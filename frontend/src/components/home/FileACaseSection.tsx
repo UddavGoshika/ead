@@ -10,10 +10,10 @@ const FileACaseSection: React.FC = () => {
 
     // Original images for this section
     const fileACaseImages = [
-        { src: "./src/assets/fil2.jpeg", title: "File a Case", subtitle: "Locate case information using advocate name, FIR number, or applicable act where supported." },
-        { src: "./src/assets/fil1.jpeg", title: "Search by CNR Number", subtitle: "Track case information using the unique Case Number Record (CNR)." },
-        { src: "./src/assets/fil3.jpeg", title: "Case Status", subtitle: "Access detailed case status using your case number or filing number as registered with the court." },
-        { src: "./src/assets/fil4.jpeg", title: "Search by Party Name", subtitle: "Find your case status using the petitioner or respondent name." },
+        { src: "/assets/fil2.jpeg", title: "File a Case", subtitle: "Locate case information using advocate name, FIR number, or applicable act where supported." },
+        { src: "/assets/fil1.jpeg", title: "Search by CNR Number", subtitle: "Track case information using the unique Case Number Record (CNR)." },
+        { src: "/assets/fil3.jpeg", title: "Case Status", subtitle: "Access detailed case status using your case number or filing number as registered with the court." },
+        { src: "/assets/fil4.jpeg", title: "Search by Party Name", subtitle: "Find your case status using the petitioner or respondent name." },
     ];
 
     const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % fileACaseImages.length);

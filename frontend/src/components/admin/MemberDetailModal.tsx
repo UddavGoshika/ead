@@ -38,7 +38,7 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
 
     const renderFileLink = (path: string | undefined, label: string) => {
         if (!path) return null;
-        const fullUrl = path.startsWith('http') ? path : `http://localhost:5000/${path}`;
+        const fullUrl = path.startsWith('http') ? path : `/${path}`;
         return (
             <div className={styles.fileItem}>
                 <label>{label}</label>
@@ -63,7 +63,7 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
                     <div className={styles.profileHeader}>
                         <div className={styles.avatarLarge}>
                             {member.profilePicPath || member.avatar ? (
-                                <img src={member.profilePicPath ? (member.profilePicPath.startsWith('http') ? member.profilePicPath : `http://localhost:5000/${member.profilePicPath}`) : member.avatar} alt={member.name} />
+                                <img src={member.profilePicPath ? (member.profilePicPath.startsWith('http') ? member.profilePicPath : `/${member.profilePicPath}`) : member.avatar} alt={member.name} />
                             ) : (
                                 <UserCircle size={80} color="#64748b" />
                             )}

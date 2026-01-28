@@ -201,7 +201,7 @@ const SearchSection: React.FC = () => {
                                             {/* Blurry Background Image */}
                                             {profile.profilePicPath ? (
                                                 <img
-                                                    src={`http://localhost:5000/${profile.profilePicPath.replace(/\\/g, '/')}`}
+                                                    src={`/${profile.profilePicPath.replace(/\\/g, '/')}`}
                                                     className={styles.profileImage}
                                                     alt={name}
                                                 />

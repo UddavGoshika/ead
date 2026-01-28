@@ -90,7 +90,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                 <div className={styles.imageContainer}>
                     {advocate.image_url ? (
                         <img
-                            src={advocate.image_url.startsWith('http') ? advocate.image_url : `http://localhost:5000${advocate.image_url}`}
+                            src={advocate.image_url.startsWith('http') ? advocate.image_url : `${advocate.image_url}`}
                             alt={advocate.name}
                             className={styles.advocateImg}
                             onError={(e) => {

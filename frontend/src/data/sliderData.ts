@@ -1,24 +1,24 @@
 export const sliderImages = [
     {
-        src: "./src/assets/fil4.jpeg",
+        src: "/assets/fil4.jpeg",
         title: "Search by Party Name",
         subtitle: "Find your case status using the petitioner or respondent name.",
         btnLink: "https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index"
     },
     {
-        src: "./src/assets/fil3.jpeg",
+        src: "/assets/fil3.jpeg",
         title: "Case Status",
         subtitle: "Access detailed case status using your case number or filing number as registered with the court.",
         btnLink: "https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index"
     },
     {
-        src: "./src/assets/fil2.jpeg",
+        src: "/assets/fil2.jpeg",
         title: "File a Case",
         subtitle: "Locate case information using advocate name, FIR number, or applicable act where supported.",
         btnLink: "https://services.ecourts.gov.in/ecourtindia_v6/"
     },
     {
-        src: "./src/assets/fil1.jpeg",
+        src: "/assets/fil1.jpeg",
         title: "Search by CNR Number",
         subtitle: "Track case information using the unique Case Number Record (CNR).",
         btnLink: "https://services.ecourts.gov.in/ecourtindia_v6/"

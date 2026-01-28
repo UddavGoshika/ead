@@ -114,7 +114,7 @@ const PublicProfile: React.FC = () => {
                         {/* Header Section */}
                         <div className={styles.header}>
                             <img
-                                src={profile.profilePicPath ? `http://localhost:5000/${profile.profilePicPath.replace(/\\/g, '/')}` : "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1200"}
+                                src={profile.profilePicPath ? `/${profile.profilePicPath.replace(/\\/g, '/')}` : "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1200"}
                                 alt={profile.name}
                                 className={styles.bannerImage}
                             />

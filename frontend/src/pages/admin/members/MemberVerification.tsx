@@ -85,7 +85,7 @@ interface PendingMember {
     documents: { name: string, path: string }[];
 }
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = window.location.hostname === 'localhost' ? "http://localhost:5000" : "";
 
 const MOCK_DEMO_MEMBER: PendingMember = {
     id: "demo-1",

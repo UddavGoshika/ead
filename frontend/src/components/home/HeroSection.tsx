@@ -189,7 +189,7 @@ const HomeBanner: React.FC = () => {
                 {/* LEFT: Fixed Luxury Content */}
                 <div className={styles.left}>
                     <div className={styles.logoCircle}>
-                        <img src={settings?.logo_url_hero || "src/assets/image.png"} alt="e-Advocate Logo" />
+                        <img src={settings?.logo_url_hero || "/assets/image.png"} alt="e-Advocate Logo" />
                     </div>
                     <div className={styles.titleContainer}>
                         <h1 className={styles.mainTitle}>{settings?.hero_title || "e-Advocate Services"}</h1>

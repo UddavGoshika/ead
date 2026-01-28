@@ -99,7 +99,7 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                     <p>{fileName}</p>
                 </div>
                 <a
-                    href={`http://localhost:5000/${path}`}
+                    href={`/${path}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.viewFileBtn}

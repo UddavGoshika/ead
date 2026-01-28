@@ -161,7 +161,7 @@ const Navbar: React.FC = () => {
                 <div className={styles.leftLogo}>
                     {/* <span>e-Advocate</span>
                     <small>SERVICES</small> */}
-                    <a href="#home"> <img src={settings?.logo_url_left || "src/assets/eadvocate.webp"} alt="Left Logo" /></a>
+                    <a href="#home"> <img src={settings?.logo_url_left || "/assets/eadvocate.webp"} alt="Left Logo" /></a>
                 </div>
             </div>
 
@@ -311,12 +311,12 @@ const Navbar: React.FC = () => {
                             ))
                         ) : (
                             <>
-                                <a href="#"><img src="src/assets/edverse.webp" className={styles.ecoimages} />Tatito Edverse ↗</a>
-                                <a href="#"><img src="src/assets/carrer.webp" className={styles.ecoimages} />Tatito Carrer Hub ↗</a>
-                                <a href="#"><img src="src/assets/nexus.webp" className={styles.ecoimages} />Tatito Nexus ↗</a>
-                                <a href="#"><img src="src/assets/civic.webp" className={styles.ecoimages} />Tatito Civic One ↗</a>
-                                <a href="#"><img src="src/assets/health.webp" className={styles.ecoimages} />Tatito Health+ ↗</a>
-                                <a href="#"><img src="src/assets/fashion.webp" className={styles.ecoimages} />Tatito Fashions ↗</a>
+                                <a href="#"><img src="/assets/edverse.webp" className={styles.ecoimages} />Tatito Edverse ↗</a>
+                                <a href="#"><img src="/assets/carrer.webp" className={styles.ecoimages} />Tatito Carrer Hub ↗</a>
+                                <a href="#"><img src="/assets/nexus.webp" className={styles.ecoimages} />Tatito Nexus ↗</a>
+                                <a href="#"><img src="/assets/civic.webp" className={styles.ecoimages} />Tatito Civic One ↗</a>
+                                <a href="#"><img src="/assets/health.webp" className={styles.ecoimages} />Tatito Health+ ↗</a>
+                                <a href="#"><img src="/assets/fashion.webp" className={styles.ecoimages} />Tatito Fashions ↗</a>
                             </>
                         )}
                     </div>
@@ -329,7 +329,7 @@ const Navbar: React.FC = () => {
                 <div className={styles.rightLogo}>
                     {/* <span>e-Advocate</span>
                     <small>SERVICES</small> */}
-                    <a href="#home"> <img src={settings?.logo_url_right || "src/assets/civic.webp"} alt="Right Logo" /></a>
+                    <a href="#home"> <img src={settings?.logo_url_right || "/assets/civic.webp"} alt="Right Logo" /></a>
                 </div>
             </div>
         </header>

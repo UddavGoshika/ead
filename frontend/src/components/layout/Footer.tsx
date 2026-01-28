@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
                 "Integration with India.gov.in for direct access to official citizen services.",
                 "Authorized platform for digitizing advocate-client interactions under local laws."
             ],
-            icons: ["https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg", "src/assets/Indiagovin.webp"]
+            icons: ["https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg", "/assets/Indiagovin.webp"]
         },
         partnership: {
             title: "Departmental Partnerships",
@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
                 "Support for e-Filing 3.0 protocols used across District and High Courts.",
                 "Direct syncing with the National Judicial Data Grid (NJDG)."
             ],
-            icons: ["src/assets/doj.webp", "src/assets/ecomitte.webp"]
+            icons: ["/assets/doj.webp", "/assets/ecomitte.webp"]
         },
         collaboration: {
             title: "Technological Collaborations",
@@ -43,7 +43,7 @@ const Footer: React.FC = () => {
                 "Collaboration with open-source legal tech communities for innovative feature development.",
                 "Cloud-secured data hosting using ISO-certified standards."
             ],
-            icons: ["src/assets/nic.webp", "src/assets/india_code.webp"]
+            icons: ["/assets/nic.webp", "/assets/india_code.webp"]
         },
         association: {
             title: "Institutional Associations",
@@ -228,21 +228,21 @@ const Footer: React.FC = () => {
                         <span>APPROVED BY</span>
                         <div className={styles.brandLogos}>
                             <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" className={styles.brandLogo} />
-                            <img src="src\assets\Indiagovin.webp" alt="India Gov" className={styles.brandLogo} />
+                            <img src="/assets/Indiagovin.webp" alt="India Gov" className={styles.brandLogo} />
                         </div>
                     </div>
                     <div className={styles.brandBox} onClick={() => openModal('partnership')}>
                         <span>PARTNERSHIP</span>
                         <div className={styles.brandLogos}>
-                            <img src="src\assets\doj.webp" alt="Ministry of Law" className={styles.brandLogo} />
-                            <img src="src\assets\ecomitte.webp" alt="eCommittee" className={styles.brandLogo} />
+                            <img src="/assets/doj.webp" alt="Ministry of Law" className={styles.brandLogo} />
+                            <img src="/assets/ecomitte.webp" alt="eCommittee" className={styles.brandLogo} />
                         </div>
                     </div>
                     <div className={styles.brandBox} onClick={() => openModal('collaboration')}>
                         <span>COLLABORATION</span>
                         <div className={styles.brandLogos}>
-                            <img src="src\assets\nic.webp" alt="NIC" className={styles.brandLogo} />
-                            <img src="src\assets\india_code.webp" alt="India Code" className={styles.brandLogo} />
+                            <img src="/assets/nic.webp" alt="NIC" className={styles.brandLogo} />
+                            <img src="/assets/india_code.webp" alt="India Code" className={styles.brandLogo} />
                         </div>
                     </div>
                     <div className={styles.brandBox} onClick={() => openModal('association')}>
@@ -262,10 +262,10 @@ const Footer: React.FC = () => {
 
                         <div className={styles.storeButtons}>
                             <div className={styles.storeBtn}>
-                                <img src="src/assets/apple-store.jpg" alt="App Store" />
+                                <img src="/assets/apple-store.jpg" alt="App Store" />
                             </div>
                             <div className={styles.storeBtn}>
-                                <img src="src/assets/google-play.png" alt="Google Play" />
+                                <img src="/assets/google-play.png" alt="Google Play" />
                             </div>
                         </div>
                     </div>
