@@ -221,7 +221,7 @@ router.post('/forgot-password', async (req, res) => {
         user.resetPasswordExpires = expires;
         await user.save();
 
-        const resetUrl = `http://localhost:5173/reset-password/${token}`;
+        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
 
         const mailResult = await sendEmail(
             email,

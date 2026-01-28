@@ -257,7 +257,7 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
 
         // Send Email
         const emailSubject = 'Action Required: Your Verification Request';
-        const emailText = `Hello ${profileName},\n\nYour profile verification was not successful for the following reason:\n\n${remarks}\n\nPlease click the link below to verify/update your details:\nhttp://localhost:5173/dashboard\n\nThank you,\nE-Advocate Team`;
+        const emailText = `Hello ${profileName},\n\nYour profile verification was not successful for the following reason:\n\n${remarks}\n\nPlease click the link below to verify/update your details:\n${req.protocol}://${req.get('host')}/dashboard\n\nThank you,\nE-Advocate Team`;
 
         await sendEmail(user.email, emailSubject, emailText);
 
@@ -433,7 +433,7 @@ router.post('/onboard-staff', async (req, res) => {
                     <p><strong>Login ID:</strong> ${loginId}</p>
                     <p><strong>Password:</strong> ${tempPassword}</p>
                 </div>
-                <p>Please login at <a href="http://localhost:5173">E-Advocate Workspace</a></p>
+                <p>Please login at <a href="${req.protocol}://${req.get('host')}">E-Advocate Workspace</a></p>
                 <p>You will be required to change your password on first login.</p>
             </div>
         `;
