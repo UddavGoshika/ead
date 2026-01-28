@@ -11,14 +11,20 @@ const { createNotification } = require('../utils/notif');
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
     try {
         const user = await User.findOne({ email });
         if (user) {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
-            // NOTIFICATION: LOGIN
-            createNotification('login', `${user.email} logged in`, user.email, user._id);
+            // NOTIFICATION: LOGIN (Background)
+            createNotification('login', `${user.email} logged in`, user.email, user._id).catch(err => {
+                console.error("Login Notification Error:", err.message);
+            });
 
             return res.json({
                 token: 'user-token-' + user._id,
@@ -31,19 +37,21 @@ router.post('/login', async (req, res) => {
                 }
             });
         }
+
+        // Fallback for hardcoded demo accounts ONLY if user not in DB
+        if (email === 'admin@gmail.com' && password === 'admin123') {
+            return res.json({
+                token: 'mock-token-admin',
+                user: { id: '65a001', role: 'admin', name: 'Admin User', email: 'admin@gmail.com' }
+            });
+        }
+
+        return res.status(400).json({ error: 'Invalid credentials' });
+
     } catch (err) {
-        console.error("Login DB Error:", err.message);
+        console.error("Login Error:", err);
+        return res.status(500).json({ error: 'Server error during login. Please check DB connection.' });
     }
-
-    // Fallback for hardcoded demo accounts if DB lookup fails or user not found
-    if (email === 'admin@gmail.com' && password === 'admin123') {
-        return res.json({
-            token: 'mock-token-admin',
-            user: { id: '65a001', role: 'admin', name: 'Admin User', email: 'admin@gmail.com' }
-        });
-    }
-
-    return res.status(400).json({ error: 'Invalid credentials' });
 });
 
 // SEND OTP
