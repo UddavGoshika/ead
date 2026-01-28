@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import styles from "./activity.module.css";
+import styles from "./Activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star } from "lucide-react";
