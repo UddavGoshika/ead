@@ -47,7 +47,7 @@ export const caseService = {
         api.get<{ cases: Case[] }>('/cases', { params: { userId } }),
     fileCase: (caseData: any) =>
         api.post<{ message: string; caseId: number }>('/cases', caseData),
-    getMetrics: (userId: number) =>
+    getMetrics: (userId: number | string) =>
         api.get<any>('/metrics', { params: { userId } }),
 };
 
