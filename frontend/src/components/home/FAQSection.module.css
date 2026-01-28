@@ -1,0 +1,133 @@
+.faqSection {
+    padding: 100px 0;
+    background:
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        linear-gradient(180deg, #0b122f, #0b102a);
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    background: linear-gradient(to right, var(--primary-gold), #fff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: #94a3b8;
+}
+
+.searchWrapper {
+    margin-bottom: 40px;
+}
+
+.searchBar {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+}
+
+.searchBar input {
+    width: 100%;
+    padding: 16px 20px 16px 55px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.searchBar input:focus {
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 20px rgba(197, 161, 87, 0.1);
+}
+
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.item:hover {
+    border-color: var(--glass-border-gold);
+}
+
+.question {
+    width: 100%;
+    padding: 24px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+}
+
+.active {
+    border-color: var(--primary-gold);
+}
+
+.answerWrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.active .answerWrapper {
+    max-height: 300px;
+}
+
+.answer {
+    padding: 0 30px 24px;
+    color: #94a3b8;
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 2rem;
+    }
+
+    .question {
+        padding: 20px;
+        font-size: 1.1rem;
+    }
+}

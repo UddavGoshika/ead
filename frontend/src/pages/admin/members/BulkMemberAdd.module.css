@@ -1,0 +1,199 @@
+.container {
+    padding: 24px;
+}
+
+.filterBar {
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.selectableFilters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+}
+
+.filterSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filterSection label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.chipGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chip:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chip.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.card {
+    background: linear-gradient(180deg, #0b1224, #020617);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.header h2 {
+    color: #f8fafc;
+    font-size: 1.6rem;
+    margin-bottom: 24px;
+}
+
+.instructions {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.instructions p {
+    color: #94a3b8;
+    margin: 0;
+}
+
+.downloadBtn {
+    background: transparent;
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.downloadBtn:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.uploadSection {
+    margin-bottom: 30px;
+}
+
+.dropZone {
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.dropZone:hover {
+    border-color: #ec4899;
+    background: rgba(236, 72, 153, 0.02);
+}
+
+.fileInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.uploadIcon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.uploadText {
+    color: #e2e8f0;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.uploadMeta {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+}
+
+.uploadBtn {
+    background: #ec4899;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.uploadBtn:hover {
+    background: #db2777;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(236, 72, 153, 0.2);
+}
+
+.notes {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 30px;
+}
+
+.notes h4 {
+    color: #f8fafc;
+    margin-bottom: 15px;
+}
+
+.notes ul {
+    color: #94a3b8;
+    padding-left: 20px;
+    font-size: 0.9rem;
+}
+
+.notes li {
+    margin-bottom: 8px;
+}

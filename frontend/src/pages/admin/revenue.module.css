@@ -1,0 +1,21 @@
+.graphCard {
+    background: linear-gradient(180deg, #0b1224, #020617);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 40px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.85);
+    height: 360px;
+    /* REQUIRED */
+
+}
+
+.graphCard h2 {
+    color: #ffffff;
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+
+.chartWrapper {
+    width: 100%;
+    height: 300px;
+}

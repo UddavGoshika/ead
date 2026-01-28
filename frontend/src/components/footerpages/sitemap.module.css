@@ -1,0 +1,170 @@
+/* ================= ROOT WRAPPER ================= */
+
+.termsSection {
+    background: transparent;
+    padding: 80px 0;
+}
+
+.termsContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.container {
+    background: transparent;
+}
+
+/* ================= TITLE ================= */
+
+.container h1 {
+    text-align: center;
+    font-size: 2.6rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: #ffffff;
+}
+
+.updated {
+    text-align: center;
+    font-size: 14px;
+    color: #9aa4bf;
+    margin-bottom: 30px;
+}
+
+/* ================= SITEMAP WRAPPER ================= */
+
+.sitemap {
+    background: transparent;
+    padding: 40px 0;
+}
+
+.sitemap h4 {
+    text-align: center;
+    font-size: 1.9rem;
+    margin-bottom: 40px;
+    color: #e9ecff;
+    font-weight: 700;
+}
+
+/* ================= GRID ================= */
+
+.sitemapGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 40px;
+}
+
+/* ================= CARD BLOCK ================= */
+
+.sitemapGrid>div {
+    background: linear-gradient(180deg, #0b1226, #070c1d);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    transition: all 0.35s ease;
+}
+
+.sitemapGrid>div:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* ================= CARD TITLES ================= */
+
+.sitemapGrid h4 {
+    font-size: 1.25rem;
+    margin-bottom: 18px;
+    color: #ffffff;
+    position: relative;
+    padding-bottom: 10px;
+    text-align: left;
+}
+
+.sitemapGrid h4::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(to right, #1d4ed8, #2563eb);
+    border-radius: 2px;
+}
+
+/* ================= LIST ================= */
+
+.sitemapGrid ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sitemapGrid li {
+    margin-bottom: 12px;
+}
+
+/* ================= LINKS ================= */
+
+.sitemapGrid a {
+    text-decoration: none;
+    color: #dbe1ff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    position: relative;
+    padding-left: 16px;
+    transition: all 0.25s ease;
+    display: inline-block;
+}
+
+.sitemapGrid a::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #3b82f6;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.sitemapGrid a:hover {
+    color: #ffffff;
+    padding-left: 20px;
+}
+
+/* ================= EXTERNAL LINKS ================= */
+
+.sitemapGrid a[target="_blank"] {
+    color: #93c5fd;
+}
+
+.sitemapGrid a[target="_blank"]:hover {
+    color: #ffffff;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 900px) {
+    .sitemapGrid {
+        gap: 28px;
+    }
+
+    .container h1 {
+        font-size: 2.2rem;
+    }
+
+    .sitemap h4 {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .sitemapGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .container h1 {
+        font-size: 2rem;
+    }
+}

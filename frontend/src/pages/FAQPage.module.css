@@ -1,0 +1,180 @@
+.faqPage {
+    background-color: var(--premium-blue);
+    min-height: 100vh;
+    color: #fff;
+}
+
+.hero {
+    padding: 80px 0;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(6, 12, 26, 0.95) 0%, rgba(10, 25, 47, 0.9) 100%);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.heroIcon {
+    color: var(--primary-gold);
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    background: linear-gradient(to right, var(--primary-gold), #fff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+}
+
+.searchWrapper {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 16px 20px 16px 55px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+.searchInput:focus {
+    border-color: var(--primary-gold);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+}
+
+.content {
+    padding: 80px 0;
+}
+
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.accordionItem {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.accordionItem:hover {
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.accordionItem.active {
+    border-color: var(--primary-gold);
+}
+
+.accordionHeader {
+    width: 100%;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.chevron {
+    color: #64748b;
+    transition: transform 0.3s;
+}
+
+.active .chevron {
+    transform: rotate(180deg);
+    color: var(--primary-gold);
+}
+
+.accordionContent {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.active .accordionContent {
+    max-height: 500px;
+    padding: 0 25px 25px;
+}
+
+.accordionContent p {
+    color: #94a3b8;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.noResults {
+    text-align: center;
+    padding: 50px;
+    color: #64748b;
+}
+
+.contactSupport {
+    margin-top: 80px;
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(2, 6, 23, 0.5) 100%);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+}
+
+.contactSupport h3 {
+    font-size: 1.8rem;
+    color: var(--primary-gold);
+    margin-bottom: 15px;
+}
+
+.contactSupport p {
+    color: #94a3b8;
+    margin-bottom: 30px;
+}
+
+.contactBtn {
+    padding: 14px 40px;
+    background: var(--primary-gold);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.contactBtn:hover {
+    transform: scale(1.05);
+}

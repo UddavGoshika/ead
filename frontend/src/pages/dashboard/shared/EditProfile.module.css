@@ -1,0 +1,389 @@
+.page {
+  min-height: 100vh;
+  padding: 30px;
+  background: #0a0c10;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.header h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.backBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #facc15;
+  transform: translateX(-3px);
+}
+
+/* Profile Hero */
+.profileHero {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 24px;
+  padding: 35px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.avatarWrapper {
+  position: relative;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 30px;
+  object-fit: cover;
+  border: 3px solid #facc15;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cameraBtn {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: #facc15;
+  color: #000;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+
+.cameraBtn:hover {
+  transform: scale(1.1);
+}
+
+.heroInfo h3 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.verifiedTag {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.heroInfo p {
+  color: #94a3b8;
+  font-size: 1rem;
+  margin: 0 0 20px 0;
+}
+
+.completeness {
+  width: 300px;
+}
+
+.completeness .label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg, #facc15, #eab308);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+}
+
+/* Sections Grid */
+.sectionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.sectionCard {
+  background: #1e293b;
+  padding: 24px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sectionCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sectionCard:hover {
+  transform: translateY(-5px);
+  border-color: rgba(250, 204, 21, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.sectionCard:hover::before {
+  opacity: 1;
+}
+
+.iconBox {
+  width: 50px;
+  height: 50px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #facc15;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardContent h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cardContent p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.editBtn {
+  margin-left: auto;
+  color: #475569;
+  transition: color 0.2s;
+}
+
+.sectionCard:hover .editBtn {
+  color: #facc15;
+}
+
+/* Modal System */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeInModal 0.3s forwards;
+}
+
+@keyframes fadeInModal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 32px;
+  width: 500px;
+  overflow: hidden;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.6);
+  animation: slideModal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slideModal {
+  from {
+    transform: translateY(40px) scale(0.95);
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  padding: 25px 35px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: 800;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #ef4444;
+}
+
+.modalBody {
+  padding: 35px;
+}
+
+.inputGroup {
+  margin-bottom: 25px;
+}
+
+.inputGroup label {
+  display: block;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.inputGroup input {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 14px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.inputGroup input:focus {
+  border-color: #facc15;
+}
+
+.modalActions {
+  padding: 0 35px 35px;
+  display: flex;
+  gap: 15px;
+}
+
+.modalActions button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.save {
+  background: #facc15;
+  color: #000;
+  border: none;
+}
+
+.save:hover {
+  box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .profileHero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header h2 {
+    font-size: 1.8rem;
+  }
+
+  .completeness {
+    width: 100%;
+  }
+}

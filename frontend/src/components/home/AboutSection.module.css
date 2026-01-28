@@ -1,0 +1,146 @@
+.aboutSection {
+    padding: 100px 0;
+    background:
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        linear-gradient(180deg, #0b122f, #0b102a);
+    color: #fff;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(to right, var(--primary-gold), #fff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.contentGrid {
+    margin-top: 40px;
+}
+
+.textContent h3 {
+    font-size: 1.8rem;
+    color: var(--primary-gold);
+    margin-bottom: 15px;
+}
+
+.textContent p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #cbd5e1;
+    margin-bottom: 25px;
+}
+
+.servicesHeader {
+    margin: 40px 0 20px;
+}
+
+.servicesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.serviceItem {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 30px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.serviceItem:hover {
+    transform: translateY(-10px);
+    border-color: var(--primary-gold);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.iconBox {
+    color: var(--primary-gold);
+    margin-bottom: 20px;
+}
+
+.serviceItem h4 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.serviceItem p {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    margin-bottom: 0;
+}
+
+.approvalSection {
+    margin-top: 80px;
+    padding-top: 60px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.approvalBox {
+    text-align: center;
+}
+
+.approvalBox h4 {
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.9rem;
+    margin-bottom: 30px;
+}
+
+.logosRow {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 30px;
+}
+
+.logosGrid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+    opacity: 0.6;
+}
+
+.placeholderLogo {
+    font-weight: 800;
+    color: #fff;
+    font-size: 1.2rem;
+    border: 1px dashed #475569;
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 2.2rem;
+    }
+}

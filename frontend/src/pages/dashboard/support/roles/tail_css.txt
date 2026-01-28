@@ -1,0 +1,20 @@
+﻿        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.revenueText {
+    font-size: 20px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.revenueText span {
+    font-size: 9px;
+    color: #64748b;
+    margin-left: 5px;
+}

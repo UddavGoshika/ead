@@ -1,0 +1,296 @@
+.chatContainer,
+.callContainer {
+    width: 100%;
+    height: 100%;
+    background: #020617;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.uiHeader {
+    padding: 20px 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.userInfo,
+.sessionInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.userAvatar {
+    width: 40px;
+    height: 40px;
+    background: #1e293b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    overflow: hidden;
+}
+
+.userName {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.userStatus {
+    font-size: 11px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pulseDot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.headerActions {
+    display: flex;
+    gap: 15px;
+}
+
+.completeBtn {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.completeBtn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.messageList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.messageWrapper {
+    display: flex;
+}
+
+.agentWrapper {
+    justify-content: flex-end;
+}
+
+.messageBubble {
+    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+}
+
+.userWrapper .messageBubble {
+    background: #1e293b;
+    color: #f1f5f9;
+    border-bottom-left-radius: 4px;
+}
+
+.agentWrapper .messageBubble {
+    background: #3b82f6;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.timestamp {
+    display: block;
+    font-size: 10px;
+    opacity: 0.5;
+    margin-top: 5px;
+    text-align: right;
+}
+
+.chatInputArea {
+    padding: 20px 30px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.inputWrapper {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    padding: 6px;
+}
+
+.inputWrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    outline: none;
+    font-size: 14px;
+}
+
+.sendBtn {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* CALL STYLES */
+.callBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+}
+
+.largeAvatar {
+    width: 120px;
+    height: 120px;
+    background: #1e293b;
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 2px solid #3b82f6;
+}
+
+.largeAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 38px;
+}
+
+.avatarPulse {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+}
+
+.callUserInfo {
+    text-align: center;
+}
+
+.callUserInfo h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    color: #3b82f6;
+    letter-spacing: 2px;
+}
+
+.waveContainer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 60px;
+}
+
+.waveBar {
+    width: 3px;
+    background: #3b82f6;
+    border-radius: 10px;
+}
+
+.callControls {
+    display: flex;
+    gap: 30px;
+    padding-bottom: 50px;
+}
+
+.controlBtn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.muted {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+.holdActive {
+    background: #fbbf24 !important;
+    color: #1e293b !important;
+    border-color: #fbbf24 !important;
+}
+
+.endCallBtn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+}
+
+.callStatus {
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

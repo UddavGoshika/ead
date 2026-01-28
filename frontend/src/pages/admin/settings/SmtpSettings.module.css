@@ -1,0 +1,113 @@
+.page {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+}
+
+/* CARD */
+.card {
+    background: linear-gradient(180deg, #0b1224, #020617);
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+}
+
+/* HEADINGS */
+.card h3 {
+    color: #e5e7eb;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.card h4 {
+    color: #e5e7eb;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* FORM */
+.form {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.field label {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    background: #020617;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #e5e7eb;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: #ec4899;
+}
+
+/* ACTIONS */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+/* PRIMARY BUTTON */
+.primaryBtn {
+    background: #ec4899;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* WARNING */
+.warning {
+    color: #f87171;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+/* INSTRUCTIONS */
+.instructionBlock {
+    background: rgba(148, 163, 184, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.instructionBlock ul {
+    padding-left: 18px;
+}
+
+.instructionBlock li {
+    font-size: 13px;
+    color: #e5e7eb;
+    margin-bottom: 6px;
+}
+
+/* INLINE */
+.inline {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.inline input {
+    flex: 1;
+}

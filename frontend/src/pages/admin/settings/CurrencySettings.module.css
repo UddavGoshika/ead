@@ -1,0 +1,184 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* GRID */
+.topGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* CARD */
+.card {
+    background: linear-gradient(180deg, #0b1224, #020617);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+}
+
+.card h3 {
+    color: #e5e7eb;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+/* INLINE */
+.inline {
+    display: flex;
+    gap: 12px;
+}
+
+.right {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+/* FORM */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+label {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+input,
+select {
+    background: #020617;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #e5e7eb;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #ec4899;
+}
+
+/* BUTTONS */
+.saveBtn {
+    background: #ec4899;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.addBtn {
+    background: #ec4899;
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* TABLE */
+.tableHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.tableActions {
+    display: flex;
+    gap: 10px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+thead th {
+    text-align: left;
+    color: #94a3b8;
+    padding: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+tbody td {
+    padding: 14px 12px;
+    color: #e5e7eb;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+tbody tr:hover {
+    background: rgba(148, 163, 184, 0.05);
+}
+
+/* OPTIONS */
+.options {
+    display: flex;
+    gap: 8px;
+}
+
+.iconBtn {
+    background: rgba(236, 72, 153, 0.15);
+    border: none;
+    color: #ec4899;
+    width: 30px;
+    height: 30px;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* PAGINATION */
+.pagination {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.pagination button {
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.activePage {
+    background: #ec4899;
+    border-color: #ec4899;
+    color: white;
+}
+
+
+.toggleBtn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.on {
+    background-color: #4caf50;
+    color: #fff;
+}
+
+.off {
+    background-color: #ccc;
+    color: #333;
+}

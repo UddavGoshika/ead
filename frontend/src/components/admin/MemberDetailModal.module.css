@@ -1,0 +1,252 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal {
+    background: #0f172a;
+    width: 850px;
+    max-width: 95%;
+    max-height: 90vh;
+    border-radius: 24px;
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+    from {
+        transform: scale(0.95) translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.header {
+    padding: 24px 32px;
+    background: rgba(30, 41, 59, 0.5);
+    border-bottom: 1px solid rgba(250, 204, 21, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    color: #ef4444;
+    transform: rotate(90deg);
+}
+
+.content {
+    padding: 32px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 40px;
+}
+
+.avatarLarge {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 4px solid #fac215;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(250, 194, 21, 0.2);
+}
+
+.avatarLarge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.basicInfo h1 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+    color: #f1f5f9;
+}
+
+.badges {
+    display: flex;
+    gap: 12px;
+}
+
+.roleBadge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.roleBadge.advocate {
+    background: #fac215;
+    color: #020617;
+}
+
+.roleBadge.client {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+
+.statusBadge.active {
+    color: #22c55e;
+    border-color: #22c55e;
+}
+
+.statusBadge.blocked {
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.sectionsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.sectionCard {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.sectionCard h3 {
+    margin: 0 0 20px 0;
+    font-size: 16px;
+    color: #fac215;
+    font-weight: 600;
+    border-left: 3px solid #fac215;
+    padding-left: 12px;
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 14px;
+}
+
+.infoRow label {
+    color: #94a3b8;
+}
+
+.infoRow span {
+    color: #f1f5f9;
+    font-weight: 500;
+}
+
+.descText {
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.filesGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fileItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(2, 6, 23, 0.3);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.fileItem label {
+    font-size: 13px;
+    color: #cbd5e1;
+}
+
+.fileLink {
+    color: #fac215;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.fileLink:hover {
+    color: #fde047;
+    text-decoration: underline;
+}
+
+.footer {
+    padding: 24px 32px;
+    background: rgba(30, 41, 59, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.primaryBtn {
+    background: #fac215;
+    color: #020617;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(250, 194, 21, 0.3);
+    transition: all 0.2s;
+}
+
+.primaryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(250, 194, 21, 0.4);
+}

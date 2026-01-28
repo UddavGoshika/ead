@@ -1,0 +1,139 @@
+.tableContainer {
+    margin-top: 60px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 30px;
+}
+
+.tableHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.tableHeader h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #3b82f6;
+}
+
+.nodeCount {
+    font-size: 10px;
+    font-weight: 900;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 4px 12px;
+    border-radius: 100px;
+}
+
+.scrollWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 15px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table td {
+    padding: 20px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
+}
+
+.userCell {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.miniAvatar {
+    width: 36px;
+    height: 36px;
+    background: #1e293b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.miniAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #475569;
+}
+
+.roleBadge {
+    font-size: 9px;
+    font-weight: 950;
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.activityInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.statusBadge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.pulseDot {
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.actionBtn {
+    background: transparent;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.actionBtn:hover {
+    color: #fff;
+}

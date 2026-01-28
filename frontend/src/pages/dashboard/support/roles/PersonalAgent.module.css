@@ -1,0 +1,9 @@
+/* Personal Agent Specific Styles */
+.agentActionBtn {
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
+
+.agentActionBtn:hover {
+    background: rgba(139, 92, 246, 0.1) !important;
+}

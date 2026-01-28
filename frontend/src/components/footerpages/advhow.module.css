@@ -1,0 +1,200 @@
+.page {
+
+    margin-top: 180px;
+}
+
+/* ================= CONTAINER ================= */
+
+.advhowitworksContainer {
+    width: 92%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ================= HERO ================= */
+
+.advhowitworksHero {
+    position: relative;
+    padding: 120px 0;
+    background-size: cover;
+    background-position: center;
+    color: #ffffff;
+}
+
+.advhowitworksHero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(15, 23, 42, 0.85),
+            rgba(15, 23, 42, 0.65));
+}
+
+.advhowitworksHero .advhowitworksContainer {
+    position: relative;
+    z-index: 2;
+}
+
+.advhowitworksHeroTitle {
+    font-size: 44px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.advhowitworksHeroDesc {
+    font-size: 18px;
+    max-width: 760px;
+    opacity: 0.95;
+    display: flex;
+    justify-content: center;
+}
+
+/* ================= PROCESS ================= */
+
+.advhowitworksProcess {
+    padding: 90px 0;
+    background: linear-gradient(180deg, #0b1226, #070c1d);
+}
+
+.advhowitworksHeading {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+.advhowitworksSubtitle {
+    text-align: center;
+    max-width: 760px;
+    margin: auto;
+    font-size: 16px;
+    opacity: 0.75;
+    margin-bottom: 80px;
+}
+
+/* ================= GRID STEPS ================= */
+
+.advhowitworksSteps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 90px;
+}
+
+.advhowitworksStep {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.advhowitworksReverse {
+    direction: rtl;
+}
+
+.advhowitworksReverse .advhowitworksContent {
+    direction: ltr;
+}
+
+/* ================= CONTENT ================= */
+
+.advhowitworksContent {
+    background: linear-gradient(180deg, #0b1226, #070c1d);
+    padding: 48px;
+    border-radius: 18px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.08);
+}
+
+.advhowitworksNum {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: 22px;
+}
+
+.advhowitworksContent h3 {
+    font-size: 24px;
+    margin-bottom: 14px;
+}
+
+.advhowitworksContent p {
+    font-size: 15.5px;
+    opacity: 0.9;
+}
+
+/* ================= FEATURES ================= */
+
+.advhowitworksFeatures {
+    list-style: none;
+    margin-top: 18px;
+}
+
+.advhowitworksFeatures li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    font-size: 14.5px;
+}
+
+.advhowitworksFeatures li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+/* ================= NOTE ================= */
+
+.advhowitworksNote {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-left: 4px solid #1d4ed8;
+    background-color: rgba(29, 78, 216, 0.08);
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+/* ================= IMAGE ================= */
+
+.advhowitworksImage img {
+    width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.15);
+}
+
+.advhowitworksCaption {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1024px) {
+    .advhowitworksStep {
+        grid-template-columns: 1fr;
+    }
+
+    .advhowitworksReverse {
+        direction: ltr;
+    }
+
+    .advhowitworksHeroTitle {
+        font-size: 36px;
+    }
+}
+
+@media (max-width: 600px) {
+    .advhowitworksContent {
+        padding: 34px;
+    }
+
+    .advhowitworksHeading {
+        font-size: 28px;
+    }
+}

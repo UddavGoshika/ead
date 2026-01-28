@@ -1,0 +1,226 @@
+.advocatedashboard {
+    display: flex;
+    height: 100vh;
+    background: #0a0c10;
+    position: relative;
+    overflow: hidden;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+}
+
+.mainContentadvocatedash {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.03), transparent);
+}
+
+.topBar {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    background: rgba(15, 20, 26, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    gap: 15px;
+}
+
+.topBarLeft {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.pageTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pageTitle span {
+    color: #94a3b8;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.badgeStack {
+    display: flex;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+.planBadge {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.freeBadge {
+    background: rgba(100, 116, 139, 0.1);
+    color: #94a3b8;
+}
+
+.proBadge {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.ultraBadge {
+    background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+    color: #fff;
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    animation: pulseUltra 2s infinite;
+}
+
+@keyframes pulseUltra {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.topBarRight {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notificationBtn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.notificationBtn:hover {
+    color: #d4af37;
+}
+
+.contentBody {
+    flex: 1;
+    padding: 30px;
+    padding-bottom: 100px;
+    position: relative;
+    min-height: calc(100vh - 80px);
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hamburger {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+}
+
+.toast {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    background: #1e293b;
+    border-left: 4px solid #d4af37;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 1024px) {
+    .contentBody {
+        padding: 20px;
+    }
+}
+
+.writeBlogBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 15px;
+}
+
+.writeBlogBtn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}

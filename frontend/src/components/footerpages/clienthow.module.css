@@ -1,0 +1,204 @@
+.page {
+
+    margin-top: 180px;
+
+}
+
+/* ================= HERO ================= */
+
+.chowitHero {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    padding: 150px 20px 100px;
+    color: #ffffff;
+}
+
+.chowitHero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(6, 11, 26, 0.85),
+            rgba(6, 11, 26, 0.95));
+}
+
+.chowitContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.chowitHeroTitle {
+    font-size: 46px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.chowitHeroSubtitle {
+    max-width: 760px;
+    font-size: 18px;
+    line-height: 1.7;
+    color: #d0d6f9;
+}
+
+/* ================= PROCESS SECTION ================= */
+
+.chowitProcess {
+    background: radial-gradient(circle at top, #0f1b3d, #060b1a);
+    padding: 100px 20px;
+    color: #ffffff;
+}
+
+.chowitSectionTitle {
+    text-align: center;
+    font-size: 38px;
+    margin-bottom: 14px;
+}
+
+.chowitSectionSubtitle {
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto 90px;
+    font-size: 16px;
+    color: #9aa4bf;
+}
+
+/* ================= STEPS WRAPPER ================= */
+
+.chowitSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+}
+
+/* ================= STEP CARD ================= */
+
+.chowitStep {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    background: linear-gradient(180deg, #0b1226, #070c1d);
+    border-radius: 22px;
+    padding: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 35px 80px rgba(0, 0, 0, 0.55);
+    position: relative;
+}
+
+.chowitStepContent {
+    order: 1;
+}
+
+.chowitStepImage {
+    order: 2;
+}
+
+.chowitReverse .chowitStepContent {
+    order: 2;
+}
+
+.chowitReverse .chowitStepImage {
+    order: 1;
+}
+
+/* ================= STEP NUMBER ================= */
+
+.chowitStepNumber {
+    position: absolute;
+    top: -40px;
+    left: 40px;
+    font-size: 84px;
+    font-weight: 800;
+    color: rgba(124, 92, 255, 0.18);
+    pointer-events: none;
+}
+
+/* ================= CONTENT ================= */
+
+.chowitStepContent h3 {
+    font-size: 28px;
+    margin-bottom: 14px;
+}
+
+.chowitStepContent p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #c8d0f0;
+    margin-bottom: 18px;
+}
+
+/* ================= FEATURES ================= */
+
+.chowitFeatureList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.chowitFeatureList li {
+    margin-bottom: 10px;
+    padding-left: 22px;
+    position: relative;
+    color: #ffffff;
+}
+
+.chowitFeatureList li::before {
+    content: "✔";
+    position: absolute;
+    left: 0;
+    color: #7c5cff;
+    font-weight: bold;
+}
+
+/* ================= NOTE ================= */
+
+.chowitNote {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 4px solid #7c5cff;
+    font-size: 14px;
+    color: #e5e9ff;
+}
+
+/* ================= IMAGE ================= */
+
+.chowitStepImage img {
+    width: 100%;
+    border-radius: 18px;
+    object-fit: cover;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+.chowitCaption {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #9aa4bf;
+    text-align: center;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 900px) {
+    .chowitStep {
+        grid-template-columns: 1fr;
+        padding: 36px;
+    }
+
+    .chowitStepContent,
+    .chowitStepImage {
+        order: unset;
+    }
+
+    .chowitStepNumber {
+        font-size: 64px;
+        top: -30px;
+        left: 28px;
+    }
+
+    .chowitHeroTitle {
+        font-size: 34px;
+    }
+}

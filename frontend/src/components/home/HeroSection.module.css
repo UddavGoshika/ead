@@ -1,0 +1,301 @@
+.hero {
+    min-height: 100vh;
+    width: 100%;
+    color: #ffffff;
+    background:
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        linear-gradient(180deg, #0b122f, #0b102a);
+    position: relative;
+    padding-top: 220px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding-bottom: 100px;
+    justify-content: center;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+
+    z-index: 1;
+}
+
+.container {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 80px;
+    padding: 0 40px;
+    z-index: 2;
+}
+
+/* LEFT SIDE (50%) */
+.left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 55%;
+}
+
+/* .logoCircle {
+    margin-bottom: 30px;
+} */
+
+.logoCircle img {
+    height: 295px;
+    width: auto;
+    filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.2));
+}
+
+.mainTitle {
+    /* font-size: clamp(2.5rem, 5vw, 4.2rem); */
+    font-weight: 900;
+    margin-bottom: 24px;
+    line-height: 1.1;
+    background: linear-gradient(to right, #ffffff, #e2e8f0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.mainSubtitle {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: #94a3b8;
+    margin-bottom: 45px;
+    max-width: 540px;
+}
+
+.luxuryBtn {
+    padding: 16px 45px;
+    border-radius: 100px;
+    background: transparent;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fbf9f9;
+    margin-right: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.luxuryBtn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 5px 40px rgba(171, 173, 173, 0.655);
+}
+
+.exploreBtn {
+    padding: 16px 50px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, #facc15, #b8860b);
+    border: none;
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(250, 204, 21, 0.2);
+    font-family: 'Cinzel', serif;
+}
+
+.exploreBtn:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 50px rgba(250, 204, 21, 0.4);
+    background: linear-gradient(135deg, #ffd700, #daa520);
+}
+
+/* RIGHT SIDE (50%) */
+.right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 50%;
+}
+
+.rightContentBox {
+    width: 620px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+
+}
+
+.slider {
+    width: 100%;
+    height: 380px;
+    border-radius: 35px;
+    overflow: hidden;
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
+}
+
+.sliderImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.5s ease-in-out;
+}
+
+.navBtn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.navBtn:hover {
+    background: #facc15;
+    color: #000;
+    border-color: #facc15;
+}
+
+.prevBtn {
+    left: 20px;
+}
+
+.nextBtn {
+    right: 20px;
+}
+
+.counter {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #facc15;
+}
+
+/* DYNAMIC CONTENT BELOW SLIDER */
+.dynamicContent {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    padding: 35px;
+    margin-top: 20px;
+    border-radius: 35px;
+    border: 1px solid var(--glass-border);
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
+    box-shadow: var(--glass-shadow);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slideTitle {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #ffffff;
+}
+
+.slideSubtitle {
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    font-size: 1.05rem;
+}
+
+.primaryBtn {
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid #facc15;
+    padding: 12px 30px;
+    border-radius: 100px;
+    color: #facc15;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.primaryBtn:hover {
+    background: #facc15;
+    color: #000;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .container {
+        gap: 40px;
+    }
+
+    .rightContentBox {
+        width: 500px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .hero::before {
+        width: 100%;
+        height: 60%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .container {
+        flex-direction: column;
+        gap: 60px;
+        padding: 120px 20px 60px;
+    }
+
+    .left,
+    .right {
+        max-width: 100%;
+        align-items: center;
+        text-align: center;
+    }
+
+    .logoCircle {
+        justify-content: center;
+    }
+
+    .mainSubtitle {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

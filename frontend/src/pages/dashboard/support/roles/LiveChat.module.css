@@ -1,0 +1,9 @@
+/* Live Support Specific Styles */
+.liveActionBtn {
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+}
+
+.liveActionBtn:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+}

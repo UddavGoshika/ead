@@ -1,0 +1,210 @@
+.invoiceWrapper {
+    background: white;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+    padding: 40px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.topLogoRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.amazonLogo {
+    display: flex;
+    align-items: baseline;
+}
+
+.brand {
+    font-size: 42px;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: -2px;
+}
+
+.dotIn {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.invoiceTitleContainer {
+    text-align: right;
+}
+
+.mainTitle {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.subTitle {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.addressesGrid {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.addressBlock {
+    width: 48%;
+}
+
+.blockHeading {
+    font-size: 13px;
+    margin: 0 0 4px 0;
+    font-weight: 700;
+}
+
+.sellerName,
+.buyerName {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.addressBlock p {
+    margin: 1px 0;
+}
+
+.regInfo {
+    margin-top: 15px;
+}
+
+.metaInfoGrid {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.metaInfoGrid p {
+    margin: 3px 0;
+    font-size: 12px;
+}
+
+/* ================= TABLE ================= */
+.amazonTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.amazonTable th {
+    background: #ccc;
+    border: 1px solid #252424;
+    padding: 6px 4px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: #080808;
+}
+
+.amazonTable td {
+    border-left: 1px solid #070707;
+    border-right: 1px solid #070707;
+    padding: 8px 4px;
+    vertical-align: top;
+}
+
+.itemMajor {
+    font-weight: 600;
+    margin: 0;
+    color: #080808;
+}
+
+.itemMinor {
+    font-size: 9px;
+    color: #080808;
+    margin: 2px 0 0 0;
+}
+
+.emptyRow td {
+    height: 60px;
+}
+
+.totalRow td {
+    border-top: 2px solid #333;
+    border-bottom: 2px solid #333;
+    background: #fdfdfd;
+    padding: 10px 4px;
+}
+
+.totalText {
+    text-align: left;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.amountWordsRow {
+    border: 1px solid #777;
+    border-top: none;
+    padding: 10px;
+    margin-bottom: 30px;
+}
+
+.amountWordsRow p {
+    margin: 2px 0;
+    font-size: 13px;
+}
+
+.signatureRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 50px;
+}
+
+.signRight {
+    text-align: right;
+    width: 200px;
+}
+
+.sellerStamp {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.signatureArea {
+    height: 40px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.signImg {
+    max-height: 40px;
+    opacity: 0.8;
+}
+
+.authorized {
+    font-weight: 700;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.bottomDisclaimer {
+    font-size: 8px;
+    color: #888;
+}
+
+.bottomDisclaimer p {
+    margin: 1px 0;
+}
+
+.pageNumber {
+    text-align: right;
+    margin-top: 20px !important;
+    font-weight: 600;
+}
+
+@media print {
+    .invoiceWrapper {
+        padding: 0;
+    }
+}

@@ -1,0 +1,9 @@
+/* Chat Support Specific Styles */
+.chatActionBtn {
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+.chatActionBtn:hover {
+    background: rgba(59, 130, 246, 0.1) !important;
+}

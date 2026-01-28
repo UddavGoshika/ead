@@ -1,0 +1,682 @@
+/* .page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h2 {
+    color: #fbfaf8;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.addBtn {
+    background: #020915;
+    color: #fbfaf8;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.card {
+    background: linear-gradient(180deg, #0b1224, #020915);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table th {
+    color: #fbfaf8;
+    text-align: left;
+    padding: 14px;
+    border-bottom: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+.table td {
+    color: #e5e7eb;
+    padding: 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.amount {
+    font-weight: 700;
+}
+
+.id {
+    font-family: monospace;
+}
+
+.proofBtn {
+    background: transparent;
+    border: 1px solid #fbfaf8;
+    color: #fbfaf8;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.status {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.approved {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.rejected {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.actions {
+    position: relative;
+}
+
+.menuBtn {
+    background: transparent;
+    border: none;
+    color: #fbfaf8;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: 32px;
+    background: #020915;
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    min-width: 130px;
+    z-index: 10;
+}
+
+.menu button {
+    background: transparent;
+    border: none;
+    padding: 10px 14px;
+    text-align: left;
+    color: #e5e7eb;
+    cursor: pointer;
+}
+
+.menu button:hover {
+    background: rgba(250, 204, 21, 0.1);
+}
+
+.approve {
+    color: #22c55e;
+}
+
+.reject {
+    color: #ef4444;
+}
+
+.details {
+    color: #facc15;
+}
+
+.bottomGrid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 22px;
+}
+
+.methods {
+    display: flex;
+    justify-content: space-between;
+}
+
+.configBtn {
+    background: transparent;
+    border: 1px solid #c7c6c5;
+    color: #f8f7f5;
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+}
+
+.big {
+    font-size: 32px;
+    font-weight: 700;
+    color: #f8f7f5;
+} */
+
+
+/* WalletRecharge.module.css */
+.page {
+    background: #020617;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 24px;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header h2 {
+    color: #f8fafc;
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: #94a3b8;
+    margin: 4px 0 0;
+    font-size: 14px;
+}
+
+.headerActions {
+    display: flex;
+    gap: 12px;
+}
+
+.addBtn,
+.exportBtn {
+    background: #1e40af;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.addBtn:hover,
+.exportBtn:hover {
+    background: #1e3a8a;
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    background: #1e2937;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.searchContainer {
+    flex: 1;
+    min-width: 240px;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 12px 16px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: white;
+    font-size: 15px;
+}
+
+.filterSelect,
+.dateInput,
+.amountInput,
+.sortToggle,
+.pageSizeSelect {
+    padding: 10px 14px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: white;
+}
+
+.dateRange,
+.amountRange {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sortContainer {
+    display: flex;
+    gap: 8px;
+}
+
+.clearBtn {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.bulkActions {
+    background: #1e2937;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-left: 4px solid #3b82f6;
+}
+
+.bulkApprove {
+    background: #166534;
+    color: #86efac;
+}
+
+.bulkReject {
+    background: #991b1b;
+    color: #fca5a5;
+}
+
+.card {
+    background: #1e2937;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #334155;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    padding: 16px;
+    background: #0f172a;
+    color: #cbd5e1;
+    font-weight: 500;
+    border-bottom: 2px solid #334155;
+    cursor: pointer;
+    user-select: none;
+}
+
+.table td {
+    padding: 16px;
+    border-bottom: 1px solid #334155;
+    vertical-align: middle;
+}
+
+.table tr:hover {
+    background: #1e2937;
+}
+
+.id {
+    font-family: monospace;
+    font-weight: 500;
+}
+
+.amount {
+    font-weight: 600;
+    color: #60a5fa;
+}
+
+.status {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status.pending {
+    background: #854d0e;
+    color: #fef08c;
+}
+
+.status.approved {
+    background: #14532d;
+    color: #86efac;
+}
+
+.status.rejected {
+    background: #991b1b;
+    color: #fca5a5;
+}
+
+.proofBtn {
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.menu {
+    position: absolute;
+    background: #1e2937;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    padding: 8px;
+    z-index: 100;
+    min-width: 140px;
+}
+
+.menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.menu button:hover {
+    background: #334155;
+}
+
+.approve {
+    color: #86efac;
+}
+
+.reject {
+    color: #fca5a5;
+}
+
+.details {
+    color: #93c5fd;
+}
+
+.actions {
+    position: relative;
+}
+
+.menuBtn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #94a3b8;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #334155;
+    font-size: 14px;
+}
+
+.paginationControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bottomGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.methods {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.methodItem {
+    padding: 16px;
+    background: #0f172a;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+
+.configBtn {
+    background: #334155;
+    color: #cbd5e1;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.statItem .big {
+    font-size: 32px;
+    font-weight: 700;
+    color: #60a5fa;
+    display: block;
+}
+
+.progressBar {
+    height: 8px;
+    background: #334155;
+    border-radius: 9999px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(to right, #3b82f6, #60a5fa);
+    transition: width 0.4s ease;
+}
+
+.distribution h4 {
+    margin-bottom: 16px;
+    color: #cbd5e1;
+}
+
+.barContainer {
+    margin-bottom: 14px;
+}
+
+.barLabel {
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #94a3b8;
+}
+
+.bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 28px;
+}
+
+.barFill {
+    height: 20px;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.approvedBar {
+    background: #166534;
+}
+
+.pendingBar {
+    background: #854d0e;
+}
+
+.rejectedBar {
+    background: #991b1b;
+}
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal {
+    background: #1e2937;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 520px;
+    border: 1px solid #475569;
+    padding: 32px;
+}
+
+.proofPreview img {
+    width: 100%;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.detailsContent p {
+    margin: 12px 0;
+    line-height: 1.6;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 32px;
+}
+
+.modalActions button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.modalActions button:first-child {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.selectedRow {
+    background: #1e3a8a !important;
+}
+
+/* FORM STYLES FOR MODALS */
+.formGroup {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formGroup label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #94a3b8;
+}
+
+.formInput,
+.formSelect,
+.formTextarea {
+    width: 100%;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus {
+    border-color: #3b82f6;
+}
+
+.formTextarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.modalTitle {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: #f8fafc;
+    font-size: 20px;
+}
+
+.submitBtn {
+    background: #2563eb !important;
+    color: white !important;
+}
+
+.submitBtn:hover {
+    background: #1d4ed8 !important;
+}
+
+.methodList {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.methodCard {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+@media (max-width: 1024px) {
+    .bottomGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

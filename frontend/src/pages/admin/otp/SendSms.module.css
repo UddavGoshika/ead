@@ -1,0 +1,120 @@
+.page {
+    background: #020b1a;
+    min-height: 100vh;
+    padding: 32px;
+    color: white;
+}
+
+.card {
+    background: #020f25;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 900px;
+    margin: auto;
+    border: 1px solid #1e2a4a;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+}
+
+.title {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+/* FORM */
+.formGroup {
+    margin-bottom: 20px;
+}
+
+.formGroup label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.input,
+.textarea {
+    width: 100%;
+    background: #01091a;
+    border: 1px solid #243b64;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: white;
+}
+
+.textarea {
+    min-height: 120px;
+    resize: none;
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    border-color: #1e90ff;
+    box-shadow: 0 0 0 1px #1e90ff;
+}
+
+/* MULTI SELECT */
+.multiSelect {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #01091a;
+    border: 1px solid #243b64;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.userItem {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #081a35;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.userItem:hover {
+    background: #12325f;
+}
+
+.selected {
+    background: #1e90ff;
+    color: white;
+}
+
+/* NOTE */
+.note {
+    color: #ff5a8a;
+    font-size: 12px;
+    margin-top: 6px;
+    display: block;
+}
+
+/* ACTION */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sendBtn {
+    background: #ff2f7d;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.sendBtn:hover {
+    box-shadow: 0 0 14px rgba(255, 47, 125, 0.7);
+    transform: translateY(-1px);
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .page {
+        padding: 16px;
+    }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "eadvocate-backend",
+  "version": "1.0.0",
+  "description": "Backend for Advocate Service App",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "seed-data": "node seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "mongodb": "^7.0.0",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^7.0.12"
+  }
+}

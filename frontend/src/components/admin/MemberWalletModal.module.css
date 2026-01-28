@@ -1,0 +1,219 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal {
+    background: #0f172a;
+    width: 480px;
+    max-width: 90%;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: modalIn 0.3s ease-out;
+}
+
+@keyframes modalIn {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.header {
+    padding: 20px 24px;
+    background: #1e293b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #f1f5f9;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.content {
+    padding: 24px;
+}
+
+.balanceCard {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 24px;
+}
+
+.balanceInfo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.balanceInfo label {
+    font-size: 13px;
+    color: #94a3b8;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.balanceInfo h3 {
+    margin: 0;
+    font-size: 28px;
+    color: #f1f5f9;
+}
+
+.adjustmentSection {
+    margin-bottom: 32px;
+}
+
+.adjustmentSection h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: #f1f5f9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.adjustInputWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.adjustInputWrap input {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.adjustBtns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.addBtn {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.deductBtn {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.historySection h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #f1f5f9;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #f5c842;
+}
+
+.historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.historyList::-webkit-scrollbar {
+    width: 4px;
+}
+
+.historyList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.historyItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+.historyText {
+    flex-grow: 1;
+}
+
+.historyText p {
+    margin: 0 0 2px 0;
+    font-size: 13px;
+    color: #f1f5f9;
+}
+
+.historyText span {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.historyAmount {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.plus {
+    color: #10b981;
+}
+
+.minus {
+    color: #ef4444;
+}

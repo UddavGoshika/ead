@@ -1,0 +1,124 @@
+.testimonialSection {
+    padding: 100px 0;
+    background:
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        linear-gradient(180deg, #0b122f, #0b102a);
+    position: relative;
+    overflow: hidden;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    background: linear-gradient(to right, var(--primary-gold), #fff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: #94a3b8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: var(--glass-shadow);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    border-color: var(--glass-border-gold);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.quoteIcon {
+    color: rgba(197, 161, 87, 0.2);
+    margin-bottom: 20px;
+}
+
+.rating {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.content {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #cbd5e1;
+    margin-bottom: 30px;
+    font-style: italic;
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-gold), #b38b4d);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.verifyIcon {
+    color: #22c55e;
+}
+
+.info span {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 2rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,85 @@
+import React from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import {
+    User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
+    Coins, LogOut, Briefcase, Lock, Wallet
+} from 'lucide-react';
+import styles from '../Sidebar.module.css';
+
+interface Props {
+    isOpen: boolean;
+    showsidePage: (page: string) => void;
+    currentPage: string;
+}
+
+const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
+    const { user, logout } = useAuth();
+
+    const menuItems = [
+        { id: 'edit-profile', label: 'Edit Profile', icon: User },
+        { id: 'search-preferences', label: 'Search Preferences', icon: Search },
+        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
+        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star, premium: true },
+        { id: 'blogs', label: 'Blogs', icon: Newspaper },
+        { id: 'my-cases', label: 'My Cases', icon: Briefcase },
+        { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
+        { id: 'safety-center', label: 'Safety Center', icon: Shield },
+        { id: 'account-settings', label: 'Account & Settings', icon: Settings },
+        { id: 'credits', label: 'Credits', icon: Coins },
+    ];
+
+    const plan = user?.plan || 'Free';
+    const isPremium = plan !== 'Free';
+
+    return (
+        <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+            <div className={styles.profileSection}>
+                <div className={styles.avatar}>
+                    {user?.name?.charAt(0) || 'A'}
+                </div>
+                <div className={styles.userInfo}>
+                    <h3>{user?.name || 'Advocate'}</h3>
+                    <p>ID - {user?.id || '12345'}</p>
+                </div>
+
+                <button className={styles.upgradeBtn} onClick={() => showsidePage('upgrade')}>
+                    Upgrade Membership
+                </button>
+                <div className={styles.upgradeText}>
+                    UPTO 53% OFF ALL MEMBERSHIP PLANS
+                </div>
+            </div>
+
+            <nav className={styles.nav}>
+                {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    const isLocked = item.premium && !isPremium;
+
+                    return (
+                        <button
+                            key={item.id}
+                            className={`${styles.link} ${currentPage === item.id ? styles.active : ''} ${isLocked ? styles.locked : ''}`}
+                            onClick={() => !isLocked && showsidePage(item.id)}
+                        >
+                            <div className={styles.iconWrapper}>
+                                <Icon size={22} />
+                                {isLocked && <Lock size={12} className={styles.lockIcon} />}
+                            </div>
+                            <span>{item.label}</span>
+                            {isLocked && <span className={styles.proTagSmall}>PRO</span>}
+                        </button>
+                    );
+                })}
+            </nav>
+
+            <div className={styles.footer}>
+                <button className={styles.logoutBtn} onClick={() => logout()}>
+                    <LogOut size={20} />
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+    );
+};
+
+export default AdvocateSidebar;
