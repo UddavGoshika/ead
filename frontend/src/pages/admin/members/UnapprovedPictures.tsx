@@ -16,6 +16,7 @@ const members: Member[] = [
         since: "18-06-2025",
         status: "Active",
         image: "/avatar13.jpg",
+        coins: 0,
     },
 ];
 

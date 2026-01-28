@@ -43,7 +43,7 @@ export const adminService = {
 };
 
 export const caseService = {
-    getCases: (userId?: number) =>
+    getCases: (userId?: number | string) =>
         api.get<{ cases: Case[] }>('/cases', { params: { userId } }),
     fileCase: (caseData: any) =>
         api.post<{ message: string; caseId: number }>('/cases', caseData),
