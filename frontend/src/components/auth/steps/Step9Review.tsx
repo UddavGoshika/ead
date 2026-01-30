@@ -50,15 +50,32 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
     };
 
     const stop = () => {
+        if (!drawing) return;
         setDrawing(false);
-        updateFormData({ signatureProvided: true });
+        const canvas = canvasRef.current;
+        if (canvas) {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    updateFormData({
+                        signature: blob,
+                        signatureProvided: true,
+                        signatureDate: new Date().toISOString()
+                    });
+                }
+            }, 'image/png');
+        }
     };
 
     const clearSignature = () => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
-        if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        updateFormData({ signatureProvided: false });
+        if (canvas && ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateFormData({
+                signature: null,
+                signatureProvided: false
+            });
+        }
     };
 
     /* ================= TERMS ================= */
@@ -265,8 +282,15 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
 
                 <input
                     type="date"
-                    value={formData.signatureDate || ''}
-                    onChange={e => updateFormData({ signatureDate: e.target.value })}
+                    placeholder="Date"
+                    value={new Date().toISOString().split('T')[0]}
+                    readOnly
+                    style={{
+                        backgroundColor: 'transparent',
+                        cursor: 'not-allowed',
+
+                        margin: '20px'
+                    }}
                 />
             </div>
 

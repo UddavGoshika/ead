@@ -4,6 +4,8 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ClientRegistration.module.css';
 import { authService } from '../../services/api';
+import { auth } from '../../firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 
 interface ClientRegistrationProps {
     onClose: () => void;
@@ -39,13 +41,22 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         signature: null,
         regDate: new Date().toISOString().split('T')[0],
         emailOtp: '',
-        emailVerified: false
+        emailVerified: false,
+        mobileOtp: '',
+        mobileVerified: false
     });
 
     const [otpSending, setOtpSending] = useState(false);
     const [otpVerifying, setOtpVerifying] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const [otpMessage, setOtpMessage] = useState({ text: '', type: '' });
+
+    // Mobile OTP States
+    const [mobileOtpSending, setMobileOtpSending] = useState(false);
+    const [mobileOtpVerifying, setMobileOtpVerifying] = useState(false);
+    const [mobileCountdown, setMobileCountdown] = useState(0);
+    const [mobileMessage, setMobileMessage] = useState({ text: '', type: '' });
+    const [confirmationResult, setConfirmationResult] = useState<any>(null);
 
     React.useEffect(() => {
         let timer: any;
@@ -54,6 +65,14 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
         return () => clearTimeout(timer);
     }, [countdown]);
+
+    React.useEffect(() => {
+        let timer: any;
+        if (mobileCountdown > 0) {
+            timer = setTimeout(() => setMobileCountdown(mobileCountdown - 1), 1000);
+        }
+        return () => clearTimeout(timer);
+    }, [mobileCountdown]);
 
     const handleSendOtp = async () => {
         if (!formData.email) {
@@ -101,6 +120,80 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
     };
 
+    const setupRecaptcha = () => {
+        if (!(window as any).recaptchaVerifier) {
+            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': () => { },
+                'expired-callback': () => { }
+            });
+        }
+    };
+
+    const handleSendMobileOtp = async () => {
+        if (!formData.mobile) {
+            setMobileMessage({ text: 'Please enter mobile in Step 1 first.', type: 'error' });
+            return;
+        }
+
+        setMobileOtpSending(true);
+        setMobileMessage({ text: '', type: '' });
+        try {
+            setupRecaptcha();
+            const appVerifier = (window as any).recaptchaVerifier;
+
+            // Sanitization and E.164 Formatting
+            let rawMobile = formData.mobile || "";
+            let cleaned = rawMobile.replace(/[^\d+]/g, "");
+
+            if (cleaned.length === 10 && !cleaned.startsWith('+')) {
+                cleaned = '+91' + cleaned;
+            }
+
+            if (!cleaned.startsWith('+')) {
+                cleaned = '+' + cleaned;
+            }
+
+            const confirmation = await signInWithPhoneNumber(auth, cleaned, appVerifier);
+            setConfirmationResult(confirmation);
+            setMobileMessage({ text: 'OTP sent successfully via SMS.', type: 'success' });
+            setMobileCountdown(60);
+        } catch (err: any) {
+            console.error('Firebase Auth Error:', err);
+            setMobileMessage({ text: 'Error: ' + (err.message || 'Check configuration'), type: 'error' });
+            if ((window as any).recaptchaVerifier) {
+                (window as any).recaptchaVerifier.clear();
+                (window as any).recaptchaVerifier = null;
+            }
+        } finally {
+            setMobileOtpSending(false);
+        }
+    };
+
+    const handleVerifyMobileOtp = async () => {
+        if (!formData.mobileOtp || formData.mobileOtp.length !== 6) {
+            setMobileMessage({ text: 'Enter 6-digit OTP.', type: 'error' });
+            return;
+        }
+        if (!confirmationResult) {
+            setMobileMessage({ text: 'Please send OTP first.', type: 'error' });
+            return;
+        }
+
+        setMobileOtpVerifying(true);
+        setMobileMessage({ text: '', type: '' });
+        try {
+            await confirmationResult.confirm(formData.mobileOtp);
+            setMobileMessage({ text: 'Mobile verified successfully!', type: 'success' });
+            updateFormData('mobileVerified', true);
+        } catch (err: any) {
+            console.error('Mobile verification error:', err);
+            setMobileMessage({ text: 'Invalid Mobile OTP.', type: 'error' });
+        } finally {
+            setMobileOtpVerifying(false);
+        }
+    };
+
 
     const [currentAddress, setCurrentAddress] = useState({
         country: '',
@@ -137,10 +230,10 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             submissionData.append('email', formData.email);
             submissionData.append('password', formData.password);
             submissionData.append('documentType', formData.documentType);
-            submissionData.append('legalCategory', formData.legalCategory);
+            submissionData.append('category', formData.category);
             submissionData.append('specialization', formData.specialization);
             submissionData.append('subDepartment', formData.subDepartment);
-            submissionData.append('mode', formData.consultationMode);
+            submissionData.append('mode', formData.mode);
             submissionData.append('advocateType', formData.advocateType);
             submissionData.append('languages', formData.languages);
             submissionData.append('issueDescription', formData.issueDescription);
@@ -188,43 +281,58 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
                                 <label>First Name *</label>
-                                <input value={formData.firstName} onChange={(e) => updateFormData('firstName', e.target.value)} />
+                                <input value={formData.firstName || ''} onChange={(e) => updateFormData('firstName', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Last Name *</label>
-                                <input value={formData.lastName} onChange={(e) => updateFormData('lastName', e.target.value)} />
+                                <input value={formData.lastName || ''} onChange={(e) => updateFormData('lastName', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Gender *</label>
-                                <select value={formData.gender} onChange={(e) => updateFormData('gender', e.target.value)}>
-                                    <option value="">Select</option>
+                                <select value={formData.gender || ''} onChange={(e) => updateFormData('gender', e.target.value)}>
+                                    <option value="">Select Gender</option>
                                     <option>Male</option>
                                     <option>Female</option>
+                                    <option>Other</option>
                                 </select>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Date of Birth *</label>
-                                <input value={formData.dob} onChange={(e) => updateFormData('dob', e.target.value)} />
+                                <input type="date" value={formData.dob || ''} onChange={(e) => updateFormData('dob', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Mobile *</label>
-                                <input value={formData.mobile} onChange={(e) => updateFormData('mobile', e.target.value)} />
+                                <input value={formData.mobile || ''} onChange={(e) => updateFormData('mobile', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email *</label>
-                                <input value={formData.email} onChange={(e) => updateFormData('email', e.target.value)} />
+                                <input value={formData.email || ''} onChange={(e) => updateFormData('email', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Password *</label>
-                                <input type="password" value={formData.password} onChange={(e) => updateFormData('password', e.target.value)} />
+                                <input type="password" value={formData.password || ''} onChange={(e) => updateFormData('password', e.target.value)} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Document Type *</label>
-                                <select>
+                                <select
+                                    value={formData.documentType || ''}
+                                    onChange={(e) => updateFormData('documentType', e.target.value)}
+                                >
+                                    <option value="">Select Document</option>
                                     <option>Aadhar</option>
                                     <option>PAN</option>
                                     <option>Voter</option>
                                 </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Upload ID Proof *</label>
+                                <input
+                                    type="file"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) updateFormData('document', file);
+                                    }}
+                                />
                             </div>
                         </div>
 
@@ -282,10 +390,12 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             case 2:
                 return (
                     <div className={styles.stepContent}>
+                        <div id="recaptcha-container"></div>
                         <p className={styles.centerText}>
-                            Verify your email to proceed
+                            Verify your credentials to proceed
                         </p>
 
+                        {/* Email Verification */}
                         <div className={styles.formGroup}>
                             <label>Email OTP <span className={styles.required}>*</span>
                                 {formData.email && <span style={{ textTransform: 'none', marginLeft: '10px', color: '#64748b' }}>({formData.email})</span>}
@@ -318,32 +428,17 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             {countdown > 0 && !formData.emailVerified && (
-                                <p className={styles.resendText}>
-                                    Resend available in {countdown}s
-                                </p>
+                                <p className={styles.resendText}>Resend available in {countdown}s</p>
                             )}
-                            {countdown === 0 && !formData.emailVerified && formData.email && (
-                                <button
-                                    className={styles.resendLink}
-                                    onClick={handleSendOtp}
-                                    disabled={otpSending}
-                                >
-                                    <RefreshCcw size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-                                    Resend OTP
-                                </button>
-                            )}
-
                             {otpMessage.text && (
-                                <p className={styles.statusMessage} style={{
-                                    color: otpMessage.type === 'success' ? '#10b981' : '#ff4d4d'
-                                }}>
+                                <p className={styles.statusMessage} style={{ color: otpMessage.type === 'success' ? '#10b981' : '#ff4d4d' }}>
                                     {otpMessage.text}
                                 </p>
                             )}
                         </div>
 
-                        {/* mobile otp */}
-                        <div className={styles.formGroup}>
+                        {/* Mobile Verification (Firebase) */}
+                        <div className={styles.formGroup} style={{ marginTop: '20px' }}>
                             <label>Mobile OTP <span className={styles.required}>*</span>
                                 {formData.mobile && <span style={{ textTransform: 'none', marginLeft: '10px', color: '#64748b' }}>({formData.mobile})</span>}
                             </label>
@@ -361,24 +456,27 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 />
                                 {!formData.mobileVerified ? (
                                     <button
-                                        type="button"
-                                        className={styles.resendLink}
-                                        onClick={handleSendOtp}
-                                        disabled={otpSending}
+                                        className={styles.verifyBtn}
+                                        onClick={formData.mobileOtp?.length === 6 ? handleVerifyMobileOtp : handleSendMobileOtp}
+                                        disabled={mobileOtpSending || mobileOtpVerifying || (mobileCountdown > 0 && !formData.mobileOtp)}
                                     >
-                                        <RefreshCcw size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
-                                        Resend OTP
+                                        {mobileOtpSending ? 'Sending...' : mobileOtpVerifying ? 'Verifying...' : (formData.mobileOtp?.length === 6 ? 'Verify' : 'Send SMS')}
                                     </button>
                                 ) : (
-                                    <>
+                                    <div className={styles.verifiedBadge}>
                                         <CheckCircle size={20} /> Verified
-                                    </>
+                                    </div>
                                 )}
                             </div>
+                            {mobileCountdown > 0 && !formData.mobileVerified && (
+                                <p className={styles.resendText}>Resend available in {mobileCountdown}s</p>
+                            )}
+                            {mobileMessage.text && (
+                                <p className={styles.statusMessage} style={{ color: mobileMessage.type === 'success' ? '#10b981' : '#ff4d4d' }}>
+                                    {mobileMessage.text}
+                                </p>
+                            )}
                         </div>
-
-
-
                     </div>
                 );
 
@@ -527,46 +625,77 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
                                 <label>Category *</label>
-                                <select>
+                                <select
+                                    value={formData.category || ''}
+                                    onChange={(e) => updateFormData('category', e.target.value)}
+                                >
+                                    <option value="">Select Category</option>
                                     <option>Criminal</option>
                                     <option>Civil</option>
+                                    <option>Family</option>
+                                    <option>Corporate</option>
                                 </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Specialization *</label>
-                                <input />
+                                <input
+                                    value={formData.specialization || ''}
+                                    onChange={(e) => updateFormData('specialization', e.target.value)}
+                                    placeholder="e.g. Divorce, Property"
+                                />
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Sub Department *</label>
-                                <input />
+                                <input
+                                    value={formData.subDepartment || ''}
+                                    onChange={(e) => updateFormData('subDepartment', e.target.value)}
+                                />
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Consultation Mode *</label>
-                                <select>
+                                <select
+                                    value={formData.mode || ''}
+                                    onChange={(e) => updateFormData('mode', e.target.value)}
+                                >
+                                    <option value="">Select Mode</option>
                                     <option>Online</option>
                                     <option>Offline</option>
+                                    <option>Both</option>
                                 </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Advocate Type *</label>
-                                <select>
+                                <select
+                                    value={formData.advocateType || ''}
+                                    onChange={(e) => updateFormData('advocateType', e.target.value)}
+                                >
+                                    <option value="">Select Type</option>
                                     <option>Senior</option>
                                     <option>Junior</option>
+                                    <option>Any</option>
                                 </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Languages *</label>
-                                <input />
+                                <input
+                                    value={formData.languages || ''}
+                                    onChange={(e) => updateFormData('languages', e.target.value)}
+                                    placeholder="e.g. English, Hindi"
+                                />
                             </div>
 
                             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                                 <label>Brief Legal Issue *</label>
-                                <textarea />
+                                <textarea
+                                    value={formData.issueDescription || ''}
+                                    onChange={(e) => updateFormData('issueDescription', e.target.value)}
+                                    placeholder="Describe your legal issue..."
+                                />
                             </div>
                         </div>
                     </div>
@@ -595,7 +724,11 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             <label className={styles.checkboxRow}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={formData.declaration1 || false}
+                                    onChange={(e) => updateFormData('declaration1', e.target.checked)}
+                                />
                                 I agree to the above declaration
                             </label>
                         </div>
@@ -615,7 +748,11 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             <label className={styles.checkboxRow}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={formData.declaration2 || false}
+                                    onChange={(e) => updateFormData('declaration2', e.target.checked)}
+                                />
                                 I agree to comply with BCI norms
                             </label>
                         </div>
@@ -632,7 +769,11 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             <label className={styles.checkboxRow}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={formData.declaration3 || false}
+                                    onChange={(e) => updateFormData('declaration3', e.target.checked)}
+                                />
                                 I consent to share my profile
                             </label>
                         </div>
@@ -687,7 +828,15 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                                 };
 
                                                 const stopDrawing = () => {
-                                                    isDrawing = false;
+                                                    if (isDrawing) {
+                                                        isDrawing = false;
+                                                        canvas.toBlob((blob) => {
+                                                            if (blob) {
+                                                                updateFormData('signature', blob);
+                                                                updateFormData('signatureData', canvas.toDataURL());
+                                                            }
+                                                        }, 'image/png');
+                                                    }
                                                 };
 
                                                 canvas.addEventListener('mousedown', startDrawing);
@@ -847,9 +996,19 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                     <button
                         className={styles.nextBtn}
                         onClick={() => {
-                            if (currentStep === 2 && !formData.emailVerified) {
-                                alert('Please verify your email via OTP before proceeding.');
-                                return;
+                            if (currentStep === 2) {
+                                if (!formData.emailVerified && !formData.mobileVerified) {
+                                    alert('Please verify both email and mobile before proceeding.');
+                                    return;
+                                }
+                                if (!formData.emailVerified) {
+                                    alert('Please verify your email via OTP before proceeding.');
+                                    return;
+                                }
+                                if (!formData.mobileVerified) {
+                                    alert('Please verify your mobile via SMS OTP before proceeding.');
+                                    return;
+                                }
                             }
                             currentStep < steps.length ? setCurrentStep((prev: number) => prev + 1) : handleSubmit()
                         }}

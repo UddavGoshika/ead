@@ -27,13 +27,17 @@ import { Menu, ArrowLeft, Bell } from 'lucide-react';
 import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
+import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 
 const ClientDashboard: React.FC = () => {
     const { user } = useAuth();
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || ['Silver', 'Gold', 'Platinum', 'Pro', 'Ultra'].some(p => plan.includes(p));
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
+    const isUltra = plan.toLowerCase().includes('ultra');
 
-    const [currentPage, setCurrentPage] = useState('featured-profiles');
+    // Set initial page based on premium status
+    const [currentPage, setCurrentPage] = useState(isPremium ? 'featured-profiles' : 'normalfccards');
     const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -120,6 +124,8 @@ const ClientDashboard: React.FC = () => {
 
             case 'activity':
                 return <Activity />;
+            case 'my-subscription':
+                return <PlanOverview />;
             case 'messenger':
                 return <Messenger
                     view="list"
@@ -187,20 +193,34 @@ const ClientDashboard: React.FC = () => {
                         <button className={styles.hamburger} onClick={toggleSidebar}>
                             <Menu size={24} />
                         </button>
-                        {currentPage !== 'featured-profiles' && (
+                        {currentPage !== 'featured-profiles' && currentPage !== 'normalfccards' && (
                             <button className={styles.backBtn} onClick={backtohome}>
                                 <ArrowLeft size={22} />
                             </button>
                         )}
                         <h1 className={styles.pageTitle}>
                             {getPageTitle()}
-                            {currentPage === 'featured-profiles' && <span>some one is posted their blogs</span>}
                         </h1>
                     </div>
 
-                    {currentPage === 'my-cases' && (
-                        <div className={styles.topBarRight}>
-                            {/* Top Action Bar */}
+                    {(currentPage === 'featured-profiles' || currentPage === 'normalfccards') && (
+                        <div className={styles.newsTicker}>
+                            <span className={styles.tickerText}>✨ LATEST NEWS: SOMEONE JUST POSTED A NEW BLOG</span>
+                        </div>
+                    )}
+
+                    <div className={styles.topBarRight}>
+                        <div className={styles.badgeStack}>
+                            {isPremium ? (
+                                <span className={`${styles.planBadge} ${isUltra ? styles.ultraBadge : isPro ? styles.proBadge : styles.liteBadge}`}>
+                                    {plan}
+                                </span>
+                            ) : (
+                                <span className={`${styles.planBadge} ${styles.freeBadge}`}>Free Plan</span>
+                            )}
+                        </div>
+
+                        {currentPage === 'my-cases' && (
                             <div className={styles.caseActions}>
                                 <button className={styles.topBtn}>
                                     <FileText size={18} />
@@ -215,12 +235,12 @@ const ClientDashboard: React.FC = () => {
                                     New Case
                                 </button>
                             </div>
+                        )}
 
-                            <button className={styles.notificationBtn}>
-                                <Bell size={22} />
-                            </button>
-                        </div>
-                    )}
+                        <button className={styles.notificationBtn}>
+                            <Bell size={22} />
+                        </button>
+                    </div>
 
                 </header>
 

@@ -18,7 +18,8 @@ const advUpload = upload.fields([
     { name: 'adr-profilePic', maxCount: 1 },
     { name: 'adr-degreeCert', maxCount: 1 },
     { name: 'adr-idProof', maxCount: 1 },
-    { name: 'adr-practiceLicense', maxCount: 1 }
+    { name: 'adr-practiceLicense', maxCount: 1 },
+    { name: 'signature', maxCount: 1 }
 ]);
 
 // Helper to generate unique ID
@@ -26,8 +27,8 @@ async function generateAdvocateId() {
     let id;
     let exists = true;
     while (exists) {
-        const randomNum = Math.floor(100000 + Math.random() * 900000); // 6 digits
-        id = `ADV-${randomNum}`;
+        const randomNum = Math.floor(10000 + Math.random() * 90000); // 5 digits
+        id = `TP-EAD-ADV${randomNum}`;
         const existing = await Advocate.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
@@ -149,7 +150,8 @@ router.post('/register', (req, res, next) => {
             idProof: {
                 docType: req.body.idProofType,
                 docPath: files['adr-idProof'] ? files['adr-idProof'][0].path : null
-            }
+            },
+            signaturePath: files['signature'] ? files['signature'][0].path : null
         };
 
         const newAdvocate = await Advocate.create(advocateData);
@@ -170,17 +172,43 @@ router.post('/register', (req, res, next) => {
 
 router.get('/', async (req, res) => {
     try {
-        const { search } = req.query;
+        const { search, specialization, court, state, city, experience } = req.query;
         let query = { verified: true };
 
+        const conditions = [];
+
         if (search) {
-            query.$or = [
-                { firstName: { $regex: search, $options: 'i' } },
-                { lastName: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { 'practice.specialization': { $regex: search, $options: 'i' } }
-            ];
+            conditions.push({
+                $or: [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { 'practice.specialization': { $regex: search, $options: 'i' } },
+                    { unique_id: { $regex: search, $options: 'i' } }
+                ]
+            });
+        }
+
+        if (specialization && specialization !== 'Department') {
+            conditions.push({ 'practice.specialization': { $regex: specialization, $options: 'i' } });
+        }
+        if (court && court !== 'Select Court') {
+            conditions.push({ 'practice.court': { $regex: court, $options: 'i' } });
+        }
+        if (state) {
+            conditions.push({ 'location.state': { $regex: state, $options: 'i' } });
+        }
+        if (city) {
+            conditions.push({ 'location.city': { $regex: city, $options: 'i' } });
+        }
+        if (experience && experience !== 'Experience') {
+            // Basic experience filtering - usually range like "5-10 Years"
+            conditions.push({ 'practice.experience': { $regex: experience, $options: 'i' } });
+        }
+
+        if (conditions.length > 0) {
+            query.$and = conditions;
         }
 
         const dbAdvocates = await Advocate.find(query);

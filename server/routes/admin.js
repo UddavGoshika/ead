@@ -8,6 +8,7 @@ const Package = require('../models/Package');
 const Attribute = require('../models/Attribute');
 const Blog = require('../models/Blog');
 const AuditLog = require('../models/AuditLog');
+const Transaction = require('../models/Transaction'); // Added Transaction model
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -86,8 +87,34 @@ router.get('/packages', async (req, res) => {
 // CREATE/UPDATE PACKAGE
 router.post('/packages', async (req, res) => {
     try {
-        const { memberType, name, tiers } = req.body;
-        const pkg = await Package.create({ memberType, name, tiers });
+        const { id, memberType, name, category, description, icon, gradient, tiers, featured, sortOrder } = req.body;
+        const packageName = name || category;
+
+        let pkg;
+        if (id) {
+            pkg = await Package.findByIdAndUpdate(id, {
+                memberType,
+                name: packageName,
+                description,
+                icon,
+                gradient,
+                tiers,
+                featured,
+                sortOrder
+            }, { new: true });
+        } else {
+            pkg = await Package.create({
+                memberType,
+                name: packageName,
+                description,
+                icon,
+                gradient,
+                tiers,
+                featured,
+                sortOrder
+            });
+        }
+
         res.json({ success: true, pkg });
     } catch (err) {
         console.error(`[ADMIN] Error saving package: ${err.message}`);
@@ -182,7 +209,9 @@ router.get('/members', async (req, res) => {
                 phone: profile ? (profile.mobile || 'N/A') : 'N/A',
                 gender: profile ? profile.gender : 'N/A',
                 verified: profile ? profile.verified : false,
-                location: location
+                location: location,
+                avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
+                unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`
             };
         }));
 
@@ -210,20 +239,62 @@ router.patch('/members/:id/status', async (req, res) => {
 // VERIFY ADVOCATE
 router.patch('/members/:id/verify', async (req, res) => {
     try {
-        const { verified } = req.body;
+        const { verified, remarks } = req.body;
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (!verified && remarks) {
+            // Rejection logic
+            user.status = 'Pending';
+            await user.save();
+
+            let profileName = 'User';
+            if (user.role.toLowerCase() === 'advocate') {
+                const profile = await Advocate.findOneAndUpdate({ userId: user._id }, { verified: false }, { new: true });
+                if (profile) profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
+            } else if (user.role.toLowerCase() === 'client') {
+                const profile = await Client.findOne({ userId: user._id });
+                if (profile) profileName = `${profile.firstName} ${profile.lastName}`;
+            }
+
+            const emailSubject = 'Action Required: Your Verification Request';
+            const emailText = `Hello ${profileName},\n\nYour profile verification was not successful for the following reason:\n\n${remarks}\n\nPlease click the link below to verify/update your details:\n${req.protocol}://${req.get('host')}/dashboard\n\nThank you,\nE-Advocate Team`;
+
+            await sendEmail(user.email, emailSubject, emailText);
+
+            return res.json({ success: true, message: 'Member rejected and informed via email' });
+        }
 
         if (user.role.toLowerCase() === 'advocate') {
             const advocate = await Advocate.findOneAndUpdate({ userId: user._id }, { verified }, { new: true });
             if (!advocate) return res.status(404).json({ error: 'Advocate profile not found' });
 
-            // Notification
-            createNotification('profileUpdate', `Your advocate profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
+            user.status = verified ? 'Active' : 'Pending';
+            await user.save();
 
+            if (verified) {
+                const emailSubject = 'Congratulations! Your Advocate Profile is Verified';
+                const emailText = `Hello ${advocate.name || advocate.firstName},\n\nWe are pleased to inform you that your advocate profile has been successfully verified. You now have full access to the E-Advocate platform.\n\nYou can login using your registered email and password at:\n${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+                await sendEmail(user.email, emailSubject, emailText);
+            }
+
+            createNotification('profileUpdate', `Your advocate profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
             res.json({ success: true, message: `Advocate ${verified ? 'verified' : 'unverified'} successfully` });
+        } else if (user.role.toLowerCase() === 'client') {
+            user.status = verified ? 'Active' : 'Pending';
+            await user.save();
+
+            const profile = await Client.findOne({ userId: user._id });
+            if (verified && profile) {
+                const emailSubject = 'Important: Your Client Account is Now Active';
+                const emailText = `Hello ${profile.firstName} ${profile.lastName},\n\nYour account has been verified and activated by our team. You can now post legal requirements and connect with advocates.\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+                await sendEmail(user.email, emailSubject, emailText);
+            }
+
+            createNotification('profileUpdate', `Your client profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
+            res.json({ success: true, message: `Client ${verified ? 'verified' : 'unverified'} successfully` });
         } else {
-            res.status(400).json({ error: 'Only advocates can be verified' });
+            res.status(400).json({ error: 'Invalid user role for verification' });
         }
     } catch (err) {
         console.error('Verify error:', err);
@@ -312,16 +383,18 @@ router.get('/members/:id', async (req, res) => {
         const documents = [];
         if (profile) {
             if (user.role.toLowerCase() === 'advocate') {
+                if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
                 if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: profile.education.certificatePath });
                 if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: profile.practice.licensePath });
                 if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: profile.idProof.docPath });
+                if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             } else {
                 if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: profile.documentPath });
                 if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             }
         }
 
-        res.json({ success: true, member: { ...user, ...profile, documents, id: user._id } });
+        res.json({ success: true, member: { user, profile, documents } });
     } catch (err) {
         console.error('Member detail error:', err);
         res.status(500).json({ success: false, error: err.message });
@@ -448,6 +521,102 @@ router.post('/onboard-staff', async (req, res) => {
 
     } catch (err) {
         console.error('Onboarding Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= FINANCIAL MANAGEMENT =================
+router.get('/transactions', async (req, res) => {
+    try {
+        const transactions = await Transaction.find().sort({ createdAt: -1 });
+
+        const enrichedTransactions = await Promise.all(transactions.map(async (t) => {
+            const user = await User.findById(t.userId);
+            let profile = null;
+            if (user) {
+                if (user.role.toLowerCase() === 'advocate') {
+                    profile = await Advocate.findOne({ userId: user._id });
+                } else if (user.role.toLowerCase() === 'client') {
+                    profile = await Client.findOne({ userId: user._id });
+                }
+            }
+
+            return {
+                id: t._id,
+                memberName: profile ? (profile.name || `${profile.firstName} ${profile.lastName}`) : 'Unknown',
+                memberId: profile ? profile.unique_id : (user ? user._id : 'N/A'),
+                email: user ? user.email : 'N/A',
+                mobile: profile ? (profile.mobile || 'N/A') : 'N/A',
+                role: user ? user.role : 'N/A',
+                packageName: t.packageId || 'Custom',
+                subPackage: (t.metadata && t.metadata.tier) || 'Standard',
+                paymentMethod: t.gateway || 'N/A',
+                amount: `₹${t.amount.toLocaleString()}`,
+                discount: t.metadata && t.metadata.discount ? `₹${t.metadata.discount}` : '₹0.00',
+                tax: t.metadata && t.metadata.tax ? `₹${t.metadata.tax}` : '₹0.00',
+                netAmount: `₹${t.amount.toLocaleString()}`,
+                status: t.status.charAt(0).toUpperCase() + t.status.slice(1),
+                transactionId: t.paymentId || t.orderId,
+                transactionDate: t.createdAt.toLocaleString()
+            };
+        }));
+
+        res.json({ success: true, transactions: enrichedTransactions });
+    } catch (err) {
+        console.error('Transaction fetch error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// IMPERSONATE MEMBER
+router.post('/impersonate/:id', async (req, res) => {
+    try {
+        // Simple security check (should ideally use middleware)
+        let token = req.headers.authorization;
+        if (!token) return res.status(401).json({ error: 'No authorization token provided' });
+
+        if (token.startsWith('Bearer ')) token = token.slice(7);
+
+        let isAdmin = false;
+
+        // 1. Handle Mock Admin Token
+        if (token.includes('admin') || token.includes('65a001')) {
+            isAdmin = true;
+        }
+        // 2. Handle Real User Token (Database Check)
+        else if (token.startsWith('user-token-')) {
+            const userId = token.split('user-token-')[1];
+            if (require('mongoose').Types.ObjectId.isValid(userId)) {
+                const adminRecord = await User.findById(userId);
+                if (adminRecord && (adminRecord.role.toLowerCase() === 'admin' || adminRecord.role.toLowerCase() === 'superadmin')) {
+                    isAdmin = true;
+                }
+            }
+        }
+
+        if (!isAdmin) {
+            return res.status(403).json({ success: false, error: 'Only administrators can impersonate members' });
+        }
+
+        const targetUser = await User.findById(req.params.id);
+        if (!targetUser) return res.status(404).json({ success: false, error: 'User not found' });
+
+        // In this system, tokens are 'user-token-' + ID
+        const impersonationToken = 'user-token-' + targetUser._id;
+
+        res.json({
+            success: true,
+            token: impersonationToken,
+            user: {
+                id: targetUser._id,
+                email: targetUser.email,
+                role: targetUser.role,
+                name: targetUser.email, // Fallback name
+                status: targetUser.status
+            }
+        });
+    } catch (err) {
+        console.error('Impersonation error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });

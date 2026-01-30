@@ -6,9 +6,9 @@ const SettingsSchema = new mongoose.Schema({
     hero_title: { type: String, default: 'e-Advocate Services' },
     hero_subtitle: { type: String, default: 'A secure digital bridge between clients and professionals. Discover trusted experts, connect instantly, and manage your legal journey with confidence through our premium platform.' },
     marquee_text: { type: String, default: '• Verified Advocates • 24/7 Legal Consultation • Secure Platform' },
-    logo_url_left: { type: String, default: 'src/assets/eadvocate.webp' },
-    logo_url_right: { type: String, default: 'src/assets/civic.webp' },
-    logo_url_hero: { type: String, default: 'src/assets/image.png' },
+    logo_url_left: { type: String, default: '/assets/eadvocate.webp' },
+    logo_url_right: { type: String, default: '/assets/civic.webp' },
+    logo_url_hero: { type: String, default: '/assets/image.png' },
     header_menu: [
         { label: { type: String }, link: { type: String } }
     ],

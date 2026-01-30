@@ -36,29 +36,87 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
     const { user } = useAuth();
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({
+        search: '',
+        specialization: 'Department',
+        court: 'Select Court',
+        location: 'Location',
+        experience: 'Experience'
+    });
+
+    const fetchAdvocates = async () => {
+        setLoading(true);
+        try {
+            const params: any = {};
+            if (filters.search) params.search = filters.search;
+            if (filters.specialization !== 'Department') params.specialization = filters.specialization;
+            if (filters.court !== 'Select Court') params.court = filters.court;
+            if (filters.location !== 'Location') params.city = filters.location;
+            if (filters.experience !== 'Experience') params.experience = filters.experience;
+
+            const response = await advocateService.getAdvocates(params);
+            setAdvocates(response.data.advocates || []);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to load advocates');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchAdvocates = async () => {
-            try {
-                const response = await advocateService.getAdvocates();
-                setAdvocates(response.data.advocates || []);
-            } catch (err) {
-                console.error(err);
-                showToast('Failed to load advocates');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchAdvocates();
     }, []);
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        fetchAdvocates();
+    };
 
     return (
         <div className={styles.page}>
             <div className={styles.headerSection}>
                 <button className={styles.backLink} onClick={() => showsidePage('featured-profiles')}>
                     <ArrowLeft size={18} />
-                    <span>Switch to Featured Profiles (Gold Luxury)</span>
+                    <span>Switch to Featured Profiles</span>
                 </button>
+            </div>
+
+            <div className={styles.searchSection}>
+                <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
+                    <input
+                        type="text"
+                        name="search"
+                        value={filters.search}
+                        onChange={handleFilterChange}
+                        placeholder="Search by ID or Name..."
+                        className={styles.dashboardSearchInput}
+                    />
+                    <button type="submit" className={styles.searchBtnInside}>Search</button>
+                </form>
+
+                <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
+                    <option>Department</option>
+                    <option>Criminal Law</option>
+                    <option>Civil Law</option>
+                    <option>Family Law</option>
+                </select>
+                <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
+                    <option>Select Court</option>
+                    <option>Supreme Court</option>
+                    <option>High Court</option>
+                </select>
+                <select name="location" value={filters.location} onChange={handleFilterChange} className={styles.filterSelect}>
+                    <option>Location</option>
+                    <option>Delhi</option>
+                    <option>Mumbai</option>
+                </select>
+
+                <button className={styles.submitBtnDashboard} onClick={fetchAdvocates}>Submit</button>
             </div>
 
             {loading ? (
@@ -67,41 +125,46 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {advocates.map(adv => (
-                        <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
-                            <AdvocateCard
-                                advocate={adv}
-                                variant="normal"
-                                isPremium={user?.isPremium}
-                                onAction={async (action: string, data?: string) => {
-                                    if (user) {
-                                        const targetId = String(adv.id);
-                                        const userId = String(user.id);
-                                        const targetRole = 'advocate';
+                    {(() => {
+                        const plan = user?.plan || 'Free';
+                        const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
-                                        if (action === 'interest_initiated' || action === 'interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                            showToast(`Interest sent to ${adv.name}`);
-                                        } else if (action === 'super_interest_sent' || action === 'super-interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                            showToast(`Super Interest sent to ${adv.name}!`);
-                                        } else if (action === 'shortlisted') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                            showToast(`${adv.name} added to shortlist`);
-                                        } else if (action === 'openFullChatPage') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                                            onSelectForChat(adv);
-                                        } else if (action === 'message_sent' && data) {
-                                            await interactionService.sendMessage(userId, targetId, data);
-                                            showToast(`Message sent to ${adv.name}`);
-                                        } else {
-                                            showToast(`Advocate ${adv.name}: ${action}`);
+                        return advocates.map(adv => (
+                            <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
+                                <AdvocateCard
+                                    advocate={adv}
+                                    variant="normal"
+                                    isPremium={isPremium}
+                                    onAction={async (action: string, data?: string) => {
+                                        if (user) {
+                                            const targetId = String(adv.id);
+                                            const userId = String(user.id);
+                                            const targetRole = 'advocate';
+
+                                            if (action === 'interest_initiated' || action === 'interest') {
+                                                await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                showToast(`Interest sent to ${adv.name}`);
+                                            } else if (action === 'super_interest_sent' || action === 'super-interest') {
+                                                await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                showToast(`Super Interest sent to ${adv.name}!`);
+                                            } else if (action === 'shortlisted') {
+                                                await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                showToast(`${adv.name} added to shortlist`);
+                                            } else if (action === 'openFullChatPage') {
+                                                await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                onSelectForChat(adv);
+                                            } else if (action === 'message_sent' && data) {
+                                                await interactionService.sendMessage(userId, targetId, data);
+                                                showToast(`Message sent to ${adv.name}`);
+                                            } else {
+                                                showToast(`Advocate ${adv.name}: ${action}`);
+                                            }
                                         }
-                                    }
-                                }}
-                            />
-                        </div>
-                    ))}
+                                    }}
+                                />
+                            </div>
+                        ));
+                    })()}
                 </div>
             )}
         </div>

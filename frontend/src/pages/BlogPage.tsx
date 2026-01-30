@@ -3,74 +3,55 @@ import styles from './BlogPage.module.css';
 import BlogCard from '../components/blog/BlogCard';
 import { Loader2 } from 'lucide-react';
 
-const INITIAL_POSTS = [
-    {
-        id: 1,
-        title: "Upload Documents",
-        description: "Before you can begin filing cases or verifying your identity, it is crucial to upload the necessary documents to the eFiling portal. This includes your Bar Registration Certificate, a valid Photo ID proof, and your current Address Proof. The system requires these files to be in specific formats such as PDF or JPEG to ensure smooth processing.",
-        author: "e-Advocate Services",
-        authorInitials: "e",
-        module: "Documentation Module",
-        date: "March 2025",
-        category: "Case Study",
-        image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-        id: 2,
-        title: "Digital Courts: The Future of Law",
-        description: "The digital transformation of the Indian judiciary is moving rapidly. With the implementation of Phase 3 of the e-Courts project, virtual hearings and online case management are becoming the norm. This article explores the benefits and challenges of this transition for practitioners.",
-        author: "Justice Tech Team",
-        authorInitials: "JT",
-        module: "Judiciary Tech",
-        date: "Feb 2025",
-        category: "Technology",
-        image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-        id: 3,
-        title: "Winning Complex Property Disputes",
-        description: "Navigating real estate law in India requires a deep understanding of RERA and the Transfer of Property Act. In this detailed case study, we examine how a decade-long dispute was settled in just six months using online mediation and digitized evidence submission.",
-        author: "Adv. Rahul S.",
-        authorInitials: "RS",
-        module: "Property Law",
-        date: "Jan 2025",
-        category: "Legal Insights",
-        image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=800"
-    }
-];
-
 const BlogPage: React.FC = () => {
-    const [posts, setPosts] = useState(INITIAL_POSTS);
-    const [loading, setLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
+    const [posts, setPosts] = useState<any[]>([]);
+    const [displayPosts, setDisplayPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
     const observer = useRef<IntersectionObserver | null>(null);
 
     const lastPostElementRef = useCallback((node: HTMLDivElement) => {
         if (loading) return;
         if (observer.current) observer.current.disconnect();
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                loadMorePosts();
+            if (entries[0].isIntersecting) {
+                setPage(prevPage => prevPage + 1);
             }
         });
         if (node) observer.current.observe(node);
-    }, [loading, hasMore]);
+    }, [loading]);
 
-    const loadMorePosts = () => {
-        setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            const nextBatch = INITIAL_POSTS.map(p => ({
-                ...p,
-                id: p.id + posts.length // Unique IDs
-            }));
-            setPosts(prev => [...prev, ...nextBatch]);
-            setLoading(false);
+    useEffect(() => {
+        const fetchBlogs = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blogs`);
+                const data = await response.json();
+                if (data.success) {
+                    setPosts(data.blogs);
+                    setDisplayPosts(data.blogs); // Initial load
+                }
+            } catch (err) {
+                console.error('Error fetching blogs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            // Limit to some pages for simulation
-            if (posts.length > 20) setHasMore(false);
-        }, 1500);
-    };
+        fetchBlogs();
+    }, []);
+
+    // Effect for handling the "unlimited" scroll
+    useEffect(() => {
+        if (page > 1 && posts.length > 0) {
+            setLoading(true);
+            setTimeout(() => {
+                // To make it truly "unlimited", we append the posts again 
+                // in a loop if we reach the end.
+                setDisplayPosts(prev => [...prev, ...posts]);
+                setLoading(false);
+            }, 800);
+        }
+    }, [page, posts]);
 
     return (
         <div className={styles.blogPage}>
@@ -86,23 +67,40 @@ const BlogPage: React.FC = () => {
             <section className={styles.content}>
                 <div className={styles.container}>
                     <div className={styles.blogList}>
-                        {posts.map((post, index) => {
-                            if (posts.length === index + 1) {
+                        {displayPosts.map((post, index) => {
+                            const isLast = displayPosts.length === index + 1;
+                            const cardProps = {
+                                id: post._id,
+                                title: post.title,
+                                description: post.content,
+                                author: post.authorName,
+                                authorInitials: post.authorName.charAt(0).toUpperCase(),
+                                module: post.category,
+                                date: new Date(post.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                                category: "Legal Insight",
+                                image: post.image,
+                                likes: post.likes,
+                                saves: post.saves,
+                                views: post.views,
+                                shares: post.shares,
+                                comments: post.comments
+                            };
+
+                            if (isLast) {
                                 return (
-                                    <div ref={lastPostElementRef} key={post.id}>
-                                        <BlogCard post={post} />
+                                    <div ref={lastPostElementRef} key={`${post._id}-${index}`}>
+                                        <BlogCard post={cardProps} />
                                     </div>
                                 );
-                            } else {
-                                return <BlogCard key={post.id} post={post} />;
                             }
+                            return <BlogCard key={`${post._id}-${index}`} post={cardProps} />;
                         })}
                     </div>
 
                     {loading && (
                         <div className={styles.loader}>
                             <Loader2 className={styles.spinner} size={40} />
-                            <span>Loading more legal insights...</span>
+                            <span>Discovering more legal insights...</span>
                         </div>
                     )}
                 </div>

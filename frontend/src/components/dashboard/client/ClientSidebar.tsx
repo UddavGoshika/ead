@@ -14,12 +14,16 @@ interface Props {
 const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
     const { user, logout } = useAuth();
 
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
     const menuItems = [
         { id: 'Promocodes', label: 'Refer & Earn', icon: User },
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
         { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
-        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star },
+        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
+        ...(isPremium ? [{ id: 'featured-profiles', label: 'Featured Profiles', icon: Star }] : []),
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
         { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
         { id: 'safety-center', label: 'Safety Center', icon: Shield },

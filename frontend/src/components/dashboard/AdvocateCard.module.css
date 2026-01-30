@@ -66,6 +66,11 @@
     color: rgba(255, 255, 255, 0.1);
 }
 
+/* Blur effect for free plan users */
+.blurredImage {
+    filter: blur(12px);
+}
+
 /* Profile Text Overlay (Bottom Left) */
 .profileTextOverlay {
     position: absolute;
@@ -179,6 +184,44 @@
     height: 14px;
     background: rgba(255, 255, 255, 0.2);
     margin: 0 2px;
+}
+
+/* Enhanced Premium Verified Badge */
+.premiumVerified {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.7));
+    animation: badgePulse 2.5s infinite ease-in-out;
+    margin-right: -2px;
+}
+
+.premiumVerified svg {
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes badgePulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.5));
+    }
+
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.8));
+    }
+
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.5));
+    }
 }
 
 /* Interaction / Action Bar (Solid Black Bottom) */

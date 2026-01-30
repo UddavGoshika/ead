@@ -1,0 +1,93 @@
+.ranking-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.ranking-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Sizes */
+.ranking-badge-small {
+    padding: 4px 10px;
+    font-size: 10px;
+}
+
+.ranking-badge-medium {
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+.ranking-badge-large {
+    padding: 8px 18px;
+    font-size: 14px;
+}
+
+/* Colors */
+.ranking-badge-gold {
+    color: #000;
+    border: 2px solid #FFD700;
+}
+
+.ranking-badge-platinum {
+    color: #000;
+    border: 2px solid #E5E4E2;
+}
+
+.ranking-badge-silver {
+    color: #000;
+    border: 2px solid #C0C0C0;
+}
+
+.ranking-badge-blue {
+    color: white;
+    border: 2px solid #3b82f6;
+}
+
+.badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge-text {
+    white-space: nowrap;
+}
+
+/* Animation for gold badge */
+.ranking-badge-gold {
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        filter: brightness(1);
+    }
+
+    50% {
+        filter: brightness(1.2);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ranking-badge-medium {
+        padding: 5px 12px;
+        font-size: 11px;
+    }
+
+    .ranking-badge-large {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+}

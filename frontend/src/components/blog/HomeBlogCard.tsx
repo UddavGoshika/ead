@@ -5,7 +5,7 @@ import styles from './HomeBlogCard.module.css';
 
 interface HomeBlogCardProps {
     post: {
-        id: number;
+        id: string;
         title: string;
         description: string;
         author: string;
@@ -19,6 +19,17 @@ interface HomeBlogCardProps {
 
 const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
     const navigate = useNavigate();
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+    const handleReadClick = async () => {
+        try {
+            // Increment view count in background
+            fetch(`${apiUrl}/api/blogs/${post.id}`, { method: 'GET' });
+        } catch (err) {
+            console.error('Failed to increment view:', err);
+        }
+        navigate('/blogs');
+    };
 
     return (
         <motion.div
@@ -29,8 +40,8 @@ const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
             transition={{ duration: 0.5 }}
         >
             <div className={styles.cardHeader}>
-                <div className={styles.avatarCircle}>
-                    {post.authorInitials}
+                <div className={styles.authorLogo}>
+                    <img src="/assets/eadvocate.webp" alt="e-Advocate Services" />
                 </div>
                 <div className={styles.headerInfo}>
                     <span className={styles.serviceName}>{post.author}</span>
@@ -44,9 +55,15 @@ const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
                 <p className={styles.cardDescription}>{post.description}</p>
             </div>
 
+            {post.image && (
+                <div className={styles.postThumbnail}>
+                    <img src={post.image} alt={post.title} />
+                </div>
+            )}
+
             <div className={styles.cardFooter}>
                 <button className={styles.actionBtn}>{post.category}</button>
-                <button className={styles.readBtn} onClick={() => navigate('/blogs')}>Read Article</button>
+                <button className={styles.readBtn} onClick={handleReadClick}>Read Article</button>
             </div>
         </motion.div>
     );

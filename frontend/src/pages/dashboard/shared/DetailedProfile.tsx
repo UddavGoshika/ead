@@ -30,6 +30,10 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles }) => {
         // Add more based on ProfileSections
     });
     const { user } = useAuth();
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
+    const isUltra = plan.toLowerCase().includes('ultra');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -126,22 +130,81 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles }) => {
 
     const imageUrl = profile.image_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400";
 
+    const maskName = (name: string) => {
+        if (isPremium) return name;
+        if (!name) return "**";
+        return name.substring(0, 2) + "**";
+    };
+
+    const maskId = (id: string) => {
+        if (isPremium) return id;
+        if (!id) return "****";
+        return (id.length > 5 ? id.substring(0, 3) : id.substring(0, 2)) + "****";
+    };
+
     return (
         <div className={styles.container}>
-            <button className={styles.backBtn} onClick={backToProfiles}>
-                <ArrowLeft size={24} />
-            </button>
+            {!isPremium && (
+                <div className={styles.premiumOverlay}>
+                    <div className={styles.premiumLockCard}>
+                        <div className={styles.lockIconWrap}>
+                            <Star size={40} fill="#facc15" color="#facc15" className={styles.pulseIcon} />
+                        </div>
+                        <h2>Premium Profile Details</h2>
+                        <p>Detailed advocate profiles are available exclusively for Premium members.</p>
+                        <p className={styles.benefitText}>✓ View full background & experience</p>
+                        <p className={styles.benefitText}>✓ Direct contact information</p>
+                        <p className={styles.benefitText}>✓ Practice specialized areas</p>
+                        <button className={styles.premiumUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>
+                            Upgrade to Premium
+                        </button>
+                        <button className={styles.goBackBtn} onClick={backToProfiles}>
+                            No Thanks, Go Back
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Top Bar - Matching Dashboard Style */}
+            <header className={styles.topBar}>
+                <div className={styles.topBarLeft}>
+                    <button className={styles.backBtn} onClick={backToProfiles}>
+                        <ArrowLeft size={22} />
+                    </button>
+                    <h1 className={styles.pageTitle}>
+                        Profile Detail
+                    </h1>
+                </div>
+
+                <div className={styles.newsTicker}>
+                    <span className={styles.tickerText}>✨ LATEST NEWS: SOMEONE JUST POSTED A NEW BLOG</span>
+                </div>
+
+                <div className={styles.topBarRight}>
+                    <div className={styles.badgeStack}>
+                        {isPremium ? (
+                            <span className={`${styles.planBadge} ${isUltra ? styles.ultraBadge : isPro ? styles.proBadge : styles.liteBadge}`}>
+                                {plan}
+                            </span>
+                        ) : (
+                            <span className={`${styles.planBadge} ${styles.freeBadge}`}>Free Plan</span>
+                        )}
+                    </div>
+                </div>
+            </header>
 
             {/* Header Section */}
             <div className={styles.header}>
-                <img src={imageUrl} alt={profile.name} className={styles.bannerImage} />
+                <img src={imageUrl} alt={profile.name} className={`${styles.bannerImage} ${!isPremium ? styles.blurredImage : ''}`} />
                 <div className={styles.headerOverlay}>
                     <p className={styles.lastSeen}>Recently Active</p>
-                    <h1 className={styles.profileName}>{profile.name}{profile.age ? `, ${profile.age}` : ''}</h1>
-                    {/* <p className={styles.profileId}>ID - {profile.unique_id}</p> */}
+                    <h1 className={styles.profileName}>
+                        {maskName(profile.name)}
+                        {profile.age ? `, ${profile.age}` : ''}
+                    </h1>
 
                     <p className={styles.profileId}>
-                        ID - <span className={styles.verifiedId}>{profile.unique_id}</span>
+                        ID - <span className={styles.verifiedId}>{maskId(profile.unique_id)}</span>
                     </p>
 
                     <p className={styles.managedBy}>Experience: {profile.experience}</p>

@@ -1,17 +1,32 @@
 import React from 'react';
 import styles from './AboutPage.module.css';
-// import { Shield, Users, MessageSquare, LineChart } from 'lucide-react';
+import {
+    Shield,
+    Users,
+    MessageSquare,
+    Scale,
+    FileText,
+    Target,
+    Zap,
+    Globe,
+    Briefcase,
+    CheckCircle2,
+    Lock,
+    Cpu,
+    Award
+} from 'lucide-react';
 
 const AboutPage: React.FC = () => {
     return (
         <div className={styles.aboutPage}>
             <div className={styles.aboutContainer}>
                 {/* Header */}
-                <div className={styles.aboutHeader}>
-                    <h1>ABOUT E-ADVOCATE</h1>
-                    <p className={styles.tagline}>
+                <div className={styles.headerSection}>
+                    <div className={styles.badge}>ELITE INFRASTRUCTURE</div>
+                    <h1 className={styles.title}>About E-Advocate</h1>
+                    <p className={styles.subtitle}>
                         Revolutionizing Legal Services through Digital Innovation, Connecting Clients with Expert
-                        Advocates Seamlessly
+                        Advocates Seamlessly.
                     </p>
                 </div>
 
@@ -20,13 +35,13 @@ const AboutPage: React.FC = () => {
 
                     {/* Card 1: About E-Advocate Services */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-balance-scale"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <Scale size={28} />
                             </div>
-                            <div className={styles.sectionTitleWrap}>
-                                <h2 className={styles.sectionTitle}>About E-Advocate Services</h2>
-                                <div className={styles.sectionSubtitle}>Digital Legal Platform</div>
+                            <div className={styles.headerText}>
+                                <h2>About E-Advocate Services</h2>
+                                <div className={styles.headerSubtitle}>Digital Legal Platform</div>
                             </div>
                         </div>
 
@@ -56,13 +71,13 @@ const AboutPage: React.FC = () => {
 
                     {/* Card 2: About Browse Profiles */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-user-tie"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <Users size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>Browse Profiles</h2>
-                                <div className={styles.sectionSubtitle}>Find Your Perfect Legal Match</div>
+                                <div className={styles.headerSubtitle}>Find Your Perfect Legal Match</div>
                             </div>
                         </div>
 
@@ -101,15 +116,15 @@ const AboutPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 3: About File a Case */}
+                    {/* Card 3: File a Case */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-file-contract"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <FileText size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>File a Case</h2>
-                                <div className={styles.sectionSubtitle}>Digital Case Submission System</div>
+                                <div className={styles.headerSubtitle}>Digital Case Submission System</div>
                             </div>
                         </div>
 
@@ -270,15 +285,15 @@ const AboutPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 4: About Case Status */}
+                    {/* Card 4: Case Status */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-chart-line"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <Target size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>Case Status & Tracking</h2>
-                                <div className={styles.sectionSubtitle}>Real-Time Monitoring</div>
+                                <div className={styles.headerSubtitle}>Real-Time Monitoring</div>
                             </div>
                         </div>
 
@@ -403,15 +418,15 @@ const AboutPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 5: About Blogs */}
+                    {/* Card 5: Blogs */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-blog"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <MessageSquare size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>Legal Blogs & Resources</h2>
-                                <div className={styles.sectionSubtitle}>Knowledge Sharing Platform</div>
+                                <div className={styles.headerSubtitle}>Knowledge Sharing Platform</div>
                             </div>
                         </div>
 
@@ -447,13 +462,13 @@ const AboutPage: React.FC = () => {
 
                     {/* Card 6: Mission & Vision */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-bullseye"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <Zap size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>Mission & Vision</h2>
-                                <div className={styles.sectionSubtitle}>Driving Legal Innovation</div>
+                                <div className={styles.headerSubtitle}>Driving Legal Innovation</div>
                             </div>
                         </div>
 
@@ -490,13 +505,13 @@ const AboutPage: React.FC = () => {
 
                     {/* Card 7: Approvals & Partnerships */}
                     <div className={styles.fullWidthCard}>
-                        <div className={styles.sectionHeader}>
-                            <div className={styles.sectionIcon}>
-                                <i className="fas fa-handshake"></i>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <Award size={28} />
                             </div>
-                            <div>
+                            <div className={styles.headerText}>
                                 <h2>Approvals & Partnerships</h2>
-                                <div className={styles.sectionSubtitle}>Trusted Platform</div>
+                                <div className={styles.headerSubtitle}>Trusted Platform</div>
                             </div>
                         </div>
 
@@ -514,7 +529,7 @@ const AboutPage: React.FC = () => {
                                     <details className={styles.accordionCard}>
                                         <summary className={styles.accordionHeader}>
                                             <div className={styles.iconWrapper}>
-                                                <i className="fas fa-gavel"></i>
+                                                <Briefcase size={20} />
                                             </div>
                                             <h3> Approved By</h3>
                                             <span className={styles.arrow}>▼</span>
@@ -542,7 +557,7 @@ const AboutPage: React.FC = () => {
                                     <details className={styles.accordionCard}>
                                         <summary className={styles.accordionHeader}>
                                             <div className={styles.iconWrapper}>
-                                                <i className="fas fa-university"></i>
+                                                <Globe size={20} />
                                             </div>
                                             <h3>Legal Collaboration</h3>
                                             <span className={styles.arrow}>▼</span>
@@ -569,7 +584,7 @@ const AboutPage: React.FC = () => {
                                     <details className={styles.accordionCard}>
                                         <summary className={styles.accordionHeader}>
                                             <div className={styles.iconWrapper}>
-                                                <i className="fas fa-shield-alt"></i>
+                                                <Shield size={20} />
                                             </div>
                                             <h3>Partnership</h3>
                                             <span className={styles.arrow}>▼</span>
@@ -596,7 +611,7 @@ const AboutPage: React.FC = () => {
                                     <details className={styles.accordionCard}>
                                         <summary className={styles.accordionHeader}>
                                             <div className={styles.iconWrapper}>
-                                                <i className="fas fa-hand-holding-heart"></i>
+                                                <CheckCircle2 size={20} />
                                             </div>
                                             <h3>Association with</h3>
                                             <span className={styles.arrow}>▼</span>
@@ -672,22 +687,5 @@ const AboutPage: React.FC = () => {
     );
 };
 
-
-// Helper for image placeholder till we get real assets
-const Scale = ({ size, className }: { size: number, className: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /><path d="M7 21h10" /><path d="M12 3v18" /><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-    </svg>
-);
 
 export default AboutPage;

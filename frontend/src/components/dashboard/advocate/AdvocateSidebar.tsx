@@ -19,6 +19,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
         { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
+        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
         { id: 'featured-profiles', label: 'Featured Profiles', icon: Star, premium: true },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
         { id: 'my-cases', label: 'My Cases', icon: Briefcase },
@@ -29,7 +30,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
     ];
 
     const plan = user?.plan || 'Free';
-    const isPremium = plan !== 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>

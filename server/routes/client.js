@@ -19,6 +19,19 @@ const cpUpload = upload.fields([
     { name: 'signature', maxCount: 1 }
 ]);
 
+// Helper to generate unique ID
+async function generateClientId() {
+    let id;
+    let exists = true;
+    while (exists) {
+        const randomNum = Math.floor(10000 + Math.random() * 90000); // 5 digits
+        id = `TP-EAD-CL${randomNum}`;
+        const existing = await Client.findOne({ unique_id: id });
+        if (!existing) exists = false;
+    }
+    return id;
+}
+
 // REGISTER CLIENT
 router.post('/register', cpUpload, async (req, res) => {
     try {
@@ -50,14 +63,18 @@ router.post('/register', cpUpload, async (req, res) => {
             email,
             password: hashedPassword,
             role: 'client',
-            status: 'Active', // Clients are usually active immediately
+            status: 'Pending', // Needs admin verification
             myReferralCode,
             referredBy
         });
 
-        // 2. Create Client Profile
+        // 2. Generate Unique Client ID
+        const clientId = await generateClientId();
+
+        // 3. Create Client Profile
         const clientData = {
             userId: user._id,
+            unique_id: clientId,
             firstName,
             lastName,
             gender: req.body.gender,
@@ -94,7 +111,7 @@ router.post('/register', cpUpload, async (req, res) => {
         // Delete OTP record
         await Otp.deleteOne({ email });
 
-        res.json({ success: true, clientId: newClient._id });
+        res.json({ success: true, id: newClient._id, clientId: clientId });
 
     } catch (err) {
         console.error('Client Registration Error:', err);
@@ -105,23 +122,43 @@ router.post('/register', cpUpload, async (req, res) => {
 // GET ALL CLIENTS
 router.get('/', async (req, res) => {
     try {
-        const { search } = req.query;
+        const { search, category, specialization, city, state } = req.query;
         let query = {};
+        const conditions = [];
+
         if (search) {
-            query = {
+            conditions.push({
                 $or: [
                     { firstName: { $regex: search, $options: 'i' } },
                     { lastName: { $regex: search, $options: 'i' } },
-                    { email: { $regex: search, $options: 'i' } }
+                    { email: { $regex: search, $options: 'i' } },
+                    { unique_id: { $regex: search, $options: 'i' } }
                 ]
-            };
+            });
+        }
+
+        if (category && category !== 'Department') {
+            conditions.push({ 'legalHelp.category': { $regex: category, $options: 'i' } });
+        }
+        if (specialization) {
+            conditions.push({ 'legalHelp.specialization': { $regex: specialization, $options: 'i' } });
+        }
+        if (city) {
+            conditions.push({ 'address.city': { $regex: city, $options: 'i' } });
+        }
+        if (state) {
+            conditions.push({ 'address.state': { $regex: state, $options: 'i' } });
+        }
+
+        if (conditions.length > 0) {
+            query.$and = conditions;
         }
 
         const dbClients = await Client.find(query);
 
         const formattedClients = dbClients.map(client => ({
             id: client._id,
-            unique_id: `CL-${client._id.toString().slice(-4).toUpperCase()}`,
+            unique_id: client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`,
             name: `${client.firstName} ${client.lastName}`,
             location: client.address?.city ? `${client.address.city}, ${client.address.state}` : (client.address?.state || 'N/A'),
             experience: 'Client',

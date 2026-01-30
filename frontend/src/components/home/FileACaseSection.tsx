@@ -1,32 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './FileACaseSection.module.css';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../context/AuthContext';
+import { sliderImages } from '../../data/sliderData';
 
 const FileACaseSection: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const { } = useAuth();
+    const totalItems = sliderImages.length;
 
-    // Original images for this section
-    const fileACaseImages = [
-        { src: "/assets/fil2.jpeg", title: "File a Case", subtitle: "Locate case information using advocate name, FIR number, or applicable act where supported." },
-        { src: "/assets/fil1.jpeg", title: "Search by CNR Number", subtitle: "Track case information using the unique Case Number Record (CNR)." },
-        { src: "/assets/fil3.jpeg", title: "Case Status", subtitle: "Access detailed case status using your case number or filing number as registered with the court." },
-        { src: "/assets/fil4.jpeg", title: "Search by Party Name", subtitle: "Find your case status using the petitioner or respondent name." },
-    ];
+    const nextSlide = useCallback(() => {
+        setCurrentIndex((prev) => (prev + 1) % totalItems);
+    }, [totalItems]);
 
-    const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % fileACaseImages.length);
-    const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + fileACaseImages.length) % fileACaseImages.length);
+    const prevSlide = useCallback(() => {
+        setCurrentIndex((prev) => (prev - 1 + totalItems) % totalItems);
+    }, [totalItems]);
 
     useEffect(() => {
         const timer = setInterval(nextSlide, 5000);
         return () => clearInterval(timer);
-    }, []);
+    }, [nextSlide]);
 
-    // Selection for the two sliders
-    const slider1Image = fileACaseImages[currentIndex % 2]; // fil2, fil1
-    const slider2Image = fileACaseImages[(currentIndex % 2) + 2]; // fil3, fil4
+    if (!sliderImages || sliderImages.length === 0) return null;
+
+    const slider1Image = sliderImages[currentIndex];
+    const slider2Image = sliderImages[(currentIndex + 1) % totalItems];
 
     return (
         <section id="file-a-case" className={styles.section}>
@@ -38,28 +36,37 @@ const FileACaseSection: React.FC = () => {
                 </div>
 
                 <div className={styles.grid}>
-                    {/* Row 1, Col 1: Text Card (File a Case) */}
+                    {/* Row 1, Col 1: Text Card */}
                     <div className={`${styles.card} ${styles.textCard}`}>
-                        <div className={styles.cardContent}>
-                            <h2 className={styles.cardTitle}>File a Case</h2>
-                            <h3 className={styles.dynamicTitle}>{slider1Image.title}</h3>
-                            <p className={styles.cardDescription}>
-                                {slider1Image.subtitle}
-                            </p>
-                            <button
-                                onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank')}
-                                className={styles.exploreBtn}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`text1-${currentIndex}`}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.5 }}
+                                className={styles.cardContent}
                             >
-                                Click Here <ArrowRight size={18} />
-                            </button>
-                        </div>
+                                <h2 className={styles.cardTitle}>{slider1Image.title.split(' ')[0]}</h2>
+                                <h3 className={styles.dynamicTitle}>{slider1Image.title}</h3>
+                                <p className={styles.cardDescription}>
+                                    {slider1Image.subtitle}
+                                </p>
+                                <button
+                                    onClick={() => window.open(slider1Image.btnLink, '_blank')}
+                                    className={styles.exploreBtn}
+                                >
+                                    Click Here <ArrowRight size={18} />
+                                </button>
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
 
-                    {/* Row 1, Col 2: Image Slider 1 */}
+                    {/* Row 1, Col 2: Image Card */}
                     <div className={`${styles.card} ${styles.imageCard}`}>
                         <AnimatePresence mode="wait">
                             <motion.img
-                                key={`s1-${currentIndex % 2}`}
+                                key={`img1-${currentIndex}`}
                                 src={slider1Image.src}
                                 initial={{ opacity: 0, scale: 1.1 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -76,11 +83,11 @@ const FileACaseSection: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Row 2, Col 1: Image Slider 2 */}
+                    {/* Row 2, Col 1: Image Card */}
                     <div className={`${styles.card} ${styles.imageCard}`}>
                         <AnimatePresence mode="wait">
                             <motion.img
-                                key={`s2-${currentIndex % 2}`}
+                                key={`img2-${currentIndex}`}
                                 src={slider2Image.src}
                                 initial={{ opacity: 0, scale: 1.1 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -91,21 +98,30 @@ const FileACaseSection: React.FC = () => {
                         </AnimatePresence>
                     </div>
 
-                    {/* Row 2, Col 2: Text Card (Case Status) */}
+                    {/* Row 2, Col 2: Text Card */}
                     <div className={`${styles.card} ${styles.textCard} ${styles.whiteCard}`}>
-                        <div className={styles.cardContent}>
-                            <h2 className={styles.cardTitle}>Case Status</h2>
-                            <h3 className={styles.dynamicTitle}>{slider2Image.title}</h3>
-                            <p className={styles.cardDescriptionDark}>
-                                {slider2Image.subtitle}
-                            </p>
-                            <button
-                                className={styles.trackBtn}
-                                onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/index.php?p=casestatus/index', '_blank')}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={`text2-${currentIndex}`}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.5 }}
+                                className={styles.cardContent}
                             >
-                                Track Now <ArrowRight size={18} />
-                            </button>
-                        </div>
+                                <h2 className={styles.cardTitle}>{slider2Image.title.split(' ')[0]}</h2>
+                                <h3 className={styles.dynamicTitle}>{slider2Image.title}</h3>
+                                <p className={styles.cardDescriptionDark}>
+                                    {slider2Image.subtitle}
+                                </p>
+                                <button
+                                    className={styles.trackBtn}
+                                    onClick={() => window.open(slider2Image.btnLink, '_blank')}
+                                >
+                                    Track Now <ArrowRight size={18} />
+                                </button>
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>

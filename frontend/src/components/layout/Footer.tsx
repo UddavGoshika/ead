@@ -129,17 +129,20 @@ const Footer: React.FC = () => {
         if (role) setSearchRole(role);
 
         // If on home page, scroll. Otherwise navigate home.
-        if (window.location.pathname === '/') {
+        if (window.location.pathname === '/' || window.location.pathname === '/home' || window.location.pathname === '/index.html') {
             const element = document.getElementById('search');
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
             }
         } else {
             navigate('/');
+            // Longer timeout to ensure page load and ScrollToTop finish
             setTimeout(() => {
                 const element = document.getElementById('search');
-                if (element) element.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 600);
         }
     };
 
@@ -155,7 +158,11 @@ const Footer: React.FC = () => {
                     <div className={styles.column}>
                         <h3>Explore</h3>
                         <ul>
-                            <li><Link to="/HeroSection">Home</Link></li>
+                            <li><Link to="/" onClick={(e) => {
+                                if (window.location.pathname === '/') {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            }}>Home</Link></li>
                             <li><Link to="#search" onClick={(e) => handleSearchClick(e)}>Browse Profiles</Link></li>
                             <li><Link to="" onClick={() =>
                                 window.open("https://filing.ecourts.gov.in/pdedev/", "_blank", "noopener,noreferrer")

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const ClientSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    unique_id: { type: String, unique: true },
     firstName: String,
     lastName: String,
     gender: String,

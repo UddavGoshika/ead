@@ -15,11 +15,10 @@ type Post = {
     image?: string;
     status: PostStatus;
     createdAt: string;
-    // UI Mock Stats (since backend doesn't track these yet)
-    views?: string;
-    saves?: number;
-    comments?: number;
-    likes?: number;
+    views?: number;
+    saves?: string[];
+    comments?: any[];
+    likes?: string[];
     shares?: number;
 };
 
@@ -61,8 +60,6 @@ const VerifiedPostsList: React.FC = () => {
         }
     };
 
-
-
     const openFullPost = (post: Post) => {
         setSelectedPost(post);
     };
@@ -72,14 +69,12 @@ const VerifiedPostsList: React.FC = () => {
     };
 
     const getDisplayStats = (post: Post) => {
-        const isApproved = post.status === "Approved";
-        // Mock stats for UI consistency as requested by user's theme
         return {
-            likes: isApproved ? (post.likes || 124) : 0,
-            comments: isApproved ? (post.comments || 12) : 0,
-            saves: isApproved ? (post.saves || 45) : 0,
-            shares: isApproved ? (post.shares || 8) : 0,
-            views: isApproved ? (post.views || "1.2k") : "0"
+            likes: post.likes?.length || 0,
+            comments: post.comments?.length || 0,
+            saves: post.saves?.length || 0,
+            shares: post.shares || 0,
+            views: post.views || 0
         };
     };
 

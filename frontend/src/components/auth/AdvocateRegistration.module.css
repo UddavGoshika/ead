@@ -549,8 +549,8 @@
 
 .clearBtn {
     margin-top: 6px;
-    background: #fee2e2;
-    border: 1px solid #fecaca;
+    background: transparent;
+    border: 1px solid #f6f5f5;
     padding: 5px 10px;
     font-size: 12px;
     border-radius: 6px;

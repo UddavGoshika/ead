@@ -13,6 +13,8 @@ interface Tier {
     _id?: string;
     name: string;
     price: number;
+    originalPrice?: number;
+    discount?: number; // Discount percentage (0-100)
     coins: number | "unlimited";
     support?: "Chat Support" | "Call Support" | "Personal Agent" | "VIP Concierge" | string;
     description?: string;
@@ -49,7 +51,38 @@ const advocateDefaults: Package[] = [
         description: "Basic access with essential features",
         icon: "zap",
         gradient: "from-blue-50 to-gray-50",
-        tiers: [],
+        tiers: [
+            {
+                name: "Silver",
+                price: 1,
+                coins: 10,
+                active: true,
+                features: ["Basic Profile", "Limited Visibility", "Email Support"],
+                badgeColor: "#C0C0C0",
+                glowColor: "rgba(192, 192, 192, 0.2)",
+                popular: false
+            },
+            {
+                name: "Gold",
+                price: 0,
+                coins: 20,
+                active: true,
+                features: ["Enhanced Profile", "Standard Visibility", "Priority Listing", "Chat Support"],
+                badgeColor: "#FFD700",
+                glowColor: "rgba(255, 215, 0, 0.2)",
+                popular: true
+            },
+            {
+                name: "Platinum",
+                price: 0,
+                coins: 30,
+                active: true,
+                features: ["Premium Profile", "Featured Listing", "Advanced Analytics", "24/7 Support"],
+                badgeColor: "#E5E4E2",
+                glowColor: "rgba(229, 228, 226, 0.2)",
+                popular: false
+            },
+        ],
         featured: false,
         sortOrder: 1,
     },
@@ -62,10 +95,10 @@ const advocateDefaults: Package[] = [
         tiers: [
             {
                 name: "Silver",
-                price: 500,
+                price: 1,
                 coins: 50,
                 active: true,
-                features: ["Basic Analytics", "Email Support", "5 Case Templates"],
+                features: ["Basic Analytics", "Email Support", "5 Case Templates", "Client Portal"],
                 badgeColor: "#C0C0C0",
                 glowColor: "rgba(192, 192, 192, 0.2)",
                 popular: false
@@ -75,7 +108,7 @@ const advocateDefaults: Package[] = [
                 price: 1000,
                 coins: 100,
                 active: true,
-                features: ["Advanced Analytics", "Priority Support", "15 Case Templates", "Client Portal"],
+                features: ["Advanced Analytics", "Priority Support", "15 Case Templates", "Custom Branding"],
                 badgeColor: "#FFD700",
                 glowColor: "rgba(255, 215, 0, 0.2)",
                 popular: true
@@ -85,7 +118,7 @@ const advocateDefaults: Package[] = [
                 price: 1500,
                 coins: 150,
                 active: true,
-                features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "Custom Branding"],
+                features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "API Access"],
                 badgeColor: "#E5E4E2",
                 glowColor: "rgba(229, 228, 226, 0.2)",
                 popular: false
@@ -106,7 +139,7 @@ const advocateDefaults: Package[] = [
                 price: 5000,
                 coins: 500,
                 active: true,
-                features: ["AI Case Analysis", "Team Collaboration", "Custom Reports"],
+                features: ["AI Case Analysis", "Team Collaboration", "Custom Reports", "White Label"],
                 badgeColor: "#C0C0C0",
                 glowColor: "rgba(192, 192, 192, 0.3)",
                 popular: false
@@ -116,7 +149,7 @@ const advocateDefaults: Package[] = [
                 price: 10000,
                 coins: 1000,
                 active: true,
-                features: ["AI + Human Review", "API Access", "White Label", "Advanced Security"],
+                features: ["AI + Human Review", "API Access", "Advanced Security", "Dedicated Manager"],
                 badgeColor: "#FFD700",
                 glowColor: "rgba(255, 215, 0, 0.3)",
                 popular: true
@@ -126,7 +159,7 @@ const advocateDefaults: Package[] = [
                 price: 15000,
                 coins: 1500,
                 active: true,
-                features: ["Enterprise Solutions", "Dedicated Manager", "Custom Development", "SLA Guarantee"],
+                features: ["Enterprise Solutions", "Custom Development", "SLA Guarantee", "Priority Support"],
                 badgeColor: "#E5E4E2",
                 glowColor: "rgba(229, 228, 226, 0.3)",
                 popular: false
@@ -143,56 +176,216 @@ const advocateDefaults: Package[] = [
         gradient: "from-blue-900 via-blue-800 to-indigo-900",
         tiers: [
             {
-                name: "Basic Luxury",
+                name: "Silver",
                 price: 25000,
                 coins: "unlimited",
                 support: "VIP Concierge",
                 active: true,
-                features: ["Unlimited Everything", "Personal Account Manager", "Custom AI Training"],
-                badgeColor: "#8A2BE2",
-                glowColor: "rgba(138, 43, 226, 0.3)",
+                features: ["Unlimited Everything", "Personal Account Manager", "Custom AI Training", "Executive Dashboard"],
+                badgeColor: "#C0C0C0",
+                glowColor: "rgba(192, 192, 192, 0.3)",
                 popular: false
             },
             {
-                name: "Elite Access",
+                name: "Gold",
                 price: 35000,
                 coins: "unlimited",
                 support: "24/7 Executive Support",
                 active: true,
-                features: ["All Luxury Features", "Quarterly Strategy Sessions", "Market Analysis"],
-                badgeColor: "#4169E1",
-                glowColor: "rgba(65, 105, 225, 0.3)",
+                features: ["All Silver Features", "Quarterly Strategy Sessions", "Market Analysis", "Dedicated Support Team"],
+                badgeColor: "#FFD700",
+                glowColor: "rgba(255, 215, 0, 0.3)",
                 popular: true
             },
             {
-                name: "Personal Butler",
+                name: "Platinum",
                 price: 50000,
                 coins: "unlimited",
                 support: "Personal Agent",
                 active: true,
-                features: ["Dedicated Support Team", "Custom Integrations", "Executive Training", "Guaranteed ROI"],
-                badgeColor: "#00008B",
-                glowColor: "rgba(0, 0, 139, 0.3)",
+                features: ["All Gold Features", "Custom Integrations", "Executive Training", "Guaranteed ROI", "Personal Butler Service"],
+                badgeColor: "#E5E4E2",
+                glowColor: "rgba(229, 228, 226, 0.3)",
                 popular: false
             },
         ],
         featured: true,
         sortOrder: 4,
     },
+    {
+        category: "Test Package",
+        memberType: "advocate",
+        description: "Package for system testing and verification",
+        icon: "zap",
+        gradient: "from-green-50 to-emerald-50",
+        tiers: [
+            {
+                name: "Test Tier",
+                price: 1,
+                coins: 100,
+                active: true,
+                features: ["System Verification", "Payment Testing", "Feature Access"],
+                badgeColor: "#22c55e",
+                glowColor: "rgba(34, 197, 94, 0.2)",
+                popular: false
+            }
+        ],
+        featured: false,
+        sortOrder: 5,
+    },
 ];
 
-const clientDefaults: Package[] = advocateDefaults
-    .filter(pkg => pkg.category !== "Ultra Pro")
-    .map(pkg => ({
-        ...pkg,
+const clientDefaults: Package[] = [
+    {
+        category: "Free",
         memberType: "client",
-        description: pkg.description?.replace("professionals", "clients").replace("law firms", "businesses")
-    }));
+        description: "Basic access with essential features",
+        icon: "zap",
+        gradient: "from-blue-50 to-gray-50",
+        tiers: [
+            {
+                name: "Silver",
+                price: 1,
+                coins: 10,
+                active: true,
+                features: ["Basic Profile", "Limited Visibility", "Email Support"],
+                badgeColor: "#C0C0C0",
+                glowColor: "rgba(192, 192, 192, 0.2)",
+                popular: false
+            },
+            {
+                name: "Gold",
+                price: 0,
+                coins: 20,
+                active: true,
+                features: ["Enhanced Profile", "Standard Visibility", "Priority Listing", "Chat Support"],
+                badgeColor: "#FFD700",
+                glowColor: "rgba(255, 215, 0, 0.2)",
+                popular: true
+            },
+            {
+                name: "Platinum",
+                price: 0,
+                coins: 30,
+                active: true,
+                features: ["Premium Profile", "Featured Listing", "Advanced Analytics", "24/7 Support"],
+                badgeColor: "#E5E4E2",
+                glowColor: "rgba(229, 228, 226, 0.2)",
+                popular: false
+            },
+        ],
+        featured: false,
+        sortOrder: 1,
+    },
+    {
+        category: "Pro Lite",
+        memberType: "client",
+        description: "Enhanced features for growing needs",
+        icon: "shield-check",
+        gradient: "from-blue-100 to-indigo-50",
+        tiers: [
+            {
+                name: "Silver",
+                price: 1,
+                coins: 50,
+                active: true,
+                features: ["Basic Analytics", "Email Support", "5 Legal Templates", "Advocate Portal"],
+                badgeColor: "#C0C0C0",
+                glowColor: "rgba(192, 192, 192, 0.2)",
+                popular: false
+            },
+            {
+                name: "Gold",
+                price: 1000,
+                coins: 100,
+                active: true,
+                features: ["Advanced Analytics", "Priority Support", "15 Legal Templates", "Custom Dashboard"],
+                badgeColor: "#FFD700",
+                glowColor: "rgba(255, 215, 0, 0.2)",
+                popular: true
+            },
+            {
+                name: "Platinum",
+                price: 1500,
+                coins: 150,
+                active: true,
+                features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "Priority Matching"],
+                badgeColor: "#E5E4E2",
+                glowColor: "rgba(229, 228, 226, 0.2)",
+                popular: false
+            },
+        ],
+        featured: true,
+        sortOrder: 2,
+    },
+    {
+        category: "Pro",
+        memberType: "client",
+        description: "Advanced tools for established clients",
+        icon: "crown",
+        gradient: "from-blue-200 to-purple-50",
+        tiers: [
+            {
+                name: "Silver",
+                price: 5000,
+                coins: 500,
+                active: true,
+                features: ["AI Legal Assistant", "Case Management", "Custom Reports", "Priority Access"],
+                badgeColor: "#C0C0C0",
+                glowColor: "rgba(192, 192, 192, 0.3)",
+                popular: false
+            },
+            {
+                name: "Gold",
+                price: 10000,
+                coins: 1000,
+                active: true,
+                features: ["AI + Expert Review", "Multi-Case Management", "Advanced Security", "Dedicated Support"],
+                badgeColor: "#FFD700",
+                glowColor: "rgba(255, 215, 0, 0.3)",
+                popular: true
+            },
+            {
+                name: "Platinum",
+                price: 15000,
+                coins: 1500,
+                active: true,
+                features: ["Enterprise Solutions", "Custom Integration", "SLA Guarantee", "VIP Support"],
+                badgeColor: "#E5E4E2",
+                glowColor: "rgba(229, 228, 226, 0.3)",
+                popular: false
+            },
+        ],
+        featured: true,
+        sortOrder: 3,
+    },
+    {
+        category: "Test Package",
+        memberType: "client",
+        description: "Package for system testing and verification",
+        icon: "zap",
+        gradient: "from-green-50 to-emerald-50",
+        tiers: [
+            {
+                name: "Test Tier",
+                price: 1,
+                coins: 100,
+                active: true,
+                features: ["System Verification", "Payment Testing", "Feature Access"],
+                badgeColor: "#22c55e",
+                glowColor: "rgba(34, 197, 94, 0.2)",
+                popular: false
+            }
+        ],
+        featured: false,
+        sortOrder: 4,
+    },
+];
 
 /* ================= ENHANCED COMPONENT ================= */
 const PremiumPackages: React.FC = () => {
     const [packages, setPackages] = useState<Package[]>([]);
-    const [memberType, setMemberType] = useState<"advocate" | "client">("advocate");
+    const [memberType, setMemberType] = useState<"advocate" | "client" | "all">("advocate");
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [selectedTiers, setSelectedTiers] = useState<SelectedTier[]>([]);
@@ -217,20 +410,66 @@ const PremiumPackages: React.FC = () => {
     const fetchPackages = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(
-                `/api/admin/packages?memberType=${memberType}`
-            );
-            if (res.data.success && res.data.packages.length > 0) {
-                const mapped = res.data.packages.map((pkg: any) => ({
-                    ...pkg,
-                    category: pkg.name
+
+            if (memberType === 'all') {
+                // Fetch both advocate and client packages
+                const [advocateRes, clientRes] = await Promise.all([
+                    axios.get(`/api/admin/packages?memberType=advocate`),
+                    axios.get(`/api/admin/packages?memberType=client`)
+                ]);
+
+                let allPackages: Package[] = [];
+
+                // Add advocate packages
+                if (advocateRes.data.success && advocateRes.data.packages.length > 0) {
+                    const advocateMapped = advocateRes.data.packages.map((pkg: any) => ({
+                        ...pkg,
+                        category: pkg.name,
+                        memberType: pkg.memberType || 'advocate'
+                    }));
+                    allPackages = [...allPackages, ...advocateMapped];
+                } else {
+                    allPackages = [...allPackages, ...advocateDefaults];
+                }
+
+                // Add client packages
+                if (clientRes.data.success && clientRes.data.packages.length > 0) {
+                    const clientMapped = clientRes.data.packages.map((pkg: any) => ({
+                        ...pkg,
+                        category: pkg.name,
+                        memberType: pkg.memberType || 'client'
+                    }));
+                    allPackages = [...allPackages, ...clientMapped];
+                } else {
+                    allPackages = [...allPackages, ...clientDefaults];
+                }
+
+                setPackages(allPackages.sort((a, b) => {
+                    if (a.memberType !== b.memberType) return a.memberType.localeCompare(b.memberType);
+                    return (a.sortOrder || 0) - (b.sortOrder || 0);
                 }));
-                setPackages(mapped.sort((a: Package, b: Package) => (a.sortOrder || 0) - (b.sortOrder || 0)));
             } else {
-                setPackages(memberType === "advocate" ? advocateDefaults : clientDefaults);
+                // Fetch single member type
+                const res = await axios.get(`/api/admin/packages?memberType=${memberType}`);
+
+                if (res.data.success && res.data.packages.length > 0) {
+                    const mapped = res.data.packages.map((pkg: any) => ({
+                        ...pkg,
+                        category: pkg.name,
+                        memberType: pkg.memberType || memberType
+                    }));
+                    setPackages(mapped.sort((a: Package, b: Package) => (a.sortOrder || 0) - (b.sortOrder || 0)));
+                } else {
+                    const defaults = memberType === "advocate" ? advocateDefaults : clientDefaults;
+                    setPackages(defaults);
+                }
             }
-        } catch {
-            setPackages(memberType === "advocate" ? advocateDefaults : clientDefaults);
+        } catch (error) {
+            console.error('Error fetching packages:', error);
+            const defaults = memberType === "advocate" ? advocateDefaults :
+                memberType === "client" ? clientDefaults :
+                    [...advocateDefaults, ...clientDefaults];
+            setPackages(defaults);
         } finally {
             setLoading(false);
         }
@@ -240,22 +479,33 @@ const PremiumPackages: React.FC = () => {
         if (!window.confirm("This will delete ALL existing packages for this member type and reset them to factory defaults. Continue?")) return;
         try {
             setLoading(true);
-            for (const pkg of packages) {
+
+            // Delete existing packages for current memberType
+            const packagesToDelete = memberType === 'all' ? packages : packages.filter(p => p.memberType === memberType);
+            for (const pkg of packagesToDelete) {
                 if (pkg._id) {
                     await axios.delete(`/api/admin/packages/${pkg._id}`);
                 }
             }
 
-            const defaults = memberType === "advocate" ? advocateDefaults : clientDefaults;
+            const defaults = memberType === "advocate" ? advocateDefaults :
+                memberType === "client" ? clientDefaults :
+                    [...advocateDefaults, ...clientDefaults];
+
             for (const d of defaults) {
-                const payload = { ...d, name: d.category, memberType };
+                const payload = {
+                    ...d,
+                    name: d.category,
+                    id: undefined // Ensure we don't send an old ID
+                };
                 await axios.post("/api/admin/packages", payload);
             }
 
             fetchPackages();
             setSelectedTiers([]);
-        } catch {
-            alert("Error during reset. Some packages might not have been restored.");
+        } catch (err) {
+            console.error('Reset error:', err);
+            alert("Error during reset. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -327,7 +577,7 @@ const PremiumPackages: React.FC = () => {
             const payload = {
                 ...formData,
                 name: formData.category,
-                memberType,
+                memberType: formData.memberType, // Use formData's memberType, not state
                 id: currentPackage?._id
             };
             const res = await axios.post(
@@ -372,7 +622,7 @@ const PremiumPackages: React.FC = () => {
         setCurrentPackage(null);
         setFormData({
             category: "",
-            memberType,
+            memberType: memberType === 'all' ? 'advocate' : memberType,
             description: "",
             icon: "info",
             gradient: "from-blue-50 to-gray-50",
@@ -458,7 +708,16 @@ const PremiumPackages: React.FC = () => {
                 onSearch={(query) => setSearchQuery(query)}
                 placeholder="Search packages..."
                 showRoleFilter
-                onRoleChange={(role) => setMemberType(role === 'all' ? 'advocate' : role)}
+                onRoleChange={(role) => {
+                    // Handle role filter changes
+                    if (role === 'all') {
+                        setMemberType('all');
+                    } else if (role === 'advocate') {
+                        setMemberType('advocate');
+                    } else if (role === 'client') {
+                        setMemberType('client');
+                    }
+                }}
             />
 
             {/* Enhanced Top Actions Bar */}
@@ -571,12 +830,12 @@ const PremiumPackages: React.FC = () => {
             <div className={`${styles.categoryContainer} ${styles[viewMode]}`}>
                 {filteredPackages.map((pkg) => (
                     <div
-                        key={pkg._id || pkg.category}
+                        key={pkg._id || `${pkg.category}-${pkg.memberType}`}
                         className={`${styles.categoryCard} ${pkg.featured ? styles.featuredCard : ''} ${pkg.category === "Ultra Pro" ? styles.ultraCard : ''}`}
                     >
                         <div className={styles.cardGlow}></div>
 
-                        <div className={styles.cardHeader} onClick={() => toggleExpand(pkg._id || pkg.category)}>
+                        <div className={styles.cardHeader} onClick={() => toggleExpand(pkg._id || `${pkg.category}-${pkg.memberType}`)}>
                             <div className={styles.headerLeft}>
                                 <div className={styles.categoryIcon}>
                                     {getIcon(pkg.icon)}
@@ -585,6 +844,19 @@ const PremiumPackages: React.FC = () => {
                                 <div className={styles.headerText}>
                                     <div className={styles.categoryTitle}>
                                         <h3>{pkg.category}</h3>
+                                        {memberType === 'all' && (
+                                            <span className={styles.memberTypeBadge} style={{
+                                                background: pkg.memberType === 'advocate' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+                                                color: pkg.memberType === 'advocate' ? '#60a5fa' : '#a78bfa',
+                                                padding: '4px 10px',
+                                                borderRadius: '12px',
+                                                fontSize: '11px',
+                                                fontWeight: 600,
+                                                textTransform: 'capitalize'
+                                            }}>
+                                                {pkg.memberType}
+                                            </span>
+                                        )}
                                         {pkg.featured && <span className={styles.featuredBadge}>Featured</span>}
                                     </div>
                                     <p className={styles.categoryDesc}>{pkg.description}</p>
@@ -834,7 +1106,7 @@ const PremiumPackages: React.FC = () => {
                                     </select>
                                 </div>
 
-                                <div className={styles.formSection}>
+                                <div className={styles.checkboxContainer}>
                                     <label className={styles.checkboxLabel}>
                                         <input
                                             type="checkbox"
@@ -873,7 +1145,11 @@ const PremiumPackages: React.FC = () => {
 
                                 <div className={styles.tiersList}>
                                     {formData.tiers.map((tier, idx) => (
-                                        <div key={idx} className={styles.tierEditCard}>
+                                        <div
+                                            key={idx}
+                                            className={styles.tierEditCard}
+                                            style={{ '--tier-accent': tier.badgeColor } as React.CSSProperties}
+                                        >
                                             <div className={styles.tierEditHeader}>
                                                 <div className={styles.tierTitle}>
                                                     <input
@@ -908,6 +1184,42 @@ const PremiumPackages: React.FC = () => {
                                                         onChange={(e) => updateTier(idx, "price", Number(e.target.value))}
                                                         className={styles.formInput}
                                                     />
+                                                </div>
+
+                                                <div className={styles.inputGroup}>
+                                                    <label>Discount (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        placeholder="0"
+                                                        value={tier.discount || 0}
+                                                        onChange={(e) => {
+                                                            const discount = Number(e.target.value);
+                                                            updateTier(idx, "discount", discount);
+                                                            if (discount > 0 && tier.price > 0) {
+                                                                const originalPrice = Math.round(tier.price / (1 - discount / 100));
+                                                                updateTier(idx, "originalPrice", originalPrice);
+                                                            }
+                                                        }}
+                                                        className={styles.formInput}
+                                                    />
+                                                </div>
+
+                                                <div className={styles.inputGroup}>
+                                                    <label>Original Price (₹)</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Auto-calculated"
+                                                        value={tier.originalPrice || ''}
+                                                        onChange={(e) => updateTier(idx, "originalPrice", Number(e.target.value))}
+                                                        className={styles.formInput}
+                                                    />
+                                                    {tier.discount && tier.discount > 0 && (
+                                                        <small style={{ color: '#10b981', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                                                            Save ₹{(tier.originalPrice || 0) - tier.price} ({tier.discount}% OFF)
+                                                        </small>
+                                                    )}
                                                 </div>
 
                                                 <div className={styles.inputGroup}>
@@ -1013,17 +1325,155 @@ const PremiumPackages: React.FC = () => {
 
             {/* Preview Modal */}
             {isPreviewOpen && (
-                <div className={styles.modalOverlay}>
+                <div className={styles.modalOverlay} style={{ zIndex: 11000 }}>
                     <div className={styles.previewContent}>
                         <div className={styles.previewHeader}>
-                            <h2>Package Preview</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    padding: '8px',
+                                    background: 'rgba(59, 130, 246, 0.1)',
+                                    borderRadius: '10px',
+                                    color: '#3b82f6'
+                                }}>
+                                    <Eye size={20} />
+                                </div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>Package Preview</h2>
+                                    <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Seeing exactly what users will see</p>
+                                </div>
+                            </div>
                             <button className={styles.closeBtn} onClick={() => setIsPreviewOpen(false)}>
                                 <X size={24} />
                             </button>
                         </div>
-                        <div className={styles.previewBody}>
-                            {/* Preview content would go here */}
-                            <p>Preview functionality to be implemented...</p>
+                        <div className={styles.previewBody} style={{ background: '#020617', padding: '60px 40px' }}>
+                            <div className={`${styles.categoryCard} ${formData.featured ? styles.featuredCard : ''} ${formData.category === "Ultra Pro" ? styles.ultraCard : ''}`} style={{ width: '100%', maxWidth: '700px', cursor: 'default' }}>
+                                <div className={styles.cardGlow}></div>
+
+                                <div className={styles.cardHeader} style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div className={styles.headerLeft}>
+                                        <div className={styles.categoryIcon}>
+                                            {getIcon(formData.icon)}
+                                            {formData.featured && <Star size={12} className={styles.featuredStar} />}
+                                        </div>
+                                        <div className={styles.headerText}>
+                                            <div className={styles.categoryTitle}>
+                                                <h3>{formData.category || "Untitled Category"}</h3>
+                                                <span className={styles.memberTypeBadge} style={{
+                                                    background: formData.memberType === 'advocate' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                                                    color: formData.memberType === 'advocate' ? '#60a5fa' : '#a78bfa',
+                                                    padding: '4px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {formData.memberType}
+                                                </span>
+                                                {formData.featured && <span className={styles.featuredBadge}>Featured</span>}
+                                            </div>
+                                            <p className={styles.categoryDesc}>{formData.description || "No description provided yet."}</p>
+                                            <div className={styles.tierStats}>
+                                                <span className={styles.tierCount}>
+                                                    <Users size={12} /> {formData.tiers.filter(t => t.active).length} active tiers
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={styles.cardContent} style={{ padding: '28px' }}>
+                                    <div className={styles.tiersGrid} style={{
+                                        gridTemplateColumns: formData.tiers.length > 1 ? 'repeat(auto-fit, minmax(280px, 1fr))' : '1fr',
+                                        gap: '24px'
+                                    }}>
+                                        {formData.tiers.filter(t => t.active).map((tier, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`${styles.tierCard} ${styles.activeTier} ${tier.popular ? styles.popularTier : ''}`}
+                                                style={{
+                                                    '--tier-glow': tier.glowColor || 'rgba(59, 130, 246, 0.2)',
+                                                    '--tier-badge': tier.badgeColor || '#3b82f6',
+                                                    cursor: 'default'
+                                                } as React.CSSProperties}
+                                            >
+                                                {tier.popular && (
+                                                    <div className={styles.popularBadge}>
+                                                        <Star size={12} /> Most Popular
+                                                    </div>
+                                                )}
+
+                                                <div className={styles.tierHeader}>
+                                                    <div className={styles.tierName}>
+                                                        <span
+                                                            className={styles.tierBadge}
+                                                            style={{ backgroundColor: tier.badgeColor }}
+                                                        >
+                                                            {tier.name}
+                                                        </span>
+                                                        <h4>{tier.name || "Untitled Tier"}</h4>
+                                                    </div>
+                                                    <div className={styles.tierPrice}>
+                                                        <span className={styles.priceAmount}>₹{(tier.price || 0).toLocaleString()}</span>
+                                                        <span className={styles.pricePeriod}>/month</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className={styles.tierDetails}>
+                                                    <div className={styles.coinBadge}>
+                                                        {tier.coins === "unlimited" ? (
+                                                            <><Zap size={14} /> Unlimited Coins</>
+                                                        ) : (
+                                                            <><Gem size={14} /> {tier.coins || 0} Coins</>
+                                                        )}
+                                                    </div>
+
+                                                    {tier.support && (
+                                                        <div className={styles.supportBadge}>
+                                                            {getSupportIcon(tier.support)}
+                                                            <span>{tier.support}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {tier.features && tier.features.length > 0 && (
+                                                    <ul className={styles.featuresList}>
+                                                        {tier.features.filter(f => f.trim() !== "").map((feature, i) => (
+                                                            <li key={i}>
+                                                                <Check size={12} />
+                                                                <span>{feature}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+
+                                                <button style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '12px',
+                                                    border: 'none',
+                                                    background: tier.popular
+                                                        ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+                                                        : 'rgba(255,255,255,0.05)',
+                                                    color: '#fff',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    marginTop: '10px'
+                                                }}>
+                                                    Get Started
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {formData.tiers.filter(t => t.active).length === 0 && (
+                                            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b', width: '100%' }}>
+                                                <Info size={32} style={{ marginBottom: '12px', opacity: 0.5 }} />
+                                                <p>No active tiers to display in preview.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

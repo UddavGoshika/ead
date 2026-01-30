@@ -28,8 +28,8 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
     const maskName = (name: string) => {
         if (isPremium || variant === 'normal') return name;
         if (!name) return "**";
-        const parts = name.trim().split(/\s+/);
-        return parts.map(part => part.substring(0, 2) + "**").join(" ");
+        // Show first 2 characters, mask the rest
+        return name.substring(0, 2) + "**";
     };
 
     const maskId = (id: string) => {
@@ -83,6 +83,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
     };
 
     const cardClass = `${styles.card} ${variant === 'featured' ? styles.cardFeatured : styles.cardNormal}`;
+    const shouldBlur = !isPremium && variant === 'featured';
 
     return (
         <div className={cardClass}>
@@ -92,13 +93,13 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                         <img
                             src={advocate.image_url.startsWith('http') ? advocate.image_url : `${advocate.image_url}`}
                             alt={advocate.name}
-                            className={styles.advocateImg}
+                            className={`${styles.advocateImg} ${shouldBlur ? styles.blurredImage : ''}`}
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = `https://images.unsplash.com/photo-1556157382-97dee2dcb9d9?q=80&w=400&auto=format&fit=crop`;
                             }}
                         />
                     ) : (
-                        <div className={styles.bgInitial}>{advocate.name.charAt(0)}</div>
+                        <div className={`${styles.bgInitial} ${shouldBlur ? styles.blurredImage : ''}`}>{advocate.name.charAt(0)}</div>
                     )}
                     <div className={styles.imageOverlay}></div>
                 </div>
@@ -113,10 +114,33 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                 {/* Unified Verified ID Badge - Top Right */}
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
-                        {/* <Shield size={10} fill="#3b82f6" stroke="#3b82f6" /> */}
                         <span className={styles.topIdText}>{maskId(advocate.unique_id)}</span>
                         <div className={styles.badgeDivider}></div>
-                        <CheckCircle2 size={14} fill="#22c55e" color="white" />
+                        {variant === 'featured' ? (
+                            <div className={styles.premiumVerified}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    {/* Bold Round Outer Glow/Base */}
+                                    <circle cx="12" cy="12" r="11" fill="url(#blue_grad_bold)" />
+                                    {/* Thicker Checkmark */}
+                                    <path
+                                        d="M7.5 12.5L10.5 15.5L16.5 8.5"
+                                        stroke="white"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    />
+                                    <defs>
+                                        <linearGradient id="blue_grad_bold" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                                            <stop stopColor="#38bdf8" />
+                                            <stop offset="0.5" stopColor="#0ea5e9" />
+                                            <stop offset="1" stopColor="#0284c7" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                        ) : (
+                            <CheckCircle2 size={16} fill="#22c55e" color="white" />
+                        )}
                     </div>
                 </div>
 

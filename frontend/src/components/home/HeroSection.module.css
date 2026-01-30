@@ -60,8 +60,8 @@
 }
 
 .mainTitle {
-    /* font-size: clamp(2.5rem, 5vw, 4.2rem); */
-    font-weight: 900;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
     margin-bottom: 24px;
     line-height: 1.1;
     background: linear-gradient(to right, #ffffff, #e2e8f0);
@@ -71,6 +71,7 @@
 }
 
 .mainSubtitle {
+    font-family: 'Outfit', sans-serif;
     font-size: 1.2rem;
     line-height: 1.8;
     color: #94a3b8;
@@ -108,7 +109,7 @@
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 10px 30px rgba(250, 204, 21, 0.2);
-    font-family: 'Cinzel', serif;
+    font-family: 'Playfair Display', serif;
 }
 
 .exploreBtn:hover {
@@ -228,13 +229,15 @@
 }
 
 .slideTitle {
+    font-family: 'Playfair Display', serif;
     font-size: 1.8rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 12px;
     color: #ffffff;
 }
 
 .slideSubtitle {
+    font-family: 'Outfit', sans-serif;
     color: #94a3b8;
     line-height: 1.6;
     margin-bottom: 25px;
@@ -270,32 +273,94 @@
 }
 
 @media (max-width: 1024px) {
-    .hero::before {
-        width: 100%;
-        height: 60%;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    .hero {
+        padding-top: 120px;
+        min-height: auto;
     }
 
     .container {
         flex-direction: column;
-        gap: 60px;
-        padding: 120px 20px 60px;
+        gap: 40px;
+        padding: 0 20px;
     }
 
     .left,
     .right {
         max-width: 100%;
-        align-items: center;
-        text-align: center;
+        width: 100%;
     }
 
-    .logoCircle {
-        justify-content: center;
+    .rightContentBox {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .mainTitle {
+        font-size: 1.6rem;
+        margin-bottom: 12px;
     }
 
     .mainSubtitle {
-        margin-left: auto;
-        margin-right: auto;
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        max-width: 100%;
+    }
+
+    .logoCircle img {
+        height: 100px;
+    }
+
+    .slider {
+        height: 180px;
+        border-radius: 16px;
+    }
+
+    .dynamicContent {
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 16px;
+    }
+
+    .slideTitle {
+        font-size: 1.1rem;
+    }
+
+    .slideSubtitle {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .luxuryBtn,
+    .exploreBtn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        width: 100%;
+        max-width: 250px;
+        /* Force fitted look */
+        margin: 0 auto 10px auto;
+        text-align: center;
+    }
+
+    .staticAuth {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .mainTitle {
+        font-size: 1.6rem;
+    }
+
+    .logoCircle img {
+        height: 120px;
+    }
+
+    .slider {
+        height: 180px;
     }
 }

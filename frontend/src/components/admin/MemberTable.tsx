@@ -10,6 +10,7 @@ import MemberPackageModal from "./MemberPackageModal";
 import MemberWalletModal from "./MemberWalletModal";
 import { BulkAddModal } from './BulkAddModal';
 import { useAuth } from "../../context/AuthContext";
+import { getFeaturesFromPlan } from "../../config/completePackageConfig";
 
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 export type MemberContext = 'all' | 'free' | 'premium' | 'approved' | 'pending' | 'blocked' | 'deactivated' | 'deleted' | 'reported';
@@ -64,6 +65,8 @@ interface MemberTableProps {
     initialMembers?: Member[];
     defaultStatus?: string;
     context?: MemberContext;
+    initialRole?: "All" | "Advocate" | "Client";
+    initialVerifiedFilter?: "All" | "Verified" | "Unverified" | "Rejected" | "Resubmitted";
 }
 
 const MemberActions: React.FC<{
@@ -132,7 +135,15 @@ const MemberActions: React.FC<{
                     {context === 'free' && (
                         <button className={styles.primaryAction} onClick={() => { setOpen(false); onPackage(member); }}>Upgrade to Pro</button>
                     )}
-                    <button onClick={() => { setOpen(false); onVerify(member); }}>Review Verification</button>
+                    {member.status === 'Pending' && (
+                        <button className={styles.primaryAction} onClick={() => {
+                            if (window.confirm(`Quick approve ${member.name}?`)) {
+                                setOpen(false);
+                                onVerify(member); // Opens modal, or I could call a separate fast-verify
+                            }
+                        }}>Quick Review & Approve</button>
+                    )}
+                    <button onClick={() => { setOpen(false); onVerify(member); }}>Review Full Verification</button>
                     {context === 'deactivated' && (
                         <button className={styles.primaryAction} onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
                     )}
@@ -144,8 +155,16 @@ const MemberActions: React.FC<{
 
                     <button onClick={() => { setOpen(false); onEdit(member); }}>Edit Details</button>
 
-                    {context !== 'blocked' && (
+                    {member.status === 'Blocked' ? (
+                        <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Unblock Member</button>
+                    ) : (
                         <button onClick={() => { setOpen(false); handleUpdateStatus("Blocked"); }}>Block Member</button>
+                    )}
+
+                    {member.status === 'Deactivated' ? (
+                        <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
+                    ) : (
+                        <button onClick={() => { setOpen(false); handleUpdateStatus("Deactivated"); }}>Deactivate Account</button>
                     )}
 
                     <button onClick={() => { setOpen(false); onPackage(member); }}>Manage Package</button>
@@ -158,7 +177,7 @@ const MemberActions: React.FC<{
     );
 };
 
-const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaultStatus, context }) => {
+const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaultStatus, context, initialRole, initialVerifiedFilter }) => {
     const { openAdvocateReg, openClientReg, impersonate } = useAuth();
     const [members, setMembers] = useState<Member[]>(initialMembers || []);
     const [loading, setLoading] = useState(!initialMembers);
@@ -166,8 +185,8 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
     const [filterStatus, setFilterStatus] = useState<string>(defaultStatus || "All");
     const [filterCategory, setFilterCategory] = useState<string>("All"); // Use as Package Filter
     const [filterLevel, setFilterLevel] = useState<string>("All");
-    const [activeRole, setActiveRole] = useState<"Advocate" | "Client" | "All">("All");
-    const [filterVerified, setFilterVerified] = useState<"All" | "Verified" | "Unverified" | "Rejected" | "Resubmitted">("All");
+    const [activeRole, setActiveRole] = useState<"Advocate" | "Client" | "All">(initialRole || "All");
+    const [filterVerified, setFilterVerified] = useState<"All" | "Verified" | "Unverified" | "Rejected" | "Resubmitted">(initialVerifiedFilter || "All");
     const [filterRegDate, setFilterRegDate] = useState<string>("All"); // Today, Last 7 Days, Last 30 Days, Custom
     const [filterLocation, setFilterLocation] = useState({ country: "All", state: "All", city: "All", pincode: "" });
     const [sortBy, setSortBy] = useState<string>("newest");
@@ -207,12 +226,14 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
             try {
                 const res = await axios.get(`/api/admin/members/${member.id}`);
                 if (res.data.success) {
-                    // Combine user and profile data
+                    // Combine user and profile data safely
+                    const apiData = res.data.member;
                     const fullMember = {
                         ...member,
-                        ...res.data.member.user,
-                        ...res.data.member.profile,
-                        id: res.data.member.user._id // Ensure we use the correct ID
+                        ...(apiData.user || {}),
+                        ...(apiData.profile || {}),
+                        documents: apiData.documents || [],
+                        id: apiData.user?._id || member.id // Maintain consistent ID
                     };
                     setSelectedMember(fullMember);
                 } else {
@@ -277,7 +298,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     const role = (m.role || "").toLowerCase();
                     return {
                         id: m.id,
-                        code: role === 'advocate' ? `A-${m.id.slice(-4)}` : `C-${m.id.slice(-4)}`,
+                        code: m.unique_id || (role === 'advocate' ? `TP-EAD-ADV${m.id.slice(-5)}` : `TP-EAD-CL${m.id.slice(-5)}`),
                         role: role === 'advocate' ? 'Advocate' : 'Client',
                         name: m.name || 'Anonymous',
                         email: m.email,
@@ -418,9 +439,27 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
             matchesUltra = ultraFilter.supportType === "All" || m.supportType === ultraFilter.supportType;
         }
 
+        // Context-Based Overrides
+        let matchesContext = true;
+        if (context === 'free') {
+            matchesContext = (m.plan || 'Free').toLowerCase() === 'free';
+        } else if (context === 'premium') {
+            matchesContext = (m.plan || 'Free').toLowerCase() !== 'free';
+        } else if (context === 'approved') {
+            matchesContext = m.verified === true;
+        } else if (context === 'pending') {
+            matchesContext = !m.verified && m.status !== 'Blocked' && m.status !== 'Deactivated' && m.status !== 'Deleted';
+        } else if (context === 'deactivated') {
+            matchesContext = m.status === 'Deactivated';
+        } else if (context === 'blocked') {
+            matchesContext = m.status === 'Blocked';
+        } else if (context === 'reported') {
+            matchesContext = m.reported > 0;
+        }
+
         return matchesSearch && matchesStatus && matchesRole && matchesPlan && matchesVerified &&
             matchesDate && matchesLocation && matchesAdv && matchesClient && matchesUltra &&
-            matchesGender && matchesReported && matchesIdProofType;
+            matchesGender && matchesReported && matchesIdProofType && matchesContext;
     });
 
     const sortedMembers = [...filteredMembers].sort((a, b) => {
@@ -788,7 +827,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                             <th>Verification Status</th>
                             <th>Reported</th>
                             <th>Plan/Subplan</th>
-                            <th>View</th>
+                            {context !== 'free' && <th>Price</th>}
                             <th>Since</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -820,7 +859,12 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                         <div className={styles.phone}>{m.phone}</div>
                                     </div>
                                 </td>
-                                <td>{m.location || "N/A"}</td>
+                                <td>
+                                    {typeof m.location === 'object' && m.location !== null
+                                        ? Object.values(m.location).filter(v => v && typeof v !== 'object').join(", ")
+                                        : (m.location || "N/A")
+                                    }
+                                </td>
                                 <td>{m.gender}</td>
                                 <td>
                                     {m.verified ? (
@@ -845,36 +889,44 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                     <div className={styles.planCell}>
                                         {(() => {
                                             const p = m.plan || "Free";
-                                            if (p === "Free") return <strong>Free</strong>;
+                                            if (p === "Free" || p === "") return <span className={styles.standardPlan}>Free</span>;
 
-                                            // Handle "Package/Subpackage" or "Package Subpackage"
-                                            let main = p;
-                                            let sub = "";
-
-                                            if (p.includes("/")) {
-                                                [main, sub] = p.split("/");
-                                            } else if (p.toLowerCase().includes("pro lite")) {
-                                                main = "Pro Lite";
-                                                sub = p.replace(/pro lite/i, "").trim();
-                                            } else if (p.startsWith("Pro ")) {
-                                                main = "Pro";
-                                                sub = p.replace("Pro ", "").trim();
-                                            } else if (p.startsWith("Ultra Pro ")) {
-                                                main = "Ultra Pro";
-                                                sub = p.replace("Ultra Pro ", "").trim();
-                                            }
+                                            const isPremium = p.toLowerCase().includes("pro") || p.toLowerCase().includes("ultra");
 
                                             return (
-                                                <>
-                                                    <strong>{main}</strong>
-                                                    {sub && <span className={styles.subPlan}>{sub}</span>}
-                                                </>
+                                                <div className={isPremium ? styles.premiumPlan : styles.standardPlan}>
+                                                    {p}
+                                                </div>
                                             );
                                         })()}
                                     </div>
                                 </td>
 
-                                <td>{m.view || 0}</td>
+                                {context !== 'free' && (
+                                    <td>
+                                        {(() => {
+                                            const plan = m.plan || "Free";
+                                            const isFree = plan.toLowerCase() === "free" || plan === "";
+
+                                            if (isFree) {
+                                                return <span className={styles.freePrice}>₹0</span>;
+                                            }
+
+                                            try {
+                                                const features = getFeaturesFromPlan(plan);
+                                                const price = features.price;
+
+                                                return (
+                                                    <div className={styles.priceCell}>
+                                                        <span className={styles.priceAmount}>₹{price.toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                );
+                                            } catch (err) {
+                                                return <span className={styles.priceError}>N/A</span>;
+                                            }
+                                        })()}
+                                    </td>
+                                )}
                                 <td>{m.since}</td>
 
                                 <td>

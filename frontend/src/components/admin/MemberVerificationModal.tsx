@@ -68,14 +68,26 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
 
     if (!member) return null;
 
-    const isAdvocate = member.role.toLowerCase() === 'advocate';
+    const isAdvocate = member.role?.toLowerCase() === 'advocate';
     const profile = member;
 
     const renderDataField = (label: string, value: any, icon?: React.ReactNode) => {
         if (value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0)) return null;
 
         let displayValue = value;
-        if (Array.isArray(value)) displayValue = value.join(", ");
+        if (Array.isArray(value)) {
+            displayValue = value.join(", ");
+        } else if (typeof value === 'object' && value !== null) {
+            // Handle plain objects (like location or address)
+            try {
+                displayValue = Object.values(value)
+                    .filter(v => v !== undefined && v !== null && (typeof v === 'string' || typeof v === 'number'))
+                    .join(", ");
+                if (!displayValue) return null;
+            } catch (e) {
+                return null;
+            }
+        }
 
         return (
             <div className={styles.dataField}>
@@ -99,7 +111,7 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                     <p>{fileName}</p>
                 </div>
                 <a
-                    href={`/${path}`}
+                    href={`/${path.replace(/\\/g, '/')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.viewFileBtn}

@@ -13,8 +13,8 @@ const ManagerPermissions: React.FC = () => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
-        if (settings?.manager_permissions) {
-            setPermissions(settings.manager_permissions);
+        if (settings) {
+            setPermissions(settings.manager_permissions || {});
         }
     }, [settings]);
 

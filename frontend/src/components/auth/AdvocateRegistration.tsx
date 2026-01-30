@@ -109,6 +109,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         terms4: false,
         signatureProvided: false,
         signatureDate: '',
+        emailVerified: false,
+        mobileVerified: false,
     });
 
 
@@ -148,8 +150,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 );
             case 2:
                 return (
-                    formData.emailOtp?.length === 6 &&
-                    formData.emailVerified
+                    formData.emailVerified &&
+                    formData.mobileVerified
                 );
             case 3:
                 return formData.password && formData.confirmPassword && (formData.password === formData.confirmPassword);
@@ -239,7 +241,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     profilePhoto: 'adr-profilePic',
                     degreeCertificate: 'adr-degreeCert',
                     idProofDocument: 'adr-idProof',
-                    practiceLicense: 'adr-practiceLicense'
+                    practiceLicense: 'adr-practiceLicense',
+                    signature: 'signature'
                 };
 
                 Object.keys(formData).forEach(key => {

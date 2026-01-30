@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import type { User } from '../types';
 
 interface AuthContextType {
@@ -86,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userRole');
         localStorage.removeItem('token'); // ENSURE TOKEN IS REMOVED
+        window.location.href = '/';
     };
 
     const openAuthModal = (tab: 'login' | 'register' = 'login') => {
@@ -113,31 +115,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const openHelpModal = () => setIsHelpModalOpen(true);
     const closeHelpModal = () => setIsHelpModalOpen(false);
 
-    const impersonate = (targetUser: User) => {
-        // Save admin session
-        const currentToken = localStorage.getItem('token');
-        const currentUser = localStorage.getItem('user');
-        // Save where the admin currently is
-        localStorage.setItem('adminReferrer', window.location.pathname);
+    const impersonate = async (targetUser: User) => {
+        try {
+            const adminToken = localStorage.getItem('token');
+            const res = await axios.post(`/api/admin/impersonate/${targetUser.id}`, {}, {
+                headers: { Authorization: adminToken }
+            });
 
-        if (currentToken) localStorage.setItem('adminToken', currentToken);
-        if (currentUser) localStorage.setItem('adminUser', currentUser);
+            if (res.data.success) {
+                // Save admin session
+                const currentUser = localStorage.getItem('user');
+                localStorage.setItem('adminReferrer', window.location.pathname);
+                if (adminToken) localStorage.setItem('adminToken', adminToken);
+                if (currentUser) localStorage.setItem('adminUser', currentUser);
 
-        // Switch to user session
-        localStorage.setItem('user', JSON.stringify(targetUser));
-        localStorage.setItem('userRole', targetUser.role);
-        localStorage.setItem('isImpersonating', 'true');
-        // Using a mock token for impersonation as seen in MemberTable
-        localStorage.setItem('token', 'mock_token_' + targetUser.id);
+                // Switch to user session
+                const { token, user: impersonatedUser } = res.data;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(impersonatedUser));
+                localStorage.setItem('userRole', impersonatedUser.role);
+                localStorage.setItem('isImpersonating', 'true');
 
-        setUser(targetUser);
-        setIsImpersonating(true);
+                setUser(impersonatedUser);
+                setIsImpersonating(true);
 
-        // Redirect based on role
-        const role = targetUser.role.toLowerCase();
-        if (role === 'advocate') window.location.href = '/dashboard/advocate';
-        else if (role === 'client') window.location.href = '/dashboard/client';
-        else window.location.href = '/dashboard/user';
+                // Redirect based on role
+                const role = impersonatedUser.role.toLowerCase();
+                if (role === 'advocate') window.location.href = '/dashboard/advocate';
+                else if (role === 'client') window.location.href = '/dashboard/client';
+                else window.location.href = '/dashboard/user';
+            } else {
+                alert(res.data.error || 'Failed to impersonate member');
+            }
+        } catch (err: any) {
+            console.error('Impersonation call failed:', err);
+            alert(err.response?.data?.error || 'Error during impersonation');
+        }
     };
 
     const switchBackToAdmin = () => {

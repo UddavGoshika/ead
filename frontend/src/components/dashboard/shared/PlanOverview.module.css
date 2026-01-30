@@ -1,0 +1,289 @@
+.container {
+    padding: 20px;
+    margin-bottom: 250px;
+    padding-bottom: 250px;
+    width: 100%;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+}
+
+.titleInfo h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 5px;
+    background: linear-gradient(to right, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.titleInfo p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+.upgradeBtn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upgradeBtn:hover {
+    background: #d4af37;
+    color: #000;
+}
+
+.subscriptionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.glassCard {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 25px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+    color: #94a3b8;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Wallet Styles */
+.walletDisplay {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.coinCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-size: 48px;
+    font-weight: 800;
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.subtext {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.limitsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.limitItem {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.limitItem b {
+    color: #fff;
+}
+
+/* Benefit Grid */
+.benefitSection h4 {
+    color: #fff;
+    font-size: 15px;
+    margin-bottom: 15px;
+}
+
+.benefitGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.benefitItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+/* Statistics Styles */
+.statsRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.compactStat {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.statDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-bottom: 5px;
+}
+
+.compactLabel {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.compactVal {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Ledger Styles */
+.ledgerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+}
+
+.ledgerHeader span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.ledgerList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ledgerItem {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.ledgerIcon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+}
+
+.ledgerInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ledgerInfo b {
+    color: #fff;
+    font-size: 14px;
+}
+
+.ledgerInfo span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.ledgerCost {
+    color: #fbbf24;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.emptyLedger {
+    text-align: center;
+    padding: 40px;
+    color: #475569;
+    font-size: 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+@media (max-width: 1024px) {
+    .subscriptionGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .headerRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .benefitGrid {
+        grid-template-columns: 1fr;
+    }
+}

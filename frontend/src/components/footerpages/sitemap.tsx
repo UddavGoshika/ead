@@ -111,7 +111,7 @@ const Sitemap: React.FC = () => {
                                     <li><a href="#">Tatito Career Hub</a></li>
                                     <li><a href="#">Tatito Nexus</a></li>
                                     <li><a href="#">Tatito Civic One</a></li>
-                                    <li><a href="#">Tatito Health+</a></li>
+                                    <li><a href="#">E-Advocate Services</a></li>
                                     <li><a href="#">Tatito Fashions</a></li>
                                 </ul>
                             </div>

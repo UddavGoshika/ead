@@ -138,3 +138,96 @@
         width: 100%;
     }
 }
+
+/* Premium Restrictions */
+.gridContainer {
+    position: relative;
+    width: 100%;
+}
+
+.lockedGrid {
+    overflow: hidden;
+    max-height: 800px;
+    /* Limit height when locked */
+}
+
+.lockedGrid .grid {
+    filter: blur(15px) grayscale(0.8);
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+}
+
+.premiumOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.premiumLockCard {
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    max-width: 450px;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.lockIconWrap {
+    margin-bottom: 24px;
+}
+
+.pulseIcon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+    }
+
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.6));
+    }
+
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+    }
+}
+
+.premiumLockCard ul li {
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.upgradeBtnAction:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(234, 179, 8, 0.5);
+}

@@ -24,13 +24,14 @@ import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
 import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
+import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 
 const AdvocateDashboard: React.FC = () => {
     const { user } = useAuth();
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || ['Silver', 'Gold', 'Platinum', 'Pro', 'Ultra'].some(p => plan.includes(p));
-    const isPro = plan.includes('Pro') || plan.includes('Lite');
-    const isUltra = plan.includes('Ultra');
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
+    const isUltra = plan.toLowerCase().includes('ultra');
 
     const [currentPage, setCurrentPage] = useState('featured-profiles');
     const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
@@ -110,6 +111,8 @@ const AdvocateDashboard: React.FC = () => {
                 );
             case 'activity':
                 return <Activity />;
+            case 'my-subscription':
+                return <PlanOverview />;
             case 'messenger':
                 return <Messenger
                     view="list"
@@ -172,7 +175,7 @@ const AdvocateDashboard: React.FC = () => {
             <main className={styles.mainContentadvocatedash}>
                 <header className={styles.topBar}>
                     <div className={styles.topBarLeft}>
-                        <button className={styles.hamburger} onClick={toggleSidebar}>
+                        <button className={styles.hamburger} onClick={() => setSidebarOpen(true)}>
                             <Menu size={24} />
                         </button>
                         {currentPage !== 'featured-profiles' && (
@@ -182,14 +185,15 @@ const AdvocateDashboard: React.FC = () => {
                         )}
                         <h1 className={styles.pageTitle}>
                             {getPageTitle()}
-                            {currentPage === 'featured-profiles' && <span>some one is posted their blogs</span>}
-                            <div className={styles.badgeStack}>
-                                {isUltra && <span className={`${styles.planBadge} ${styles.ultraBadge}`}>Ultra Pro</span>}
-                                {isPro && !isUltra && <span className={`${styles.planBadge} ${styles.proBadge}`}>Pro</span>}
-                                {!isPremium && <span className={`${styles.planBadge} ${styles.freeBadge}`}>Free</span>}
-                            </div>
                         </h1>
                     </div>
+
+                    {currentPage === 'featured-profiles' && (
+                        <div className={styles.newsTicker}>
+                            <span className={styles.tickerText}>✨ Latest News: Someone just posted a new professional blog! Boost your visibility today. ✨</span>
+                        </div>
+                    )}
+
                     <div className={styles.topBarRight}>
                         {currentPage === 'blogs' && isPremium && (
                             <button
@@ -201,7 +205,7 @@ const AdvocateDashboard: React.FC = () => {
                             </button>
                         )}
                         <button className={styles.notificationBtn}>
-                            <Bell size={22} />
+                            <Bell size={24} />
                         </button>
                     </div>
                 </header>

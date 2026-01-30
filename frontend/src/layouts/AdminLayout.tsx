@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 
 
 const AdminLayout: React.FC = () => {
-    const { isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg } = useAuth();
+    const { logout, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg } = useAuth();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -27,10 +27,7 @@ const AdminLayout: React.FC = () => {
     };
 
     const handleLogout = () => {
-        // Simple logout logic - clear local storage and redirect
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        navigate('/');
+        logout();
     };
 
     useEffect(() => {

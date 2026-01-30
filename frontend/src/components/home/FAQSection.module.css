@@ -18,8 +18,9 @@
 }
 
 .title {
+    font-family: 'Playfair Display', serif;
     font-size: 2.8rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 15px;
     background: linear-gradient(to right, var(--primary-gold), #fff);
     background-clip: text;
@@ -28,6 +29,7 @@
 }
 
 .subtitle {
+    font-family: 'Outfit', sans-serif;
     color: #94a3b8;
 }
 
@@ -86,6 +88,7 @@
 }
 
 .question {
+    font-family: 'Playfair Display', serif;
     width: 100%;
     padding: 24px 30px;
     display: flex;
@@ -115,19 +118,46 @@
 }
 
 .answer {
+    font-family: 'Outfit', sans-serif;
     padding: 0 30px 24px;
     color: #94a3b8;
     line-height: 1.8;
     font-size: 1.1rem;
 }
 
+@media (max-width: 1024px) {
+    .faqSection {
+        padding: 80px 0;
+    }
+}
+
 @media (max-width: 768px) {
+    .faqSection {
+        padding: 60px 0;
+    }
+
     .title {
         font-size: 2rem;
     }
 
     .question {
-        padding: 20px;
-        font-size: 1.1rem;
+        padding: 18px 20px;
+        font-size: 1rem;
+    }
+
+    .answer {
+        padding: 0 20px 18px;
+        font-size: 0.95rem;
+    }
+
+    .searchBar input {
+        padding: 14px 15px 14px 50px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.75rem;
     }
 }

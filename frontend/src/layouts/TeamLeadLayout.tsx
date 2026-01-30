@@ -3,8 +3,10 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import TeamLeadSidebar from '../components/teamlead/TeamLeadSidebar';
 import styles from './TeamLeadLayout.module.css';
 import NotificationBell from "./notification";
+import { useAuth } from '../context/AuthContext';
 
 const TeamLeadLayout: React.FC = () => {
+    const { logout } = useAuth();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -21,9 +23,7 @@ const TeamLeadLayout: React.FC = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        navigate('/');
+        logout();
     };
 
     useEffect(() => {

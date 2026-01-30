@@ -187,7 +187,16 @@ const MemberVerification: React.FC = () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/api/admin/members/${id}`);
             if (res.data.success) {
-                setSelectedMember(res.data.member);
+                const apiData = res.data.member;
+                const fullMember = {
+                    ...(apiData.user || {}),
+                    ...(apiData.profile || {}),
+                    documents: apiData.documents || [],
+                    id: apiData.user?._id || id,
+                    regDate: apiData.user?.createdAt || new Date().toISOString(),
+                    role: apiData.user?.role || "Advocate" // Default or actual role
+                } as PendingMember;
+                setSelectedMember(fullMember);
             }
         } catch (error) {
             console.error("Failed to fetch member details", error);
@@ -196,7 +205,7 @@ const MemberVerification: React.FC = () => {
 
     const isChecklistComplete = () => {
         if (!selectedMember) return false;
-        const required = selectedMember.role.toLowerCase() === "advocate"
+        const required = selectedMember.role?.toLowerCase() === "advocate"
             ? ["id", "address", "degree", "license", "photo"]
             : ["id", "address", "photo"];
         return required.every(key => checklist[key]);
@@ -268,6 +277,23 @@ const MemberVerification: React.FC = () => {
 
     const renderDataField = (label: string, value: any, icon?: React.ReactNode) => {
         if (!value || (Array.isArray(value) && value.length === 0)) return null;
+
+        let displayValue = value;
+        if (Array.isArray(value)) {
+            displayValue = value.join(", ");
+        } else if (typeof value === 'object' && value !== null) {
+            // Handle objects like location {city, state, country} or other nested data
+            try {
+                displayValue = Object.values(value)
+                    .filter(v => v !== undefined && v !== null && (typeof v === 'string' || typeof v === 'number'))
+                    .join(", ");
+                if (!displayValue) return null;
+            } catch (e) {
+                console.warn("Failed to stringify object field", label, value);
+                return null;
+            }
+        }
+
         return (
             <div className={styles.dataField}>
                 <div className={styles.fieldLabel}>
@@ -275,7 +301,7 @@ const MemberVerification: React.FC = () => {
                     {label}
                 </div>
                 <div className={styles.fieldValue}>
-                    {Array.isArray(value) ? value.join(", ") : value}
+                    {displayValue}
                 </div>
             </div>
         );
@@ -358,7 +384,7 @@ const MemberVerification: React.FC = () => {
                             </div>
 
                             {/* 2. Advocate Specific: Education & Practice */}
-                            {selectedMember.role.toLowerCase() === "advocate" && (
+                            {selectedMember.role?.toLowerCase() === "advocate" && (
                                 <>
                                     <div className={styles.contentSection}>
                                         <h3 className={styles.sectionTitle}><GraduationCap size={18} /> Education & Certification</h3>
@@ -406,7 +432,7 @@ const MemberVerification: React.FC = () => {
                             )}
 
                             {/* 3. Client Specific: Legal Requirements & Address */}
-                            {selectedMember.role.toLowerCase() === "client" && (
+                            {selectedMember.role?.toLowerCase() === "client" && (
                                 <>
                                     <div className={styles.contentSection}>
                                         <h3 className={styles.sectionTitle}><FileText size={18} /> Legal Help Requirements</h3>
@@ -507,7 +533,7 @@ const MemberVerification: React.FC = () => {
                                         />
                                         <span>Is the address verified?</span>
                                     </label>
-                                    {selectedMember.role.toLowerCase() === "advocate" && (
+                                    {selectedMember.role?.toLowerCase() === "advocate" && (
                                         <>
                                             <label className={styles.checkItem}>
                                                 <input

@@ -1,449 +1,316 @@
-/* About.module.css - Full Width Layout */
 .aboutPage {
     min-height: 100vh;
-    margin-top: 170px;
-    background-color: rgba(2, 7, 12, 0.793);
-    font-family: Arial, Helvetica, sans-serif;
+    background: #020617;
+    background-image:
+        radial-gradient(circle at 10% 20%, #0f172a 0%, #020617 100%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    padding-top: 100px;
+    color: #f1f5f9;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
 }
 
 .aboutContainer {
-    margin-top: 200px;
-    /* padding: 20px 40px; */
-    max-width: 1400px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
 }
 
-/* Header */
-.aboutHeader {
+/* Header Section */
+.headerSection {
     text-align: center;
-    padding: 50px 20px;
-    /* background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); */
-    border-radius: 20px;
-    margin-bottom: 50px;
-    backdrop-filter: blur(10px);
-    /* border: 1px solid rgba(255, 255, 255, 0.1); */
+    margin-bottom: 80px;
 }
 
-.aboutHeader h1 {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 20px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+.badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
     letter-spacing: 2px;
+    display: inline-block;
+    margin-bottom: 24px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-.tagline {
-    font-size: 1.4rem;
-    color: rgba(255, 255, 255, 0.85);
-    max-width: 900px;
+.title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    background: linear-gradient(to bottom, #ffffff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: #94a3b8;
+    max-width: 700px;
     margin: 0 auto;
     line-height: 1.6;
 }
 
-/* Full Width Content Layout */
 .aboutContent {
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
 }
 
-/* Full Width Cards */
+/* Glassmorphism Cards */
 .fullWidthCard {
-    width: 94%;
-    background: rgba(2, 7, 12, 0.793);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    transition: all 0.3s ease;
-    color: #ffffff;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .fullWidthCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-    border-color: rgba(212, 175, 55, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(15, 23, 42, 0.6);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
 }
 
-/* Card Header */
 .cardHeader {
+    padding: 40px;
     display: flex;
     align-items: center;
-    gap: 25px;
-    margin-bottom: 30px;
-    padding-bottom: 25px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    gap: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .headerIcon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: rgba(212, 175, 55, 0.15);
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
-    color: #d4af37;
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
     flex-shrink: 0;
 }
 
-.headerText {
-    flex: 1;
-}
-
 .headerText h2 {
-    font-size: 2.5rem;
-    font-weight: 600;
-    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
     color: #ffffff;
+    margin: 0;
 }
 
 .headerSubtitle {
-    font-size: 1.1rem;
-    margin-top: 8px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Card Body */
-.cardBody {
-    line-height: 1.8;
-    font-size: 16px;
-}
-
-.cardBody h3 {
-    color: #d4af37;
-    margin: 30px 0 20px;
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.cardBody h4 {
-    color: #ffffff;
-    margin: 25px 0 15px;
-    font-size: 1.3rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 4px;
     font-weight: 500;
 }
 
-/* Feature List */
-.featureList {
-    padding-left: 25px;
-    margin-bottom: 30px;
+.cardContent {
+    padding: 40px;
 }
 
-.featureList li {
-    margin-bottom: 12px;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 16px;
-    line-height: 1.7;
-}
-
-.featureList strong {
-    color: #d4af37;
-    font-weight: 600;
-}
-
-/* Purpose Box */
-.purposeBox {
-    background: rgba(212, 175, 55, 0.1);
-    border-left: 4px solid #d4af37;
-    padding: 20px;
-    border-radius: 0 10px 10px 0;
-    margin: 30px 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.purposeBox strong {
-    color: #d4af37;
-}
-
-/* Two Column Grid for internal content */
-.twoColumnGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-    margin: 30px 0;
-}
-
-.columnBox {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 25px;
-    border-radius: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.columnBox h3 {
-    color: #d4af37;
-    margin-bottom: 15px;
-    font-size: 1.3rem;
-}
-
-.columnBox p {
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.7;
-}
-
-/* Info Content for legal sections */
-.infoContent {
-    width: 100%;
-    color: #ffffff;
-    line-height: 1.9;
-    font-size: 16px;
-}
-
-.infoContent h3 {
-    color: #d4af37;
-    margin: 35px 0 20px;
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
-.infoContent p {
-    margin-bottom: 25px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.projectList {
-    padding-left: 25px;
-    margin-bottom: 35px;
-}
-
-.projectList li {
-    margin-bottom: 15px;
-    color: rgba(255, 255, 255, 0.9);
+.cardContent p {
+    color: #cbd5e1;
     line-height: 1.8;
+    margin-bottom: 24px;
+    font-size: 1.05rem;
 }
 
-.sectionDivider {
-    height: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 40px 0;
-    width: 100%;
+.cardContent h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #facc15;
+    margin: 32px 0 16px;
 }
 
-/* Accordion Styles */
+.cardContent ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.cardContent li {
+    padding-left: 28px;
+    position: relative;
+    color: #94a3b8;
+    line-height: 1.5;
+}
+
+.cardContent li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.cardContent strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Feature Grid inside cards */
+.featureGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.featureItem {
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+}
+
+.featureItem h4 {
+    margin: 0 0 12px;
+    color: #3b82f6;
+    font-size: 1.1rem;
+}
+
+.featureItem p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #94a3b8;
+}
+
+/* Legal Info Specifics */
+.legalInfoContent {
+    background: rgba(2, 6, 23, 0.4);
+    padding: 32px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.legalInfoContent h3 {
+    color: #facc15;
+    border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+
+/* Accordion Styling */
 .accordionContainer {
-    margin: 30px 0;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .accordionCard {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
-    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: all 0.3s ease;
 }
 
 .accordionHeader {
+    padding: 20px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    padding: 20px 25px;
-    cursor: pointer;
+    gap: 16px;
     list-style: none;
-    gap: 20px;
-    width: 100%;
+    outline: none;
 }
 
 .accordionHeader::-webkit-details-marker {
     display: none;
 }
 
-.accordionHeader h3 {
-    flex: 1;
-    margin: 0;
-    font-size: 1.3rem;
-    color: #ffffff;
-    font-weight: 500;
-}
-
 .iconWrapper {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: rgba(212, 175, 55, 0.2);
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #d4af37;
-    flex-shrink: 0;
+    color: #3b82f6;
+}
+
+.accordionHeader h3 {
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+    color: #ffffff;
+    flex: 1;
 }
 
 .arrow {
+    font-size: 0.8rem;
+    color: #64748b;
     transition: transform 0.3s ease;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
 }
 
-.accordionCard[open] .arrow {
+details[open] .arrow {
     transform: rotate(180deg);
 }
 
 .accordionContent {
-    padding: 0 25px 25px 90px;
-    width: 100%;
-}
-
-.accordionContent p {
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.7;
-    margin-bottom: 20px;
+    padding: 0 20px 24px 76px;
 }
 
 .approvalImage {
-    width: 100%;
-    max-width: 600px;
+    max-width: 100%;
+    height: auto;
     border-radius: 12px;
-    margin: 20px 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    margin: 16px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    filter: grayscale(0.2) contrast(1.1);
 }
 
-/* Certifications */
+/* Certifications Box */
 .certifications {
-    padding: 30px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
     margin-top: 40px;
-    width: 95%;
+    padding: 32px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(2, 6, 23, 0));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 20px;
 }
 
 .certifications h3 {
-    margin-bottom: 15px;
-    font-size: 1.4rem;
-    color: #d4af37;
+    margin-top: 0;
 }
 
-.certifications ul {
-    padding-left: 25px;
-    line-height: 1.8;
-}
-
-.certifications li {
-    margin-bottom: 12px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.certifications strong {
-    color: #d4af37;
-}
-
-/* Contact Section (optional) */
-.contactSection {
-    text-align: center;
-    padding: 60px 40px;
-    margin-top: 50px;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
-    border-radius: 20px;
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    width: 100%;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    .aboutContainer {
-        padding: 20px 30px;
-    }
-
-    .fullWidthCard {
-        padding: 30px;
-    }
-
-    .headerText h2 {
-        font-size: 2.2rem;
-    }
-}
-
+/* Responsive Utilities */
 @media (max-width: 768px) {
-    .aboutContainer {
-        padding: 20px;
+    .aboutPage {
+        padding-top: 80px;
     }
 
-    .aboutHeader h1 {
-        font-size: 2.5rem;
+    .title {
+        font-size: 2.25rem;
     }
 
-    .tagline {
-        font-size: 1.2rem;
-    }
-
-    .fullWidthCard {
-        padding: 25px;
-    }
-
-    .cardHeader {
-        flex-direction: column;
-        text-align: center;
-        gap: 20px;
-    }
-
-    .headerText h2 {
-        font-size: 2rem;
-    }
-
-    .headerIcon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-    }
-
-    .twoColumnGrid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .accordionContent {
-        padding: 0 20px 20px 20px;
-    }
-
-    .accordionHeader {
-        padding: 18px 20px;
-    }
-
-    .accordionHeader h3 {
-        font-size: 1.2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .aboutContainer {
-        padding: 15px;
-    }
-
-    .aboutHeader {
-        padding: 30px 15px;
-    }
-
-    .aboutHeader h1 {
-        font-size: 2rem;
-    }
-
-    .tagline {
+    .subtitle {
         font-size: 1.1rem;
     }
 
-    .fullWidthCard {
-        padding: 20px;
+    .cardHeader {
+        padding: 24px;
+        flex-direction: column;
+        text-align: center;
     }
 
-    .headerText h2 {
-        font-size: 1.8rem;
+    .cardContent {
+        padding: 24px;
     }
 
-    .headerSubtitle {
-        font-size: 1rem;
+    .featureGrid {
+        grid-template-columns: 1fr;
     }
 
-    .cardBody h3 {
-        font-size: 1.3rem;
-    }
-
-    .featureList li {
-        font-size: 15px;
+    .accordionContent {
+        padding-left: 20px;
     }
 }

@@ -37,6 +37,7 @@ export interface MenuItem {
     badge?: string;
     children?: MenuItem[];
     isAdminOnly?: boolean;
+    parentId?: string;
 }
 
 export const MANAGER_MENU_SCHEMA: MenuItem[] = [
@@ -165,6 +166,7 @@ export const MANAGER_MENU_SCHEMA: MenuItem[] = [
     {
         id: "contact-us-queries",
         name: "Contact Us Queries",
+        parentId: "support-ticket",
         icon: MdEmail,
         path: "/manager/contact-queries",
     },
@@ -300,7 +302,13 @@ interface SidebarProps {
     collapsed: boolean;
 }
 
-const MenuItemComponent: React.FC<{ item: MenuItem; depth?: number; search: string; collapsed: boolean }> = ({ item, depth = 0, search, collapsed }) => {
+const MenuItemComponent: React.FC<{
+    item: MenuItem;
+    depth?: number;
+    search: string;
+    collapsed: boolean;
+    parentIsRestricted?: boolean;
+}> = ({ item, depth = 0, search, collapsed, parentIsRestricted = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
 
@@ -321,7 +329,10 @@ const MenuItemComponent: React.FC<{ item: MenuItem; depth?: number; search: stri
     // An item is restricted if:
     // 1. It is explicitly marked as isAdminOnly
     // 2. Its ID is explicitly set to false in permissions
-    const isRestricted = item.isAdminOnly || permissions[item.id] === false;
+    // 3. Its parent is restricted (cascading permission)
+    // 4. Its logical parentId (if defined) is restricted
+    const currentIsRestricted = item.isAdminOnly || permissions[item.id] === false;
+    const isRestricted = !!(parentIsRestricted || currentIsRestricted || (item.parentId && permissions[item.parentId] === false));
 
     const toggle = (e: React.MouseEvent) => {
         if (isRestricted) {
@@ -342,7 +353,7 @@ const MenuItemComponent: React.FC<{ item: MenuItem; depth?: number; search: stri
                     `${styles.menuItem} ${(linkActive || isActive) ? styles.activeItem : ''} ${depth > 0 ? styles.subItem : ''} ${collapsed ? styles.collapsedItem : ''} ${isRestricted ? styles.restricted : ''}`
                 }
                 onClick={toggle}
-                title={isRestricted ? 'Restricted to Admin' : (collapsed ? item.name : '')}
+                title={isRestricted ? 'Access Restricted by Admin' : (collapsed ? item.name : '')}
             >
                 <div className={styles.itemContent}>
                     {item.icon && (
@@ -352,7 +363,7 @@ const MenuItemComponent: React.FC<{ item: MenuItem; depth?: number; search: stri
                     )}
                     {!collapsed && <span>{item.name}</span>}
                     {!collapsed && item.badge && <span className={styles.badge}>{item.badge}</span>}
-                    {!collapsed && isRestricted && <span className={styles.adminOnlyTag}>Admin Only</span>}
+                    {!collapsed && isRestricted && <span className={styles.adminOnlyTag}>Restricted</span>}
                 </div>
                 {!collapsed && hasChildren && (
                     <span className={`${styles.chevron} ${isOpen || isActive ? styles.chevronOpen : ''}`}>▶</span>
@@ -364,10 +375,11 @@ const MenuItemComponent: React.FC<{ item: MenuItem; depth?: number; search: stri
                     {item.children?.map(child => (
                         <MenuItemComponent
                             key={child.id}
-                            item={isRestricted ? { ...child, isAdminOnly: true } : child}
+                            item={child}
                             depth={depth + 1}
                             search={search}
                             collapsed={collapsed}
+                            parentIsRestricted={isRestricted}
                         />
                     ))}
                 </div>

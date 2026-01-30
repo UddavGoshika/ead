@@ -14,6 +14,11 @@ const SearchSection: React.FC = () => {
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [clients, setClients] = useState<ClientProfile[]>([]);
     const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({
+        location: '',
+        experience: '',
+        specialization: ''
+    });
 
     // Modal & Notification State
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -22,20 +27,40 @@ const SearchSection: React.FC = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [searchRole]); // Re-fetch when role switches
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const advRes = await advocateService.getAdvocates();
-            if (advRes.data.success) setAdvocates(advRes.data.advocates);
-        } catch (err) { console.error('Error fetching advocates:', err); }
+            const params: any = {};
+            if (filters.location && filters.location !== 'Location') params.city = filters.location;
+            if (filters.experience && filters.experience !== 'Experience') params.experience = filters.experience;
+            if (filters.specialization && filters.specialization !== 'Specialization') {
+                if (searchRole === 'advocates') params.specialization = filters.specialization;
+                else params.category = filters.specialization;
+            }
 
-        try {
-            const clientRes = await clientService.getClients();
-            if (clientRes.data.success) setClients(clientRes.data.clients);
-        } catch (err) { console.error('Error fetching clients:', err); }
-        setLoading(false);
+            if (searchRole === 'advocates') {
+                const advRes = await advocateService.getAdvocates(params);
+                if (advRes.data.success) setAdvocates(advRes.data.advocates);
+            } else {
+                const clientRes = await clientService.getClients(params);
+                if (clientRes.data.success) setClients(clientRes.data.clients);
+            }
+        } catch (err) {
+            console.error('Error fetching profiles:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const applyFilters = () => {
+        fetchData();
     };
 
     const handleAction = async (targetId: string, action: string) => {
@@ -167,22 +192,39 @@ const SearchSection: React.FC = () => {
 
                     <div className={styles.filterBar}>
                         <div className={styles.selectWrapper}>
-                            <select><option>Location</option><option>Mumbai</option><option>Delhi</option></select>
+                            <select name="location" value={filters.location} onChange={handleFilterChange}>
+                                <option>Location</option>
+                                <option>Mumbai</option>
+                                <option>Delhi</option>
+                                <option>Bangalore</option>
+                            </select>
                             <ChevronDown className={styles.chevron} size={18} />
                         </div>
                         <div className={`${styles.selectWrapper} ${searchRole === 'clients' ? styles.disabledFilter : ''}`}>
-                            <select disabled={searchRole === 'clients'}>
-                                {searchRole === 'clients' ? <option>Experience </option> : (
-                                    <><option>Experience</option><option>0-5 Years</option><option>5-10 Years</option><option>10+ Years</option></>
-                                )}
+                            <select
+                                name="experience"
+                                value={filters.experience}
+                                onChange={handleFilterChange}
+                                disabled={searchRole === 'clients'}
+                            >
+                                <option>Experience</option>
+                                <option>0-5 Years</option>
+                                <option>5-10 Years</option>
+                                <option>10+ Years</option>
                             </select>
                             <ChevronDown className={styles.chevron} size={18} />
                         </div>
                         <div className={styles.selectWrapper}>
-                            <select><option>Specialization</option><option>Corporate</option><option>Criminal</option></select>
+                            <select name="specialization" value={filters.specialization} onChange={handleFilterChange}>
+                                <option>Specialization</option>
+                                <option>Corporate</option>
+                                <option>Criminal</option>
+                                <option>Civil</option>
+                                <option>Family</option>
+                            </select>
                             <ChevronDown className={styles.chevron} size={18} />
                         </div>
-                        <button className={styles.applyBtn}>Apply Filters</button>
+                        <button className={styles.applyBtn} onClick={applyFilters}>Apply Filters</button>
                     </div>
                 </div>
 

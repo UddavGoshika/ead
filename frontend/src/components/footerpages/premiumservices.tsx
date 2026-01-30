@@ -16,97 +16,146 @@ import {
     Globe,
     Clock,
     X,
-    Lock
+    Lock,
+    ShieldCheck,
+    Gem,
+    Crown
 } from 'lucide-react';
 import { PaymentManager } from '../../services/payment/PaymentManager';
 import type { PaymentGateway } from '../../types/payment';
 import { useAuth } from '../../context/AuthContext';
 
-type PlanKey = "free" | "lite" | "pro" | "ultra";
-type TierKey = "silver" | "gold" | "platinum";
+// Backend Package Interface
+interface BackendTier {
+    _id?: string;
+    name: string;
+    price: number;
+    coins: number | "unlimited";
+    support?: string;
+    active: boolean;
+    features?: string[];
+    badgeColor?: string;
+    glowColor?: string;
+    popular?: boolean;
+}
+
+interface BackendPackage {
+    _id?: string;
+    memberType: "advocate" | "client";
+    name: string; // This is the category name
+    description?: string;
+    icon?: string;
+    gradient?: string;
+    tiers: BackendTier[];
+    featured?: boolean;
+    sortOrder?: number;
+}
 
 type MembershipPlan = {
     title: string;
     icon: any;
     description: string;
     features: string[];
+    tiers: {
+        name: string;
+        price: number;
+        active: boolean;
+    }[];
 };
 
-const membershipPlans: Record<PlanKey, MembershipPlan> = {
-    free: {
-        title: "Free Access",
-        icon: <Star size={24} />,
-        description: "Explore the platform with basic features and public access.",
-        features: [
-            "Basic Search Visibility",
-            "Public Profile Access",
-            "Send Case Interest (Limited)",
-            "Community Support Access",
-            "Mobile Web View",
-            "Legal Resource Library"
-        ],
-    },
-    lite: {
-        title: "Pro Lite",
-        icon: <Zap size={24} />,
-        description: "Essential premium features for growing legal careers.",
-        features: [
-            "Search Visibility Boost (Basic)",
-            "Instant Message Access",
-            "Enhanced Profile Badge",
-            "Standard Case Interest Posting",
-            "Mobile App Access",
-            "Email Support"
-        ],
-    },
-    pro: {
-        title: "Pro",
-        icon: <Shield size={24} />,
-        description: "Advanced tools for established legal professionals.",
-        features: [
-            "Top-of-Search Priority Placement",
-            "Featured Profile Listing",
-            "Profile Visitor Analytics",
-            "Direct Super Interest Access",
-            "Unlimited Case Interests",
-            "Voice & Video Call Support",
-            "24/7 Priority Support"
-        ],
-    },
-    ultra: {
-        title: "Ultra Pro Luxury",
-        icon: <Cpu size={24} />,
-        description: "The ultimate privilege. Elite status and unparalleled tools.",
-        features: [
-            "Exclusive 'Ultra' Verification Badge",
-            "Global Network Visibility",
-            "Personalized AI Legal Assistant",
-            "Dedicated Relationship Manager",
-            "Unlimited Super Interests",
-            "Priority Access to High-Value Cases",
-            "Exclusive Industry Networking Events",
-            "Advanced CRM Integration"
-        ],
-    },
-};
-
-const PLAN_PRICES: Record<PlanKey, Record<TierKey, number>> = {
-    free: { silver: 0, gold: 0, platinum: 0 },
-    lite: { silver: 500, gold: 1000, platinum: 1500 },
-    pro: { silver: 5000, gold: 10000, platinum: 15000 },
-    ultra: { silver: 25000, gold: 35000, platinum: 50000 }
+// Icon mapping helper
+const getIconComponent = (iconName?: string) => {
+    switch (iconName?.toLowerCase()) {
+        case "zap": return <Zap size={24} />;
+        case "shield-check": return <ShieldCheck size={24} />;
+        case "crown": return <Crown size={24} />;
+        case "gem": return <Gem size={24} />;
+        case "shield": return <Shield size={24} />;
+        case "cpu": return <Cpu size={24} />;
+        default: return <Star size={24} />;
+    }
 };
 
 const Preservices: React.FC = () => {
-    const [activeCategory, setActiveCategory] = useState<PlanKey>("lite");
-    const [selectedTier, setSelectedTier] = useState<TierKey | null>(null);
+    const [packages, setPackages] = useState<Record<string, MembershipPlan>>({});
+    const [packageKeys, setPackageKeys] = useState<string[]>([]);
+    const [activeCategory, setActiveCategory] = useState<string>("");
+    const [selectedTier, setSelectedTier] = useState<string | null>(null);
     const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | ''>('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [upiUrl, setUpiUrl] = useState<string | null>(null);
     const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes timer
-    const { user, isLoggedIn } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const { user, isLoggedIn, openAuthModal } = useAuth();
     const timerRef = useRef<any>(null);
+
+    // Fetch packages from API
+    useEffect(() => {
+        const fetchPackages = async () => {
+            try {
+                setLoading(true);
+                const memberType = user?.role === 'client' ? 'client' : 'advocate';
+                const response = await axios.get(`/api/admin/packages?memberType=${memberType}`);
+
+                if (response.data.success && response.data.packages.length > 0) {
+                    const backendPackages: BackendPackage[] = response.data.packages;
+
+                    // Map backend packages to UI structure
+                    const mappedPackages: Record<string, MembershipPlan> = {};
+                    const keys: string[] = [];
+
+                    backendPackages
+                        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                        .forEach((pkg) => {
+                            const key = pkg.name.toLowerCase().replace(/\s+/g, '-');
+                            keys.push(key);
+
+                            // Get active tiers only
+                            const activeTiers = pkg.tiers
+                                .filter(tier => tier.active)
+                                .map(tier => ({
+                                    name: tier.name,
+                                    price: tier.price,
+                                    active: tier.active
+                                }));
+
+                            mappedPackages[key] = {
+                                title: pkg.name,
+                                icon: getIconComponent(pkg.icon),
+                                description: pkg.description || "Premium package features",
+                                features: pkg.tiers[0]?.features || [
+                                    "Enhanced Profile",
+                                    "Priority Support",
+                                    "Advanced Features"
+                                ],
+                                tiers: activeTiers
+                            };
+                        });
+
+                    setPackages(mappedPackages);
+                    setPackageKeys(keys);
+                    if (keys.length > 0 && !activeCategory) {
+                        setActiveCategory(keys[0]);
+                    }
+                } else {
+                    // Fallback to default if no packages found
+                    console.warn('No packages found, using defaults');
+                    setPackages({});
+                    setPackageKeys([]);
+                }
+            } catch (error) {
+                console.error('Error fetching packages:', error);
+                // Set empty state on error
+                setPackages({});
+                setPackageKeys([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPackages();
+    }, [user?.role]);
 
     useEffect(() => {
         const loadGateways = async () => {
@@ -137,13 +186,39 @@ const Preservices: React.FC = () => {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const handleTierSelect = (tier: TierKey) => {
+    const handleTierSelect = (tier: string) => {
         setSelectedTier(tier);
         setUpiUrl(null);
         setTimeLeft(300);
     };
 
-    const price = (activeCategory && selectedTier) ? PLAN_PRICES[activeCategory][selectedTier] : 0;
+    const [coupon, setCoupon] = useState('');
+    const [discount, setDiscount] = useState(0);
+    const [appliedCode, setAppliedCode] = useState<string | null>(null);
+
+    const getCurrentPackage = () => packages[activeCategory];
+    const getCurrentTier = () => {
+        const pkg = getCurrentPackage();
+        return pkg?.tiers.find(t => t.name === selectedTier);
+    };
+
+    // Price Breakdown Logic
+    const basePrice = getCurrentTier()?.price || 0;
+    const discountAmount = basePrice * (discount / 100);
+    const afterDiscount = basePrice - discountAmount;
+
+    // Tax & Fees
+    const cgst = afterDiscount * 0.09;
+    const sgst = afterDiscount * 0.09;
+    const subTotalWithTax = afterDiscount + cgst + sgst;
+
+    // Convenience Fee (1.8% on total value)
+    const convFee = subTotalWithTax * 0.018;
+
+    const finalTotal = subTotalWithTax + convFee;
+
+    // Allow logic to use base price for display if needed, but we use detailed variables now.
+    const price = basePrice;
 
     const handleBuyNow = async () => {
         if (!isLoggedIn) { alert("Please login to proceed."); return; }
@@ -153,15 +228,24 @@ const Preservices: React.FC = () => {
 
         setIsProcessing(true);
         try {
+            const currentPkg = getCurrentPackage();
             const result = await PaymentManager.getInstance().processPayment(
                 selectedGateway,
                 `${activeCategory}_${selectedTier}`,
-                price,
+                Math.round(finalTotal),
                 'INR',
                 {
-                    planTitle: `${membershipPlans[activeCategory].title} (${selectedTier.toUpperCase()})`,
+                    planTitle: `${currentPkg?.title || activeCategory} (${selectedTier.toUpperCase()})`,
                     userName: user?.name,
                     userEmail: user?.email,
+                    breakdown: {
+                        base: basePrice,
+                        discount: discountAmount,
+                        cgst,
+                        sgst,
+                        convFee,
+                        total: finalTotal
+                    }
                 }
             );
 
@@ -184,6 +268,30 @@ const Preservices: React.FC = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className={styles.pageContainer}>
+                <div style={{ textAlign: 'center', padding: '100px 20px', color: '#fff' }}>
+                    <Clock size={48} style={{ animation: 'spin 1s linear infinite' }} />
+                    <p style={{ marginTop: '20px' }}>Loading Premium Packages...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (packageKeys.length === 0) {
+        return (
+            <div className={styles.pageContainer}>
+                <div style={{ textAlign: 'center', padding: '100px 20px', color: '#fff' }}>
+                    <Shield size={48} />
+                    <p style={{ marginTop: '20px' }}>No packages available at the moment.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const currentPkg = getCurrentPackage();
+
     return (
         <div className={styles.pageContainer}>
             {/* UPI Rich Page / Overlay */}
@@ -194,7 +302,7 @@ const Preservices: React.FC = () => {
                         <div className={styles.upiHeader}>
                             <div className={styles.richIcon}><QrCode size={40} /></div>
                             <h2>Secure Payment Protocol</h2>
-                            <p>Complete your upgrade to <strong>{membershipPlans[activeCategory].title} ({selectedTier})</strong></p>
+                            <p>Complete your upgrade to <strong>{currentPkg?.title || activeCategory} ({selectedTier})</strong></p>
                         </div>
 
                         <div className={styles.richQrBox}>
@@ -234,15 +342,15 @@ const Preservices: React.FC = () => {
                 </div>
             )}
 
-            <div className={styles.headerSection}>
+            <div className={styles.headerSection} style={{ marginTop: '200px' }}>
                 <div className={styles.badge}>ELITE INFRASTRUCTURE</div>
                 <h1 className={styles.title}>Premium Ecosystem</h1>
-                <p className={styles.subtitle}>Navigate through our futuristic membership tiers designed for total legal dominance.</p>
+                <p className={styles.subtitle}>Navigate through our futuristic membership tiers designed for total dominance.</p>
             </div>
 
             {/* Futuristic Tab Bar */}
             <div className={styles.tabContainer}>
-                {(["free", "lite", "pro", "ultra"] as const).map((cat) => (
+                {packageKeys.map((cat) => (
                     <button
                         key={cat}
                         className={`${styles.planTab} ${activeCategory === cat ? styles.activeTab : ''}`}
@@ -251,8 +359,8 @@ const Preservices: React.FC = () => {
                             setSelectedTier(null); // Reset tier when switching category
                         }}
                     >
-                        {membershipPlans[cat].icon}
-                        <span>{membershipPlans[cat].title}</span>
+                        {packages[cat]?.icon}
+                        <span>{packages[cat]?.title}</span>
                     </button>
                 ))}
             </div>
@@ -260,34 +368,43 @@ const Preservices: React.FC = () => {
             <div className={styles.membershipWrapper}>
                 <div className={styles.activeTierDisplay}>
                     <div className={styles.categoryInfo}>
-                        <h2 className={styles.categoryHeading}>{membershipPlans[activeCategory].title}</h2>
-                        <p className={styles.categoryDesc}>{membershipPlans[activeCategory].description}</p>
+                        <h2 className={styles.categoryHeading}>{currentPkg?.title}</h2>
+                        <p className={styles.categoryDesc}>{currentPkg?.description}</p>
                     </div>
 
                     <div className={styles.tiersContainer}>
-                        {(["silver", "gold", "platinum"] as const).map((tier) => (
+                        {currentPkg?.tiers.map((tier) => (
                             <div
-                                key={tier}
-                                className={`${styles.tierCard} ${selectedTier === tier ? styles.selectedTier : ''}`}
-                                onClick={() => handleTierSelect(tier)}
+                                key={tier.name}
+                                className={`${styles.tierCard} ${selectedTier === tier.name ? styles.selectedTier : ''}`}
+                                onClick={() => handleTierSelect(tier.name)}
                             >
                                 <div className={styles.tierHeader}>
-                                    <span className={styles.tierName}>{tier}</span>
+                                    <span className={styles.tierName}>{tier.name}</span>
                                     <div className={styles.tierPriceContainer}>
                                         <span className={styles.currency}>₹</span>
-                                        <span className={styles.tierPrice}>{PLAN_PRICES[activeCategory][tier].toLocaleString()}</span>
+                                        <span className={styles.tierPrice}>
+                                            {(!isLoggedIn && activeCategory !== 'free') ? '***' : tier.price.toLocaleString()}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className={styles.benefitList}>
-                                    {membershipPlans[activeCategory].features.map((feature, idx) => (
+                                <div className={`${styles.benefitList} ${(!isLoggedIn && activeCategory !== 'free') ? styles.lockedBenefitList : ''}`} onClick={() => !isLoggedIn && openAuthModal('login')}>
+                                    {currentPkg?.features.map((feature: string, idx: number) => (
                                         <div key={idx} className={styles.featureItem}>
                                             <Check size={14} className={styles.checkIcon} />
-                                            <span>{feature}</span>
+                                            <span className={(!isLoggedIn && activeCategory !== 'free') ? styles.blurredText : ''}>
+                                                {feature}
+                                            </span>
                                         </div>
                                     ))}
+                                    {(!isLoggedIn && activeCategory !== 'free') && (
+                                        <div className={styles.centralLockOverlay}>
+                                            <Lock size={32} />
+                                        </div>
+                                    )}
                                 </div>
                                 <button className={styles.selectBtn}>
-                                    {selectedTier === tier ? 'SELECTED' : 'SELECT TIER'}
+                                    {selectedTier === tier.name ? 'SELECTED' : 'SELECT TIER'}
                                 </button>
                             </div>
                         ))}
@@ -295,7 +412,52 @@ const Preservices: React.FC = () => {
                 </div>
 
                 <div className={styles.loginPanel}>
-                    {(!selectedTier) ? (
+                    {!isLoggedIn ? (
+                        <div className={styles.summaryContent}>
+                            <div className={styles.summaryHeader}>
+                                <span className={styles.summaryLabel}>
+                                    {activeCategory === 'free' ? 'Standard Access' : 'Elite Access Required'}
+                                </span>
+                                <h1 className={styles.planTitleSummary}>{currentPkg?.title}</h1>
+                                {selectedTier && (
+                                    <div className={styles.tierBadgeContainer}>
+                                        <span className={styles.tierBadge}>{selectedTier}</span>
+                                        <Shield size={18} className={styles.platinumIcon} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.pricePanel}>
+                                <div className={styles.priceRow}>
+                                    <span>{activeCategory === 'free' ? 'Entry Cost' : (selectedTier ? 'Tier Investment' : 'Plans Starting From')}</span>
+                                    <span className={styles.totalAmount}>
+                                        {activeCategory === 'free' ? 'FREE' : (!isLoggedIn ? '₹***' : `₹${(selectedTier ? price : (currentPkg?.tiers[0]?.price || 0)).toLocaleString()}`)}
+                                    </span>
+                                </div>
+                                <div className={styles.priceRow}>
+                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                        {activeCategory === 'free' ? 'Login to activate features' : 'Login to unlock payment protocols'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className={styles.lockedFeaturesNotice}>
+                                <Lock size={24} color="#3b82f6" style={{ marginBottom: '15px' }} />
+                                <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                                    Authenticate your account to access the {activeCategory.toUpperCase()} gateway and activate your premium legal membership.
+                                </p>
+                            </div>
+
+                            <button
+                                className={styles.buyBtn}
+                                onClick={() => openAuthModal('login')}
+                                style={{ marginTop: '30px' }}
+                            >
+                                {activeCategory === 'free' ? <Check size={20} /> : <Lock size={20} />}
+                                <span>{activeCategory === 'free' ? 'LOGIN TO GET STARTED' : 'LOGIN TO UPGRADE'}</span>
+                            </button>
+                        </div>
+                    ) : (!selectedTier) ? (
                         <div className={styles.noSelection}>
                             <div className={styles.luxuryIcon}><Star size={48} /></div>
                             <h3>Futuristic Checkout</h3>
@@ -305,21 +467,100 @@ const Preservices: React.FC = () => {
                         <div className={styles.summaryContent}>
                             <div className={styles.summaryHeader}>
                                 <span className={styles.summaryLabel}>Package Summary</span>
-                                <h1 className={styles.planTitleSummary}>{membershipPlans[activeCategory].title}</h1>
+                                <h1 className={styles.planTitleSummary}>{currentPkg?.title}</h1>
                                 <div className={styles.tierBadgeContainer}>
                                     <span className={styles.tierBadge}>{selectedTier}</span>
                                     <Shield size={18} className={styles.platinumIcon} />
                                 </div>
                             </div>
 
+                            {/* Coupon Section */}
+                            <div className={styles.couponSection} style={{ marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter Coupon Code"
+                                        value={coupon}
+                                        onChange={(e) => setCoupon(e.target.value.toUpperCase())}
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px',
+                                            borderRadius: '12px',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            color: '#fff',
+                                            outline: 'none',
+                                            fontSize: '0.9rem'
+                                        }}
+                                        disabled={!!appliedCode}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            // Simple mock logic
+                                            if (coupon === 'WELCOME10') {
+                                                setAppliedCode(coupon);
+                                                setDiscount(10); // 10%
+                                                alert('Coupon Applied! 10% Discount.');
+                                            } else if (coupon === 'EADVOCATE20') {
+                                                setAppliedCode(coupon);
+                                                setDiscount(20);
+                                                alert('Coupon Applied! 20% Discount.');
+                                            } else {
+                                                alert('Invalid Coupon Code');
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '0 20px',
+                                            borderRadius: '12px',
+                                            background: appliedCode ? '#10b981' : '#3b82f6',
+                                            border: 'none',
+                                            color: '#fff',
+                                            fontWeight: 'bold',
+                                            cursor: appliedCode ? 'default' : 'pointer'
+                                        }}
+                                        disabled={!!appliedCode}
+                                    >
+                                        {appliedCode ? 'APPLIED' : 'APPLY'}
+                                    </button>
+                                </div>
+                                {appliedCode && (
+                                    <p style={{ color: '#10b981', fontSize: '0.8rem', marginTop: '8px' }}>
+                                        Discount Applied: {discount}% OFF
+                                    </p>
+                                )}
+                            </div>
+
                             <div className={styles.pricePanel}>
                                 <div className={styles.priceRow}>
-                                    <span>Subscription Value</span>
-                                    <span className={styles.totalAmount}>₹{price.toLocaleString()}</span>
+                                    <span>Base Price</span>
+                                    <span style={{ fontWeight: 800 }}>₹{price.toLocaleString()}</span>
+                                </div>
+
+                                {appliedCode && (
+                                    <div className={styles.priceRow}>
+                                        <span style={{ color: '#10b981' }}>Discount ({discount}%)</span>
+                                        <span style={{ color: '#10b981' }}>- ₹{discountAmount.toFixed(2)}</span>
+                                    </div>
+                                )}
+
+                                <div className={styles.priceRow}>
+                                    <span>CGST (9%)</span>
+                                    <span>₹{cgst.toFixed(2)}</span>
                                 </div>
                                 <div className={styles.priceRow}>
-                                    <span>Network Fee</span>
-                                    <span className={styles.taxAmount}>Inclusive</span>
+                                    <span>SGST (9%)</span>
+                                    <span>₹{sgst.toFixed(2)}</span>
+                                </div>
+                                <div className={styles.priceRow}>
+                                    <span>Convenience Fee (1.8%)</span>
+                                    <span>₹{convFee.toFixed(2)}</span>
+                                </div>
+
+                                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '15px 0' }}></div>
+
+                                <div className={styles.priceRow}>
+                                    <span style={{ color: '#fff' }}>Total Payable</span>
+                                    <span className={styles.totalAmount} style={{ fontSize: '1.8rem' }}>₹{Math.round(finalTotal).toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -351,7 +592,7 @@ const Preservices: React.FC = () => {
                                     {isProcessing ? 'CONNECTING...' : (
                                         activeCategory === 'free' ? 'ALREADY ACTIVE' : (
                                             <>
-                                                <span>SECURE PAYMENT • ₹{price.toLocaleString()}</span>
+                                                <span>PAY SECURELY • ₹{Math.round(finalTotal).toLocaleString()}</span>
                                                 <ArrowRight size={20} />
                                             </>
                                         )

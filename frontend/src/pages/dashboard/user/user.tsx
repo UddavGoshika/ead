@@ -89,7 +89,7 @@ const PROJECTS: ProjectData[] = [
     { id: 'career', name: 'Tatito Career Hub', icon: Briefcase, color: '#10b981', stats: { totalUsers: 8921, activeReferrers: 2345, totalEarnings: 321450, projectRevenue: 890000, pendingWithdrawals: 32100 } },
     { id: 'nexus', name: 'Tatito Nexus', icon: Network, color: '#8b5cf6', stats: { totalUsers: 15678, activeReferrers: 4567, totalEarnings: 678900, projectRevenue: 1850000, pendingWithdrawals: 67890 } },
     { id: 'civic', name: 'Tatito Civic One', icon: Building, color: '#f59e0b', stats: { totalUsers: 5678, activeReferrers: 1234, totalEarnings: 234567, projectRevenue: 650000, pendingWithdrawals: 23456 } },
-    { id: 'health', name: 'Tatito Health+', icon: Heart, color: '#ef4444', stats: { totalUsers: 7890, activeReferrers: 2345, totalEarnings: 345678, projectRevenue: 950000, pendingWithdrawals: 34567 } },
+    { id: 'health', name: 'E-Advocate Services', icon: Heart, color: '#ef4444', stats: { totalUsers: 7890, activeReferrers: 2345, totalEarnings: 345678, projectRevenue: 950000, pendingWithdrawals: 34567 } },
     { id: 'advocate', name: 'Tatito E-Advocate', icon: Megaphone, color: '#ec4899', stats: { totalUsers: 4567, activeReferrers: 1234, totalEarnings: 234567, projectRevenue: 550000, pendingWithdrawals: 23456 } },
 ];
 

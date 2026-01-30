@@ -26,6 +26,10 @@ router.post('/login', async (req, res) => {
                 console.error("Login Notification Error:", err.message);
             });
 
+            if (user.status === 'Pending') {
+                return res.status(403).json({ error: 'Your account is pending verification. Please wait for admin approval.' });
+            }
+
             return res.json({
                 token: 'user-token-' + user._id,
                 user: {
@@ -33,7 +37,9 @@ router.post('/login', async (req, res) => {
                     email: user.email,
                     role: user.role,
                     name: user.email,
-                    status: user.status
+                    status: user.status,
+                    plan: user.plan || 'Free',
+                    isPremium: user.isPremium || false
                 }
             });
         }
@@ -180,7 +186,9 @@ router.post('/register', async (req, res) => {
                 id: user._id,
                 email: user.email,
                 role: user.role,
-                status: user.status
+                status: user.status,
+                plan: user.plan || 'Free',
+                isPremium: user.isPremium || false
             },
             token: 'user-token-' + user._id
         });

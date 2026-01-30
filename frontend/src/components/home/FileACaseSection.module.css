@@ -6,7 +6,7 @@
     /* Dark navy from image */
     padding: 100px 20px;
     color: white;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 .container {
@@ -20,13 +20,15 @@
 }
 
 .title {
+    font-family: 'Playfair Display', serif;
     color: white;
     font-size: 2.5rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 5px;
 }
 
 .mainTitle {
+    font-family: 'Playfair Display', serif;
     color: white;
     font-size: 2rem;
     font-weight: 700;
@@ -34,6 +36,7 @@
 }
 
 .subtitle {
+    font-family: 'Outfit', sans-serif;
     color: #94a3b8;
     font-size: 1.1rem;
 }
@@ -73,8 +76,9 @@
 }
 
 .cardTitle {
+    font-family: 'Playfair Display', serif;
     font-size: 2.2rem;
-    font-weight: 800;
+    font-weight: 700;
     margin: 0;
     line-height: 1.1;
     color: #fff;
@@ -277,13 +281,71 @@
     background: #005580;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
+    .title {
+        font-size: 2rem;
+    }
+
+    .cardTitle {
+        font-size: 1.8rem;
+    }
+
+    .cardContent {
+        padding: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .section {
+        padding: 60px 15px;
+    }
+
     .grid {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
 
     .card {
         height: auto;
-        min-height: 400px;
+        min-height: 350px;
+        border-radius: 24px;
+    }
+
+    .cardContent {
+        padding: 30px;
+        max-width: 100%;
+    }
+
+    .cardTitle {
+        font-size: 1.6rem;
+    }
+
+    .cardDescription,
+    .cardDescriptionDark {
+        font-size: 1rem;
+        margin: 15px 0 25px;
+    }
+
+    .exploreBtn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .imageCard {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .mainTitle {
+        font-size: 1.5rem;
+    }
+
+    .cardTitle {
+        font-size: 1.4rem;
     }
 }

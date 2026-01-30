@@ -19,13 +19,15 @@
 }
 
 .title {
+    font-family: 'Playfair Display', serif;
     font-size: 3rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 10px;
     letter-spacing: -1px;
 }
 
 .subtitle {
+    font-family: 'Outfit', sans-serif;
     color: rgba(255, 255, 255, 0.4);
     font-size: 1.1rem;
     font-weight: 400;
@@ -207,8 +209,9 @@
 
 
 .profileName {
+    font-family: 'Playfair Display', serif;
     font-size: 1.5rem;
-    font-weight: 800;
+    font-weight: 700;
     color: white;
     margin: 0;
     letter-spacing: -0.5px;
@@ -333,24 +336,98 @@
     transition: all 0.3s ease;
 }
 
-@media (max-width: 1200px) {
-    .profileName {
-        font-size: 1.5rem;
+@media (max-width: 1024px) {
+    .title {
+        font-size: 2.5rem;
+    }
+
+    .filterBar {
+        gap: 10px;
+    }
+
+    .selectWrapper {
+        min-width: 150px;
+        flex: 1;
     }
 }
 
 @media (max-width: 768px) {
+    .searchSection {
+        padding: 50px 15px;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
     .luxuryCard {
-        max-width: 450px;
-        margin: 0 auto;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        min-height: 400px;
+        aspect-ratio: 1/1;
     }
 
-    .cardContent {
-        height: 280px;
+    .resultsGrid {
+        grid-template-columns: 1fr;
+        padding: 0 10px;
     }
 
-    .largeInitial {
-        font-size: 140px;
+    .filterBar {
+        flex-direction: column;
+        width: 100%;
+        padding: 0 20px;
+    }
+
+    .selectWrapper {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .applyBtn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .roleBtn {
+        padding: 8px 20px;
+        font-size: 0.8rem;
+    }
+
+    .luxuryCard {
+        aspect-ratio: auto;
+        height: 450px;
+    }
+
+    .cardOverlay {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .bottomRight {
+        position: static;
+        flex-direction: row;
+        gap: 20px;
+        margin-top: 15px;
+    }
+
+    .infoLine {
+        align-items: flex-start;
+    }
+
+    .topRightBadge {
+        right: 20px;
     }
 }
 
@@ -361,19 +438,20 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 9999;
-    padding: 16px 32px;
+    padding: 16px 24px;
     border-radius: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
     color: white;
     font-weight: 600;
-    min-width: 350px;
+    width: 90%;
+    max-width: 400px;
     backdrop-filter: blur(15px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
         0 0 20px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    font-family: 'Cinzel', serif;
+    font-family: 'Playfair Display', serif;
 }
 
 .success {
@@ -387,7 +465,7 @@
 }
 
 .notification span {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     letter-spacing: 0.5px;
 }
 
@@ -399,6 +477,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .notifText {

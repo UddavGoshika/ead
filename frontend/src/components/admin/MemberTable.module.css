@@ -458,6 +458,27 @@
     border-bottom-color: rgba(245, 200, 66, 0.2) !important;
 }
 
+.premiumPlan {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+}
+
+.standardPlan {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
 .statusActionRow {
     display: flex;
     justify-content: space-between;
@@ -864,4 +885,33 @@
 
 .selectedRow td {
     border-bottom-color: rgba(245, 200, 66, 0.2) !important;
+}
+
+/* PRICE COLUMN STYLES */
+.priceCell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.priceAmount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.freePrice {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.priceError {
+    font-size: 0.8rem;
+    color: #ef4444;
+    font-style: italic;
 }

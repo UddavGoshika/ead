@@ -5,7 +5,7 @@
 .headerSection {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: space-between;
     margin-bottom: 25px;
 }
 
@@ -25,6 +25,100 @@
 
 .backLink:hover {
     color: #facc15;
+}
+
+.planInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.accountLabel {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.planBadge {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 6px 18px;
+    border-radius: 50px;
+    letter-spacing: 1.8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: default;
+}
+
+.planBadge:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.verifiedBadgeWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    position: relative;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.premiumSeal {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Plan Specific Seal Colors */
+.liteBadge .sealMain,
+.liteBadge .sealRibbons {
+    fill: #3b82f6;
+}
+
+.proBadge .sealMain,
+.proBadge .sealRibbons {
+    fill: #facc15;
+}
+
+.ultraBadge .sealMain,
+.ultraBadge .sealRibbons {
+    fill: #6366f1;
+}
+
+.freeBadge {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+}
+
+.liteBadge {
+    background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.proBadge {
+    background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+    border-color: rgba(250, 204, 21, 0.3);
+    color: #fef08a;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.15);
+}
+
+.ultraBadge {
+    background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
 }
 
 .searchSection {

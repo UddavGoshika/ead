@@ -8,6 +8,8 @@ export interface User {
     role: UserRole;
     isPremium?: boolean;
     plan?: string;
+    coins?: number;
+    status?: string;
     mustChangePassword?: boolean;
     tempPassword?: string;
 }

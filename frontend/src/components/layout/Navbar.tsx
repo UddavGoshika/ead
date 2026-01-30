@@ -159,8 +159,6 @@ const Navbar: React.FC = () => {
             <div className={styles.leftDock}>
                 {/* <Scale size={42} /> */}
                 <div className={styles.leftLogo}>
-                    {/* <span>e-Advocate</span>
-                    <small>SERVICES</small> */}
                     <a href="#home"> <img src={settings?.logo_url_left || "/assets/eadvocate.webp"} alt="Left Logo" /></a>
                 </div>
             </div>
@@ -281,10 +279,10 @@ const Navbar: React.FC = () => {
                             ) : (
                                 <>
                                     <button id="nav-login-btn" className={styles.login} onClick={() => openAuthModal("login")}>
-                                        <LogIn size={12} /> Login
+                                        <LogIn size={18} /> <span>Login</span>
                                     </button>
                                     <button id="nav-register-btn" className={styles.register} onClick={() => openAuthModal("register")}>
-                                        <UserPlus size={16} /> Register
+                                        <UserPlus size={18} /> <span>Register</span>
                                     </button>
                                 </>
                             )}
@@ -299,7 +297,7 @@ const Navbar: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ECOSYSTEM BAR */}
+                {/* ECOSYSTEM BAR - Hidden on mobile, shown in menu if needed, or kept as is for tablet+ */}
                 <div className={styles.ecoBar}>
                     <div className={styles.inner}>
                         {settings?.ecosystem_links && settings.ecosystem_links.length > 0 ? (
@@ -315,7 +313,7 @@ const Navbar: React.FC = () => {
                                 <a href="#"><img src="/assets/carrer.webp" className={styles.ecoimages} />Tatito Carrer Hub ↗</a>
                                 <a href="#"><img src="/assets/nexus.webp" className={styles.ecoimages} />Tatito Nexus ↗</a>
                                 <a href="#"><img src="/assets/civic.webp" className={styles.ecoimages} />Tatito Civic One ↗</a>
-                                <a href="#"><img src="/assets/health.webp" className={styles.ecoimages} />Tatito Health+ ↗</a>
+                                <a href="#"><img src="/assets/eadvocate.webp" className={styles.ecoimages} />E-Advocate Services ↗</a>
                                 <a href="#"><img src="/assets/fashion.webp" className={styles.ecoimages} />Tatito Fashions ↗</a>
                             </>
                         )}
@@ -330,6 +328,101 @@ const Navbar: React.FC = () => {
                     {/* <span>e-Advocate</span>
                     <small>SERVICES</small> */}
                     <a href="#home"> <img src={settings?.logo_url_right || "/assets/civic.webp"} alt="Right Logo" /></a>
+                </div>
+            </div>
+
+            {/* MOBILE OVERLAY MENU */}
+            <div className={`${styles.mobileMenu} ${isMenuOpen ? styles.mobileMenuOpen : ""}`}>
+                <div className={styles.mobileMenuHeader}>
+                    <div className={styles.mobileLogo}>
+                        <img src={settings?.logo_url_left || "/assets/eadvocate.webp"} alt="Logo" />
+                    </div>
+                    <button className={styles.closeMenu} onClick={() => setIsMenuOpen(false)}>
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <div className={styles.mobileSearch}>
+                    <div className={styles.searchContainer}>
+                        <input
+                            type="text"
+                            placeholder={dynamicPlaceholder}
+                            className={styles.search}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <button className={styles.searchButtons} onClick={() => { handleSearch(); setIsMenuOpen(false); }}>
+                            <SearchIcon size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                <nav className={styles.mobileNavLinks}>
+                    <button onClick={() => { navigate("/"); setIsMenuOpen(false); }}>Home</button>
+                    {settings?.header_menu && settings.header_menu.length > 0 ? (
+                        settings.header_menu.map((item, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    if (item.label.toLowerCase() === "browse profiles") {
+                                        openFilterModal();
+                                    } else if (item.link.startsWith("http")) {
+                                        window.open(item.link, "_blank", "noopener,noreferrer");
+                                    } else {
+                                        navigate(item.link);
+                                    }
+                                    setIsMenuOpen(false);
+                                }}
+                            >
+                                {item.label}
+                            </button>
+                        ))
+                    ) : (
+                        <>
+                            <button onClick={() => { openFilterModal(); setIsMenuOpen(false); }}>Browse Profiles</button>
+                            <button onClick={() => { window.open("https://filing.ecourts.gov.in/pdedev/", "_blank", "noopener,noreferrer"); setIsMenuOpen(false); }}>File Case</button>
+                            <button onClick={() => { window.open("https://services.ecourts.gov.in/ecourtindia_v6/", "_blank", "noopener,noreferrer"); setIsMenuOpen(false); }}>Case Status</button>
+                            <button onClick={() => { navigate("/blogs"); setIsMenuOpen(false); }}>Blogs</button>
+                            <button onClick={() => { navigate("/about"); setIsMenuOpen(false); }}>About</button>
+                        </>
+                    )}
+                </nav>
+
+                <div className={styles.mobileActions}>
+                    {isLoggedIn ? (
+                        <div className={styles.mobileUserGroup}>
+                            <button className={styles.mobileActionBtn} onClick={() => { goToDashboard(); setIsMenuOpen(false); }}>
+                                <LayoutDashboard size={20} /> Dashboard
+                            </button>
+                            <button className={styles.mobileActionBtn} onClick={() => { goToSettings(); setIsMenuOpen(false); }}>
+                                <Settings size={20} /> Settings
+                            </button>
+                            <button className={`${styles.mobileActionBtn} ${styles.logout}`} onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
+                                <LogOut size={20} /> Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={styles.mobileAuthGroup}>
+                            <button className={styles.mobileLogin} onClick={() => { openAuthModal("login"); setIsMenuOpen(false); }}>
+                                <LogIn size={18} /> Login
+                            </button>
+                            <button className={styles.mobileRegister} onClick={() => { openAuthModal("register"); setIsMenuOpen(false); }}>
+                                <UserPlus size={18} /> Register
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.mobileEcoLinks}>
+                    <p>Our Ecosystem</p>
+                    <div className={styles.ecoGrid}>
+                        {settings?.ecosystem_links?.map((link, idx) => (
+                            <a key={idx} href={link.link}>
+                                <img src={link.icon_url} alt={link.label} />
+                            </a>
+                        ))}
+                    </div>
                 </div>
             </div>
         </header>

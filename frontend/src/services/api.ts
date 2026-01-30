@@ -27,15 +27,15 @@ export const authService = {
 };
 
 export const advocateService = {
-    getAdvocates: (search?: string) =>
-        api.get<{ success: boolean; advocates: Advocate[] }>('/advocates', { params: { search } }),
+    getAdvocates: (filters: { search?: string, specialization?: string, court?: string, state?: string, city?: string, experience?: string } = {}) =>
+        api.get<{ success: boolean; advocates: Advocate[] }>('/advocates', { params: filters }),
     getAdvocateById: (id: number | string) =>
         api.get<{ success: boolean; advocate: Advocate }>(`/advocates/${id}`),
 };
 
 export const clientService = {
-    getClients: (search?: string) =>
-        api.get<{ success: boolean; clients: ClientProfile[] }>('/client', { params: { search } }),
+    getClients: (filters: { search?: string, category?: string, specialization?: string, city?: string, state?: string } = {}) =>
+        api.get<{ success: boolean; clients: ClientProfile[] }>('/client', { params: filters }),
 };
 
 export const adminService = {

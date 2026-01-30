@@ -18,6 +18,9 @@ router.get('/', async (req, res) => {
 
         if (!settings) {
             const defaultSettings = {
+                site_name: 'e-Advocate',
+                hero_title: 'e-Advocate Services',
+                hero_subtitle: 'A secure digital bridge between clients and professionals. Discover trusted experts, connect instantly, and manage your legal journey with confidence through our premium platform.',
                 header_menu: [
                     { label: 'Browse Profiles', link: '/search' },
                     { label: 'File Case', link: 'https://filing.ecourts.gov.in/pdedev/' },
@@ -39,20 +42,47 @@ router.get('/', async (req, res) => {
             };
             settings = await Settings.create(defaultSettings);
         } else {
-            // Auto-fix existing path issues in DB
+            // Force revert branding if it was changed (Auto-healing)
+            let changed = false;
+            if (!settings.hero_title || settings.hero_title.toLowerCase().includes('health')) {
+                settings.hero_title = 'e-Advocate Services';
+                changed = true;
+            }
+            if (!settings.logo_url_left || settings.logo_url_left.includes('health')) {
+                settings.logo_url_left = '/assets/eadvocate.webp';
+                changed = true;
+            }
+            if (!settings.logo_url_hero || settings.logo_url_hero.includes('health')) {
+                settings.logo_url_hero = '/assets/image.png';
+                changed = true;
+            }
+
+            // Fix site_name
+            if (!settings.site_name || settings.site_name.toLowerCase().includes('health') || settings.site_name.includes('Tatito')) {
+                settings.site_name = 'E-Advocate Services';
+                changed = true;
+            }
+
+            // Auto-fix existing path issues in DB and Rename Health links
             if (settings.ecosystem_links) {
-                settings.ecosystem_links = settings.ecosystem_links.map(link => ({
-                    ...link,
-                    icon_url: fixPath(link.icon_url)
-                }));
+                settings.ecosystem_links = settings.ecosystem_links.map(link => {
+                    let newLink = { ...link, icon_url: fixPath(link.icon_url) };
+
+                    if (newLink.label && (newLink.label.includes('Health') || newLink.label.includes('Tatito Health'))) {
+                        newLink.label = 'E-Advocate Services';
+                        newLink.icon_url = '/assets/eadvocate.webp';
+                        changed = true;
+                    }
+                    return newLink;
+                });
             }
             settings.logo_url_left = fixPath(settings.logo_url_left);
             settings.logo_url_right = fixPath(settings.logo_url_right);
             settings.logo_url_hero = fixPath(settings.logo_url_hero);
 
-            if (needsSave) {
+            if (needsSave || changed) {
                 await settings.save();
-                console.log('Fixed static asset paths in database settings');
+                console.log('Fixed branding, site name, and static asset paths in database settings');
             }
         }
 
@@ -67,8 +97,22 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         let settings = await Settings.findOne();
+
         if (settings) {
-            settings = await Settings.findByIdAndUpdate(settings._id, req.body, { new: true });
+            // If updating manager_permissions, handle Mixed type carefully
+            if (req.body.manager_permissions) {
+                settings.manager_permissions = req.body.manager_permissions;
+                settings.markModified('manager_permissions');
+            }
+
+            // Update other fields from req.body
+            Object.keys(req.body).forEach(key => {
+                if (key !== 'manager_permissions') {
+                    settings[key] = req.body[key];
+                }
+            });
+
+            await settings.save();
         } else {
             settings = await Settings.create(req.body);
         }

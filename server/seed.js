@@ -70,7 +70,7 @@ const seedData = async () => {
             // Create Advocate Profile
             await Advocate.create({
                 userId: user._id,
-                unique_id: `ADV-${100000 + i}`,
+                unique_id: `TP-EAD-ADV${10000 + i}`,
                 name: `${adv.firstName} ${adv.lastName}`,
                 firstName: adv.firstName,
                 lastName: adv.lastName,
@@ -118,6 +118,7 @@ const seedData = async () => {
 
             await Client.create({
                 userId: user._id,
+                unique_id: `TP-EAD-CL${10000 + clientUsers.indexOf(cl)}`,
                 firstName: cl.name.split(' ')[0],
                 lastName: cl.name.split(' ')[1] || '',
                 email: cl.email,

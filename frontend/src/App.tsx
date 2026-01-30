@@ -8,6 +8,8 @@ import FAQPage from './pages/FAQPage';
 import BlogPage from './pages/BlogPage';
 import SearchPage from './pages/SearchPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import PublicRoute from './components/auth/PublicRoute';
+import ScrollToTop from './components/shared/ScrollToTop';
 import ClientDashboard from './pages/dashboard/client/ClientDashboard';
 import AdvocateDashboard from './pages/dashboard/advocate/AdvocateDashboard';
 import PlaceholderPage from './pages/PlaceholderPage';
@@ -202,10 +204,15 @@ const App: React.FC = () => {
     <AuthProvider>
       <SettingsProvider>
         <Router>
+          <ScrollToTop />
           <ImpersonationBanner />
           <Routes>
             {/* PUBLIC ROUTES */}
-            <Route path="/" element={<HomeLayout />}>
+            <Route path="/" element={
+              <PublicRoute>
+                <HomeLayout />
+              </PublicRoute>
+            }>
               <Route index element={<HomePage />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="faq" element={<FAQPage />} />
@@ -412,60 +419,60 @@ const App: React.FC = () => {
               } />
 
               {/* Members Section */}
-              <Route path="members/free" element={<FreeMembers />} />
-              <Route path="members/premium" element={<PremiumMembers />} />
-              <Route path="members/approved" element={<ApprovedMembers />} />
-              <Route path="members/pending" element={<PendingMembers />} />
-              <Route path="members/bulk-add" element={<BulkMemberAdd />} />
-              <Route path="members/deactivated" element={<DeactivatedMembers />} />
-              <Route path="members/blocked" element={<BlockedMembers />} />
-              <Route path="members/deleted" element={<DeletedMembers />} />
-              <Route path="members/reported" element={<ReportedMembers />} />
-              <Route path="members/unapproved-pictures" element={<UnapprovedPictures />} />
+              <Route path="members/free" element={<ManagerPermissionGuard permissionId="free-members" parentId="members"><FreeMembers /></ManagerPermissionGuard>} />
+              <Route path="members/premium" element={<ManagerPermissionGuard permissionId="premium-members" parentId="members"><PremiumMembers /></ManagerPermissionGuard>} />
+              <Route path="members/approved" element={<ManagerPermissionGuard permissionId="members"><ApprovedMembers /></ManagerPermissionGuard>} />
+              <Route path="members/pending" element={<ManagerPermissionGuard permissionId="members"><PendingMembers /></ManagerPermissionGuard>} />
+              <Route path="members/bulk-add" element={<ManagerPermissionGuard permissionId="bulk-member-add" parentId="members"><BulkMemberAdd /></ManagerPermissionGuard>} />
+              <Route path="members/deactivated" element={<ManagerPermissionGuard permissionId="members"><DeactivatedMembers /></ManagerPermissionGuard>} />
+              <Route path="members/blocked" element={<ManagerPermissionGuard permissionId="members"><BlockedMembers /></ManagerPermissionGuard>} />
+              <Route path="members/deleted" element={<ManagerPermissionGuard permissionId="members"><DeletedMembers /></ManagerPermissionGuard>} />
+              <Route path="members/reported" element={<ManagerPermissionGuard permissionId="members"><ReportedMembers /></ManagerPermissionGuard>} />
+              <Route path="members/unapproved-pictures" element={<ManagerPermissionGuard permissionId="members"><UnapprovedPictures /></ManagerPermissionGuard>} />
 
               {/* Profile Attributes Section */}
-              <Route path="attributes/practice-areas" element={<PracticeAreas />} />
-              <Route path="attributes/courts" element={<Courts />} />
-              <Route path="attributes/specializations" element={<Specializations />} />
-              <Route path="attributes/case-types" element={<CaseTypes />} />
-              <Route path="attributes/language" element={<MemberLanguage />} />
-              <Route path="attributes/country" element={<Country />} />
-              <Route path="attributes/state" element={<State />} />
-              <Route path="attributes/city" element={<City />} />
-              <Route path="attributes/id-proof" element={<IdProofTypes />} />
-              <Route path="attributes/experience" element={<ExperienceLevels />} />
+              <Route path="attributes/practice-areas" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><PracticeAreas /></ManagerPermissionGuard>} />
+              <Route path="attributes/courts" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Courts /></ManagerPermissionGuard>} />
+              <Route path="attributes/specializations" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Specializations /></ManagerPermissionGuard>} />
+              <Route path="attributes/case-types" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><CaseTypes /></ManagerPermissionGuard>} />
+              <Route path="attributes/language" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><MemberLanguage /></ManagerPermissionGuard>} />
+              <Route path="attributes/country" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Country /></ManagerPermissionGuard>} />
+              <Route path="attributes/state" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><State /></ManagerPermissionGuard>} />
+              <Route path="attributes/city" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><City /></ManagerPermissionGuard>} />
+              <Route path="attributes/id-proof" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><IdProofTypes /></ManagerPermissionGuard>} />
+              <Route path="attributes/experience" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><ExperienceLevels /></ManagerPermissionGuard>} />
 
-              <Route path="members/profile-sections" element={<ProfileSections />} />
-              <Route path="members/verification" element={<MemberVerification />} />
+              <Route path="members/profile-sections" element={<ManagerPermissionGuard permissionId="members"><ProfileSections /></ManagerPermissionGuard>} />
+              <Route path="members/verification" element={<ManagerPermissionGuard permissionId="members"><MemberVerification /></ManagerPermissionGuard>} />
 
               {/* Premium & Finance */}
-              <Route path="premium-packages" element={<PremiumPackages />} />
-              <Route path="package-payments" element={<PackagePayments />} />
-              <Route path="wallet/history" element={<WalletHistory />} />
-              <Route path="wallet/recharge" element={<WalletRecharge />} />
+              <Route path="premium-packages" element={<ManagerPermissionGuard permissionId="premium-packages"><PremiumPackages /></ManagerPermissionGuard>} />
+              <Route path="package-payments" element={<ManagerPermissionGuard permissionId="package-payments"><PackagePayments /></ManagerPermissionGuard>} />
+              <Route path="wallet/history" element={<ManagerPermissionGuard permissionId="wallet"><WalletHistory /></ManagerPermissionGuard>} />
+              <Route path="wallet/recharge" element={<ManagerPermissionGuard permissionId="wallet"><WalletRecharge /></ManagerPermissionGuard>} />
 
               {/* Content & Blog */}
-              <Route path="blog/posts" element={<AllPosts />} />
-              <Route path="blog/categories" element={<BlogCategories />} />
-              <Route path="marketing/newsletter" element={<Newsletter />} />
-              <Route path="contact-queries" element={<ContactQueries />} />
+              <Route path="blog/posts" element={<ManagerPermissionGuard permissionId="all-posts" parentId="blog-system"><AllPosts /></ManagerPermissionGuard>} />
+              <Route path="blog/categories" element={<ManagerPermissionGuard permissionId="categories" parentId="blog-system"><BlogCategories /></ManagerPermissionGuard>} />
+              <Route path="marketing/newsletter" element={<ManagerPermissionGuard permissionId="newsletter" parentId="marketing"><Newsletter /></ManagerPermissionGuard>} />
+              <Route path="contact-queries" element={<ManagerPermissionGuard permissionId="contact-us-queries" parentId="support-ticket"><ContactQueries /></ManagerPermissionGuard>} />
 
               {/* Referrals & Support */}
-              <Route path="referral/commission" element={<ReferralCommission />} />
-              <Route path="referral/users" element={<ReferralUsers />} />
-              <Route path="referral/earnings" element={<ReferralEarnings />} />
-              <Route path="referral/withdraw" element={<WalletWithdraw />} />
+              <Route path="referral/commission" element={<ManagerPermissionGuard permissionId="set-referral-commission" parentId="referral"><ReferralCommission /></ManagerPermissionGuard>} />
+              <Route path="referral/users" element={<ManagerPermissionGuard permissionId="referral-users" parentId="referral"><ReferralUsers /></ManagerPermissionGuard>} />
+              <Route path="referral/earnings" element={<ManagerPermissionGuard permissionId="referral-earnings" parentId="referral"><ReferralEarnings /></ManagerPermissionGuard>} />
+              <Route path="referral/withdraw" element={<ManagerPermissionGuard permissionId="wallet-withdraw-request" parentId="referral"><WalletWithdraw /></ManagerPermissionGuard>} />
 
-              <Route path="support/active" element={<ActiveTickets />} />
-              <Route path="support/my" element={<MyTickets />} />
-              <Route path="support/solved" element={<SolvedTickets />} />
-              <Route path="support/settings/category" element={<SupportCategory />} />
-              <Route path="support/settings/agent" element={<AssignedAgent />} />
+              <Route path="support/active" element={<ManagerPermissionGuard permissionId="active-tickets" parentId="support-ticket"><ActiveTickets /></ManagerPermissionGuard>} />
+              <Route path="support/my" element={<ManagerPermissionGuard permissionId="support-ticket"><MyTickets /></ManagerPermissionGuard>} />
+              <Route path="support/solved" element={<ManagerPermissionGuard permissionId="support-ticket"><SolvedTickets /></ManagerPermissionGuard>} />
+              <Route path="support/settings/category" element={<ManagerPermissionGuard permissionId="category" parentId="support-ticket"><SupportCategory /></ManagerPermissionGuard>} />
+              <Route path="support/settings/agent" element={<ManagerPermissionGuard permissionId="default-assigned-agent" parentId="support-ticket"><AssignedAgent /></ManagerPermissionGuard>} />
 
               {/* Addons & Restricted */}
-              <Route path="otp/templates" element={<SmsTemplates />} />
-              <Route path="otp/credentials" element={<OtpCredentials />} />
-              <Route path="otp/send" element={<SendSms />} />
+              <Route path="otp/templates" element={<ManagerPermissionGuard permissionId="sms-templates" parentId="otp-system"><SmsTemplates /></ManagerPermissionGuard>} />
+              <Route path="otp/credentials" element={<ManagerPermissionGuard permissionId="set-otp-credentials" parentId="otp-system"><OtpCredentials /></ManagerPermissionGuard>} />
+              <Route path="otp/send" element={<ManagerPermissionGuard permissionId="send-sms" parentId="otp-system"><SendSms /></ManagerPermissionGuard>} />
               <Route path="offline-payments/manual" element={<AdminOnlyPage />} />
               <Route path="uploaded-files" element={<UploadedFiles />} />
 
@@ -500,32 +507,32 @@ const App: React.FC = () => {
 
               {/* Oversight & Communications */}
               <Route path="oversight/team-lead" element={
-                <ManagerPermissionGuard permissionId="tl-performance">
+                <ManagerPermissionGuard permissionId="tl-performance" parentId="oversight">
                   <TeamLeadPerformance />
                 </ManagerPermissionGuard>
               } />
               <Route path="oversight/hr" element={
-                <ManagerPermissionGuard permissionId="hr-progress">
+                <ManagerPermissionGuard permissionId="hr-progress" parentId="oversight">
                   <HRWorkProgress />
                 </ManagerPermissionGuard>
               } />
               <Route path="oversight/reports" element={
-                <ManagerPermissionGuard permissionId="role-reports">
+                <ManagerPermissionGuard permissionId="role-reports" parentId="oversight">
                   <RoleReports />
                 </ManagerPermissionGuard>
               } />
               <Route path="communications/inform-admin" element={
-                <ManagerPermissionGuard permissionId="inform-admin">
+                <ManagerPermissionGuard permissionId="inform-admin" parentId="communications">
                   <InformSuperAdmin />
                 </ManagerPermissionGuard>
               } />
 
-              {/* Original Manager Routes */}
-              <Route path="workspace" element={<ManagerWorkspace />} />
-              <Route path="hierarchy" element={<ManagerWorkspace />} />
-              <Route path="analytics" element={<StaffPayroll />} />
-              <Route path="resources" element={<ResourcePlanning />} />
-              <Route path="reports" element={<ProfessionalAudit />} />
+              {/* Original Manager Routes - Guarded */}
+              <Route path="workspace" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
+              <Route path="hierarchy" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
+              <Route path="analytics" element={<ManagerPermissionGuard permissionId="oversight"><StaffPayroll /></ManagerPermissionGuard>} />
+              <Route path="resources" element={<ManagerPermissionGuard permissionId="oversight"><ResourcePlanning /></ManagerPermissionGuard>} />
+              <Route path="reports" element={<ManagerPermissionGuard permissionId="role-reports" parentId="oversight"><ProfessionalAudit /></ManagerPermissionGuard>} />
             </Route>
 
             <Route path="/team-lead" element={<TeamLeadLayout />}>
