@@ -151,9 +151,9 @@ const AuthModal: React.FC = () => {
         }
     };
 
-    const handleRegisterChoice = (role: 'client' | 'advocate') => {
-        setSelectedRole(role);
-        if (role === 'advocate') {
+    const handleRegisterChoice = (role: 'client' | 'advocate' | 'provider') => {
+        setSelectedRole(role === 'provider' ? 'advocate' : role);
+        if (role === 'advocate' || role === 'provider') {
             openAdvocateReg();
         } else if (role === 'client') {
             openClientReg();
@@ -166,7 +166,7 @@ const AuthModal: React.FC = () => {
         <>
             <div className={styles.overlay} onClick={closeAuthModal}>
                 <motion.div
-                    className={styles.modal}
+                    className={`${styles.modal} ${activeTab === 'register' && regStep === 'choice' ? styles.wideModal : ''}`}
                     onClick={e => e.stopPropagation()}
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -306,6 +306,11 @@ const AuthModal: React.FC = () => {
                                                     <div className={styles.iconCircle}><Scale /></div>
                                                     <h3>I am an Advocate</h3>
                                                     <p>Providing legal services and managing professional portfolio.</p>
+                                                </div>
+                                                <div className={styles.regOption} onClick={() => handleRegisterChoice('provider')}>
+                                                    <div className={styles.iconCircle}><Mail /></div>
+                                                    <h3>I am a Legal Service Provider</h3>
+                                                    <p>Offering documentation, drafting, and specialized legal support.</p>
                                                 </div>
                                             </div>
                                         </>

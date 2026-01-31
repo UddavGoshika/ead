@@ -163,6 +163,36 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                     </div>
                 </div>
             </div>
+
+            <div className={styles.documentationSection}>
+                <label className={styles.sectionLabel}>LEGAL DOCUMENTATION SERVICES (OPTIONAL)</label>
+                <p className={styles.sectionHint}>Select the documentation services you provide</p>
+                <div className={styles.docsGrid}>
+                    {[
+                        { id: 'agreements', label: 'Agreements Drafting' },
+                        { id: 'affidavits', label: 'Affidavits' },
+                        { id: 'notices', label: 'Notices' },
+                        { id: 'legal-docs', label: 'Legal Document Preparation' }
+                    ].map(doc => (
+                        <div
+                            key={doc.id}
+                            className={`${styles.docChip} ${formData.legalDocumentation?.includes(doc.id) ? styles.activeChip : ''}`}
+                            onClick={() => {
+                                const current = formData.legalDocumentation || [];
+                                const next = current.includes(doc.id)
+                                    ? current.filter((i: string) => i !== doc.id)
+                                    : [...current, doc.id];
+                                updateFormData({ legalDocumentation: next });
+                            }}
+                        >
+                            <div className={styles.chipCheck}>
+                                {formData.legalDocumentation?.includes(doc.id) ? '✓' : '+'}
+                            </div>
+                            <span>{doc.label}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };

@@ -169,6 +169,18 @@ export const MENU_SCHEMA: MenuItem[] = [
         ],
     },
     {
+        id: "legal-documentation",
+        name: "Legal Documentation",
+        icon: MdFolder,
+        path: "/admin/legal-documentation",
+        children: [
+            { id: "agreements", name: "Agreements", path: "/admin/legal-docs/agreements" },
+            { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits" },
+            { id: "notices", name: "Notices", path: "/admin/legal-docs/notices" },
+            { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers" },
+        ],
+    },
+    {
         id: "offline-payment-system",
         name: "Offline Payment System",
         icon: MdAccountBalance,

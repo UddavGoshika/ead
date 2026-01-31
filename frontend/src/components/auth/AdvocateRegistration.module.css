@@ -801,6 +801,84 @@ refreal code  */
     background: rgba(239, 68, 68, 0.05) !important;
 }
 
+/* Documentation Chips */
+.documentationSection {
+    margin-top: 40px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+}
+
+.sectionLabel {
+    display: block;
+    color: #daa520;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 5px;
+}
+
+.sectionHint {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+}
+
+.docsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.docChip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #252545;
+    border: 1px solid #353565;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.docChip:hover {
+    border-color: #daa520;
+    background: rgba(218, 165, 32, 0.05);
+    transform: translateY(-2px);
+}
+
+.activeChip {
+    border-color: #daa520;
+    background: rgba(218, 165, 32, 0.15);
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.2);
+}
+
+.chipCheck {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: #353565;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    color: #94a3b8;
+    transition: all 0.3s;
+}
+
+.activeChip .chipCheck {
+    background: #daa520;
+    color: #000;
+}
+
+.activeChip span {
+    color: #fff;
+    font-weight: 600;
+}
+
 .referralErrorText {
     color: #ef4444;
     font-size: 12px;

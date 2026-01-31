@@ -1,9 +1,13 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 
-const PlaceholderPage: React.FC = () => {
+interface PlaceholderProps {
+    title?: string;
+}
+
+const PlaceholderPage: React.FC<PlaceholderProps> = ({ title }) => {
     const location = useLocation();
-    const pageName = location.pathname.substring(1).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const pageName = title || location.pathname.substring(1).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     return (
         <div style={{

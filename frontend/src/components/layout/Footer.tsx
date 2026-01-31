@@ -179,6 +179,7 @@ const Footer: React.FC = () => {
                             <li><Link to="/premium-services">Premium Services</Link></li>
                             <li><Link to="/careers">Careers</Link></li>
                             <li><Link to="/how-it-works">How it Works</Link></li>
+                            <li><Link to="/documentation-how-it-works">Documentation - How It Works</Link></li>
                             <li><Link to="#" onClick={(e) => { e.preventDefault(); openModal('credits'); }}>Credits</Link></li>
                             <li><Link to="/site-map">Site Map</Link></li>
                             <li><Link to="/about">About Us</Link></li>

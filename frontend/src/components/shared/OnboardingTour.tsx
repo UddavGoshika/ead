@@ -200,35 +200,6 @@ const OnboardingTour: React.FC = () => {
                 }}
 
             />
-            {/* Debug Reset Button (Top Left Corner) */}
-            <div
-                onClick={() => {
-                    localStorage.removeItem('hasSeenHomeTour');
-                    alert('Tour Reset! Refreshing page...');
-                    window.location.reload();
-                }}
-                style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '35px',
-                    height: '35px',
-                    zIndex: 100000,
-                    cursor: 'pointer',
-                    background: 'rgba(197, 160, 89, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    borderBottomRightRadius: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                }}
-                title="CLICK TO RESET TOUR"
-            >
-                🔄
-            </div>
         </>
     );
 };

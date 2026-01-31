@@ -365,11 +365,11 @@
     }
 
     .luxuryCard {
-        width: 100%;
-        max-width: 400px;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 0 20px 0 !important;
         height: auto;
-        min-height: 400px;
-        aspect-ratio: 1/1;
+        min-height: 450px;
     }
 
     .resultsGrid {

@@ -34,6 +34,8 @@ import Grievances from './components/footerpages/grivence.tsx';
 import RefundPolicy from './components/footerpages/refund.tsx';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import LegalDocumentationPage from './pages/LegalDocumentationPage';
+import ProviderDashboard from './pages/dashboard/provider/ProviderDashboard';
 
 // Admin Members
 import MemberTable from './components/admin/MemberTable';
@@ -218,6 +220,8 @@ const App: React.FC = () => {
               <Route path="faq" element={<FAQPage />} />
               <Route path="blogs" element={<BlogPage />} />
               <Route path="search" element={<SearchPage />} />
+              <Route path="legal-documentation" element={<LegalDocumentationPage />} />
+              <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} /> {/* Using same for now as placeholder or specialized section */}
               <Route path="profile/:uniqueId" element={<PublicProfile />} />
               <Route path="file-a-case" element={<PlaceholderPage />} />
               <Route path="case-status" element={<PlaceholderPage />} />
@@ -253,6 +257,12 @@ const App: React.FC = () => {
             <Route path="/dashboard/advocate" element={
               <ProtectedRoute>
                 <AdvocateDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/dashboard/provider" element={
+              <ProtectedRoute>
+                <ProviderDashboard />
               </ProtectedRoute>
             } />
 
@@ -328,6 +338,12 @@ const App: React.FC = () => {
               <Route path="otp/send" element={<SendSms />} />
               <Route path="offline-payments/manual" element={<ManualPayments />} />
               <Route path="uploaded-files" element={<UploadedFiles />} />
+
+              {/* Legal Documentation Admin */}
+              <Route path="legal-docs/agreements" element={<PlaceholderPage title="Manage Agreements" />} />
+              <Route path="legal-docs/affidavits" element={<PlaceholderPage title="Manage Affidavits" />} />
+              <Route path="legal-docs/notices" element={<PlaceholderPage title="Manage Notices" />} />
+              <Route path="legal-docs/providers" element={<PlaceholderPage title="Manage Service Providers" />} />
 
               {/* Setup & Settings */}
               <Route path="setup/header" element={<HeaderSetup />} />

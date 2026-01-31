@@ -111,6 +111,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         signatureDate: '',
         emailVerified: false,
         mobileVerified: false,
+        legalDocumentation: [],
     });
 
 

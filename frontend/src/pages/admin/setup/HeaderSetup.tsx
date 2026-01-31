@@ -140,7 +140,16 @@ const HeaderConfiguration: React.FC = () => {
             <section className={styles.section}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h4>Navigation Menu Items</h4>
-                    <button className={styles.saveBtn} style={{ padding: '5px 10px', fontSize: '0.8rem' }} onClick={addMenuItem}>+ Add Item</button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            className={styles.saveBtn}
+                            style={{ padding: '5px 12px', fontSize: '0.8rem', background: '#daa520', color: '#000' }}
+                            onClick={() => setMenuItems([...menuItems, { label: "Legal Documentation", link: "/legal-documentation" }])}
+                        >
+                            + Quick Add Legal Docs
+                        </button>
+                        <button className={styles.saveBtn} style={{ padding: '5px 12px', fontSize: '0.8rem' }} onClick={addMenuItem}>+ Add Custom Item</button>
+                    </div>
                 </div>
                 {menuItems.map((item, index) => (
                     <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>

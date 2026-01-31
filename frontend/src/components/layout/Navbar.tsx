@@ -165,6 +165,11 @@ const Navbar: React.FC = () => {
 
             {/* CENTER : ALL 3 BARS */}
             <div className={styles.centerStack}>
+                {/* Mobile Logo Only */}
+                <div className={styles.mobileLogoMain}>
+                    <img src={settings?.logo_url_left || "/assets/eadvocate.webp"} alt="Logo" onClick={() => navigate("/")} />
+                </div>
+
                 {/* TOP BAR */}
                 <div className={styles.topBar}>
                     <div className={styles.inner}>
@@ -213,6 +218,7 @@ const Navbar: React.FC = () => {
                                     <button onClick={() => window.open("https://filing.ecourts.gov.in/pdedev/", "_blank", "noopener,noreferrer")}>File Case</button>
                                     <button onClick={() => window.open("https://services.ecourts.gov.in/ecourtindia_v6/", "_blank", "noopener,noreferrer")}>Case Status</button>
                                     <button onClick={() => navigate("/blogs")}>Blogs</button>
+                                    <button onClick={() => navigate("/legal-documentation")}>Legal Documentation</button>
                                     <button onClick={() => navigate("/about")}>About</button>
                                 </>
                             )}
@@ -384,6 +390,7 @@ const Navbar: React.FC = () => {
                             <button onClick={() => { window.open("https://filing.ecourts.gov.in/pdedev/", "_blank", "noopener,noreferrer"); setIsMenuOpen(false); }}>File Case</button>
                             <button onClick={() => { window.open("https://services.ecourts.gov.in/ecourtindia_v6/", "_blank", "noopener,noreferrer"); setIsMenuOpen(false); }}>Case Status</button>
                             <button onClick={() => { navigate("/blogs"); setIsMenuOpen(false); }}>Blogs</button>
+                            <button onClick={() => { navigate("/legal-documentation"); setIsMenuOpen(false); }}>Legal Documentation</button>
                             <button onClick={() => { navigate("/about"); setIsMenuOpen(false); }}>About</button>
                         </>
                     )}
@@ -417,11 +424,21 @@ const Navbar: React.FC = () => {
                 <div className={styles.mobileEcoLinks}>
                     <p>Our Ecosystem</p>
                     <div className={styles.ecoGrid}>
-                        {settings?.ecosystem_links?.map((link, idx) => (
-                            <a key={idx} href={link.link}>
-                                <img src={link.icon_url} alt={link.label} />
-                            </a>
-                        ))}
+                        {(settings?.ecosystem_links && settings.ecosystem_links.length > 0) ? (
+                            settings.ecosystem_links.map((link, idx) => (
+                                <a key={idx} href={link.link} target="_blank" rel="noopener noreferrer">
+                                    <img src={link.icon_url} alt={link.label} />
+                                    <span>{link.label}</span>
+                                </a>
+                            ))
+                        ) : (
+                            <>
+                                <a href="#"><img src="/assets/edverse.webp" alt="Edverse" /><span>Edverse</span></a>
+                                <a href="#"><img src="/assets/carrer.webp" alt="Careers" /><span>Careers</span></a>
+                                <a href="#"><img src="/assets/nexus.webp" alt="Nexus" /><span>Nexus</span></a>
+                                <a href="#"><img src="/assets/civic.webp" alt="Civic" /><span>Civic</span></a>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
