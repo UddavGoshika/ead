@@ -446,23 +446,40 @@ const FilterModal: React.FC = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
             >
-
-
-                <button className={styles.closeIconBtn} onClick={closeFilterModal}>
-                    <X size={24} />X
-                </button>
+                {/* 
+                  HEADER ROW 
+                  Left: Role Toggles
+                  Right: Search by ID 
+                */}
                 <div className={styles.headerRow}>
-                    <div className={styles.topHeader}>
-                        <h2 className={styles.modalTitle}>Browse Profiles</h2>
-
+                    {/* Left: Role Toggles */}
+                    <div className={styles.rolePicker}>
+                        <div className={styles.roleToggle}>
+                            <button
+                                className={`${styles.roleOption} ${role === 'advocate' ? styles.activeRole : ''}`}
+                                onClick={() => setRole('advocate')}
+                            >
+                                {/* Using a placeholder icon, can use UserGroup if available */}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                Find Advocates
+                            </button>
+                            <button
+                                className={`${styles.roleOption} ${role === 'client' ? styles.activeRole : ''}`}
+                                onClick={() => setRole('client')}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                                Find Clients
+                            </button>
+                        </div>
                     </div>
 
+                    {/* Right: Search */}
                     <div className={styles.headerControls}>
                         <div className={styles.searchContainer}>
                             <Search size={18} className={styles.searchIcon} />
                             <input
                                 type="text"
-                                placeholder="Search by ID"
+                                placeholder="Search by ID (e.g., ADV-123)"
                                 className={styles.idInput}
                                 value={searchId}
                                 onChange={(e) => setSearchId(e.target.value)}
@@ -470,31 +487,12 @@ const FilterModal: React.FC = () => {
                             />
                             <button className={styles.searchActionBtn} onClick={handleApply}>Search</button>
                         </div>
-
-                        <div className={styles.rolePicker}>
-                            <span className={styles.roleLabel}>Role:</span>
-                            <div className={styles.roleToggle}>
-                                <button
-                                    className={`${styles.roleOption} ${role === 'advocate' ? styles.activeRole : ''}`}
-                                    onClick={() => setRole('advocate')}
-                                >
-                                    Advocate
-                                </button>
-                                <button
-                                    className={`${styles.roleOption} ${role === 'client' ? styles.activeRole : ''}`}
-                                    onClick={() => setRole('client')}
-                                >
-                                    Client
-                                </button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
                 <div className={styles.scrollArea}>
                     <div className={styles.grid}>
-                        {/* Language */}
+                        {/* Row 1: Languages, Depts, SubDepts, Experience */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select Languages"
@@ -502,50 +500,27 @@ const FilterModal: React.FC = () => {
                                     { value: 'english', label: 'English' },
                                     { value: 'hindi', label: 'Hindi' },
                                     { value: 'telugu', label: 'Telugu' },
-                                    { value: 'assamese', label: 'Assamese' },
-                                    { value: 'awadhi', label: 'Awadhi' },
-                                    { value: 'bagheli', label: 'Bagheli' },
-                                    { value: 'banjara', label: 'Banjara' },
-                                    { value: 'bhojpuri', label: 'Bhojpuri' },
-                                    { value: 'bodo', label: 'Bodo' },
-                                    { value: 'bundeli', label: 'Bundeli' },
-                                    { value: 'chhattisgarhi', label: 'Chhattisgarhi' },
-                                    { value: 'coorgi', label: 'Coorgi' },
-                                    { value: 'dakhini', label: 'Dakhini' },
-                                    { value: 'dogri', label: 'Dogri' },
-                                    { value: 'garhwali', label: 'Garhwali' },
-                                    { value: 'gujarati', label: 'Gujarati' },
-                                    { value: 'haryanvi', label: 'Haryanvi' },
-                                    { value: 'kannada', label: 'Kannada' },
-                                    { value: 'kashmiri', label: 'Kashmiri' },
-                                    { value: 'konkani', label: 'Konkani' },
-                                    { value: 'malayalam', label: 'Malayalam' },
-                                    { value: 'manipuri', label: 'Manipuri' },
                                     { value: 'marathi', label: 'Marathi' },
-                                    { value: 'punjabi', label: 'Punjabi' },
-                                    { value: 'rajasthani', label: 'Rajasthani' },
-                                    { value: 'sanskrit', label: 'Sanskrit' },
                                     { value: 'tamil', label: 'Tamil' },
-                                    { value: 'tulu', label: 'Tulu' },
-                                    { value: 'urdu', label: 'Urdu' }
+                                    { value: 'kannada', label: 'Kannada' },
+                                    { value: 'malayalam', label: 'Malayalam' },
+                                    { value: 'gujarati', label: 'Gujarati' },
+                                    { value: 'punjabi', label: 'Punjabi' }
                                 ]}
-
                                 selected={filters.language}
                                 onChange={(val) => toggleFilter('language', val)}
                             />
                         </div>
 
-                        {/* Department */}
                         <div className={styles.filterBox}>
                             <MultiSelect
-                                placeholder="Select Departments"
+                                placeholder="Select Departments / Categories"
                                 options={Object.entries(DEPARTMENT_DATA).map(([value, d]) => ({ value, label: d.label }))}
                                 selected={filters.department}
                                 onChange={(val) => toggleFilter('department', val)}
                             />
                         </div>
 
-                        {/* Sub Department */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select Sub Departments"
@@ -556,14 +531,14 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        {/* Experience */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select Experience"
                                 options={[
                                     { value: '1-3', label: '1-3 Years' },
                                     { value: '3-5', label: '3-5 Years' },
-                                    { value: '5+', label: '5+ Years' }
+                                    { value: '5-10', label: '5-10 Years' },
+                                    { value: '10+', label: '10+ Years' }
                                 ]}
                                 selected={filters.experience}
                                 onChange={(val) => toggleFilter('experience', val)}
@@ -571,7 +546,7 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        {/* State */}
+                        {/* Row 2: States, Districts, Cities, Mode */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select States"
@@ -581,7 +556,6 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        {/* District */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select Districts"
@@ -592,7 +566,6 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        {/* City */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Select Cities"
@@ -603,7 +576,6 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        {/* Consultation Mode */}
                         <div className={styles.filterBox}>
                             <MultiSelect
                                 placeholder="Consultation Mode"
@@ -619,8 +591,8 @@ const FilterModal: React.FC = () => {
                 </div>
 
                 <div className={styles.footerActions}>
-                    <button className={styles.resetActionButton} onClick={handleReset}>Reset</button>
                     <button className={styles.applyActionButton} onClick={handleApply}>Apply Filters</button>
+                    {/* Hidden/Removed Reset Button as per visual req, or if needed can add back subtly */}
                 </div>
             </motion.div>
         </div>

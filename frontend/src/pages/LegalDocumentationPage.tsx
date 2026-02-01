@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { interactionService } from '../services/interactionService';
+import { LOCATION_DATA_RAW } from '../components/layout/statesdis';
 
 // --- Types ---
 
@@ -837,6 +838,20 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
         </div>
     );
 
+
+
+    // Helper logic to get current options based on state/district selection
+    // Derived state for dropdown options
+    const availableStates = Object.keys(LOCATION_DATA_RAW).sort();
+
+    const availableDistricts = filters.state && LOCATION_DATA_RAW[filters.state]
+        ? Object.keys(LOCATION_DATA_RAW[filters.state]).sort()
+        : [];
+
+    const availableCities = filters.state && filters.district && LOCATION_DATA_RAW[filters.state][filters.district]
+        ? LOCATION_DATA_RAW[filters.state][filters.district].sort()
+        : [];
+
     const renderServiceView = () => {
         if (!currentDetail) return null;
 
@@ -859,36 +874,58 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                             />
                         </div>
+
+                        {/* STATE FILTER */}
                         <select
                             value={filters.state}
-                            onChange={(e) => setFilters({ ...filters, state: e.target.value })}
+                            onChange={(e) => {
+                                setFilters({
+                                    ...filters,
+                                    state: e.target.value,
+                                    district: '', // Reset child filters
+                                    city: ''
+                                });
+                            }}
                             className={styles.filterSelect}
                         >
                             <option value="">All States</option>
-                            <option value="delhi">Delhi</option>
-                            <option value="maharashtra">Maharashtra</option>
-                            <option value="karnataka">Karnataka</option>
+                            {availableStates.map(state => (
+                                <option key={state} value={state}>{state}</option>
+                            ))}
                         </select>
+
+                        {/* DISTRICT FILTER */}
                         <select
                             value={filters.district}
-                            onChange={(e) => setFilters({ ...filters, district: e.target.value })}
+                            onChange={(e) => {
+                                setFilters({
+                                    ...filters,
+                                    district: e.target.value,
+                                    city: '' // Reset child filter
+                                });
+                            }}
                             className={styles.filterSelect}
+                            disabled={!filters.state}
                         >
-                            <option value="">All Districts</option>
-                            <option value="central">Central</option>
-                            <option value="north">North</option>
-                            <option value="south">South</option>
+                            <option value="">{filters.state ? "All Districts" : "Select State First"}</option>
+                            {availableDistricts.map(dist => (
+                                <option key={dist} value={dist}>{dist}</option>
+                            ))}
                         </select>
+
+                        {/* CITY FILTER */}
                         <select
                             value={filters.city}
                             onChange={(e) => setFilters({ ...filters, city: e.target.value })}
                             className={styles.filterSelect}
+                            disabled={!filters.district}
                         >
-                            <option value="">All Cities</option>
-                            <option value="mumbai">Mumbai</option>
-                            <option value="bangalore">Bangalore</option>
-                            <option value="delhi">Delhi</option>
+                            <option value="">{filters.district ? "All Cities" : "Select District First"}</option>
+                            {availableCities.map(city => (
+                                <option key={city} value={city}>{city}</option>
+                            ))}
                         </select>
+
                         <select
                             value={filters.experience}
                             onChange={(e) => setFilters({ ...filters, experience: e.target.value })}
