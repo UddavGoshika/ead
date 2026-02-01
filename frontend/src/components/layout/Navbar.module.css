@@ -48,6 +48,8 @@
 
 .leftLogo img,
 .rightLogo img {
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
   width: 150px;
   height: auto;
   object-fit: contain;
@@ -412,6 +414,7 @@
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   display: flex;
+
   align-items: center;
   overflow-x: auto;
   scrollbar-width: none;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, MessageSquare, Clock, Newspaper, Briefcase } from 'lucide-react';
+import { MessageSquare, Clock, Newspaper, Briefcase } from 'lucide-react';
 import styles from '../MobileNav.module.css';
 
 interface Props {
@@ -7,12 +7,12 @@ interface Props {
     currentPage: string;
 }
 
-const AdvocateBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => {
+const AdvisorBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => {
     const items = [
-        { id: 'messenger', label: 'Messenger', icon: MessageSquare },
-        { id: 'activity', label: 'Activity', icon: Clock },
-        { id: 'blogs', label: 'Blogs', icon: Newspaper },
-        { id: 'my-cases', label: 'My Cases', icon: Briefcase }
+        { id: 'messenger', label: 'Inbox', icon: MessageSquare },
+        { id: 'activity', label: 'Feeds', icon: Clock },
+        { id: 'blogs', label: 'Insights', icon: Newspaper },
+        { id: 'my-cases', label: 'Tasks', icon: Briefcase }
     ];
 
     return (
@@ -31,4 +31,4 @@ const AdvocateBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => 
     );
 };
 
-export default AdvocateBottomNav;
+export default AdvisorBottomNav;

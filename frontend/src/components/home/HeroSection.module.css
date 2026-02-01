@@ -210,9 +210,14 @@
     margin-top: 20px;
     border-radius: 35px;
     border: 1px solid var(--glass-border);
-    text-align: center;
     animation: fadeIn 0.8s ease-out;
     box-shadow: var(--glass-shadow);
+
+    /* NEW */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 @keyframes fadeIn {

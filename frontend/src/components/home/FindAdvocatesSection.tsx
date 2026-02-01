@@ -34,7 +34,7 @@ const FindAdvocatesSection: React.FC = () => {
                 <div className={styles.glassCard}>
                     <div className={styles.header}>
                         <h2>Find Your Advocate</h2>
-                        <p>Search through thousands of verified legal professionals across India</p>
+                        <p>Search through thousands of verified  professionals across India</p>
                     </div>
 
                     <div className={styles.quickSearch}>

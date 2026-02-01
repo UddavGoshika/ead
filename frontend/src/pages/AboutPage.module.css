@@ -13,7 +13,7 @@
 .aboutContainer {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 60px 20px;
+    padding: 100px 20px;
 }
 
 /* Header Section */
@@ -40,6 +40,7 @@
     font-weight: 800;
     background: linear-gradient(to bottom, #ffffff, #94a3b8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 24px;
     letter-spacing: -0.02em;

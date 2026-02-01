@@ -35,6 +35,8 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
                 return <Navigate to="/dashboard/finance" replace />;
             case 'support':
                 return <Navigate to="/dashboard/support" replace />;
+            case 'legal_provider':
+                return <Navigate to="/dashboard/advisor" replace />;
             case 'telecaller':
                 return <Navigate to="/telecaller" replace />;
             case 'customer-care':

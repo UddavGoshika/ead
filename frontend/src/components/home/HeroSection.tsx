@@ -248,7 +248,7 @@ const HomeBanner: React.FC = () => {
                         {/* DYNAMIC CONTENT BELOW SLIDER */}
                         <div className={styles.dynamicContent}>
                             <h2 className={styles.slideTitle}>{sliderImages[current].title}</h2>
-                            <p className={styles.slideSubtitle}>{sliderImages[current].subtitle}</p>
+                            {/* <p className={styles.slideSubtitle}>{sliderImages[current].subtitle}</p> */}
                             <a
                                 href={sliderImages[current].btnLink}
                                 target="_blank"

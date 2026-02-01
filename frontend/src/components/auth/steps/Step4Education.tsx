@@ -6,13 +6,14 @@ import universitiesData from '../../../data/universities.json';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    isOptional?: boolean;
 }
 
 const universities = Object.keys(universitiesData).sort();
 
 const years = Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i);
 
-const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
@@ -41,7 +42,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Degree */}
                 <div className={styles.formGroup}>
                     <label>
-                        GRADUATE DEGREE <span className={styles.required}>*</span>
+                        GRADUATE DEGREE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="degree"
@@ -60,7 +61,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* University */}
                 <div className={styles.formGroup}>
                     <label>
-                        UNIVERSITY <span className={styles.required}>*</span>
+                        UNIVERSITY {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="university"
@@ -77,7 +78,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* College */}
                 <div className={styles.formGroup}>
                     <label>
-                        COLLEGE <span className={styles.required}>*</span>
+                        COLLEGE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="college"
@@ -95,7 +96,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Graduation Year */}
                 <div className={styles.formGroup}>
                     <label>
-                        GRADUATION YEAR <span className={styles.required}>*</span>
+                        GRADUATION YEAR {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="passingYear"
@@ -114,7 +115,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Enrollment Number */}
                 <div className={styles.formGroup}>
                     <label>
-                        ENROLLMENT NUMBER <span className={styles.required}>*</span>
+                        ENROLLMENT NUMBER {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <input
                         type="text"
@@ -128,7 +129,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Degree Certificate */}
                 <div className={styles.formGroup}>
                     <label>
-                        DEGREE CERTIFICATE <span className={styles.required}>*</span>
+                        DEGREE CERTIFICATE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <div className={styles.uploadWrapper}>
                         <input
@@ -159,7 +160,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData }) => {
 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label>
-                        About me <span className={styles.required}>*</span>
+                        About me {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <textarea
                         name="aboutMe"

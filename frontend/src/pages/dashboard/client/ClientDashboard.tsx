@@ -22,6 +22,7 @@ import ChatPopup from '../shared/ChatPopup';
 import MyCases from './sections/MyCases';
 import FileCase from './sections/FileCase';
 import PromoCodes from './sections/PromoCodes';
+import LegalDocumentationPage from '../../LegalDocumentationPage';
 import { Menu, ArrowLeft, Bell } from 'lucide-react';
 
 import type { Advocate } from '../../../types';
@@ -137,6 +138,8 @@ const ClientDashboard: React.FC = () => {
                 return <FileCase backToHome={backtohome} showToast={showToast} />;
             case 'Promocodes':
                 return <PromoCodes />;
+            case 'legal-documentation':
+                return <LegalDocumentationPage isEmbedded />;
             default:
                 return isPremium ? (
                     <FeaturedProfiles
@@ -172,9 +175,9 @@ const ClientDashboard: React.FC = () => {
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
-            case 'my-cases': return 'My Cases';
             case 'fileacase': return 'File a New Case';
             case 'Promocodes': return 'Special Promocodes';
+            case 'legal-documentation': return 'Legal Documentation';
             default: return 'Client Dashboard';
         }
     };

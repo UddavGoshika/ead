@@ -56,68 +56,90 @@
 }
 
 .textCard {
-    background: var(--glass-gradient);
-    backdrop-filter: var(--glass-blur);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: #fff;
     padding: 0px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+    transition: all 0.4s ease;
+}
+
+.textCard:hover {
+    border-color: rgba(0, 163, 255, 0.4);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(0, 163, 255, 0.1);
 }
 
 .whiteCard {
-    background: var(--glass-gradient) !important;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
 }
 
 .cardContent {
-    max-width: 400px;
-    padding: 60px;
+    max-width: 450px;
+    padding: 40px 60px;
 }
 
 .cardTitle {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #38bdf8;
+    margin-bottom: 12px;
+}
+
+.dynamicTitle {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 800;
     margin: 0;
     line-height: 1.1;
     color: #fff;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .cardDescription {
-    color: #cbd5e1;
-    margin: 25px 0 35px;
-    line-height: 1.6;
-    font-size: 1.1rem;
+    color: #94a3b8;
+    margin: 20px 0 30px;
+    line-height: 1.7;
+    font-size: 1.05rem;
 }
 
 .cardDescriptionDark {
-    color: #fff;
-    margin: 25px 0 35px;
-    line-height: 1.6;
-    font-size: 1.1rem;
-    font-weight: 500;
+    color: #94a3b8;
+    margin: 20px 0 30px;
+    line-height: 1.7;
+    font-size: 1.05rem;
 }
 
 .exploreBtn {
-    background: #00a3ff;
+    background: linear-gradient(135deg, #00a3ff 0%, #0066ff 100%);
     color: white;
     border: none;
-    padding: 15px 40px;
-    border-radius: 100px;
-    font-weight: 700;
-    font-size: 1.1rem;
+    padding: 14px 34px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
     width: fit-content;
-    transition: transform 0.2s, background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 163, 255, 0.3);
 }
 
 .exploreBtn:hover {
-    background: #0082cc;
-    transform: scale(1.02);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 163, 255, 0.4);
 }
 
 .imageCard {
@@ -263,22 +285,24 @@
 }
 
 .trackBtn {
-    background: #006699;
+    background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
     color: white;
     border: none;
-    padding: 15px 35px;
+    padding: 14px 34px;
     border-radius: 12px;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
 }
 
 .trackBtn:hover {
-    background: #005580;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(56, 189, 248, 0.4);
 }
 
 @media (max-width: 1024px) {

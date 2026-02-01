@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Hammer } from 'lucide-react';
+import { X, Briefcase } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import styles from './AdvocateRegistration.module.css';
+import styles from './LegalProviderRegistration.module.css';
 import { authService } from '../../services/api';
 
 // Import Step Components
@@ -15,7 +15,7 @@ import Step7Career from './steps/Step7Career';
 import Step8Availability from './steps/Step8Availability';
 import Step9Review from './steps/Step9Review';
 
-interface AdvocateRegistrationProps {
+interface LegalProviderRegistrationProps {
     onClose: () => void;
 }
 
@@ -31,7 +31,7 @@ const steps = [
     { id: 9, label: 'REVIEW' },
 ];
 
-const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) => {
+const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ onClose }) => {
     const [currentStep, setCurrentStep] = useState<number>(1);
     const [formData, setFormData] = useState<any>({
         // Step 1 - Personal
@@ -53,7 +53,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         password: '',
         confirmPassword: '',
 
-        // Step 4 - Education
+        // Step 4 - Education (Optional for Providers)
         degree: '',
         university: '',
         college: '',
@@ -62,7 +62,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         degreeCertificate: null,
         aboutMe: '',
 
-        // Step 5 - Practice
+        // Step 5 - Practice (Optional for Providers)
         barRegNo: '',
         stateBar: '',
         courtOfPractice: '',
@@ -85,7 +85,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         permPincode: '',
         sameAsCurrent: false,
 
-        // Step 7 - Career
+        // Step 7 - Career (Optional for Providers)
         currentFirm: '',
         position: '',
         workType: '',
@@ -115,8 +115,6 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         captchaVerified: false,
     });
 
-
-
     const updateFormData = (newData: any) => {
         setFormData((prev: any) => ({ ...prev, ...newData }));
     };
@@ -127,10 +125,10 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
             case 1: return <Step1Personal {...props} />;
             case 2: return <Step2Verification {...props} />;
             case 3: return <Step3Password {...props} />;
-            case 4: return <Step4Education {...props} />;
-            case 5: return <Step5Practice {...props} />;
+            case 4: return <Step4Education {...props} isOptional={true} />;
+            case 5: return <Step5Practice {...props} isOptional={true} />;
             case 6: return <Step6Location {...props} />;
-            case 7: return <Step7Career {...props} />;
+            case 7: return <Step7Career {...props} isOptional={true} />;
             case 8: return <Step8Availability {...props} />;
             case 9: return <Step9Review {...props} />;
             default: return null;
@@ -157,26 +155,10 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 );
             case 3:
                 return formData.password && formData.confirmPassword && (formData.password === formData.confirmPassword);
-            case 4:
-                return (
-                    formData.degree &&
-                    formData.university &&
-                    formData.college &&
-                    formData.passingYear &&
-                    formData.enrollmentNumber &&
-                    formData.degreeCertificate &&
-                    formData.aboutMe
-                );
 
-            case 5:
-                return (
-                    formData.barRegNo &&
-                    formData.stateBar &&
-                    formData.courtOfPractice &&
-                    formData.experienceRange &&
-                    formData.specialization &&
-                    formData.practiceLicense
-                );
+            case 4: return true; // Education is optional for Providers
+            case 5: return true; // Practice is optional for Providers
+            case 7: return true; // Career is optional for Providers
 
             case 6:
                 return (
@@ -193,14 +175,6 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     )
                 );
 
-            case 7:
-                return (
-                    formData.workType &&
-                    Array.isArray(formData.languages) &&
-                    formData.languages.length > 0 &&
-                    formData.careerBio
-                );
-
             case 8:
                 return (
                     Array.isArray(formData.consultationTypes) &&
@@ -210,7 +184,6 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     formData.workStart &&
                     formData.workEnd
                 );
-
 
             case 9:
                 return (
@@ -238,10 +211,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
             setCurrentStep(prev => prev + 1);
         } else {
             try {
-                // Actual Backend Submission using FormData for files
                 const submissionData = new FormData();
-
-                // Define file fields for special handling
                 const fileFieldsMapping: Record<string, string> = {
                     profilePhoto: 'adr-profilePic',
                     degreeCertificate: 'adr-degreeCert',
@@ -252,42 +222,25 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
 
                 Object.keys(formData).forEach(key => {
                     const value = formData[key];
-
-                    // Skip null/undefined
                     if (value === null || value === undefined) return;
 
-                    // Handle special file fields
                     if (fileFieldsMapping[key]) {
                         submissionData.append(fileFieldsMapping[key], value);
-                    }
-                    // Handle arrays
-                    else if (Array.isArray(value)) {
+                    } else if (Array.isArray(value)) {
                         submissionData.append(key, JSON.stringify(value));
-                    }
-                    // Handle all others (ensure they aren't accidentally sent as binary if they are objects)
-                    else {
-                        // If it's a File/Blob but not in our mapping, skip it to avoid MulterErrors
-                        if (value instanceof File || value instanceof Blob) {
-                            console.warn(`Skipping unhandled file field: ${key}`);
-                            return;
-                        }
-
-                        // Otherwise append as is (strings, numbers, booleans)
+                    } else {
+                        if (value instanceof File || value instanceof Blob) return;
                         submissionData.append(key, value);
                     }
                 });
 
-                // Log FormData for debugging Multer matches
-                console.log('--- FormData contents ---');
-                for (let [key, value] of (submissionData as any).entries()) {
-                    console.log(`${key}:`, value instanceof File ? `File(${value.name})` : value);
-                }
-                console.log('------------------------');
+                // Force role for provider registration
+                submissionData.set('role', 'legal_provider');
 
                 const response = await authService.registerAdvocate(submissionData);
                 if (response.data.success) {
                     const advId = response.data.advocateId || response.data.uniqueId || 'Assigned shortly';
-                    alert(`Registration submitted successfully!\n\nYour Unique Advocate ID is: ${advId}\n\nPlease keep this ID for future reference.`);
+                    alert(`Legal Provider registration submitted successfully!\n\nYour Unique ID is: ${advId}\n\nPlease keep this ID for future reference.`);
                     onClose();
                 } else {
                     alert('Registration failed: ' + (response.data.error || 'Unknown error'));
@@ -308,18 +261,16 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
             >
-                {/* Header */}
                 <div className={styles.header}>
                     <div className={styles.headerTitle}>
-                        <Hammer className={styles.hammerIcon} size={24} />
-                        <h2>Advocate Registration</h2>
+                        <Briefcase className={styles.hammerIcon} size={24} />
+                        <h2>Legal Advisor Registration</h2>
                     </div>
                     <button className={styles.closeBtn} onClick={onClose}>
                         <X size={24} /> X
                     </button>
                 </div>
 
-                {/* Stepper */}
                 <div className={styles.stepperContainer}>
                     <div className={styles.progressBar}>
                         <div
@@ -334,16 +285,13 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                                 className={`${styles.stepItem} ${currentStep === step.id ? styles.activeStep : ''} ${currentStep > step.id ? styles.completedStep : ''}`}
                                 onClick={() => setCurrentStep(step.id)}
                             >
-                                <div className={styles.stepCircle}>
-                                    {step.id}
-                                </div>
+                                <div className={styles.stepCircle}>{step.id}</div>
                                 <span className={styles.stepLabel}>{step.label}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Main Content Area */}
                 <div className={styles.content}>
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -358,7 +306,6 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     </AnimatePresence>
                 </div>
 
-                {/* Footer Actions */}
                 <div className={styles.footer}>
                     <button
                         className={styles.backBtn}
@@ -367,11 +314,9 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     >
                         Previous
                     </button>
-                    <button
-                        className={styles.nextBtn}
-                        onClick={handleNext}
-                    >
-                        {currentStep === steps.length ? 'Submit Application' : 'Continue'}
+                    <button className={styles.nextBtn} onClick={handleNext}>
+                        {([4, 5, 7].includes(currentStep)) ? 'Skip & Continue' :
+                            (currentStep === steps.length ? 'Submit Application' : 'Continue')}
                     </button>
                 </div>
             </motion.div>
@@ -379,4 +324,4 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
     );
 };
 
-export default AdvocateRegistration;
+export default LegalProviderRegistration;

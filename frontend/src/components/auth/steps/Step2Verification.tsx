@@ -230,7 +230,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Smartphone size={14} />
-                        MOBILE OTP <span className={styles.required}>*</span>
+                        MOBILE OTP <span className={styles.required}></span>
                         {formData.mobile && <span style={{ textTransform: 'none', marginLeft: '10px', color: '#64748b' }}>({formData.mobile})</span>}
                     </label>
                     <div className={styles.otpInputWrapper}>

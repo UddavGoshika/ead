@@ -5,9 +5,10 @@ import styles from '../AdvocateRegistration.module.css';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    isOptional?: boolean;
 }
 
-const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
@@ -25,7 +26,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Bar Registration */}
                 <div className={styles.formGroup}>
                     <label>
-                        BAR COUNCIL REG. NO. <span className={styles.required}>*</span>
+                        BAR COUNCIL REG. NO. {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <input
                         type="text"
@@ -39,7 +40,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* State Bar Council */}
                 <div className={styles.formGroup}>
                     <label>
-                        STATE BAR COUNCIL <span className={styles.required}>*</span>
+                        STATE BAR COUNCIL {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <input
                         type="text"
@@ -53,7 +54,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Court of Practice */}
                 <div className={styles.formGroup}>
                     <label>
-                        COURT OF PRACTICE <span className={styles.required}>*</span>
+                        COURT OF PRACTICE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="courtOfPractice"
@@ -73,7 +74,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Experience */}
                 <div className={styles.formGroup}>
                     <label>
-                        YEARS OF EXPERIENCE <span className={styles.required}>*</span>
+                        YEARS OF EXPERIENCE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="experienceRange"
@@ -91,7 +92,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Primary Specialization */}
                 <div className={styles.formGroup}>
                     <label>
-                        PRIMARY SPECIALIZATION <span className={styles.required}>*</span>
+                        PRIMARY SPECIALIZATION {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="specialization"
@@ -135,7 +136,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Practice License */}
                 <div className={styles.formGroup}>
                     <label>
-                        PRACTICE LICENSE <span className={styles.required}>*</span>
+                        PRACTICE LICENSE {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <div className={styles.uploadWrapper}>
                         <input

@@ -9,6 +9,7 @@ const Attribute = require('../models/Attribute');
 const Blog = require('../models/Blog');
 const AuditLog = require('../models/AuditLog');
 const Transaction = require('../models/Transaction'); // Added Transaction model
+const LegalRequest = require('../models/LegalRequest');
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -617,6 +618,59 @@ router.post('/impersonate/:id', async (req, res) => {
         });
     } catch (err) {
         console.error('Impersonation error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= LEGAL REQUEST MANAGEMENT =================
+
+// GET ALL LEGAL REQUESTS
+router.get('/legal-requests', async (req, res) => {
+    try {
+        const { type, status } = req.query;
+        let query = {};
+        if (type) query.type = type;
+        if (status && status !== 'All') query.status = status;
+
+        const requests = await LegalRequest.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, requests });
+    } catch (err) {
+        console.error('Legal requests fetch error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// CREATE/UPDATE LEGAL REQUEST
+router.post('/legal-requests', async (req, res) => {
+    try {
+        const data = req.body;
+        let request;
+        if (data._id) {
+            request = await LegalRequest.findByIdAndUpdate(data._id, data, { new: true });
+        } else if (data.id) { // sometimes frontend uses 'id' instead of '_id'
+            request = await LegalRequest.findByIdAndUpdate(data.id, data, { new: true });
+        } else {
+            // Generate requestId if not provided
+            if (!data.requestId) {
+                const prefix = data.type === 'Affidavit' ? 'AFF' : data.type === 'Agreement' ? 'AGR' : 'NTC';
+                const count = await LegalRequest.countDocuments({ type: data.type });
+                data.requestId = `${prefix}-REQ-${1000 + count + 1}`;
+            }
+            request = await LegalRequest.create(data);
+        }
+        res.json({ success: true, request });
+    } catch (err) {
+        console.error('Legal request save error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE LEGAL REQUEST
+router.delete('/legal-requests/:id', async (req, res) => {
+    try {
+        await LegalRequest.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Legal request deleted successfully' });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });

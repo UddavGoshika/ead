@@ -263,6 +263,31 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
             </div>
 
 
+            {/* ========== CAPTCHA VERIFICATION ========= */}
+            <div className={styles.signatureSection}>
+                <h4>🛡️ Security Verification</h4>
+                <div className={styles.captchaContainer}>
+                    <div className={styles.captchaBox}>
+                        <span className={styles.captchaText}>LEX-7A9B2</span>
+                    </div>
+                    <div className={styles.captchaInputGroup}>
+                        <input
+                            type="text"
+                            placeholder="Type Code Above"
+                            className={styles.captchaInput}
+                            onChange={(e) => {
+                                if (e.target.value.toUpperCase() === 'LEX-7A9B2') {
+                                    updateFormData({ captchaVerified: true });
+                                } else {
+                                    updateFormData({ captchaVerified: false });
+                                }
+                            }}
+                        />
+                        {formData.captchaVerified && <span className={styles.verifySuccess}>✔ Verified</span>}
+                    </div>
+                </div>
+            </div>
+
             {/* ========== SIGNATURE ========= */}
             <div className={styles.signatureSection}>
                 <h4><PenTool size={14} /> Digital Signature</h4>
@@ -283,14 +308,9 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
                 <input
                     type="date"
                     placeholder="Date"
-                    value={new Date().toISOString().split('T')[0]}
+                    value={formData.signatureDate ? formData.signatureDate.split('T')[0] : new Date().toISOString().split('T')[0]}
                     readOnly
-                    style={{
-                        backgroundColor: 'transparent',
-                        cursor: 'not-allowed',
-
-                        margin: '20px'
-                    }}
+                    className={styles.dateInput}
                 />
             </div>
 

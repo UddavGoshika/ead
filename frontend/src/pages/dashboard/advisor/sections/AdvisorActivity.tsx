@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import styles from "./activity.module.css";
+import styles from "../../advocate/sections/Activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
-import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck } from "lucide-react";
+import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare } from "lucide-react";
 
-const Activity = () => {
+const AdvisorActivity = () => {
     const { user } = useAuth();
     const [stats, setStats] = useState({
         visits: 0,
         sent: 0,
         received: 0,
-        accepted: 0
+        accepted: 0,
+        messages: 0
     });
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -25,7 +26,8 @@ const Activity = () => {
                         interactionService.getActivityStats(String(user.id)),
                         interactionService.getAllActivities(String(user.id))
                     ]);
-                    setStats(statsData);
+                    // If statsData doesn't have messages, we default to 0
+                    setStats({ ...statsData, messages: statsData.messages || 0 });
                     setActivities(activitiesData);
                 } catch (err) {
                     console.error("Error fetching activity data:", err);
@@ -41,7 +43,8 @@ const Activity = () => {
         { label: "Profile Visits", value: stats.visits, icon: <Eye size={22} />, color: "#3b82f6", type: 'visit' },
         { label: "Interests Sent", value: stats.sent, icon: <Send size={22} />, color: "#facc15", type: 'sent' },
         { label: "Interests Received", value: stats.received, icon: <Inbox size={22} />, color: "#10b981", type: 'received' },
-        { label: "Accepted Requests", value: stats.accepted, icon: <Star size={22} />, color: "#f43f5e", type: 'accepted' }
+        { label: "Shortlisted", value: stats.accepted, icon: <UserCheck size={22} />, color: "#f43f5e", type: 'accepted' },
+        { label: "Messages", value: stats.messages, icon: <MessageSquare size={22} />, color: "#8b5cf6", type: 'message' }
     ];
 
     const filteredActivities = activities.filter(act => {
@@ -50,6 +53,7 @@ const Activity = () => {
         if (activeFilter === 'sent') return ['interest', 'superInterest'].includes(act.type) && act.isSender;
         if (activeFilter === 'received') return ['interest', 'superInterest'].includes(act.type) && !act.isSender;
         if (activeFilter === 'accepted') return act.status === 'accepted';
+        if (activeFilter === 'message') return act.type === 'message' || act.type === 'chat_initiated';
         return true;
     });
 
@@ -76,13 +80,13 @@ const Activity = () => {
             {/* Interactions List */}
             <div className={styles.interests}>
                 <div className={styles.interestsHeader}>
-                    <h2>{activeFilter === 'all' ? 'Recent Interactions' : `${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)} Logs`}</h2>
+                    <h2>{activeFilter === 'all' ? 'Activity Log' : `${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)} History`}</h2>
                     <span className={styles.viewAll} onClick={() => setActiveFilter('all')}>Show All</span>
                 </div>
 
                 <div className={styles.activityList}>
                     {loading ? (
-                        <div className={styles.emptyMsg}>Loading activities...</div>
+                        <div className={styles.emptyMsg}>Syncing professional activities...</div>
                     ) : filteredActivities.length > 0 ? (
                         filteredActivities.map((act) => (
                             <div key={act._id} className={styles.activityItem}>
@@ -90,15 +94,19 @@ const Activity = () => {
                                     {act.type === 'visit' ? <Eye size={18} /> :
                                         act.type === 'interest' ? <Send size={18} /> :
                                             act.type === 'superInterest' ? <Star size={18} /> :
-                                                act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
+                                                act.type === 'message' || act.type === 'chat_initiated' ? <MessageSquare size={18} /> :
+                                                    act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
                                 </div>
                                 <div className={styles.activityDetails}>
                                     <p className={styles.activityText}>
                                         {act.status === 'accepted' ? (
-                                            <>You have been <strong>shortlisted</strong> for <strong>{act.partnerName}</strong>'s service</>
+                                            <>Client <strong>{act.partnerName}</strong> has <strong>shortlisted</strong> you for their case.</>
+                                        ) : act.type === 'message' || act.type === 'chat_initiated' ? (
+                                            <>New message {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
                                         ) : (
                                             <><strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
                                         )}
+                                        {act.service && <span className={styles.serviceTag}>Service: {act.service}</span>}
                                         {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
                                     </p>
                                     <span className={styles.activityTime}>
@@ -117,7 +125,7 @@ const Activity = () => {
                         ))
                     ) : (
                         <div className={styles.emptyMsg}>
-                            <p>No logged activities found for this category.</p>
+                            <p>No activity records available.</p>
                         </div>
                     )}
                 </div>
@@ -126,4 +134,4 @@ const Activity = () => {
     );
 };
 
-export default Activity;
+export default AdvisorActivity;

@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import styles from './LegalDocumentationPage.module.css';
 import {
-    FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2,
-    ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock
+    FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
+    ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { interactionService } from '../services/interactionService';
 
 // --- Types ---
 
 interface Provider {
     id: string;
+    adv_id: string;
+    license_id: string;
     name: string;
+    age: number;
     image_url?: string;
     location: string;
     specialization: string;
@@ -20,6 +25,8 @@ interface Provider {
     reviews: number;
     hourly_rate: string;
     isPremium: boolean;
+    isVerified: boolean;
+    specializations?: string[];
 }
 
 interface ServiceDetail {
@@ -39,36 +46,265 @@ const documentationServices = [
     {
         id: 'agreements',
         title: 'Agreements Drafting',
-        description: 'Custom agreements tailored to your specific legal requirements, ensuring full compliance with BCI standards and Indian contract laws.',
-        price: '₹5,000 - ₹10,000',
+        description:
+            'Legally sound and customized agreements drafted in accordance with Indian Contract Act, 1872 and Bar Council of India (BCI) standards.',
+        price: '₹2,500 onwards',
         icon: <FileText size={32} />,
-        features: ['Business Contracts', 'Property Agreements', 'Service Level Agreements', 'Partnership Deeds']
+        idealFor: [
+            'Businesses',
+            'Startups',
+            'Professionals',
+            'Property Owners',
+            'Investors',
+        ],
+        features: [
+            'Clear definition of rights and obligations',
+            'Risk mitigation clauses',
+            'Industry-specific drafting',
+            'Legally enforceable structure',
+        ],
+        deliverables: [
+            'Editable Word & PDF formats',
+            'Legally structured clauses',
+            'Execution-ready document',
+        ],
+        timeline: '2–7 working days',
+        revisions: 'Up to 2 free revisions',
+        compliance: [
+            'Indian Contract Act, 1872',
+            'BCI Professional Standards',
+            'Applicable State & Central Laws',
+        ],
+        howItWorks: [
+            'Requirement analysis',
+            'Clause identification',
+            'Drafting',
+            'Client review',
+            'Final delivery',
+        ],
+        serviceOptions: [
+            // Commercial & Business
+            'Agency Agreement',
+            'Arbitration Agreement',
+            'Business Transfer Agreement',
+            'Consultancy Agreement',
+            'Co-founder Agreement',
+            'Distribution Agreement',
+            'Development Agreement',
+            'Exclusivity Agreement',
+            'Franchise Agreement',
+            'Independent Contractor Agreement',
+            'Joint Venture Agreement',
+            'Partnership Deed',
+            'Shareholders Agreement',
+            'Supply Agreement',
+            'Vendor Agreement',
+            'Retainer Agreement',
+            'Service Level Agreement (SLA)',
+
+            // Employment & HR
+            'Employment Agreement',
+            'Non-Compete Agreement',
+            'Confidentiality Agreement',
+            'Non-Disclosure Agreement (NDA)',
+
+            // Property & Real Estate
+            'Builder–Buyer Agreement',
+            'Lease Agreement (Residential)',
+            'Lease Agreement (Commercial)',
+            'Rental Agreement',
+            'Purchase Agreement',
+            'Gift Deed (Agreement Format)',
+
+            // IP & Technology
+            'Intellectual Property Assignment Agreement',
+            'Licensing Agreement',
+            'Technology Transfer Agreement',
+            'Trademark Licensing Agreement',
+
+            // Strategic & General
+            'Memorandum of Understanding (MoU)',
+            'Settlement Agreement',
+            'Indemnity Agreement',
+            'Guarantee Agreement',
+        ],
     },
+
     {
         id: 'affidavits',
         title: 'Affidavits',
-        description: 'Professional drafting of legal affidavits for all purposes, including identity verification, name change, and court declarations.',
-        price: '₹4,000 - ₹8,000',
+        description:
+            'Drafting of legally valid affidavits in prescribed formats for courts, government authorities, and official use.',
+        price: '₹1,500 onwards',
         icon: <ClipboardCheck size={32} />,
-        features: ['Name Change Affidavits', 'Address Proof Oaths', 'Legal Heir Declarations', 'Financial Statements']
+        idealFor: [
+            'Individuals',
+            'Court Proceedings',
+            'Government Applications',
+            'Banks & Institutions',
+        ],
+        features: [
+            'Legally prescribed format',
+            'Verification clauses',
+            'Notary / oath-ready',
+        ],
+        deliverables: [
+            'Affidavit draft',
+            'Stamp paper guidance',
+            'Execution instructions',
+        ],
+        timeline: '1–3 working days',
+        revisions: '1 free revision',
+        compliance: [
+            'Civil Procedure Code',
+            'Indian Evidence Act',
+            'State-specific affidavit rules',
+        ],
+        howItWorks: [
+            'Purpose identification',
+            'Fact collection',
+            'Drafting',
+            'Client confirmation',
+            'Final delivery',
+        ],
+        serviceOptions: [
+            'Address Proof Affidavit',
+            'Age Proof Affidavit',
+            'Birth Certificate Correction Affidavit',
+            'Change of Name Affidavit',
+            'Character Certificate Affidavit',
+            'Date of Birth Correction Affidavit',
+            'Education / Qualification Affidavit',
+            'Financial Status Affidavit',
+            'Heirship Affidavit',
+            'Income Affidavit',
+            'Loss of Documents Affidavit',
+            'Marriage Affidavit',
+            'Nationality Affidavit',
+            'Ownership Declaration Affidavit',
+            'Passport Related Affidavit',
+            'Relationship Proof Affidavit',
+            'Single Status Affidavit',
+            'Service Record Affidavit',
+            'Vehicle Ownership Affidavit',
+            'Court Proceedings Affidavit',
+            'Government Submission Affidavit',
+            'Bank / Financial Institution Affidavit',
+        ],
     },
+
     {
         id: 'notices',
         title: 'Legal Notices',
-        description: 'Accurate and compelling legal notices drafted with precision to protect your interests and initiate formal legal proceedings.',
-        price: '₹3,000 - ₹6,000',
+        description:
+            'Drafting of formal legal notices to assert legal rights, demand compliance, or respond to disputes.',
+        price: '₹3,000 onwards',
         icon: <Scale size={32} />,
-        features: ['Recovery Notices', 'Breach of Contract', 'Tenant Eviction', 'Consumer Complaints']
+        idealFor: [
+            'Individuals',
+            'Businesses',
+            'Employers',
+            'Landlords',
+            'Consumers',
+        ],
+        features: [
+            'Clear statement of facts',
+            'Legal grounds cited',
+            'Professional legal language',
+        ],
+        deliverables: [
+            'Legally drafted notice',
+            'Ready-to-send format',
+        ],
+        timeline: '1–2 working days',
+        revisions: '1 free revision',
+        compliance: [
+            'CPC / CrPC',
+            'Consumer Protection Act',
+            'Contract Laws',
+        ],
+        howItWorks: [
+            'Fact review',
+            'Legal analysis',
+            'Drafting',
+            'Client approval',
+            'Final delivery',
+        ],
+        serviceOptions: [
+            'Breach of Contract Notice',
+            'Consumer Complaint Notice',
+            'Divorce Legal Notice',
+            'Eviction Notice',
+            'Fraud & Misrepresentation Notice',
+            'Loan Recovery Notice',
+            'Money Recovery Notice',
+            'Property Dispute Notice',
+            'Rent Arrears Notice',
+            'Service Deficiency Notice',
+            'Termination of Contract Notice',
+            'Workplace Harassment Representation',
+            'Cheque Bounce Notice (NI Act)',
+            'Reply to Legal Notice',
+            'Cease and Desist Notice',
+        ],
     },
+
     {
         id: 'legal-docs',
-        title: 'Document Preparation',
-        description: 'Comprehensive preparation of any specialized legal documents required for government, regulatory, or judicial processes.',
-        price: '₹6,000 - ₹12,000',
+        title: 'Legal Document Preparation',
+        description:
+            'Preparation of specialized legal documents for personal, business, statutory, and regulatory purposes.',
+        price: '₹3,000 onwards',
         icon: <ScrollText size={32} />,
-        features: ['Will Drafting', 'Power of Attorney', 'Lease Documents', 'Trust Deeds']
-    }
+        idealFor: [
+            'Families',
+            'Business Owners',
+            'Trusts',
+            'Property Holders',
+        ],
+        features: [
+            'Statutory compliance',
+            'Execution-ready format',
+            'Clear legal structuring',
+        ],
+        deliverables: [
+            'Customized legal document',
+            'Stamp & registration guidance',
+        ],
+        timeline: '3–7 working days',
+        revisions: 'Up to 2 free revisions',
+        compliance: [
+            'Indian Succession Act',
+            'Registration Act, 1908',
+            'State Stamp Laws',
+        ],
+        howItWorks: [
+            'Requirement assessment',
+            'Document structuring',
+            'Drafting',
+            'Client review',
+            'Final delivery',
+        ],
+        serviceOptions: [
+            'Will Drafting',
+            'Codicil to Will',
+            'Power of Attorney (General)',
+            'Power of Attorney (Special)',
+            'Gift Deed',
+            'Trust Deed',
+            'Lease Deed',
+            'Rental Agreement',
+            'Indemnity Bond',
+            'Declaration & Undertaking',
+            'Authorization Letter',
+            'Property Declarations',
+            'Statutory Forms & Applications',
+            'Government Representations',
+            'Regulatory Filings',
+        ],
+    },
 ];
+
 
 const serviceDetails: Record<string, ServiceDetail> = {
     agreements: {
@@ -87,9 +323,19 @@ const serviceDetails: Record<string, ServiceDetail> = {
             'Book a service directly through the profile',
             'Receive digital and physical copies as needed'
         ],
-        categories: ['Commercial', 'Real Estate', 'Marital', 'Intellectual Property', 'Digital Services'],
-        types: ['Contracts', 'Deeds', 'Memos', 'Bylaws'],
-        subtypes: ['Standard', 'Urgent', 'Bilingual', 'International']
+        categories: [
+            'Agency Agreement', 'Arbitration Agreement', 'Business Transfer Agreement', 'Builder–Buyer Agreement',
+            'Consultancy Agreement', 'Confidentiality / NDA', 'Co-founder Agreement', 'Distribution Agreement',
+            'Development Agreement', 'Employment Agreement', 'Exclusivity Agreement', 'Franchise Agreement',
+            'Gift Deed (Agreement Format)', 'Independent Contractor Agreement', 'Intellectual Property Assignment Agreement',
+            'Joint Venture Agreement', 'Lease Agreement (Residential / Commercial)', 'Licensing Agreement',
+            'Memorandum of Understanding (MoU)', 'Non-Compete Agreement', 'Non-Disclosure Agreement (NDA)',
+            'Partnership Deed', 'Purchase Agreement', 'Rental Agreement', 'Retainer Agreement',
+            'Service Level Agreement (SLA)', 'Shareholders Agreement', 'Supply Agreement',
+            'Technology Transfer Agreement', 'Trademark Licensing Agreement', 'Vendor Agreement'
+        ],
+        types: ['Standard', 'Urgent', 'Bilingual', 'International'],
+        subtypes: ['Individual', 'Corporate', 'Government']
     },
     affidavits: {
         id: 'affidavits',
@@ -107,7 +353,14 @@ const serviceDetails: Record<string, ServiceDetail> = {
             'Pay fee and get it verified by our lawyers',
             'Download and use for your official requirement'
         ],
-        categories: ['Personal', 'Academic', 'Employment', 'Legal Heir'],
+        categories: [
+            'Address Proof Affidavit', 'Age Proof Affidavit', 'Birth Certificate Correction Affidavit',
+            'Change of Name Affidavit', 'Character Certificate Affidavit', 'Date of Birth Correction Affidavit',
+            'Education / Qualification Affidavit', 'Financial Status Affidavit', 'Heirship Affidavit',
+            'Income Affidavit', 'Loss of Documents Affidavit', 'Marriage Affidavit', 'Nationality Affidavit',
+            'Ownership Declaration Affidavit', 'Passport Related Affidavit', 'Relationship Proof Affidavit',
+            'Single Status Affidavit', 'Service Record Affidavit', 'Vehicle Ownership Affidavit'
+        ],
         types: ['General', 'Specific', 'Oath'],
         subtypes: ['Standard Form', 'Custom Statement']
     },
@@ -127,7 +380,12 @@ const serviceDetails: Record<string, ServiceDetail> = {
             'Review the drafted notice for factual accuracy',
             'Direct the expert to send via official channels'
         ],
-        categories: ['Debt Recovery', 'Tenant Disputes', 'Consumer Rights', 'Contractual Breach'],
+        categories: [
+            'Breach of Contract Notice', 'Consumer Complaint Notice', 'Divorce Legal Notice',
+            'Eviction Notice', 'Fraud & Misrepresentation Notice', 'Loan Recovery Notice',
+            'Money Recovery Notice', 'Property Dispute Notice', 'Rent Arrears Notice',
+            'Service Deficiency Notice', 'Termination of Contract Notice', 'Workplace Harassment Representation'
+        ],
         types: ['Demand Notice', 'Show Cause', 'Disclaimer'],
         subtypes: ['Standard Letter', 'Advocate Notified']
     },
@@ -136,10 +394,7 @@ const serviceDetails: Record<string, ServiceDetail> = {
         title: 'Specialized Legal Documentation',
         description: 'Advanced document preparation for complex legal needs, including Wills, POA, and Trust Deeds.',
         howItWorks: [
-            'Detailed requirement gathering with a senior partner',
-            'Drafting according to specific state laws',
-            'Compliance check with regulatory authorities',
-            'Final signatures and legal filing assistance'
+            'Requirement assessment', 'Document structure planning', 'Legal drafting', 'Client revisions', 'Final execution-ready delivery'
         ],
         howToUse: [
             'Search for document specialists in your state',
@@ -147,45 +402,68 @@ const serviceDetails: Record<string, ServiceDetail> = {
             'Provide supporting proofs for drafting',
             'Finalize document after expert validation'
         ],
-        categories: ['Succession', 'Estate Planning', 'Organization', 'Social Cause'],
-        types: ['Will', 'Power of Attorney', 'Lease', 'Trust Deed'],
-        subtypes: ['Individual', 'Joint', 'Global']
+        categories: [
+            'Will Drafting', 'Living Will / Healthcare Proxy', 'Codicil to Will', 'Special Power of Attorney',
+            'General Power of Attorney', 'Durable Power of Attorney', 'Trust Deed (Private / Public)',
+            'Gift Deed', 'Relinquishment Deed', 'Partition Deed', 'Settlement Deed', 'Sale Deed Drafting',
+            'Lease Deed', 'Mortgage Deed', 'Rectification Deed', 'Cancellation Deed', 'Adoption Deed'
+        ],
+        types: ['Estate Planning', 'Property Transfer', 'Fiduciary Docs'],
+        subtypes: ['Individual', 'Joint', 'Corporate Entity']
     }
 };
 
 const mockProviders: Provider[] = [
     {
         id: 'p1',
+        adv_id: 'ADV-100000',
+        license_id: 'TS/1428/5256',
         name: 'Rajesh Kumar',
+        age: 27,
         location: 'Delhi, India',
         specialization: 'Civil & Documentation',
         experience: '12 Years',
         rating: 4.8,
         reviews: 124,
         hourly_rate: '₹2,500',
-        isPremium: true
+        isPremium: true,
+        isVerified: true,
+        image_url: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=800',
+        specializations: ['Agreement drafting', 'Affidavits', 'Legal Notices']
     },
     {
         id: 'p2',
+        adv_id: 'ADV-100001',
+        license_id: 'MH/4521/8765',
         name: 'Sneha Sharma',
+        age: 31,
         location: 'Mumbai, Maharashtra',
         specialization: 'Corporate Contracts',
         experience: '8 Years',
         rating: 4.9,
         reviews: 86,
         hourly_rate: '₹3,200',
-        isPremium: true
+        isPremium: true,
+        isVerified: true,
+        image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800',
+        specializations: ['Agreements', 'Corporate Docs']
     },
     {
         id: 'p3',
+        adv_id: 'ADV-100002',
+        license_id: 'KA/2219/3341',
         name: 'Vikas Mehra',
+        age: 42,
         location: 'Bangalore, Karnataka',
         specialization: 'Property Laws',
         experience: '15 Years',
         rating: 4.7,
         reviews: 210,
         hourly_rate: '₹4,000',
-        isPremium: false
+        isPremium: false,
+        isVerified: true,
+        image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
+        specializations: ['Property Deeds', 'Wills', 'Notices']
     }
 ];
 
@@ -197,67 +475,263 @@ const maskString = (str: string) => {
 
 // --- Sub-Components ---
 
-const ProviderCard: React.FC<{ provider: Provider; isLoggedIn: boolean; onLogin: () => void }> = ({ provider, isLoggedIn, onLogin }) => (
-    <motion.div
-        className={`${styles.pCard} ${!isLoggedIn ? styles.blurredCard : ''}`}
-        whileHover={{ translateY: -5 }}
-    >
-        <div className={styles.pCardHeader}>
-            <div className={styles.pAvatar}>
-                {provider.image_url ? <img src={provider.image_url} alt={isLoggedIn ? provider.name : 'Provider'} /> : <span>{provider.name.charAt(0)}</span>}
-            </div>
-            {provider.isPremium && <span className={styles.premiumBadge}>Premium Expert</span>}
-        </div>
-        <div className={styles.pCardBody}>
-            <h3>{isLoggedIn ? provider.name : maskString(provider.name)}</h3>
-            <p className={styles.pLoc}><MapPin size={14} /> {isLoggedIn ? provider.location : maskString(provider.location)}</p>
-            <p className={styles.pSpec}>{provider.specialization}</p>
-            <div className={styles.pMeta}>
-                <span>{provider.experience} Exp.</span>
-                <span className={styles.pRating}><Star size={14} fill="#facc15" color="#facc15" /> {provider.rating} ({provider.reviews})</span>
-            </div>
-        </div>
-
-        {!isLoggedIn && (
-            <div className={styles.maskOverlay}>
-                <Lock size={20} />
-                <p>Login to View details</p>
-                <button onClick={onLogin} className={styles.maskLoginBtn}>Login Now</button>
-            </div>
-        )}
-
-        <div className={styles.pCardFooter}>
-            <span className={styles.pPrice}>{provider.hourly_rate} / service</span>
-            <button className={styles.pBookBtn} onClick={() => !isLoggedIn && onLogin()}>
-                {isLoggedIn ? 'Book Service' : 'Login to Book'}
+const SelectableFilter: React.FC<{
+    label: string;
+    options: string[];
+    selectedValue: string;
+    onSelect: (val: string) => void
+}> = ({ label, options, selectedValue, onSelect }) => (
+    <div className={styles.filterRow}>
+        <span className={styles.filterLabel}>{label}</span>
+        <div className={styles.chipContainer}>
+            <button
+                className={`${styles.filterChip} ${selectedValue === '' ? styles.activeChip : ''}`}
+                onClick={() => onSelect('')}
+            >
+                All
             </button>
-        </div>
-    </motion.div>
-);
-
-const FilterSection: React.FC<{ label: string; options: string[] }> = ({ label, options }) => (
-    <div className={styles.filterGroup}>
-        <label>{label}</label>
-        <div className={styles.selectWrapper}>
-            <select>
-                <option value="">Select {label}</option>
-                {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-            <ChevronDown size={16} />
+            {options.map(opt => (
+                <button
+                    key={opt}
+                    className={`${styles.filterChip} ${selectedValue === opt ? styles.activeChip : ''}`}
+                    onClick={() => onSelect(opt)}
+                >
+                    {opt}
+                </button>
+            ))}
         </div>
     </div>
 );
 
+const ProviderCard: React.FC<{
+    provider: Provider;
+    isLoggedIn: boolean;
+    onLogin: () => void;
+    onClick: () => void;
+    onChat: (p: Provider) => void;
+    onConsult: (p: Provider) => void;
+}> = ({ provider, isLoggedIn, onLogin, onClick, onChat, onConsult }) => {
+    const { user } = useAuth();
+    const { name, age, location, experience, specialization, license_id, adv_id, image_url, specializations } = provider;
+
+    return (
+        <motion.div
+            className={styles.premiumProviderCard}
+            whileHover={{ translateY: -10 }}
+            onClick={onClick}
+            style={{ cursor: 'pointer' }}
+        >
+            {/* Image Section */}
+            <div className={styles.cardImageSection}>
+                <img
+                    src={image_url || 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=800'}
+                    alt={name}
+                    className={styles.providerImage}
+                />
+
+                {/* Top Right Badges */}
+                <div className={styles.topBadgesContainer}>
+                    <div className={styles.topIdBadge}>
+                        <span>{adv_id}</span>
+                        <div className={styles.checkInner}>
+                            <CheckCircle2 size={12} />
+                        </div>
+                    </div>
+                    {/* Specializations moved to top right */}
+                    <div className={styles.topSpecTags}>
+                        {specializations && specializations.map(spec => (
+                            <span key={spec} className={styles.topSpecTag}>{spec}</span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Bottom Overlay Details */}
+                <div className={styles.imageOverlay}>
+                    <div className={styles.overlayMain}>
+                        <h3>{name}, {age}</h3>
+                        <p className={styles.overlayLoc}>{location}</p>
+                        <p className={styles.overlayExp}>{experience} experience</p>
+                    </div>
+
+                    <div className={styles.overlayBadges}>
+                        <div className={styles.licenseBadge}>
+                            <Lock size={12} className={styles.shieldIcon} />
+                            <span>{license_id}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className={styles.cardActionBar}>
+                <button
+                    className={styles.actionItem}
+                    onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!isLoggedIn) {
+                            onLogin();
+                        } else {
+                            try {
+                                await interactionService.recordActivity('advocate', provider.id, 'interest', String(user?.id));
+                                alert(`Interest for ${provider.name} recorded!`);
+                            } catch (err) {
+                                console.error("Error recording interest:", err);
+                                alert("Action failed. Please try again.");
+                            }
+                        }
+                    }}
+                >
+                    <div className={styles.actionIcon}><Briefcase size={20} /></div>
+                    <span>Interest</span>
+                </button>
+                <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onChat(provider); }}>
+                    <div className={styles.actionIcon}><MessageCircle size={20} /></div>
+                    <span>Chat</span>
+                </button>
+                <button
+                    className={styles.actionItem}
+                    onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!isLoggedIn) {
+                            onLogin();
+                        } else {
+                            try {
+                                await interactionService.recordActivity('advocate', provider.id, 'shortlist', String(user?.id));
+                                alert(`${provider.name} added to your shortlist!`);
+                            } catch (err) {
+                                console.error("Error shortlisting:", err);
+                            }
+                        }
+                    }}
+                >
+                    <div className={styles.actionIcon}><Award size={20} /></div>
+                    <span>Shortlist</span>
+                </button>
+                <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onConsult(provider); }}>
+                    <div className={styles.actionIcon}><Clock size={20} /></div>
+                    <span>Consultation</span>
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+// --- Form & Popup Components ---
+
+const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
+    const [msg, setMsg] = useState('');
+    return (
+        <div className={styles.popupOverlay} onClick={onClose}>
+            <motion.div className={styles.chatPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
+                <div className={styles.popupHeader}>
+                    <div className={styles.popupProviderInfo}>
+                        <img src={provider.image_url} alt="" />
+                        <div>
+                            <h4>Chat with {provider.name}</h4>
+                            <p>Ref: {service}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose}><X size={20} /></button>
+                </div>
+                <div className={styles.chatMessages}>
+                    <div className={styles.systemNote}>Logged in messenger: {service} service initiated</div>
+                </div>
+                <form className={styles.chatInput} onSubmit={async e => {
+                    e.preventDefault();
+                    const currentUserId = String((useAuth() as any).user?.id);
+                    if (msg.trim()) {
+                        try {
+                            await interactionService.sendMessage(currentUserId, provider.id, msg);
+                            // Also record interest action for the dashboard feed
+                            await interactionService.recordActivity('advocate', provider.id, 'chat', currentUserId);
+                            alert(`Message sent to ${provider.name} regarding ${service}`);
+                            onClose();
+                        } catch (err) {
+                            console.error("Chat error:", err);
+                        }
+                    }
+                }}>
+                    <input type="text" placeholder="Type message..." value={msg} onChange={e => setMsg(e.target.value)} />
+                    <button type="submit"><Zap size={18} /></button>
+                </form>
+            </motion.div>
+        </div>
+    );
+};
+
+const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
+    const [form, setForm] = useState({ service, reason: '' });
+    return (
+        <div className={styles.popupOverlay} onClick={onClose}>
+            <motion.div className={styles.consultPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
+                <div className={styles.popupHeader}>
+                    <h3>Book Consultation</h3>
+                    <button onClick={onClose}><X size={20} /></button>
+                </div>
+                <form className={styles.consultForm} onSubmit={async e => {
+                    e.preventDefault();
+                    const currentUserId = String((useAuth() as any).user?.id);
+                    try {
+                        await interactionService.recordActivity('advocate', provider.id, 'consultation', currentUserId);
+                        alert(`Consultation for ${service} requested from ${provider.name}`);
+                        onClose();
+                    } catch (err) {
+                        console.error("Consultation error:", err);
+                    }
+                }}>
+                    <div className={styles.inputGroup}>
+                        <label>Target Service</label>
+                        <input type="text" value={form.service} readOnly />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label>Reason for Consulting</label>
+                        <textarea placeholder="Tell the advocate what you need help with..." required value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} rows={4} />
+                    </div>
+                    <button type="submit" className={styles.confirmBtn}>Confirm Consultation Request</button>
+                    <p className={styles.formNote}>This will be logged in your activity tab & advisor dashboard.</p>
+                </form>
+            </motion.div>
+        </div>
+    );
+};
+
 // --- Main Page Component ---
 
-const LegalDocumentationPage: React.FC = () => {
-    const { isLoggedIn, openAuthModal } = useAuth();
+const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
+    const { isLoggedIn, openAuthModal, user } = useAuth();
+    const location = useLocation();
     const [activeNav, setActiveNav] = useState('home');
     const [isLoaded, setIsLoaded] = useState(false);
+    const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [chatTarget, setChatTarget] = useState<Provider | null>(null);
+    const [consultTarget, setConsultTarget] = useState<Provider | null>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [filters, setFilters] = useState({
+        state: '',
+        district: '',
+        city: '',
+        categories: [] as string[],
+        type: '',
+        subtype: '',
+        experience: '',
+        search: ''
+    });
 
     useEffect(() => {
         setIsLoaded(true);
-    }, []);
+        // Task 1: auto-select and scroll based on incoming state
+        if (location.state && (location.state as any).serviceId) {
+            const sid = (location.state as any).serviceId;
+            setActiveNav(sid);
+            setTimeout(() => {
+                const element = document.getElementById('providers-section');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 300);
+        }
+    }, [location.state]);
 
     const navItems = [
         { id: 'home', label: 'Home', icon: <Home size={18} /> },
@@ -268,6 +742,100 @@ const LegalDocumentationPage: React.FC = () => {
     ];
 
     const currentDetail = serviceDetails[activeNav];
+    const isPremium = user?.isPremium || user?.plan === 'Pro' || user?.plan === 'Ultra';
+
+    const renderProviderTable = () => (
+        <div className={styles.tableCard}>
+            <div className={styles.tableWrapper}>
+                <table className={styles.providerTable}>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Specialist (Name/ID)</th>
+                            <th>Location</th>
+                            <th>Expertise</th>
+                            <th>Exp.</th>
+                            <th>License ID</th>
+                            <th>Verification</th>
+                            <th>Starting Rate</th>
+                            <th>Rating</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {mockProviders.map((p, index) => (
+                            <tr key={p.id}>
+                                <td>{index + 1}</td>
+                                <td>
+                                    <div className={styles.providerInfoCell}>
+                                        <img src={p.image_url} alt="" className={styles.miniAvatar} />
+                                        <div>
+                                            <div className={styles.pName}>{p.name}</div>
+                                            <div className={styles.pId}>{p.adv_id}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{p.location}</td>
+                                <td>
+                                    <div className={styles.tableSpecBadge}>
+                                        {activeNav === 'agreements' ? 'Agreement Specialist' :
+                                            activeNav === 'affidavits' ? 'Affidavit Specialist' :
+                                                activeNav === 'notices' ? 'Notice Specialist' : 'Doc Specialist'}
+                                    </div>
+                                    <div className={styles.pSub} style={{ marginTop: '4px', fontSize: '0.7rem' }}>
+                                        Matching: {currentDetail.categories[0]} & more
+                                    </div>
+                                </td>
+                                <td>{p.experience}</td>
+                                <td>{p.license_id}</td>
+                                <td>
+                                    {p.isVerified ? (
+                                        <div className={styles.verifiedTag}>
+                                            <CheckCircle2 size={14} /> Verified
+                                        </div>
+                                    ) : (
+                                        <span className={styles.pendingTag}>Pending</span>
+                                    )}
+                                </td>
+                                <td className={styles.rateCell}>{p.hourly_rate}</td>
+                                <td>
+                                    <div className={styles.ratingCell}>
+                                        <Star size={14} fill="#daa520" color="#daa520" />
+                                        <span>{p.rating}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div className={styles.tableActions}>
+                                        <button
+                                            className={styles.tableViewDetail}
+                                            onClick={() => setSelectedProvider(p)}
+                                            title="View Full Profile"
+                                        >
+                                            View Details
+                                        </button>
+                                        <button
+                                            className={styles.tableQuickAction}
+                                            onClick={(e) => { e.stopPropagation(); !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}
+                                            title="Send Interest"
+                                        >
+                                            <Briefcase size={16} />
+                                        </button>
+                                        <button
+                                            className={styles.tableQuickAction}
+                                            onClick={(e) => { e.stopPropagation(); !isLoggedIn ? openAuthModal('login') : setChatTarget(p); }}
+                                            title="Quick Chat"
+                                        >
+                                            <MessageCircle size={16} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 
     const renderServiceView = () => {
         if (!currentDetail) return null;
@@ -280,65 +848,144 @@ const LegalDocumentationPage: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className={styles.serviceDetailContent}
             >
-                <div className={styles.detailHero}>
-                    <div className={styles.detailHeroInfo}>
-                        <motion.h1 initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>{currentDetail.title}</motion.h1>
-                        <p>{currentDetail.description}</p>
-                    </div>
-                    <div className={styles.howSections}>
-                        <div className={styles.howBox}>
-                            <h4><Clock size={18} /> How it Works</h4>
-                            <ul>
-                                {currentDetail.howItWorks.map((step, i) => <li key={i}>{step}</li>)}
-                            </ul>
-                        </div>
-                        <div className={styles.howBox}>
-                            <h4><Info size={18} /> How to Use</h4>
-                            <ul>
-                                {currentDetail.howToUse.map((step, i) => <li key={i}>{step}</li>)}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div className={styles.searchFilterBar}>
-                    <div className={styles.searchInner}>
-                        <div className={styles.filterHeader}>
-                            <Filter size={20} />
-                            <h3>Refine Your Selection</h3>
-                        </div>
-                        <div className={styles.filtersGrid}>
-                            <FilterSection label="State" options={['Delhi', 'Maharashtra', 'Karnataka', 'Tamil Nadu']} />
-                            <FilterSection label="City" options={['Mumbai', 'Pune', 'Bangalore', 'Chennai']} />
-                            <FilterSection label="Category" options={currentDetail.categories} />
-                            <FilterSection label="Type" options={currentDetail.types} />
-                            <FilterSection label="Sub-type" options={currentDetail.subtypes} />
-                        </div>
-                        <div className={styles.searchAction}>
-                            <div className={styles.searchInputGroup}>
-                                <Search size={18} />
-                                <input type="text" placeholder="Search by name or keyword..." />
-                            </div>
-                            <button className={styles.searchBtn}>Apply Filters</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className={styles.resultsSection}>
-                    <div className={styles.resultsHeader}>
-                        <h2>Available Specialists</h2>
-                        <p>Found 14 certified advocates for this service</p>
-                    </div>
-                    <div className={styles.providersGrid}>
-                        {mockProviders.map(p => (
-                            <ProviderCard
-                                key={p.id}
-                                provider={p}
-                                isLoggedIn={isLoggedIn}
-                                onLogin={() => openAuthModal('login')}
+                <div className={styles.advancedFilterContainer}>
+                    <div className={styles.filterBarTop}>
+                        <div className={styles.filterInputWrapper}>
+                            <Search size={18} className={styles.searchIcon} />
+                            <input
+                                type="text"
+                                placeholder="Search specialists..."
+                                value={filters.search}
+                                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                             />
-                        ))}
+                        </div>
+                        <select
+                            value={filters.state}
+                            onChange={(e) => setFilters({ ...filters, state: e.target.value })}
+                            className={styles.filterSelect}
+                        >
+                            <option value="">All States</option>
+                            <option value="delhi">Delhi</option>
+                            <option value="maharashtra">Maharashtra</option>
+                            <option value="karnataka">Karnataka</option>
+                        </select>
+                        <select
+                            value={filters.district}
+                            onChange={(e) => setFilters({ ...filters, district: e.target.value })}
+                            className={styles.filterSelect}
+                        >
+                            <option value="">All Districts</option>
+                            <option value="central">Central</option>
+                            <option value="north">North</option>
+                            <option value="south">South</option>
+                        </select>
+                        <select
+                            value={filters.city}
+                            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                            className={styles.filterSelect}
+                        >
+                            <option value="">All Cities</option>
+                            <option value="mumbai">Mumbai</option>
+                            <option value="bangalore">Bangalore</option>
+                            <option value="delhi">Delhi</option>
+                        </select>
+                        <select
+                            value={filters.experience}
+                            onChange={(e) => setFilters({ ...filters, experience: e.target.value })}
+                            className={styles.filterSelect}
+                        >
+                            <option value="">Experience (All)</option>
+                            <option value="5">5+ Years</option>
+                            <option value="10">10+ Years</option>
+                            <option value="15">15+ Years</option>
+                        </select>
+                        <button className={styles.mainSearchButton}>Search</button>
                     </div>
+
+                    <div className={styles.multiSelectFilterRow}>
+                        <div className={styles.multiSelectSection}>
+                            <div className={styles.filterHeaderRow}>
+                                <div className={styles.filterLabelGroup}>
+                                    <h3 className={styles.filterRowLabel}>Select Featured Services:</h3>
+                                    {filters.categories.length > 0 && (
+                                        <span className={styles.selectionCount}>
+                                            ({filters.categories.length} selected)
+                                        </span>
+                                    )}
+                                </div>
+                                <div className={styles.secondarySearch}>
+                                    <div className={styles.secSearchInput}>
+                                        <Search size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search specific services..."
+                                            onChange={(e) => {/* Add local search logic if needed */ }}
+                                        />
+                                    </div>
+                                    <button className={styles.secSearchBtn}>Search</button>
+                                </div>
+                            </div>
+                            <div className={styles.serviceChips}>
+                                {currentDetail.categories.map(cat => {
+                                    const isActive = filters.categories.includes(cat);
+                                    return (
+                                        <button
+                                            key={cat}
+                                            className={`${styles.categoryChip} ${isActive ? styles.chipActive : ''}`}
+                                            onClick={() => {
+                                                const newCategories = isActive
+                                                    ? filters.categories.filter(c => c !== cat)
+                                                    : [...filters.categories, cat];
+                                                setFilters({ ...filters, categories: newCategories });
+                                            }}
+                                        >
+                                            {cat}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="providers-section" className={styles.resultsSection}>
+                    <div className={styles.resultsHeader}>
+                        <div className={styles.resultsTitleArea}>
+                            <h2>Available Specialists</h2>
+                            <p>Found 14 certified advocates for this service</p>
+                        </div>
+                        <div className={styles.viewToggle}>
+                            <button
+                                className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleActive : ''}`}
+                                onClick={() => setViewMode('grid')}
+                            >
+                                Grid View
+                            </button>
+                            <button
+                                className={`${styles.toggleBtn} ${viewMode === 'table' ? styles.toggleActive : ''}`}
+                                onClick={() => setViewMode('table')}
+                            >
+                                Table View
+                            </button>
+                        </div>
+                    </div>
+
+                    {viewMode === 'grid' ? (
+                        <div className={styles.providersGrid}>
+                            {mockProviders.map(p => (
+                                <ProviderCard
+                                    key={p.id}
+                                    provider={p}
+                                    isLoggedIn={isLoggedIn}
+                                    onLogin={() => openAuthModal('login')}
+                                    onClick={() => setSelectedProvider(p)}
+                                    onChat={(p) => setChatTarget(p)}
+                                    onConsult={(p) => setConsultTarget(p)}
+                                />
+                            ))}
+                        </div>
+                    ) : renderProviderTable()}
                 </div>
             </motion.div>
         );
@@ -374,44 +1021,224 @@ const LegalDocumentationPage: React.FC = () => {
 
             <section className={styles.servicesGrid}>
                 {documentationServices.map((service, index) => (
-                    <motion.div
-                        key={service.id}
-                        className={styles.serviceCard}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                        onClick={() => {
-                            setIsLoaded(false);
-                            setActiveNav(service.id);
-                            setTimeout(() => setIsLoaded(true), 100);
-                            window.scrollTo({ top: 300, behavior: 'smooth' });
-                        }}
-                    >
-                        <div className={styles.cardHeader}>
-                            <div className={styles.iconWrapper}>{service.icon}</div>
-                            <span className={styles.price}>{service.price}</span>
-                        </div>
-                        <h2 className={styles.cardTitle}>{service.title}</h2>
-                        <p className={styles.cardDescription}>{service.description}</p>
-
-                        <div className={styles.featuresList}>
-                            {service.features.map(feature => (
-                                <div key={feature} className={styles.featureItem}>
-                                    <CheckCircle2 size={16} className={styles.checkIcon} />
-                                    <span>{feature}</span>
+                    <React.Fragment key={service.id}>
+                        {/* ================= SERVICE CARD ================= */}
+                        <motion.div
+                            className={styles.serviceCard}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            whileHover={{ y: -6 }}
+                            whileTap={{ scale: 0.98 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                                setIsLoaded(false);
+                                setActiveNav(service.id);
+                                setTimeout(() => setIsLoaded(true), 100);
+                                contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    setIsLoaded(false);
+                                    setActiveNav(service.id);
+                                    setTimeout(() => setIsLoaded(true), 100);
+                                    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                                }
+                            }}
+                        >
+                            {/* ---------- Header ---------- */}
+                            <div className={styles.cardHeader}>
+                                <div className={styles.headerLeft}>
+                                    <div className={styles.iconWrapper}>{service.icon}</div>
+                                    <h2 className={styles.cardTitle}>{service.title}</h2>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
 
-                        <button className={styles.learnMoreBtn}>
-                            Explore Specialists <ArrowRight size={18} />
-                        </button>
-                    </motion.div>
+                            {/* ---------- Content ---------- */}
+                            <div className={styles.cardMainGrid}>
+                                <div className={styles.cardInfoCol}>
+                                    <p className={styles.cardDescription}>{service.description}</p>
+
+                                    {/* Ideal For */}
+                                    <div className={styles.idealForList}>
+                                        <span className={styles.label}>Ideal For:</span>
+                                        <div className={styles.tagGroup}>
+                                            {service.idealFor.map((item: string) => (
+                                                <span key={item} className={styles.tag}>{item}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={styles.cardDetailsCol}>
+                                    <div className={styles.detailsSubGrid}>
+                                        <div className={styles.detailsGroup}>
+                                            <h4>Key Features</h4>
+                                            <div className={styles.featuresList}>
+                                                {service.features.map((feature: string) => (
+                                                    <div key={feature} className={styles.featureItem}>
+                                                        <CheckCircle2 size={16} className={styles.checkIcon} />
+                                                        <span>{feature}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.detailsGroup}>
+                                            <h4>Deliverables</h4>
+                                            <div className={styles.featuresList}>
+                                                {service.deliverables.map((item: string) => (
+                                                    <div key={item} className={styles.featureItem}>
+                                                        <Briefcase size={16} className={styles.deliverableIcon} />
+                                                        <span>{item}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ---------- SERVICES COVERED PREVIEW ---------- */}
+                            <div className={styles.servicesPreview}>
+                                <h4 className={styles.servicesTitle}>Services Covered</h4>
+                                <div className={styles.servicesChips}>
+                                    {service.serviceOptions.map((opt: string) => (
+                                        <span key={opt} className={styles.serviceChip}>
+                                            <Bookmark size={12} />
+                                            {opt}
+                                        </span>
+                                    ))}
+
+                                    {service.serviceOptions.length > 6 && (
+                                        <span className={styles.moreChip}>
+                                            +{service.serviceOptions.length - 6} more
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* ---------- CTA ---------- */}
+                            <button
+                                type="button"
+                                className={styles.learnMoreBtn}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsLoaded(false);
+                                    setActiveNav(service.id);
+                                    setTimeout(() => setIsLoaded(true), 100);
+                                    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                                }}
+                            >
+                                Explore Full Service Details & Specialists
+                                <ArrowRight size={18} />
+                            </button>
+                        </motion.div>
+
+                        {/* ================= FULL SERVICES PANEL ================= */}
+                        <AnimatePresence>
+                            {activeNav === service.id && isLoaded && (
+                                <motion.div
+                                    className={styles.fullServicesPanel}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.4 }}
+                                >
+                                    <h3 className={styles.panelTitle}>
+                                        Complete List of {service.title}
+                                    </h3>
+
+                                    <div className={styles.fullServicesGrid}>
+                                        {service.serviceOptions.map((opt: string) => (
+                                            <div key={opt} className={styles.fullServiceItem}>
+                                                <CheckCircle2 size={16} />
+                                                <span>{opt}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </React.Fragment>
                 ))}
+            </section>
 
-                {/* Lawyer Listing Card */}
 
+            {/* NEW DETAILED 2x2 GRID SECTION */}
+            <section className={styles.detailedGridSection}>
+                <h2>Comprehensive Legal Drafting Solutions</h2>
+                <div className={styles.detailedGrid}>
+                    <div className={styles.detailedCard}>
+                        <h3>Agreement Drafting Services</h3>
+                        <p>
+                            From business contracts to personal property tokens, we ensure every clause is legally bulletproof.
+                            Our experts specialize in Indian Contract Act compliance, protecting your interests in every transaction.
+                        </p>
+                        <button
+                            className={styles.detailedLearnMore}
+                            onClick={() => {
+                                setActiveNav('agreements');
+                                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                        >
+                            View Agreement Specialists <ArrowRight size={16} />
+                        </button>
+                    </div>
+
+                    <div className={styles.detailedCard}>
+                        <h3>Affidavit Drafting Services</h3>
+                        <p>
+                            Get your facts legally sworn and verified. We handle all types of personal and court-related affidavits,
+                            ensuring they meet the strictest evidentiary standards for government and judicial submissions.
+                        </p>
+                        <button
+                            className={styles.detailedLearnMore}
+                            onClick={() => {
+                                setActiveNav('affidavits');
+                                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                        >
+                            View Affidavit Specialists <ArrowRight size={16} />
+                        </button>
+                    </div>
+
+                    <div className={styles.detailedCard}>
+                        <h3>Legal Notice Drafting Services</h3>
+                        <p>
+                            Assert your rights with strategic legal communication. Our advocates draft high-impact notices
+                            that initiate legal action or facilitate settlements, covering recovery, eviction, and contract breaches.
+                        </p>
+                        <button
+                            className={styles.detailedLearnMore}
+                            onClick={() => {
+                                setActiveNav('notices');
+                                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                        >
+                            View Notice Specialists <ArrowRight size={16} />
+                        </button>
+                    </div>
+
+                    <div className={styles.detailedCard}>
+                        <h3>Legal Document Preparation Services</h3>
+                        <p>
+                            Advanced preparation for complex legal documents including Wills, Power of Attorney, and Trust Deeds.
+                            We guide you through the registration process and ensure state-specific stamp duty compliance.
+                        </p>
+                        <button
+                            className={styles.detailedLearnMore}
+                            onClick={() => {
+                                setActiveNav('legal-docs');
+                                contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                        >
+                            View Document Specialists <ArrowRight size={16} />
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <section className={styles.benefitsSection}>
@@ -435,8 +1262,8 @@ const LegalDocumentationPage: React.FC = () => {
     );
 
     return (
-        <div className={styles.pageContainer}>
-            <div className={styles.navBackground}>
+        <div className={`${styles.pageContainer} ${isEmbedded ? styles.embeddedMode : ''}`}>
+            {!isEmbedded && <div className={styles.navBackground}>
                 <nav className={styles.subNavBar}>
                     <div className={styles.subNavBarInner}>
                         {navItems.map((item) => (
@@ -447,7 +1274,7 @@ const LegalDocumentationPage: React.FC = () => {
                                     setIsLoaded(false);
                                     setActiveNav(item.id);
                                     setTimeout(() => setIsLoaded(true), 100);
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
                             >
                                 <span className={styles.subNavIcon}>{item.icon}</span>
@@ -456,13 +1283,160 @@ const LegalDocumentationPage: React.FC = () => {
                         ))}
                     </div>
                 </nav>
-            </div>
+            </div>}
 
-            <div className={styles.mainContent}>
+            <div className={styles.mainContent} ref={contentRef}>
                 <AnimatePresence mode="wait">
-                    {activeNav === 'home' ? renderHomeView() : (isLoaded && renderServiceView())}
+                    {activeNav === 'home' ? (isEmbedded ? renderServiceView() : renderHomeView()) : (isLoaded && renderServiceView())}
                 </AnimatePresence>
+
+                {/* Task 3 & 4: Full Grid and Bottom Support */}
+                <div className={styles.taskExtensions}>
+                    <section className={styles.bottomSupportSection}>
+                        <div className={styles.supportGrid}>
+                            <div className={styles.queryFormCard}>
+                                <h3>Submit a Legal Query</h3>
+                                <p>Our experts will get back to you within 24 hours.</p>
+                                <form className={styles.supportForm}>
+                                    <div className={styles.formRow}>
+                                        <input type="text" placeholder="Full Name" required />
+                                        <input type="tel" placeholder="Phone Number" required />
+                                    </div>
+                                    <input type="email" placeholder="Email Address" required />
+                                    <textarea placeholder="Describe your legal requirement or query..." rows={4} required></textarea>
+                                    <button type="submit" className={styles.formSubmitBtn}>Send Message</button>
+                                </form>
+                            </div>
+
+                            <div className={styles.fraudAlertCard}>
+                                <div className={styles.alertHeader}>
+                                    <div className={styles.alertIcon}><Zap size={32} /></div>
+                                    <h3>Fraud Alert & Safety</h3>
+                                </div>
+                                <div className={styles.alertContent}>
+                                    <p className={styles.warningText}>
+                                        <strong>Important:</strong> E-Advocate Services never asks for sensitive otp or bank details over phone.
+                                        Always verify the advocate's unique ID on our portal before making any payments.
+                                    </p>
+                                    <ul className={styles.safetyList}>
+                                        <li>Pay only through secured gateway.</li>
+                                        <li>Ask for a digitally signed receipt.</li>
+                                        <li>Report suspicious activity immediately.</li>
+                                    </ul>
+                                    <div className={styles.contactDetails}>
+                                        <div className={styles.contactItem}>
+                                            <Clock size={18} />
+                                            <span>Support: +91 800-LAW-TECH</span>
+                                        </div>
+                                        <div className={styles.contactItem}>
+                                            <MessageCircle size={18} />
+                                            <span>Email: help@eadvocate.in</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
             </div>
+            {/* NEW POPUPS */}
+            <AnimatePresence>
+                {chatTarget && (
+                    <ChatPopup
+                        provider={chatTarget}
+                        service={currentDetail.title}
+                        onClose={() => setChatTarget(null)}
+                    />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {consultTarget && (
+                    <ConsultationPopup
+                        provider={consultTarget}
+                        service={currentDetail.title}
+                        onClose={() => setConsultTarget(null)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* DETAILED PROFILE MODAL */}
+            <AnimatePresence>
+                {selectedProvider && (
+                    <motion.div
+                        className={styles.modalOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setSelectedProvider(null)}
+                    >
+                        <motion.div
+                            className={styles.modalContent}
+                            initial={{ y: 50, scale: 0.95 }}
+                            animate={{ y: 0, scale: 1 }}
+                            exit={{ y: 50, scale: 0.95 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button className={styles.closeModal} onClick={() => setSelectedProvider(null)}>
+                                <ChevronDown size={28} />
+                            </button>
+
+                            {!isPremium ? (
+                                <div className={styles.lockedProfile}>
+                                    <div className={styles.lockIconWrapper}>
+                                        <Lock size={48} />
+                                    </div>
+                                    <h2>Premium Content Locked</h2>
+                                    <p>
+                                        Detailed advocate profiles, contact information, and success stories are exclusive to our premium members.
+                                        Join our elite circle to gain full access.
+                                    </p>
+                                    <div className={styles.premiumCTA}>
+                                        {!isLoggedIn && (
+                                            <button className={styles.loginBtn} onClick={() => openAuthModal('login')}>
+                                                Member Login
+                                            </button>
+                                        )}
+                                        <button className={styles.premiumBtn}>
+                                            Upgrade to Premium
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ padding: '60px' }}>
+                                    {/* Detailed Profile View for Premium Users */}
+                                    <div style={{ display: 'flex', gap: '40px' }}>
+                                        <img
+                                            src={selectedProvider.image_url}
+                                            style={{ width: '200px', height: '200px', borderRadius: '24px', objectFit: 'cover' }}
+                                        />
+                                        <div>
+                                            <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display' }}>{selectedProvider.name}</h1>
+                                            <p style={{ color: '#daa520', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedProvider.specialization}</p>
+                                            <p style={{ color: '#94a3b8' }}>{selectedProvider.location} • {selectedProvider.experience} experience</p>
+                                        </div>
+                                    </div>
+                                    {/* Add more detailed info here... */}
+                                    <div className={styles.modalActionBar}>
+                                        <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}>
+                                            <Briefcase size={20} />
+                                            <span>Express Interest</span>
+                                        </button>
+                                        <button className={styles.modalActionBtnPrimary} onClick={() => { !isLoggedIn ? openAuthModal('login') : setChatTarget(selectedProvider); }}>
+                                            <MessageCircle size={20} />
+                                            <span>Direct Chat</span>
+                                        </button>
+                                        <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}>
+                                            <Clock size={20} />
+                                            <span>Book Consultation</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

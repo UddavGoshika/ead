@@ -8,10 +8,11 @@ import ChatWidget from '../components/layout/ChatWidget';
 import HelpModal from '../components/layout/HelpModal';
 import AdvocateRegistration from '../components/auth/AdvocateRegistration';
 import ClientRegistration from '../components/auth/ClientRegistration';
+import LegalProviderRegistration from '../components/auth/LegalProviderRegistration';
 import { useAuth } from '../context/AuthContext';
 
 const HomeLayout: React.FC = () => {
-    const { isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg } = useAuth();
+    const { isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg, isLegalProviderRegOpen, closeLegalProviderReg } = useAuth();
 
     return (
         <div className="home-layout">
@@ -26,6 +27,7 @@ const HomeLayout: React.FC = () => {
             <ChatWidget />
             {isAdvocateRegOpen && <AdvocateRegistration onClose={closeAdvocateReg} />}
             {isClientRegOpen && <ClientRegistration onClose={closeClientReg} />}
+            {isLegalProviderRegOpen && <LegalProviderRegistration onClose={closeLegalProviderReg} />}
         </div>
     );
 };

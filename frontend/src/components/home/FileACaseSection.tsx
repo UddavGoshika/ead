@@ -30,9 +30,9 @@ const FileACaseSection: React.FC = () => {
         <section id="file-a-case" className={styles.section}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h2 className={styles.title}>Digital Legal Solutions</h2>
+                    {/* <h2 className={styles.title}>Digital Legal Solutions</h2> */}
                     <h1 className={styles.mainTitle}>e-Advocate Services</h1>
-                    <p className={styles.subtitle}>Quick access to legal filing & case tracking</p>
+                    <p className={styles.subtitle}>Quick access to filing & case tracking</p>
                 </div>
 
                 <div className={styles.grid}>
@@ -47,7 +47,7 @@ const FileACaseSection: React.FC = () => {
                                 transition={{ duration: 0.5 }}
                                 className={styles.cardContent}
                             >
-                                <h2 className={styles.cardTitle}>{slider1Image.title.split(' ')[0]}</h2>
+                                <h2 className={styles.cardTitle}>File a Case</h2>
                                 <h3 className={styles.dynamicTitle}>{slider1Image.title}</h3>
                                 <p className={styles.cardDescription}>
                                     {slider1Image.subtitle}
@@ -109,7 +109,7 @@ const FileACaseSection: React.FC = () => {
                                 transition={{ duration: 0.5 }}
                                 className={styles.cardContent}
                             >
-                                <h2 className={styles.cardTitle}>{slider2Image.title.split(' ')[0]}</h2>
+                                <h2 className={styles.cardTitle}>Case Status</h2>
                                 <h3 className={styles.dynamicTitle}>{slider2Image.title}</h3>
                                 <p className={styles.cardDescriptionDark}>
                                     {slider2Image.subtitle}

@@ -92,6 +92,18 @@ export const MENU_SCHEMA: MenuItem[] = [
         path: "/admin/package-payments",
     },
     {
+        id: "legal-documentation",
+        name: "Legal Documentation",
+        icon: MdFolder,
+        path: "/admin/legal-docs",
+        children: [
+            { id: "agreements", name: "Agreements", path: "/admin/legal-docs/agreements", badge: "1240" },
+            { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits", badge: "3892" },
+            { id: "notices", name: "Notices", path: "/admin/legal-docs/notices", badge: "5120" },
+            { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers", badge: "Active" },
+        ],
+    },
+    {
         id: "wallet",
         name: "Wallet",
         icon: MdAccountBalanceWallet,
@@ -166,18 +178,6 @@ export const MENU_SCHEMA: MenuItem[] = [
             { id: "sms-templates", name: "SMS Templates", path: "/admin/otp/templates" },
             { id: "set-otp-credentials", name: "Set OTP Credentials", path: "/admin/otp/credentials" },
             { id: "send-sms", name: "Send SMS", path: "/admin/otp/send" },
-        ],
-    },
-    {
-        id: "legal-documentation",
-        name: "Legal Documentation",
-        icon: MdFolder,
-        path: "/admin/legal-documentation",
-        children: [
-            { id: "agreements", name: "Agreements", path: "/admin/legal-docs/agreements" },
-            { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits" },
-            { id: "notices", name: "Notices", path: "/admin/legal-docs/notices" },
-            { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers" },
         ],
     },
     {

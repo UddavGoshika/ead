@@ -30,8 +30,8 @@ const BlogSection: React.FC = () => {
         <section id="blogs" className={styles.blogSection}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h2 className={styles.title}>Legal Insights</h2>
-                    <p className={styles.subtitle}>Stay updated with the latest news, success stories, and expert opinions from the legal world.</p>
+                    <h2 className={styles.title}>Blog Insights</h2>
+                    <p className={styles.subtitle}>Stay updated with the latest news, success stories, and expert opinions from the  world.</p>
                 </div>
 
                 <div className={styles.grid}>

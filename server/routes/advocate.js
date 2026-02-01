@@ -83,7 +83,7 @@ router.post('/register', (req, res, next) => {
         user = await User.create({
             email,
             password: hashedPassword,
-            role: 'advocate',
+            role: req.body.role || 'advocate',
             status: 'Pending', // Needs admin verification
             myReferralCode,
             referredBy

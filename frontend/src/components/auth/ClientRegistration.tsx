@@ -43,7 +43,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         emailOtp: '',
         emailVerified: false,
         mobileOtp: '',
-        mobileVerified: false
+        mobileVerified: false,
+        captchaVerified: false
     });
 
     const [otpSending, setOtpSending] = useState(false);
@@ -913,6 +914,40 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
                         </div>
 
+                        {/* CAPTCHA VERIFICATION */}
+                        <div className={styles.formGroup} style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
+                            <label style={{ fontSize: '16px', color: '#daa520', marginBottom: '15px', display: 'block' }}>🛡️ Security Verification</label>
+                            <div className={styles.captchaContainer}>
+                                <div className={styles.captchaBox}>
+                                    <span className={styles.captchaText}>LEX-CLIENT-88</span>
+                                </div>
+                                <div className={styles.captchaInputGroup}>
+                                    <input
+                                        type="text"
+                                        placeholder="Type Code Above"
+                                        className={styles.captchaInput}
+                                        style={{
+                                            backgroundColor: '#1a1a1aff',
+                                            border: '1px solid #333',
+                                            color: '#fff',
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            fontSize: '16px',
+                                            width: '200px'
+                                        }}
+                                        onChange={(e) => {
+                                            if (e.target.value.toUpperCase() === 'LEX-CLIENT-88') {
+                                                updateFormData('captchaVerified', true);
+                                            } else {
+                                                updateFormData('captchaVerified', false);
+                                            }
+                                        }}
+                                    />
+                                    {formData.captchaVerified && <span style={{ color: '#10b981', fontWeight: 'bold' }}>✔ Verified</span>}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Date - Auto-filled with current date */}
                         <div className={styles.formGroup}>
                             <label>Date *</label>
@@ -1007,6 +1042,16 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 }
                                 if (!formData.mobileVerified) {
                                     alert('Please verify your mobile via SMS OTP before proceeding.');
+                                    return;
+                                }
+                            }
+                            if (currentStep === steps.length) {
+                                if (!formData.captchaVerified) {
+                                    alert('Please complete the Captcha verification before submitting.');
+                                    return;
+                                }
+                                if (!formData.declaration1 || !formData.declaration2 || !formData.declaration3 || !formData.signature) {
+                                    alert('Please agree to all declarations and provide signature.');
                                     return;
                                 }
                             }

@@ -1,7 +1,7 @@
 import { useAuth } from '../../../context/AuthContext';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
-    Coins, LogOut, Wallet
+    Coins, LogOut, Wallet, FileText
 } from 'lucide-react';
 // import styles from '../Sidebar.module.css';
 import styles from './ClientSidebar.module.css';
@@ -25,6 +25,7 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
         { id: 'my-subscription', label: 'My Subscription', icon: Shield },
         ...(isPremium ? [{ id: 'featured-profiles', label: 'Featured Profiles', icon: Star }] : []),
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
+        { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
         { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
         { id: 'safety-center', label: 'Safety Center', icon: Shield },
         { id: 'account-settings', label: 'Account & Settings', icon: Settings },

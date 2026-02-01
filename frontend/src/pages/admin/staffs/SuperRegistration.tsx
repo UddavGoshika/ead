@@ -79,6 +79,7 @@ const SuperRegistration: React.FC = () => {
         idProofType: 'Aadhar', idUpload: null, resumeUpload: null,
         // Step 4: Account
         loginId: '', tempPassword: '',
+        captchaVerified: false,
     });
 
     useEffect(() => {
@@ -127,6 +128,11 @@ const SuperRegistration: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (currentFormStep === 5 && !formData.captchaVerified) {
+            alert('Please complete the security verification (Captcha) before submitting.');
+            return;
+        }
+
         if (currentFormStep < 5) {
             handleNext();
             return;
@@ -155,6 +161,7 @@ const SuperRegistration: React.FC = () => {
                         roleSpecific: {} as any,
                         idProofType: 'Aadhar', idUpload: null, resumeUpload: null,
                         loginId: '', tempPassword: '',
+                        captchaVerified: false,
                     });
                 }, 5000);
             } else {
@@ -580,6 +587,33 @@ const SuperRegistration: React.FC = () => {
                                         Check all details before submitting. Upon submission, the request will be sent to the Admin for final approval.
                                         Credentials will be dispatched to <strong>{formData.email}</strong> after approval.
                                     </p>
+                                </div>
+
+                                {/* Captcha Verification */}
+                                <div className={styles.captchaSection}>
+                                    <div className={styles.sectionTitle}>
+                                        <MdAdminPanelSettings size={20} /> Security Verification
+                                    </div>
+                                    <div className={styles.captchaContainer}>
+                                        <div className={styles.captchaBox}>
+                                            <span className={styles.captchaText}>LEX-STAFF-99</span>
+                                        </div>
+                                        <div className={styles.captchaInputGroup}>
+                                            <input
+                                                type="text"
+                                                placeholder="Type Code Above"
+                                                className={styles.captchaInput}
+                                                onChange={(e) => {
+                                                    if (e.target.value.toUpperCase() === 'LEX-STAFF-99') {
+                                                        setFormData(prev => ({ ...prev, captchaVerified: true }));
+                                                    } else {
+                                                        setFormData(prev => ({ ...prev, captchaVerified: false }));
+                                                    }
+                                                }}
+                                            />
+                                            {formData.captchaVerified && <span className={styles.verifySuccess}>✔ Verified</span>}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

@@ -12,6 +12,7 @@ import PublicRoute from './components/auth/PublicRoute';
 import ScrollToTop from './components/shared/ScrollToTop';
 import ClientDashboard from './pages/dashboard/client/ClientDashboard';
 import AdvocateDashboard from './pages/dashboard/advocate/AdvocateDashboard';
+import AdvisorDashboard from './pages/dashboard/advisor/AdvisorDashboard';
 import PlaceholderPage from './pages/PlaceholderPage';
 import Preservices from './components/footerpages/premiumservices.tsx';
 import AboutUs from './pages/AboutPage';
@@ -35,7 +36,6 @@ import RefundPolicy from './components/footerpages/refund.tsx';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import LegalDocumentationPage from './pages/LegalDocumentationPage';
-import ProviderDashboard from './pages/dashboard/provider/ProviderDashboard';
 
 // Admin Members
 import MemberTable from './components/admin/MemberTable';
@@ -100,6 +100,12 @@ import OtpCredentials from './pages/admin/otp/OtpCredentials';
 import SendSms from './pages/admin/otp/SendSms';
 import ManualPayments from './pages/admin/offline-payments/ManualPayments';
 import UploadedFiles from './pages/admin/UploadedFiles';
+
+// Admin Legal Documentation
+import AgreementsList from './pages/admin/legal-docs/AgreementsList';
+import AffidavitsList from './pages/admin/legal-docs/AffidavitsList';
+import NoticesList from './pages/admin/legal-docs/NoticesList';
+import DocumentationProviders from './pages/admin/legal-docs/DocumentationProviders';
 import HeaderSetup from './pages/admin/setup/HeaderSetup';
 import FooterSetup from './pages/admin/setup/FooterSetup';
 import PagesSetup from './pages/admin/setup/PagesSetup';
@@ -211,9 +217,7 @@ const App: React.FC = () => {
           <Routes>
             {/* PUBLIC ROUTES */}
             <Route path="/" element={
-              <PublicRoute>
-                <HomeLayout />
-              </PublicRoute>
+              <HomeLayout />
             }>
               <Route index element={<HomePage />} />
               <Route path="about" element={<AboutUs />} />
@@ -260,9 +264,9 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/dashboard/provider" element={
-              <ProtectedRoute>
-                <ProviderDashboard />
+            <Route path="/dashboard/advisor" element={
+              <ProtectedRoute allowedRoles={['legal_provider']}>
+                <AdvisorDashboard />
               </ProtectedRoute>
             } />
 
@@ -340,10 +344,10 @@ const App: React.FC = () => {
               <Route path="uploaded-files" element={<UploadedFiles />} />
 
               {/* Legal Documentation Admin */}
-              <Route path="legal-docs/agreements" element={<PlaceholderPage title="Manage Agreements" />} />
-              <Route path="legal-docs/affidavits" element={<PlaceholderPage title="Manage Affidavits" />} />
-              <Route path="legal-docs/notices" element={<PlaceholderPage title="Manage Notices" />} />
-              <Route path="legal-docs/providers" element={<PlaceholderPage title="Manage Service Providers" />} />
+              <Route path="legal-docs/agreements" element={<AgreementsList />} />
+              <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
+              <Route path="legal-docs/notices" element={<NoticesList />} />
+              <Route path="legal-docs/providers" element={<DocumentationProviders />} />
 
               {/* Setup & Settings */}
               <Route path="setup/header" element={<HeaderSetup />} />

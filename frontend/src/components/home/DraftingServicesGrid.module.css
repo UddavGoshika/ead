@@ -1,0 +1,129 @@
+.sectionContainer {
+    padding: 100px 20px;
+    background:
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        linear-gradient(180deg, #0b122f, #0b102a);
+    position: relative;
+    overflow: hidden;
+}
+
+.inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 70px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: rgba(218, 165, 32, 0.1);
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    border-radius: 100px;
+    color: #daa520;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 3.5rem;
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 50px;
+    border-radius: 32px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    backdrop-filter: blur(20px);
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: #daa520;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.iconWrapper {
+    width: 70px;
+    height: 70px;
+    background: rgba(218, 165, 32, 0.1);
+    color: #daa520;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.card h3 {
+    font-size: 2rem;
+    font-family: 'Playfair Display', serif;
+    color: #fff;
+}
+
+.card p {
+    color: #94a3b8;
+    line-height: 1.7;
+    font-size: 1.1rem;
+    flex: 1;
+}
+
+.learnMore {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px 30px;
+    border-radius: 100px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: fit-content;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.learnMore:hover {
+    background: #daa520;
+    color: #000;
+    border-color: #daa520;
+    transform: translateX(10px);
+}
+
+@media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+}

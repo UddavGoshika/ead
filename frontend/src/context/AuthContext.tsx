@@ -20,6 +20,9 @@ interface AuthContextType {
     isClientRegOpen: boolean;
     openClientReg: () => void;
     closeClientReg: () => void;
+    isLegalProviderRegOpen: boolean;
+    openLegalProviderReg: () => void;
+    closeLegalProviderReg: () => void;
     searchRole: 'advocates' | 'clients';
     setSearchRole: (role: 'advocates' | 'clients') => void;
     isHelpModalOpen: boolean;
@@ -57,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [isAdvocateRegOpen, setIsAdvocateRegOpen] = useState(false);
     const [isClientRegOpen, setIsClientRegOpen] = useState(false);
+    const [isLegalProviderRegOpen, setIsLegalProviderRegOpen] = useState(false);
     const [searchRole, setSearchRole] = useState<'advocates' | 'clients'>('advocates');
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [isImpersonating, setIsImpersonating] = useState<boolean>(() => {
@@ -112,6 +116,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const closeClientReg = () => setIsClientRegOpen(false);
 
+    const openLegalProviderReg = () => {
+        setIsAuthModalOpen(false);
+        setIsLegalProviderRegOpen(true);
+    };
+    const closeLegalProviderReg = () => setIsLegalProviderRegOpen(false);
+
     const openHelpModal = () => setIsHelpModalOpen(true);
     const closeHelpModal = () => setIsHelpModalOpen(false);
 
@@ -143,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const role = impersonatedUser.role.toLowerCase();
                 if (role === 'advocate') window.location.href = '/dashboard/advocate';
                 else if (role === 'client') window.location.href = '/dashboard/client';
+                else if (role === 'legal_provider') window.location.href = '/dashboard/advisor';
                 else window.location.href = '/dashboard/user';
             } else {
                 alert(res.data.error || 'Failed to impersonate member');
@@ -203,6 +214,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isClientRegOpen,
             openClientReg,
             closeClientReg,
+            isLegalProviderRegOpen,
+            openLegalProviderReg,
+            closeLegalProviderReg,
             searchRole,
             setSearchRole,
             isHelpModalOpen,

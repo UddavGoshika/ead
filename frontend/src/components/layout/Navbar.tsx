@@ -130,6 +130,8 @@ const Navbar: React.FC = () => {
                 navigate("/dashboard/client");
             } else if (role === 'advocate') {
                 navigate("/dashboard/advocate");
+            } else if (role === 'legal_provider') {
+                navigate("/dashboard/advisor");
             }
         }
     };
@@ -141,6 +143,8 @@ const Navbar: React.FC = () => {
                 navigate("/dashboard/client", { state: { initialPage: 'account-settings' } });
             } else if (role === 'advocate') {
                 navigate("/dashboard/advocate", { state: { initialPage: 'account-settings' } });
+            } else if (role === 'legal_provider') {
+                navigate("/dashboard/advisor", { state: { initialPage: 'account-settings' } });
             } else {
                 // For staff roles, maybe they have a different settings page or it's within their dashboard
                 navigate(`/dashboard/${role}`);

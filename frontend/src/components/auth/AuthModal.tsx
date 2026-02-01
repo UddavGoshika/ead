@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AuthModal.module.css';
 
 const AuthModal: React.FC = () => {
-    const { isAuthModalOpen, closeAuthModal, authTab, login, openAdvocateReg, openClientReg } = useAuth();
+    const { isAuthModalOpen, closeAuthModal, authTab, login, openAdvocateReg, openClientReg, openLegalProviderReg } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'login' | 'register'>(authTab);
     const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -39,7 +39,7 @@ const AuthModal: React.FC = () => {
         setError(null);
 
         // INTERCEPT TEST ACCOUNTS
-        if (password === 'pwd123') {
+        if (password === 'pwd123' || password === 'advisor123') {
             let mockUser = null;
             if (email === 'free@lexi.com') {
                 mockUser = { id: 'mock-free', unique_id: 'ADV-FREE', name: 'Free Advocate', email, role: 'advocate' as const, plan: 'Free' };
@@ -47,13 +47,29 @@ const AuthModal: React.FC = () => {
                 mockUser = { id: 'mock-pro', unique_id: 'ADV-PRO', name: 'Pro Advocate', email, role: 'advocate' as const, plan: 'Pro Gold', isPremium: true };
             } else if (email === 'ultra@lexi.com') {
                 mockUser = { id: 'mock-ultra', unique_id: 'ADV-ULTRA', name: 'Ultra Pro Advocate', email, role: 'advocate' as const, plan: 'Ultra Pro Platinum', isPremium: true };
+            } else if (email === 'advisor@lexi.com' || email === 'advisor@gmail.com') {
+                mockUser = { id: 'mock-advisor', unique_id: 'LSP-001', name: 'Elite Legal Advisor', email, role: 'legal_provider' as const, plan: 'Advisor Pro', isPremium: true };
             }
 
             if (mockUser) {
                 // PASS MOCK TOKEN
                 login(mockUser, 'mock-token-' + mockUser.id);
                 closeAuthModal();
-                navigate('/dashboard/advocate', { replace: true });
+
+                let target = '/dashboard/advocate';
+                if (mockUser.role === 'legal_provider') target = '/dashboard/advisor';
+                if (email === 'advisor@gmail.com') target = '/dashboard/advisor';
+
+                // If user is already on a public page, stay there.
+                const currentPath = window.location.pathname;
+                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
+                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
+
+                if (isPublicPage) {
+                    target = currentPath;
+                }
+
+                navigate(target, { replace: true });
                 setLoading(false);
                 return;
             }
@@ -90,9 +106,19 @@ const AuthModal: React.FC = () => {
                     target = '/dashboard/support';
                 } else if (response.data.user.role === 'USER') {
                     target = '/dashboard/user';
+                } else if (response.data.user.role === 'legal_provider') {
+                    target = '/dashboard/advisor';
                 }
 
                 console.log('Redirecting to:', target);
+                // If user is already on a public page, stay there.
+                const currentPath = window.location.pathname;
+                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
+                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
+
+                if (isPublicPage && response.data.user.role !== 'admin' && response.data.user.role !== 'ADMIN') {
+                    target = currentPath;
+                }
                 navigate(target, { replace: true });
             }
         } catch (err: any) {
@@ -134,14 +160,22 @@ const AuthModal: React.FC = () => {
             if (response.data.success && response.data.user) {
                 console.log('Registration successful, user:', response.data.user);
                 login(response.data.user);
-
-                // Close modal
                 closeAuthModal();
 
-                // Redirect based on role
-                const target = response.data.user.role === 'client' ? '/dashboard/client' : '/dashboard/advocate';
-                console.log('Redirecting to:', target);
+                let target = '/dashboard/client';
+                if (response.data.user.role === 'advocate') target = '/dashboard/advocate';
+                else if (response.data.user.role === 'legal_provider') target = '/dashboard/advisor';
+
+                // If user is already on a public page, stay there.
+                const currentPath = window.location.pathname;
+                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
+                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
+
+                if (isPublicPage && response.data.user.role !== 'admin' && response.data.user.role !== 'ADMIN') {
+                    target = currentPath;
+                }
                 navigate(target, { replace: true });
+                console.log('Redirecting to:', target);
             }
         } catch (err: any) {
             console.error('Registration Error:', err);
@@ -152,12 +186,14 @@ const AuthModal: React.FC = () => {
     };
 
     const handleRegisterChoice = (role: 'client' | 'advocate' | 'provider') => {
-        setSelectedRole(role === 'provider' ? 'advocate' : role);
-        if (role === 'advocate' || role === 'provider') {
+        if (role === 'advocate') {
             openAdvocateReg();
+        } else if (role === 'provider') {
+            openLegalProviderReg();
         } else if (role === 'client') {
             openClientReg();
         } else {
+            setSelectedRole(role);
             setRegStep('form');
         }
     };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import {
-    User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
+    User, Newspaper, ArrowUp, Shield, Settings,
     Coins, LogOut, Briefcase, Lock, Wallet, FileText
 } from 'lucide-react';
 import styles from '../Sidebar.module.css';
@@ -12,22 +12,19 @@ interface Props {
     currentPage: string;
 }
 
-const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
+const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
     const { user, logout } = useAuth();
 
     const menuItems = [
-        { id: 'edit-profile', label: 'Edit Profile', icon: User },
-        { id: 'search-preferences', label: 'Search Preferences', icon: Search },
-        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
-        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
-        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star, premium: true },
-        { id: 'blogs', label: 'Blogs', icon: Newspaper },
-        { id: 'my-cases', label: 'My Cases', icon: Briefcase },
+        { id: 'edit-profile', label: 'Manage Profile', icon: User },
+        { id: 'wallet-history', label: 'Wallet & Billing', icon: Wallet },
+        { id: 'my-subscription', label: 'Pro Benefits', icon: Shield },
+        { id: 'blogs', label: 'Legal Insights', icon: Newspaper },
+        { id: 'my-cases', label: 'Active Services', icon: Briefcase },
+        { id: 'upgrade', label: 'Premium Tiers', icon: ArrowUp },
         { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
-        { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
-        { id: 'safety-center', label: 'Safety Center', icon: Shield },
-        { id: 'account-settings', label: 'Account & Settings', icon: Settings },
-        { id: 'credits', label: 'Credits', icon: Coins },
+        { id: 'account-settings', label: 'Security & Access', icon: Settings },
+        { id: 'credits', label: 'Service Credits', icon: Coins },
     ];
 
     const plan = user?.plan || 'Free';
@@ -40,22 +37,22 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
                     {user?.name?.charAt(0) || 'A'}
                 </div>
                 <div className={styles.userInfo}>
-                    <h3>{user?.name || 'Advocate'}</h3>
-                    <p>ID - {user?.id || '12345'}</p>
+                    <h3>{user?.name || 'Legal Advisor'}</h3>
+                    <p>OFFICIAL ID - {user?.id || '...'}</p>
                 </div>
 
                 <button className={styles.upgradeBtn} onClick={() => showsidePage('upgrade')}>
-                    Upgrade Membership
+                    Elite Membership
                 </button>
                 <div className={styles.upgradeText}>
-                    UPTO 53% OFF ALL MEMBERSHIP PLANS
+                    PROFESSIONAL PLAN ACTIVE
                 </div>
             </div>
 
             <nav className={styles.nav}>
                 {menuItems.map((item) => {
                     const Icon = item.icon;
-                    const isLocked = item.premium && !isPremium;
+                    const isLocked = (item as any).premium && !isPremium;
 
                     return (
                         <button
@@ -77,11 +74,11 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
             <div className={styles.footer}>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
-                    <span>Logout</span>
+                    <span>Secure Logout</span>
                 </button>
             </div>
         </aside>
     );
 };
 
-export default AdvocateSidebar;
+export default AdvisorSidebar;

@@ -36,7 +36,7 @@ const TestimonialSection: React.FC = () => {
             <div className={styles.container}>
                 <div className={styles.header}>
                     <h2 className={styles.title}>What Our Clients Says</h2>
-                    <p className={styles.subtitle}>Success stories from individuals and businesses who found their legal experts through E-Advocate.</p>
+                    <p className={styles.subtitle}>Success stories from individuals and businesses who found their  experts through E-Advocate.</p>
                 </div>
 
                 <div className={styles.grid}>

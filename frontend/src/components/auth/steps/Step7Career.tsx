@@ -5,6 +5,7 @@ import styles from '../AdvocateRegistration.module.css';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    isOptional?: boolean;
 }
 
 const languagesList = [
@@ -19,7 +20,7 @@ const languagesList = [
     'punjabi'
 ];
 
-const Step7Career: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
@@ -70,7 +71,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Work Type */}
                 <div className={styles.formGroup}>
                     <label>
-                        TYPE OF WORK <span className={styles.required}>*</span>
+                        TYPE OF WORK {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <select
                         name="workType"
@@ -89,7 +90,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Languages */}
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label>
-                        LANGUAGES KNOWN <span className={styles.required}>*</span>
+                        LANGUAGES KNOWN {!isOptional && <span className={styles.required}>*</span>}
                     </label>
 
                     <div className={styles.languageGrid}>
@@ -118,7 +119,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData }) => {
                 {/* Professional Bio */}
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label>
-                        PROFESSIONAL BIO <span className={styles.required}>*</span>
+                        PROFESSIONAL BIO {!isOptional && <span className={styles.required}>*</span>}
                     </label>
                     <textarea
                         name="careerBio"

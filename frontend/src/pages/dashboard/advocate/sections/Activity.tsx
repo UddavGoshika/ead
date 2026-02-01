@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import styles from "./Activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
-import { Clock, CheckCircle, Eye, Send, Inbox, Star } from "lucide-react";
+import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck } from "lucide-react";
 
 const Activity = () => {
     const { user } = useAuth();
@@ -89,11 +89,16 @@ const Activity = () => {
                                 <div className={styles.activityIcon}>
                                     {act.type === 'visit' ? <Eye size={18} /> :
                                         act.type === 'interest' ? <Send size={18} /> :
-                                            act.type === 'superInterest' ? <Star size={18} /> : <CheckCircle size={18} />}
+                                            act.type === 'superInterest' ? <Star size={18} /> :
+                                                act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
                                 </div>
                                 <div className={styles.activityDetails}>
                                     <p className={styles.activityText}>
-                                        <strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong>
+                                        {act.status === 'accepted' ? (
+                                            <>Client <strong>{act.partnerName}</strong> has been <strong>shortlisted</strong> for this service</>
+                                        ) : (
+                                            <><strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
+                                        )}
                                         {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
                                     </p>
                                     <span className={styles.activityTime}>
@@ -105,7 +110,7 @@ const Activity = () => {
                                         color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
                                         borderColor: act.status === 'accepted' ? '#10b98140' : act.status === 'declined' ? '#f43f5e40' : '#facc1540'
                                     }}>
-                                        {act.status.toUpperCase()}
+                                        {act.status === 'accepted' ? 'SHORTLISTED' : act.status.toUpperCase()}
                                     </span>
                                 </div>
                             </div>

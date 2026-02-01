@@ -27,14 +27,35 @@ export const authService = {
 };
 
 export const advocateService = {
-    getAdvocates: (filters: { search?: string, specialization?: string, court?: string, state?: string, city?: string, experience?: string } = {}) =>
+    getAdvocates: (filters: {
+        search?: string,
+        language?: string,
+        specialization?: string,
+        subSpecialization?: string,
+        court?: string,
+        state?: string,
+        district?: string,
+        city?: string,
+        experience?: string,
+        consultationMode?: string
+    } = {}) =>
         api.get<{ success: boolean; advocates: Advocate[] }>('/advocates', { params: filters }),
     getAdvocateById: (id: number | string) =>
         api.get<{ success: boolean; advocate: Advocate }>(`/advocates/${id}`),
 };
 
 export const clientService = {
-    getClients: (filters: { search?: string, category?: string, specialization?: string, city?: string, state?: string } = {}) =>
+    getClients: (filters: {
+        search?: string,
+        language?: string,
+        category?: string,
+        specialization?: string,
+        subDepartment?: string,
+        city?: string,
+        state?: string,
+        district?: string,
+        consultationMode?: string
+    } = {}) =>
         api.get<{ success: boolean; clients: ClientProfile[] }>('/client', { params: filters }),
 };
 

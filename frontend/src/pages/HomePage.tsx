@@ -4,6 +4,7 @@ import HeroSection from '../components/home/HeroSection';
 import SearchSection from '../components/home/SearchSection';
 import FileACaseSection from '../components/home/FileACaseSection';
 import BlogSection from '../components/home/BlogSection';
+import DraftingServicesGrid from '../components/home/DraftingServicesGrid';
 import TestimonialSection from '../components/home/TestimonialSection';
 import FAQSection from '../components/home/FAQSection';
 import ContactSection from '../components/home/ContactSection';
@@ -26,6 +27,10 @@ const HomePage: React.FC = () => {
 
             <section id="file-a-case">
                 <FileACaseSection />
+            </section>
+
+            <section id="drafting-services">
+                <DraftingServicesGrid />
             </section>
 
             <section id="blogs">

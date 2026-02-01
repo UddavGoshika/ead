@@ -1,46 +1,40 @@
 import React, { useState } from 'react';
-import styles from './AdvocateDashboard.module.css';
-import AdvocateSidebar from '../../../components/dashboard/advocate/AdvocateSidebar';
-import AdvocateBottomNav from '../../../components/dashboard/advocate/AdvocateBottomNav';
-import FeaturedProfiles from './sections/FeaturedProfiles';
-import EditProfile from '../shared/EditProfile';
-import SearchPreferences from '../shared/SearchPreferences';
-import SafetyCenter from '../shared/SafetyCenter';
-import DetailedProfile from '../shared/DetailedProfile';
-import {
-    NormalProfiles, HelpSupport
-} from './sections/Placeholders';
-import Preservices from '../../../components/footerpages/premiumservices';
-import WalletHistory from '../shared/WalletHistory';
-import Activity from './sections/Activity';
-import BlogFeed from '../shared/BlogFeed';
-import Messenger from '../shared/Messenger';
-import ChatPopup from '../shared/ChatPopup';
-import MyCases from './sections/MyCases';
-import FileCase from './sections/FileCase';
-import CreateBlog from './sections/CreateBlog';
-import CreditsPage from '../shared/CreditsPage';
-import LegalDocumentationPage from '../../LegalDocumentationPage';
+import styles from './AdvisorDashboard.module.css';
+
+// Absolute-style relative imports to ensure clarity for the compiler
+import AdvisorSidebar from '../../../components/dashboard/advisor/AdvisorSidebar.tsx';
+import AdvisorBottomNav from '../../../components/dashboard/advisor/AdvisorBottomNav.tsx';
+import AdvisorActivity from './sections/AdvisorActivity.tsx';
+
+import EditProfile from '../shared/EditProfile.tsx';
+import { HelpSupport } from '../advocate/sections/Placeholders.tsx';
+import Preservices from '../../../components/footerpages/premiumservices.tsx';
+import WalletHistory from '../shared/WalletHistory.tsx';
+import BlogFeed from '../shared/BlogFeed.tsx';
+import Messenger from '../shared/Messenger.tsx';
+import ChatPopup from '../shared/ChatPopup.tsx';
+import MyCases from '../advocate/sections/MyCases.tsx';
+import FileCase from '../advocate/sections/FileCase.tsx';
+import CreateBlog from '../advocate/sections/CreateBlog.tsx';
+import CreditsPage from '../shared/CreditsPage.tsx';
+import LegalDocumentationPage from '../../LegalDocumentationPage.tsx';
 import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
-import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
-import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
+import PlanOverview from '../../../components/dashboard/shared/PlanOverview.tsx';
 
-const AdvocateDashboard: React.FC = () => {
+const AdvisorDashboard: React.FC = () => {
     const { user } = useAuth();
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
-    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
-    const isUltra = plan.toLowerCase().includes('ultra');
 
-    const [currentPage, setCurrentPage] = useState('featured-profiles');
-    const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
-    const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
+    // For Advisor, we land on messenger
+    const [currentPage, setCurrentPage] = useState('messenger');
+    const [activeChatAdvocate, setActiveChatAdvocate] = useState<any>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
 
-    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+    const backtohome = () => setCurrentPage('messenger');
 
     const showsidePage = (page: string) => {
         setCurrentPage(page);
@@ -51,15 +45,8 @@ const AdvocateDashboard: React.FC = () => {
         setSidebarOpen(false);
     };
 
-    const handleSelectForChat = (adv: Advocate) => {
+    const handleSelectForChat = (adv: any) => {
         setActiveChatAdvocate(adv);
-    };
-
-    const backtohome = () => setCurrentPage('featured-profiles');
-
-    const showDetailedProfile = (id: string) => {
-        setDetailedProfileId(id);
-        setCurrentPage('detailed-profile-view');
     };
 
     const bottomNavClick = (page: string) => setCurrentPage(page);
@@ -74,34 +61,14 @@ const AdvocateDashboard: React.FC = () => {
 
     const renderPage = () => {
         switch (currentPage) {
-            case 'featured-profiles':
-                return <FeaturedProfiles
-                    showDetailedProfile={showDetailedProfile}
-                    showToast={showToast}
-                    showsidePage={showsidePage}
-                    onSelectForChat={handleSelectForChat}
-                />;
-            case 'normalfccards':
-                return <NormalProfiles
-                    showDetailedProfile={showDetailedProfile}
-                    showToast={showToast}
-                    showsidePage={showsidePage}
-                    onSelectForChat={handleSelectForChat}
-                />;
-            case 'detailed-profile-view':
-                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} />;
             case 'edit-profile':
                 return <EditProfile backToHome={backtohome} />;
-            case 'search-preferences':
-                return <SearchPreferences backToHome={backtohome} showToast={showToast} />;
             case 'upgrade':
                 return <Preservices />;
             case 'wallet-history':
                 return <WalletHistory backToHome={backtohome} />;
             case 'credits':
                 return <CreditsPage backToHome={backtohome} />;
-            case 'safety-center':
-                return <SafetyCenter backToHome={backtohome} showToast={showToast} />;
             case 'help-support':
                 return <HelpSupport backToHome={backtohome} />;
             case 'blogs':
@@ -111,7 +78,7 @@ const AdvocateDashboard: React.FC = () => {
                     </div>
                 );
             case 'activity':
-                return <Activity />;
+                return <AdvisorActivity />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
@@ -126,19 +93,9 @@ const AdvocateDashboard: React.FC = () => {
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
             default:
-                // Only Premium/Pro/Ultra can see Featured by default
-                return isPremium ? (
-                    <FeaturedProfiles
-                        showDetailedProfile={showDetailedProfile}
-                        showToast={showToast}
-                        showsidePage={showsidePage}
-                        onSelectForChat={handleSelectForChat}
-                    />
-                ) : (
-                    <NormalProfiles
-                        showDetailedProfile={showDetailedProfile}
-                        showToast={showToast}
-                        showsidePage={showsidePage}
+                return (
+                    <Messenger
+                        view="list"
                         onSelectForChat={handleSelectForChat}
                     />
                 );
@@ -147,42 +104,37 @@ const AdvocateDashboard: React.FC = () => {
 
     const getPageTitle = () => {
         switch (currentPage) {
-            case 'featured-profiles': return 'Featured Profiles';
-            case 'normalfccards': return 'Browse All Advocates';
-            case 'detailed-profile-view': return 'Profile Detail';
-            case 'edit-profile': return 'Edit Profile';
-            case 'search-preferences': return 'Search Preferences';
-            case 'upgrade': return 'Membership Upgrade';
-            case 'account-settings': return 'Account & Settings';
-            case 'credits': return 'My Credits';
-            case 'safety-center': return 'Safety Center';
-            case 'help-support': return 'Help & Support';
+            case 'edit-profile': return 'My Profile';
+            case 'upgrade': return 'Membership';
+            case 'account-settings': return 'Settings';
+            case 'credits': return 'Credits';
+            case 'help-support': return 'Support';
             case 'blogs': return 'Legal Blogs';
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
-            case 'my-cases': return 'My Cases';
-            case 'fileacase': return 'File a New Case';
+            case 'my-cases': return 'Service Cases';
+            case 'fileacase': return 'New Service Request';
             case 'legal-documentation': return 'Legal Documentation';
-            default: return 'Advocate Dashboard';
+            default: return 'Legal Advisor Workspace';
         }
     };
 
     return (
-        <div className={styles.advocatedashboard}>
-            <AdvocateSidebar
+        <div className={styles.advisordashboard}>
+            <AdvisorSidebar
                 isOpen={sidebarOpen}
                 showsidePage={showsidePage}
                 currentPage={currentPage}
             />
 
-            <main className={styles.mainContentadvocatedash}>
+            <main className={styles.mainContentadvdash}>
                 <header className={styles.topBar}>
                     <div className={styles.topBarLeft}>
                         <button className={styles.hamburger} onClick={() => setSidebarOpen(true)}>
                             <Menu size={24} />
                         </button>
-                        {currentPage !== 'featured-profiles' && (
+                        {currentPage !== 'messenger' && (
                             <button className={styles.backBtn} onClick={backtohome}>
                                 <ArrowLeft size={22} />
                             </button>
@@ -191,12 +143,6 @@ const AdvocateDashboard: React.FC = () => {
                             {getPageTitle()}
                         </h1>
                     </div>
-
-                    {currentPage === 'featured-profiles' && (
-                        <div className={styles.newsTicker}>
-                            <span className={styles.tickerText}>✨ Latest News: Someone just posted a new professional blog! Boost your visibility today. ✨</span>
-                        </div>
-                    )}
 
                     <div className={styles.topBarRight}>
                         {currentPage === 'blogs' && isPremium && (
@@ -219,7 +165,7 @@ const AdvocateDashboard: React.FC = () => {
                 </div>
             </main>
 
-            <AdvocateBottomNav bottomNavClick={bottomNavClick} currentPage={currentPage} />
+            <AdvisorBottomNav bottomNavClick={bottomNavClick} currentPage={currentPage} />
 
             {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
 
@@ -229,7 +175,6 @@ const AdvocateDashboard: React.FC = () => {
                         onClose={() => setShowCreateBlog(false)}
                         onSuccess={() => {
                             showToast("Blog submitted for approval!");
-                            // Optionally refresh blog feed if we add a ref
                         }}
                     />
                 </div>
@@ -245,4 +190,4 @@ const AdvocateDashboard: React.FC = () => {
     );
 };
 
-export default AdvocateDashboard;
+export default AdvisorDashboard;
