@@ -8,11 +8,20 @@ const BlogSection: React.FC = () => {
 
     useEffect(() => {
         const fetchBlogs = async () => {
+            console.log('Fetching blogs...');
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blogs`);
+                // Use production URL as fallback if local env is not set
+                const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
+                console.log('API URL:', apiUrl);
+
+                const response = await fetch(`${apiUrl}/api/blogs`);
                 const data = await response.json();
-                if (data.success) {
+                console.log('Blog data received:', data);
+
+                if (data.success && Array.isArray(data.blogs)) {
                     setBlogs(data.blogs.slice(0, 3));
+                } else {
+                    console.warn('Blog data format incorrect or success false:', data);
                 }
             } catch (err) {
                 console.error('Error fetching blogs:', err);
@@ -24,7 +33,18 @@ const BlogSection: React.FC = () => {
         fetchBlogs();
     }, []);
 
-    if (loading) return null; // Or a skeleton
+    if (loading) {
+        return (
+            <section id="blogs" className={styles.blogSection}>
+                <div className={styles.container}>
+                    <div className={styles.header} style={{ opacity: 0.5 }}>
+                        <h2 className={styles.title}>Blog Insights</h2>
+                        <p>Loading updates...</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="blogs" className={styles.blogSection}>
