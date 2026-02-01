@@ -21,6 +21,13 @@ const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
     const navigate = useNavigate();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+    // Correction Logic due to legacy data
+    const displayAuthor = post.author.includes('Health Plus') ? 'e-Advocate Services' : post.author;
+    const displayDate = post.date === 'Invalid Date' ? 'Recently Updated' : post.date;
+
+    // Fallback image logic
+    const [imgSrc, setImgSrc] = React.useState(post.image);
+
     const handleReadClick = async () => {
         try {
             // Increment view count in background
@@ -44,9 +51,9 @@ const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
                     <img src="/assets/eadvocate.webp" alt="e-Advocate Services" />
                 </div>
                 <div className={styles.headerInfo}>
-                    <span className={styles.serviceName}>{post.author}</span>
+                    <span className={styles.serviceName}>{displayAuthor}</span>
                     <span className={styles.moduleName}>{post.module}</span>
-                    <span className={styles.date}>{post.date}</span>
+                    <span className={styles.date}>{displayDate}</span>
                 </div>
             </div>
 
@@ -55,9 +62,16 @@ const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
                 <p className={styles.cardDescription}>{post.description}</p>
             </div>
 
-            {post.image && (
+            {imgSrc && (
                 <div className={styles.postThumbnail}>
-                    <img src={post.image} alt={post.title} />
+                    <img
+                        src={imgSrc}
+                        alt={post.title}
+                        onError={(e) => {
+                            e.currentTarget.onerror = null; // prevent loop
+                            setImgSrc('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800');
+                        }}
+                    />
                 </div>
             )}
 
