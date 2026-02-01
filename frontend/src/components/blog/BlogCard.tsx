@@ -25,7 +25,12 @@ interface BlogCardProps {
 
 const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
     const { user, openAuthModal, isLoggedIn } = useAuth();
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
+
+    // Correction Logic
+    const displayAuthor = post.author.includes('Health Plus') ? 'e-Advocate Services' : post.author;
+    const displayDate = post.date === 'Invalid Date' ? 'Recently Updated' : post.date;
+    const [imgSrc, setImgSrc] = useState(post.image);
 
     const [isLiked, setIsLiked] = useState(post.likes?.includes(user?.id as string) || false);
     const [isSaved, setIsSaved] = useState(post.saves?.includes(user?.id as string) || false);
@@ -137,8 +142,8 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
                                 <img src="/assets/eadvocate.webp" alt="e-Advocate logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                             <div className={styles.authorText}>
-                                <span className={styles.authorName}>{post.author}</span>
-                                <span className={styles.metaText}>{post.module} • {post.date}</span>
+                                <span className={styles.authorName}>{displayAuthor}</span>
+                                <span className={styles.metaText}>{post.module} • {displayDate}</span>
                             </div>
                         </div>
                         <div className={styles.topActions}>
@@ -189,7 +194,15 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
 
                 {/* Side Image */}
                 <div className={styles.imageWrapper}>
-                    <img src={post.image} alt={post.title} className={styles.image} />
+                    <img
+                        src={imgSrc}
+                        alt={post.title}
+                        className={styles.image}
+                        onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            setImgSrc('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800');
+                        }}
+                    />
                 </div>
             </div>
 

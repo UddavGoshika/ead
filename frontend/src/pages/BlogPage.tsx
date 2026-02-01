@@ -24,11 +24,18 @@ const BlogPage: React.FC = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/blogs`);
+                const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
+                console.log('Fetching blogs from:', apiUrl);
+
+                const response = await fetch(`${apiUrl}/api/blogs`);
                 const data = await response.json();
-                if (data.success) {
+
+                if (data.success && Array.isArray(data.blogs)) {
+                    console.log(`Loaded ${data.blogs.length} blogs.`);
                     setPosts(data.blogs);
-                    setDisplayPosts(data.blogs); // Initial load
+                    setDisplayPosts(data.blogs);
+                } else {
+                    console.warn('Failed to load blogs or invalid format:', data);
                 }
             } catch (err) {
                 console.error('Error fetching blogs:', err);
