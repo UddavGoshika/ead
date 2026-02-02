@@ -76,14 +76,12 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
                         </button>
                     );
                 })}
-            </nav>
-
-            <div className={styles.footer}>
+                <div className={styles.divider}></div>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Secure Logout</span>
                 </button>
-            </div>
+            </nav>
         </aside>
     );
 };
