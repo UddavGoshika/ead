@@ -173,4 +173,33 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET SINGLE CLIENT BY USER ID
+router.get('/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const client = await Client.findOne({ userId });
+
+        if (!client) {
+            return res.status(404).json({ success: false, error: 'Client not found' });
+        }
+
+        const formattedClient = {
+            id: client._id,
+            unique_id: client.unique_id,
+            firstName: client.firstName,
+            lastName: client.lastName,
+            email: client.email,
+            mobile: client.mobile,
+            location: client.address,
+            legalHelp: client.legalHelp,
+            img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'
+        };
+
+        res.json({ success: true, client: formattedClient });
+    } catch (err) {
+        console.error('[BACKEND] Client detail fetch error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;

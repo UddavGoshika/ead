@@ -138,23 +138,36 @@
 @media (max-width: 768px) {
     .headerContainer {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        /* Change from flex-start to stretch for full width */
+        gap: 15px;
+        height: auto;
+        margin-bottom: 20px;
     }
 
     .rightSection {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .searchForm {
         width: 100%;
+        flex-wrap: wrap;
     }
 
     .inputWrapper {
         flex: 1;
+        min-width: 200px;
     }
 
     .searchInput {
         width: 100%;
+    }
+
+    .addMemberBtn {
+        width: 100%;
+        justify-content: center;
     }
 }

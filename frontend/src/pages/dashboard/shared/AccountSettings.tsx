@@ -152,7 +152,7 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [upiUrl, setUpiUrl] = useState<string | null>(null);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const loadGateways = async () => {
@@ -228,7 +228,7 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
           <Item label="How It Works" onClick={() => setPage('how-it-works')} />
         </Section>
 
-        <button className={styles.logout}>
+        <button className={styles.logout} onClick={() => logout()}>
           <LogOut /> Logout
         </button>
       </div>

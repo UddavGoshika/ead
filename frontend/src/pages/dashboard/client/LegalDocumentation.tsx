@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import styles from './LegalDocumentationPage.module.css';
+import styles from './LegalDocumentation.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
     ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
-import { interactionService } from '../services/interactionService';
-import { LOCATION_DATA_RAW } from '../components/layout/statesdis';
+import { useAuth } from '../../../context/AuthContext';
+import { interactionService } from '../../../services/interactionService';
+import { LOCATION_DATA_RAW } from '../../../components/layout/statesdis';
 
 // --- Types ---
 
@@ -698,7 +698,7 @@ const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose
 
 // --- Main Page Component ---
 
-const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
+const ClientLegalDocumentation: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
     const { isLoggedIn, openAuthModal, user } = useAuth();
     const location = useLocation();
     const [activeNav, setActiveNav] = useState('home');
@@ -921,7 +921,7 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                             disabled={!filters.district}
                         >
                             <option value="">{filters.district ? "All Cities" : "Select District First"}</option>
-                            {availableCities.map(city => (
+                            {availableCities.map((city: string) => (
                                 <option key={city} value={city}>{city}</option>
                             ))}
                         </select>
@@ -1519,4 +1519,4 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
     );
 };
 
-export default LegalDocumentationPage;
+export default ClientLegalDocumentation;

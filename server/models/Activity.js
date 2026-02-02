@@ -13,7 +13,8 @@ const ActivitySchema = new mongoose.Schema({
         enum: ['pending', 'accepted', 'declined', 'none'],
         default: 'none'
     },
-    timestamp: { type: Date, default: Date.now }
+    timestamp: { type: Date, default: Date.now },
+    metadata: { type: Object }
 });
 
 module.exports = mongoose.model('Activity', ActivitySchema);

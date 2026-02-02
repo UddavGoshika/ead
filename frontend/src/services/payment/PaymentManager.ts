@@ -13,6 +13,7 @@ import { PaytmAdapter } from './adapters/PaytmAdapter';
 import { StripeAdapter } from './adapters/StripeAdapter';
 import { InvoiceAdapter } from './adapters/InvoiceAdapter';
 import { UPIAdapter } from './adapters/UPIAdapter';
+import { CashfreeAdapter } from './adapters/CashfreeAdapter';
 
 export class PaymentManager {
     private static instance: PaymentManager;
@@ -26,6 +27,7 @@ export class PaymentManager {
         this.registerAdapter(new StripeAdapter());
         this.registerAdapter(new InvoiceAdapter());
         this.registerAdapter(new UPIAdapter());
+        this.registerAdapter(new CashfreeAdapter());
     }
 
     static getInstance(): PaymentManager {

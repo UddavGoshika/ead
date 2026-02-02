@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { MdLogout } from 'react-icons/md';
 import styles from '../admin/AdminSidebar.module.css'; // Reusing Admin Styles
 
 import {
@@ -106,6 +108,7 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
 
 const TelecallerSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     const [search, setSearch] = useState('');
+    const { logout } = useAuth();
 
     return (
         <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
@@ -137,6 +140,17 @@ const TelecallerSidebar: React.FC<SidebarProps> = ({ collapsed }) => {
                     <MenuItem key={item.id} item={item} search={search} collapsed={collapsed} />
                 ))}
             </nav>
+
+            <div className={styles.footer}>
+                <button
+                    className={styles.logoutBtn}
+                    onClick={() => logout()}
+                    title={collapsed ? "Logout" : ""}
+                >
+                    <MdLogout className={styles.logoutIcon} />
+                    {!collapsed && <span>Logout</span>}
+                </button>
+            </div>
         </aside>
     );
 };

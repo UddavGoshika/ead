@@ -514,6 +514,23 @@
     .cleanGrid {
         grid-template-columns: 1fr;
     }
+
+    .modal {
+        width: 95% !important;
+        margin: 10px;
+    }
+
+    .invoiceModal {
+        width: 95% !important;
+    }
+
+    .modalHeaderInner {
+        padding: 15px 20px;
+    }
+
+    .modalContentBody {
+        padding: 20px;
+    }
 }
 
 /* ================= PACKAGE BLOCKS ================= */

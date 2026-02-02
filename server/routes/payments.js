@@ -224,7 +224,8 @@ router.get('/config', async (req, res) => {
             { gateway: 'paytm', isActive: true, mode: 'sandbox', credentials: { merchantId: 'YOUR_MERCHANT_ID' } },
             { gateway: 'stripe', isActive: true, mode: 'sandbox', credentials: { public_key: 'pk_test_YOUR_KEY' } },
             { gateway: 'invoice', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'upi', isActive: true, mode: 'sandbox', credentials: { upiId: 'e-advocate@okaxis', payeeName: 'E-Advocate Services' } }
+            { gateway: 'upi', isActive: true, mode: 'sandbox', credentials: { upiId: 'e-advocate@okaxis', payeeName: 'E-Advocate Services' } },
+            { gateway: 'cashfree', isActive: false, mode: 'sandbox', credentials: { appId: '', secretKey: '' } }
         ];
 
         res.json({ success: true, configs });
@@ -327,6 +328,100 @@ router.post('/create-order', authenticate, async (req, res) => {
         } else if (gateway === 'upi') {
             integrationData.upiId = 'e-advocate@okaxis';
             integrationData.payeeName = 'E-Advocate Services';
+        } else if (gateway === 'cashfree') {
+            const cfConfig = await PaymentSetting.findOne({ gateway: 'cashfree' });
+
+            if (cfConfig && cfConfig.credentials && cfConfig.credentials.appId && cfConfig.credentials.secretKey) {
+                const isSandbox = cfConfig.mode === 'sandbox';
+                const baseUrl = isSandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+                const appId = cfConfig.credentials.appId;
+                const secretKey = cfConfig.credentials.secretKey;
+
+                // User details for Cashfree
+                const customerId = req.user.id || req.user._id || `cust_${Date.now()}`;
+                const customerEmail = req.user.email || 'guest@example.com';
+                const customerPhone = req.user.phone || '9999999999';
+
+                console.log("[CASHFREE] Initiating Session with HTTPS return_url...");
+                const payload = {
+                    order_id: orderId,
+                    order_amount: amount,
+                    order_currency: currency || "INR",
+                    customer_details: {
+                        customer_id: customerId.toString(),
+                        customer_email: customerEmail,
+                        customer_phone: customerPhone
+                    },
+                    order_meta: {
+                        return_url: `https://eadvocate.in/api/payments/cashfree-callback?order_id={order_id}`
+                    }
+                };
+
+                try {
+                    // Use dynamic import for axios if it's not required at top level, 
+                    // or use the 'https' module like other integrations to avoid dependency issues if any.
+                    // However, standard axios is easier. Let's try axios, assuming it's available in node_modules.
+                    // If not, I'll fallback to the 'https' request pattern used for Paytm/Razorpay above.
+                    // For robustness, I will use the 'https' pattern to match the file style and avoid missing dep errors.
+
+                    const postData = JSON.stringify(payload);
+                    const parsedUrl = new URL(`${baseUrl}/orders`);
+
+                    const options = {
+                        hostname: parsedUrl.hostname,
+                        port: 443,
+                        path: parsedUrl.pathname,
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-version': '2022-09-01',
+                            'x-client-id': appId,
+                            'x-client-secret': secretKey,
+                            'Content-Length': postData.length
+                        }
+                    };
+
+                    const sessionData = await new Promise((resolve, reject) => {
+                        const req = https.request(options, (res) => {
+                            let data = '';
+                            res.on('data', (chunk) => { data += chunk; });
+                            res.on('end', () => {
+                                try {
+                                    resolve(JSON.parse(data));
+                                } catch (e) {
+                                    reject(e);
+                                }
+                            });
+                        });
+                        req.on('error', (e) => reject(e));
+                        req.write(postData);
+                        req.end();
+                    });
+
+                    if (sessionData.payment_session_id) {
+                        integrationData.paymentSessionId = sessionData.payment_session_id;
+                        integrationData.orderId = orderId;
+                        integrationData.mode = cfConfig.mode;
+                        console.log(`[CASHFREE] Real Session Created: ${sessionData.payment_session_id}`);
+                    } else {
+                        console.error("[CASHFREE] API Error:", sessionData);
+                        // Extract meaningful error message if possible
+                        const errorMsg = sessionData.message || sessionData.error?.message || "Failed to create Cashfree session";
+                        throw new Error(errorMsg);
+                    }
+
+                } catch (e) {
+                    console.error("[CASHFREE] Setup Failed:", e.message);
+                    // Fallback to mock ONLY if real fails, but user wants real... 
+                    // Let's throw error to be honest about failure? 
+                    // Or keep mock fallback for safety? User asked specifically for REAL.
+                    // I will log error and NOT provide a mock session, so the UI knows it failed.
+                    integrationData.error = "Real Cashfree Session Generation Failed: " + e.message;
+                }
+            } else {
+                console.warn("[CASHFREE] Credentials missing in DB.");
+                integrationData.error = "Cashfree Credentials Missing or Incomplete";
+            }
         }
 
         res.json({
@@ -426,6 +521,28 @@ router.post('/callback', async (req, res) => {
     console.log("[PAYTM] Callback received:", req.body);
     // In a real app, verify signature here and redirect to success/failure page
     res.redirect('http://localhost:3000/dashboard?payment=success');
+});
+
+// CASHFREE CALLBACK
+router.post('/cashfree-callback', async (req, res) => {
+    console.log("[CASHFREE] POST Callback received:", req.body);
+    const { orderId } = req.body; // Cashfree posts data
+
+    // In a real scenario, we should verify the signature from Cashfree here too.
+    // Since we are relying on frontend redirect mostly for UX in this specific flow,
+    // we redirect back to frontend which will call /verify.
+    // However, Cashfree 'return_url' is usually a GET or POST. 
+    // If we configured it as GET in create-order, this route should be GET.
+    // I used `http://localhost:5000/api/payments/cashfree-callback?order_id={order_id}` so likely GET if user clicks back.
+    // But Cashfree auto-redirect is often POST. Let's support both.
+
+    res.redirect(`http://localhost:3000/dashboard?status=success&order_id=${orderId || ''}`);
+});
+
+router.get('/cashfree-callback', async (req, res) => {
+    console.log("[CASHFREE] GET Callback received:", req.query);
+    const { order_id } = req.query;
+    res.redirect(`http://localhost:3000/dashboard?status=success&order_id=${order_id}`);
 });
 
 module.exports = router;

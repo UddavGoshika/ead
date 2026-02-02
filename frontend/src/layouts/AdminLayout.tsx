@@ -11,7 +11,8 @@ import { useAuth } from '../context/AuthContext';
 
 const AdminLayout: React.FC = () => {
     const { logout, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg } = useAuth();
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    // Initialize collapsed state: Mobile (hidden) or Tablet (icon-only) for < 1024px
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -36,12 +37,39 @@ const AdminLayout: React.FC = () => {
                 setIsProfileOpen(false);
             }
         };
+
+        const handleResize = () => {
+            if (window.innerWidth < 1024) {
+                setIsSidebarCollapsed(true);
+            }
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
+
+    // Close sidebar on mobile when route changes
+    useEffect(() => {
+        if (window.innerWidth < 768) {
+            setIsSidebarCollapsed(true);
+        }
+    }, [location.pathname]);
 
     return (
         <div className={`${styles.adminContainer} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
+            {/* Mobile Overlay */}
+            {!isSidebarCollapsed && (
+                <div
+                    className={styles.mobileOverlay}
+                    onClick={() => setIsSidebarCollapsed(true)}
+                />
+            )}
+
             <AdminSidebar collapsed={isSidebarCollapsed} />
 
             <main className={styles.mainContent}>

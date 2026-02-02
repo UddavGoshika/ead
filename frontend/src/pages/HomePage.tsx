@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import HeroSection from '../components/home/HeroSection';
 // import FindAdvocatesSection from '../components/home/FindAdvocatesSection';
 import SearchSection from '../components/home/SearchSection';
@@ -12,6 +14,23 @@ import ContactSection from '../components/home/ContactSection';
 import OnboardingTour from '../components/shared/OnboardingTour';
 
 const HomePage: React.FC = () => {
+    const { isLoggedIn, user } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isLoggedIn && user) {
+            const role = user.role.toLowerCase();
+            if (role === 'client') navigate('/dashboard/client');
+            else if (role === 'advocate') navigate('/dashboard/advocate');
+            else if (role === 'legal_provider') navigate('/dashboard/advisor');
+            else if (role === 'admin' || role === 'super_admin') navigate('/admin');
+            else navigate('/dashboard/user');
+        }
+    }, [isLoggedIn, user, navigate]);
+
+    // Don't render homepage content if redirecting (optional, but cleaner)
+    if (isLoggedIn) return null;
+
     return (
         <div className="home-page" style={{ overflowX: 'hidden' }}>
             <OnboardingTour />

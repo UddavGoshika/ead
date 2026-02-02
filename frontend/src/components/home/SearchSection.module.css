@@ -1,101 +1,139 @@
+/* =====================
+   SECTION
+===================== */
 .searchSection {
     background:
-        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
-        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.4), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.5), transparent 35%),
         linear-gradient(180deg, #0b122f, #0b102a);
-    padding: 80px 20px;
-    color: white;
+    padding: clamp(40px, 6vw, 80px) 16px;
+    color: #ffffff;
     border-bottom: 1px solid rgb(32, 32, 32);
 }
 
+/* =====================
+   CONTAINER
+===================== */
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
+/* =====================
+   HEADER
+===================== */
 .header {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: clamp(30px, 6vw, 50px);
 }
 
 .title {
     font-family: 'Playfair Display', serif;
-    font-size: 3rem;
+    font-size: clamp(2rem, 4vw, 3rem);
     font-weight: 700;
-    margin-bottom: 10px;
     letter-spacing: -1px;
 }
 
 .subtitle {
     font-family: 'Outfit', sans-serif;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 1.1rem;
-    font-weight: 400;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
 }
 
+/* =====================
+   CARD
+===================== */
 .card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 40px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
+    padding: clamp(20px, 4vw, 40px);
     margin-bottom: 60px;
 }
 
+/* =====================
+   CARD HEADER
+===================== */
 .cardHeader {
     display: flex;
+    gap: 24px;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 40px;
-    gap: 30px;
 }
 
+/* =====================
+   ROLE SWITCHER
+===================== */
 .roleSwitcher {
     display: flex;
-    justify-content: flex-start;
-    gap: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
+.roleBtn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.65);
+    padding: 12px 22px;
+    border-radius: 100px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.roleBtn.active {
+    background: #facc15;
+    color: #000000;
+    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.45);
+}
+
+/* =====================
+   ID SEARCH
+===================== */
 .idSearch {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 2px 5px 2px 15px;
     gap: 12px;
-    flex: 1;
-    max-width: 400px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    padding: 6px 6px 6px 14px;
+    width: 100%;
+    max-width: 420px;
 }
 
 .idInput {
     background: transparent;
     border: none;
-    color: white;
-    padding: 10px 0;
-    font-size: 0.9rem;
+    color: #ffffff;
     outline: none;
     width: 100%;
+    font-size: 0.9rem;
 }
 
 .idInput::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .idSearchBtn {
-    background: var(--primary-gold);
+    background: #facc15;
+    color: #000000;
     border: none;
-    border-radius: 8px;
-    padding: 8px 20px;
-    color: black;
+    border-radius: 10px;
+    padding: 10px 22px;
     font-weight: 700;
     cursor: pointer;
-    font-size: 0.85rem;
     transition: all 0.2s ease;
 }
 
 .idSearchBtn:hover {
-    background: white;
+    background: #ffffff;
     transform: translateY(-1px);
 }
 
@@ -103,39 +141,78 @@
     color: rgba(255, 255, 255, 0.4);
 }
 
-.roleBtn {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.6);
-    padding: 12px 30px;
-    border-radius: 100px;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-}
-
-.roleBtn.active {
-    background: var(--primary-gold);
-    color: #000;
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
-}
-
+/* =====================
+   FILTER BAR
+===================== */
 .filterBar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
-.applyBtn {
-    grid-column: span 1;
-    /* Changed from span 4 to match 4 columns layout better if we want it to be part of the grid */
-    background: var(--primary-gold);
+/* =====================
+   SELECT
+===================== */
+.selectWrapper {
+    position: relative;
+    width: 100%;
 }
 
+.selectWrapper select {
+    width: 100%;
+    /* background: rgba(255, 255, 255, 0.06) !important; */
+    background: transparent;
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    color: #ffffff;
+    padding: 14px 40px 14px 18px;
+    appearance: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Dropdown options text color */
+.selectWrapper select option {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+.chevron {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #ffffff;
+}
+
+/* =====================
+   APPLY BUTTON
+===================== */
+.applyBtn {
+    background: #facc15;
+    color: #000000;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.45);
+}
+
+.applyBtn:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+}
+
+/* =====================
+   RESPONSIVE BREAKPOINTS
+===================== */
+
+/* Tablets */
 @media (max-width: 1024px) {
     .filterBar {
         grid-template-columns: repeat(2, 1fr);
@@ -146,7 +223,17 @@
     }
 }
 
+/* Mobile */
 @media (max-width: 640px) {
+    .cardHeader {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .roleSwitcher {
+        justify-content: center;
+    }
+
     .filterBar {
         grid-template-columns: 1fr;
     }
@@ -156,52 +243,6 @@
     }
 }
 
-
-.selectWrapper {
-    position: relative;
-    min-width: 180px;
-}
-
-.selectWrapper select {
-    width: 100%;
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: #fff;
-    padding: 12px 20px;
-    appearance: none;
-    outline: none;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.chevron {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #fff;
-    pointer-events: none;
-}
-
-.applyBtn {
-    background: var(--primary-gold);
-    color: #000;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 30px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
-    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
-}
-
-.applyBtn:hover {
-    background: #fff;
-    transform: translateY(-2px);
-}
 
 .resultsGrid {
     display: grid;

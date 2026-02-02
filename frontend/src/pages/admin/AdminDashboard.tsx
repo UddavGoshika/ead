@@ -122,22 +122,27 @@ const AdminDashboard: React.FC = () => {
             </section>
 
             {/* ================= ADMIN TOOLS ================= */}
-            <section className={styles.topSection} style={{ marginTop: '0' }}>
-                <div className={styles.graphCard} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px', background: 'linear-gradient(135deg, #0f172a, #1e293b)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '12px', color: '#3b82f6' }}>
+            <section className={`${styles.topSection} ${styles.permissionSection}`}>
+                <div className={`${styles.graphCard} ${styles.permissionCard}`}>
+                    <div className={styles.permissionLeft}>
+                        <div className={styles.permissionIcon}>
                             <ShieldCheck size={32} />
                         </div>
-                        <div>
-                            <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Manager Permission Portal</h2>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>Configure dynamic access levels for operational managers.</p>
+                        <div className={styles.permissionText}>
+                            <h2>Manager Permission Portal</h2>
+                            <p>Configure dynamic access levels for operational managers.</p>
                         </div>
                     </div>
-                    <Link to="/admin/manager-permissions" className={styles.actionButton} style={{ padding: '12px 24px', textDecoration: 'none', background: '#3b82f6', color: 'white' }}>
+
+                    <Link
+                        to="/admin/manager-permissions"
+                        className={`${styles.actionButton} ${styles.permissionBtn}`}
+                    >
                         Manage Permissions
                     </Link>
                 </div>
             </section>
+
 
             {/* ================= MEMBERS LIST ================= */}
             <div className={styles.container}>

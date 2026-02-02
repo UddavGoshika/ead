@@ -186,7 +186,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
                             </button>
                         </div>
                         <button className={styles.shareBtn} onClick={handleShare}>
-                            <Share2 size={20} />
+                            <Share2 size={28} />
                             {shareCount > 0 && <span className={styles.shareBadge}>{shareCount}</span>}
                         </button>
                     </div>

@@ -36,13 +36,13 @@ const AdminDashHome: React.FC = () => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h2 className={styles.title}>Administrative Overview</h2>
-                <p className={styles.subtitle}>Welcome to the Operations & Oversight Panel.</p>
+                <h2 className={styles.title} style={{ color: '#f8fafc' }}>Administrative Overview</h2>
+                <p className={styles.subtitle} style={{ color: '#f8fafc' }}>Welcome to the Operations & Oversight Panel.</p>
             </header>
 
             <div className={styles.statsGrid} style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px',
                 marginBottom: '30px'
             }}>

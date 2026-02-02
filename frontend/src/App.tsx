@@ -36,6 +36,10 @@ import RefundPolicy from './components/footerpages/refund.tsx';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import LegalDocumentationPage from './pages/LegalDocumentationPage';
+import ClientLegalDocumentation from './pages/dashboard/client/LegalDocumentation';
+import AdvocateLegalDocumentation from './pages/dashboard/advocate/LegalDocumentation';
+import AdvisorLegalDocumentation from './pages/dashboard/advisor/LegalDocumentation';
+import DashboardLegalDocs from './pages/DashboardLegalDocs';
 
 // Admin Members
 import MemberTable from './components/admin/MemberTable';
@@ -106,6 +110,7 @@ import AgreementsList from './pages/admin/legal-docs/AgreementsList';
 import AffidavitsList from './pages/admin/legal-docs/AffidavitsList';
 import NoticesList from './pages/admin/legal-docs/NoticesList';
 import DocumentationProviders from './pages/admin/legal-docs/DocumentationProviders';
+import LegalDocumentServices from './pages/admin/legal-docs/LegalDocumentServices';
 import HeaderSetup from './pages/admin/setup/HeaderSetup';
 import FooterSetup from './pages/admin/setup/FooterSetup';
 import PagesSetup from './pages/admin/setup/PagesSetup';
@@ -224,8 +229,7 @@ const App: React.FC = () => {
               <Route path="faq" element={<FAQPage />} />
               <Route path="blogs" element={<BlogPage />} />
               <Route path="search" element={<SearchPage />} />
-              <Route path="legal-documentation" element={<LegalDocumentationPage />} />
-              <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} /> {/* Using same for now as placeholder or specialized section */}
+
               <Route path="profile/:uniqueId" element={<PublicProfile />} />
               <Route path="file-a-case" element={<PlaceholderPage />} />
               <Route path="case-status" element={<PlaceholderPage />} />
@@ -245,11 +249,18 @@ const App: React.FC = () => {
               <Route path="third-party-terms" element={<ThirdPartyTerms />} />
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="cookie-policy" element={<CookiePolicy />} />
-              <Route path="summons" element={<Summons />} />
-              <Route path="grievances" element={<Grievances />} />
               <Route path="refund" element={<RefundPolicy />} />
               <Route path="reset-password/:token" element={<ResetPassword />} />
+              <Route path="legal-documentation" element={<LegalDocumentationPage />} />
+              <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
             </Route>
+
+            {/* STANDALONE ROUTES (No Header/Footer) */}
+            {/* DASHBOARD SPECIFIC LEGAL DOCS */}
+            <Route path="/dashboard/client/legal-docs" element={<ClientLegalDocumentation isEmbedded={true} />} />
+            <Route path="/dashboard/advocate/legal-docs" element={<AdvocateLegalDocumentation isEmbedded={true} />} />
+            <Route path="/dashboard/advisor/legal-docs" element={<AdvisorLegalDocumentation isEmbedded={true} />} />
+            <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs isEmbedded={true} />} />
 
             {/* PROTECTED DASHBOARD ROUTES */}
             <Route path="/dashboard/client" element={
@@ -348,6 +359,7 @@ const App: React.FC = () => {
               <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
               <Route path="legal-docs/notices" element={<NoticesList />} />
               <Route path="legal-docs/providers" element={<DocumentationProviders />} />
+              <Route path="legal-docs/services" element={<LegalDocumentServices />} />
 
               {/* Setup & Settings */}
               <Route path="setup/header" element={<HeaderSetup />} />

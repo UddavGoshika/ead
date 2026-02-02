@@ -38,7 +38,7 @@ const ClientDashboard: React.FC = () => {
     const isUltra = plan.toLowerCase().includes('ultra');
 
     // Set initial page based on premium status
-    const [currentPage, setCurrentPage] = useState(isPremium ? 'featured-profiles' : 'normalfccards');
+    const [currentPage, setCurrentPage] = useState('featured-profiles');
     const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -141,21 +141,15 @@ const ClientDashboard: React.FC = () => {
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
             default:
-                return isPremium ? (
+                return (
                     <FeaturedProfiles
                         showDetailedProfile={showDetailedProfile}
                         showToast={showToast}
                         showsidePage={showsidePage}
                         onSelectForChat={handleSelectForChat}
                     />
-                ) : (
-                    <NormalProfiles
-                        showDetailedProfile={showDetailedProfile}
-                        showToast={showToast}
-                        showsidePage={showsidePage}
-                        onSelectForChat={handleSelectForChat}
-                    />
                 );
+
         }
     };
 

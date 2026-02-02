@@ -190,8 +190,8 @@
     background: #1e1e35;
     border: 1px solid rgba(255, 255, 255, 0.05);
     color: white;
-    width: 44px;
-    height: 44px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -270,20 +270,7 @@
     cursor: not-allowed;
 }
 
-.shareBtn {
-    background: #1e1e35;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    color: white;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-}
+
 
 .shareBadge {
     position: absolute;
@@ -310,37 +297,103 @@
 @media (max-width: 900px) {
     .container {
         flex-direction: column;
+        padding: 20px;
+        gap: 16px;
     }
 
-    .imageWrapper {
+    /* Unwrap leftContent so we can interleave its children with imageWrapper */
+    .leftContent {
+        display: contents;
+    }
+
+    /* Order 1: Author Header */
+    .authorBar {
+        order: 1;
         width: 100%;
-        height: 200px;
-        order: -1;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
     }
-}
 
-@media (max-width: 1024px) {
-    .container {
-        padding: 24px;
-        gap: 20px;
+    /* Prevent Avatar shrink and ensure roundness */
+    .avatar {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+    }
+
+    /* Reduce font size for Heading on mobile */
+    .authorName {
+        font-size: 0.95rem;
+    }
+
+    /* Reduce font size for Guide/Date */
+    .metaText {
+        font-size: 0.75rem;
+    }
+
+    /* Ensure author info text doesn't break layout */
+    .authorInfo {
+        flex: 1;
+        min-width: 0;
+        /* Allow text truncate if needed */
+        gap: 10px;
+    }
+
+    /* Order 2: Image */
+    .imageWrapper {
+        order: 2;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+        margin: 5px 0 15px 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Order 3: Main Content (Title/Desc) */
+    .mainContent {
+        order: 3;
+        margin-bottom: 20px;
+    }
+
+    /* Order 4: Interactions */
+    .interactionBar {
+        order: 4;
+        width: 100%;
+    }
+
+    /* Fix title size for mobile */
+    .title {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .description {
+        font-size: 0.95rem;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+    }
+
+    /* Adjust Author Actions for mobile row layout */
+    .topActions {
+        gap: 8px;
+        flex-shrink: 0;
+        /* Prevent actions from shrinking */
+    }
+
+    .categoryBadge {
+        padding: 5px 10px;
+        font-size: 0.7rem;
     }
 }
 
 @media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        padding: 20px;
-    }
-
-    .authorBar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .topActions {
-        align-self: flex-end;
-    }
+    /* Cleanup old overrides 
+       removed authorBar flex-col
+    */
 }
 
 @media (max-width: 480px) {

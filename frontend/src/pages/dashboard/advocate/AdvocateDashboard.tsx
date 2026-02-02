@@ -126,16 +126,8 @@ const AdvocateDashboard: React.FC = () => {
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
             default:
-                // Only Premium/Pro/Ultra can see Featured by default
-                return isPremium ? (
+                return (
                     <FeaturedProfiles
-                        showDetailedProfile={showDetailedProfile}
-                        showToast={showToast}
-                        showsidePage={showsidePage}
-                        onSelectForChat={handleSelectForChat}
-                    />
-                ) : (
-                    <NormalProfiles
                         showDetailedProfile={showDetailedProfile}
                         showToast={showToast}
                         showsidePage={showsidePage}

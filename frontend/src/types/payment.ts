@@ -1,5 +1,5 @@
 export type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled';
-export type PaymentGateway = 'razorpay' | 'paytm' | 'stripe' | 'invoice' | 'upi';
+export type PaymentGateway = 'razorpay' | 'paytm' | 'stripe' | 'invoice' | 'upi' | 'cashfree';
 export type PaymentMode = 'sandbox' | 'live';
 
 export interface PaymentGatewayConfig {
@@ -18,6 +18,8 @@ export interface PaymentGatewayConfig {
         secret_key?: string; // Stripe (backend)
         upiId?: string; // UPI
         payeeName?: string; // UPI
+        appId?: string; // Cashfree
+        secretKey?: string; // Cashfree
     };
 }
 
@@ -34,6 +36,8 @@ export interface PaymentOrder {
     sessionId?: string;
     upiId?: string;
     payeeName?: string;
+    paymentSessionId?: string; // Cashfree
+    error?: string; // Propagate creation errors
 }
 
 export interface PaymentResult {

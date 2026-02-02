@@ -58,7 +58,14 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
                         <button
                             key={item.id}
                             className={`${styles.link} ${currentPage === item.id ? styles.active : ''} ${isLocked ? styles.locked : ''}`}
-                            onClick={() => !isLocked && showsidePage(item.id)}
+                            onClick={() => {
+                                if (isLocked) return;
+                                if (item.id === 'legal-documentation') {
+                                    window.open('/dashboard/legal-docs', '_blank');
+                                } else {
+                                    showsidePage(item.id);
+                                }
+                            }}
                         >
                             <div className={styles.iconWrapper}>
                                 <Icon size={22} />

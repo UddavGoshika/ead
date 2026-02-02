@@ -189,7 +189,48 @@
     color: #f87171;
 }
 
-.logoutBtn:hover {
-    background: rgba(248, 113, 113, 0.1);
-    color: #f87171;
+
+@media (max-width: 768px) {
+    .pageBody {
+        padding: 15px;
+    }
+
+    .header {
+        padding: 10px 15px;
+        height: 70px;
+    }
+
+    .toggleBtn {
+        font-size: 1.4rem;
+    }
+
+    /* Hide breadcrumbs on very small screens if needed, or adjust */
+    .breadcrumb {
+        font-size: 0.8rem;
+        display: none;
+        /* Often breadcrumbs are too long for mobile */
+    }
+
+
+    .userMenu {
+        gap: 10px;
+    }
+
+    .dropdown {
+        width: 200px;
+        right: -10px;
+    }
+
+    .mobileOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        z-index: 1001;
+        /* Below sidebar (1002) but above everything else */
+        animation: fadeIn 0.2s ease-out;
+    }
 }

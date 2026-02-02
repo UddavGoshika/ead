@@ -56,14 +56,14 @@ const Sidebar: React.FC = () => {
                     <span>Activity</span>
                     <ChevronRight className={styles.chevron} size={16} />
                 </NavLink>
-            </nav>
 
-            <div className={styles.footer}>
+                <div className={styles.divider}></div>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Logout</span>
                 </button>
-            </div>
+            </nav>
+
         </aside>
     );
 };

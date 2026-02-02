@@ -36,12 +36,18 @@ const PublicProfile: React.FC = () => {
         const fetchProfile = async () => {
             try {
                 setLoading(true);
-                // Simulated or real fetch
-                const response = await axios.get(`/api/advocates/${uniqueId}`);
-                if (response.data.success) {
-                    setProfile(response.data.advocate);
+                let response;
+                // Determine type based on ID prefix or try both
+                if (uniqueId?.toLowerCase().startsWith('cli')) {
+                    response = await axios.get(`/api/clients/${uniqueId}`);
+                    if (response.data.success) {
+                        setProfile({ ...response.data.client, role: 'client' });
+                    }
                 } else {
-                    setError('Profile not found');
+                    response = await axios.get(`/api/advocates/${uniqueId}`);
+                    if (response.data.success) {
+                        setProfile({ ...response.data.advocate, role: 'advocate' });
+                    }
                 }
             } catch (err: any) {
                 console.error('Error fetching profile:', err);
@@ -110,7 +116,7 @@ const PublicProfile: React.FC = () => {
 
                 {/* Profile Container */}
                 <div className={styles.profileContentWrapper}>
-                    <div className={`${styles.profileInternal} ${!isLoggedIn ? styles.blurred : ''}`}>
+                    <div className={styles.profileInternal}>
                         {/* Header Section */}
                         <div className={styles.header}>
                             <img
@@ -120,16 +126,21 @@ const PublicProfile: React.FC = () => {
                             />
                             <div className={styles.headerOverlay}>
                                 <div className={styles.verifyBadge}>
-                                    <CheckCircle2 size={16} /> Verified Advocate
+                                    <CheckCircle2 size={16} /> Verified {profile.role === 'client' ? 'Client' : 'Advocate'}
                                 </div>
                                 <h1 className={styles.profileName}>{isLoggedIn ? profile.name : maskText(profile.name)}</h1>
-                                <p className={styles.profileTitle}>{isLoggedIn ? (profile.practice?.specialization || 'General Legal Practitioner') : maskText(profile.practice?.specialization || 'General Legal Practitioner')}</p>
+                                <p className={styles.profileTitle}>
+                                    {profile.role === 'client'
+                                        ? (isLoggedIn ? (profile.category || 'Legal Assistance Needed') : maskText(profile.category || 'Legal Assistance Needed'))
+                                        : (isLoggedIn ? (profile.practice?.specialization || 'General Legal Practitioner') : maskText(profile.practice?.specialization || 'General Legal Practitioner'))
+                                    }
+                                </p>
                             </div>
                         </div>
 
                         {/* Sticky Tabs */}
                         <div className={styles.tabs}>
-                            {['About', 'Professional', 'Education', 'Services'].map(tab => (
+                            {['About', profile.role === 'client' ? 'Case Details' : 'Professional', profile.role === 'client' ? 'Requirements' : 'Education', profile.role === 'client' ? 'Budget' : 'Services'].map(tab => (
                                 <div
                                     key={tab}
                                     className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`}
@@ -170,7 +181,7 @@ const PublicProfile: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'Professional' && (
+                            {activeTab === 'Professional' && profile.role !== 'client' && (
                                 <div className={styles.section}>
                                     <h3 className={styles.sectionTitle}><Gavel size={24} color="#facc15" /> Practice & Advocacy Details</h3>
                                     <div className={styles.infoGrid}>
@@ -192,7 +203,29 @@ const PublicProfile: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'Education' && (
+                            {activeTab === 'Case Details' && profile.role === 'client' && (
+                                <div className={styles.section}>
+                                    <h3 className={styles.sectionTitle}><Scale size={24} color="#facc15" /> Case Information</h3>
+                                    <div className={styles.infoGrid}>
+                                        <div className={styles.infoItem}>
+                                            <div className={styles.infoIcon}><BookOpen size={22} /></div>
+                                            <div className={styles.infoText}>
+                                                <span className={styles.infoLabel}>Category</span>
+                                                <span className={styles.infoValue}>{isLoggedIn ? (profile.category || 'General') : maskText(profile.category || 'General')}</span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.infoItem}>
+                                            <div className={styles.infoIcon}><Briefcase size={22} /></div>
+                                            <div className={styles.infoText}>
+                                                <span className={styles.infoLabel}>Sub Category</span>
+                                                <span className={styles.infoValue}>{isLoggedIn ? (profile.subCategory || '-') : maskText(profile.subCategory || '-')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'Education' && profile.role !== 'client' && (
                                 <div className={styles.section}>
                                     <h3 className={styles.sectionTitle}><GraduationCap size={24} color="#facc15" /> Academic Background</h3>
                                     <div className={styles.timeline}>
@@ -207,7 +240,14 @@ const PublicProfile: React.FC = () => {
                                 </div>
                             )}
 
-                            {activeTab === 'Services' && (
+                            {activeTab === 'Requirements' && profile.role === 'client' && (
+                                <div className={styles.section}>
+                                    <h3 className={styles.sectionTitle}><CheckCircle2 size={24} color="#facc15" /> Service Requirements</h3>
+                                    <p style={{ color: '#94a3b8' }}>{isLoggedIn ? (profile.description || 'Looking for legal assistance.') : maskText(profile.description || 'Looking for legal assistance.')}</p>
+                                </div>
+                            )}
+
+                            {activeTab === 'Services' && profile.role !== 'client' && (
                                 <div className={styles.section}>
                                     <h3 className={styles.sectionTitle}><Clock size={24} color="#facc15" /> Services & Availability</h3>
                                     <div className={styles.infoGrid}>
@@ -221,6 +261,21 @@ const PublicProfile: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {activeTab === 'Budget' && profile.role === 'client' && (
+                                <div className={styles.section}>
+                                    <h3 className={styles.sectionTitle}><Coins size={24} color="#facc15" /> Budget Overview</h3>
+                                    <div className={styles.infoGrid}>
+                                        <div className={styles.infoItem}>
+                                            <div className={styles.infoIcon}><Coins size={22} /></div>
+                                            <div className={styles.infoText}>
+                                                <span className={styles.infoLabel}>Estimated Budget</span>
+                                                <span className={styles.infoValue}>₹{profile.budget || 'Negotiable'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -228,14 +283,11 @@ const PublicProfile: React.FC = () => {
                     <div className={styles.profileIdBadge}>ID: {profile.unique_id}</div>
 
                     {!isLoggedIn && (
-                        <div className={styles.loginOverlay}>
-                            <div className={styles.lockCircle}>
-                                <Lock size={40} />
-                            </div>
-                            <h2>Profile Protected</h2>
-                            <p>Please login to see full details of this advocate</p>
-                            <button className={styles.loginBtnLarge} onClick={() => openAuthModal('login')}>
-                                Login to View Details
+                        <div className={styles.loginBanner}>
+                            <Lock size={20} className={styles.loginBannerIcon} />
+                            <span>This is a public preview. Login to view full details.</span>
+                            <button className={styles.loginBtnSmall} onClick={() => openAuthModal('login')}>
+                                Login
                             </button>
                         </div>
                     )}

@@ -552,22 +552,26 @@ const Preservices: React.FC = () => {
                                     <span>₹{sgst.toFixed(2)}</span>
                                 </div>
                                 <div className={styles.priceRow}>
-                                    <span>Convenience Fee (1.8%)</span>
-                                    <span>₹{convFee.toFixed(2)}</span>
+                                    <span>
+                                        {selectedGateway === 'cashfree' ? 'Platform Fee (2%)' : 'Convenience Fee (1.8%)'}
+                                    </span>
+                                    <span>₹{(subTotalWithTax * (selectedGateway === 'cashfree' ? 0.02 : 0.018)).toFixed(2)}</span>
                                 </div>
 
                                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '15px 0' }}></div>
 
                                 <div className={styles.priceRow}>
                                     <span style={{ color: '#fff' }}>Total Payable</span>
-                                    <span className={styles.totalAmount} style={{ fontSize: '1.8rem' }}>₹{Math.round(finalTotal).toLocaleString()}</span>
+                                    <span className={styles.totalAmount} style={{ fontSize: '1.8rem' }}>
+                                        ₹{Math.round(subTotalWithTax + (subTotalWithTax * (selectedGateway === 'cashfree' ? 0.02 : 0.018))).toLocaleString()}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className={styles.paymentSection}>
                                 <label className={styles.sectionLabel}>Secure Gateways</label>
                                 <div className={styles.gatewayGrid}>
-                                    {['razorpay', 'paytm', 'stripe', 'upi', 'invoice'].map(gw => (
+                                    {['razorpay', 'paytm', 'stripe', 'upi', 'invoice', 'cashfree'].map(gw => (
                                         <button
                                             key={gw}
                                             className={`${styles.gwBtn} ${selectedGateway === gw ? styles.activeGw : ''}`}
@@ -579,6 +583,7 @@ const Preservices: React.FC = () => {
                                             {gw === 'stripe' && <Globe size={18} />}
                                             {gw === 'upi' && <QrCode size={18} />}
                                             {gw === 'invoice' && <Receipt size={18} />}
+                                            {gw === 'cashfree' && <Zap size={18} />}
                                             <span>{gw}</span>
                                         </button>
                                     ))}
@@ -586,13 +591,64 @@ const Preservices: React.FC = () => {
 
                                 <button
                                     className={styles.buyBtn}
-                                    onClick={handleBuyNow}
+                                    onClick={async () => {
+                                        if (!isLoggedIn) { alert("Please login to proceed."); return; }
+                                        if (!selectedTier) { alert("Please select a tier."); return; }
+                                        if (activeCategory === "free") { alert("Free plan is already available."); return; }
+                                        if (!selectedGateway) { alert("Please select a payment method."); return; }
+
+                                        setIsProcessing(true);
+                                        try {
+                                            const currentPkg = getCurrentPackage();
+                                            const feeFactor = selectedGateway === 'cashfree' ? 0.02 : 0.018;
+                                            const finalCalc = subTotalWithTax + (subTotalWithTax * feeFactor);
+
+                                            const result = await PaymentManager.getInstance().processPayment(
+                                                selectedGateway,
+                                                `${activeCategory}_${selectedTier}`,
+                                                Math.round(finalCalc),
+                                                'INR',
+                                                {
+                                                    planTitle: `${currentPkg?.title || activeCategory} (${selectedTier.toUpperCase()})`,
+                                                    userName: user?.name,
+                                                    userEmail: user?.email,
+                                                    breakdown: {
+                                                        base: basePrice,
+                                                        discount: discountAmount,
+                                                        cgst,
+                                                        sgst,
+                                                        convFee: subTotalWithTax * feeFactor,
+                                                        total: finalCalc
+                                                    }
+                                                }
+                                            );
+
+                                            if (result.success) {
+                                                if (selectedGateway === 'upi' && result.metadata?.upiUrl) {
+                                                    setUpiUrl(result.metadata.upiUrl);
+                                                    setCurrentOrderId(result.orderId);
+                                                    setTimeLeft(300); // Start 5 min timer
+                                                } else if (selectedGateway === 'cashfree') {
+                                                    console.log("Redirecting to Cashfree...");
+                                                } else {
+                                                    alert("Success! Your account has been upgraded.");
+                                                    window.location.reload();
+                                                }
+                                            } else {
+                                                alert(`Payment failed: ${result.error}`);
+                                            }
+                                        } catch (error: any) {
+                                            alert(`Error: ${error.message}`);
+                                        } finally {
+                                            setIsProcessing(false);
+                                        }
+                                    }}
                                     disabled={isProcessing || activeCategory === 'free'}
                                 >
                                     {isProcessing ? 'CONNECTING...' : (
                                         activeCategory === 'free' ? 'ALREADY ACTIVE' : (
                                             <>
-                                                <span>PAY SECURELY • ₹{Math.round(finalTotal).toLocaleString()}</span>
+                                                <span>PAY SECURELY • ₹{Math.round(subTotalWithTax + (subTotalWithTax * (selectedGateway === 'cashfree' ? 0.02 : 0.018))).toLocaleString()}</span>
                                                 <ArrowRight size={20} />
                                             </>
                                         )

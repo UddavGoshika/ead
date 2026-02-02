@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import styles from "../../advocate/sections/Activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
-import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare } from "lucide-react";
+import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare, X } from "lucide-react";
+import api from "../../../../services/api";
 
 const AdvisorActivity = () => {
     const { user } = useAuth();
@@ -16,6 +17,8 @@ const AdvisorActivity = () => {
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
+    const [selectedClient, setSelectedClient] = useState<any>(null);
+    const [popupLoading, setPopupLoading] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -26,7 +29,6 @@ const AdvisorActivity = () => {
                         interactionService.getActivityStats(String(user.id)),
                         interactionService.getAllActivities(String(user.id))
                     ]);
-                    // If statsData doesn't have messages, we default to 0
                     setStats({ ...statsData, messages: statsData.messages || 0 });
                     setActivities(activitiesData);
                 } catch (err) {
@@ -56,6 +58,29 @@ const AdvisorActivity = () => {
         if (activeFilter === 'message') return act.type === 'message' || act.type === 'chat_initiated';
         return true;
     });
+
+    const handleClientClick = async (partnerId: string) => {
+        try {
+            setPopupLoading(true);
+            const response = await api.get(`/client/${partnerId}`);
+            if (response.data.success) {
+                setSelectedClient(response.data.client);
+            } else {
+                alert("Could not fetch client details.");
+            }
+        } catch (error) {
+            console.error("Error fetching client details:", error);
+            alert("Error fetching client details.");
+        } finally {
+            setPopupLoading(false);
+        }
+    };
+
+    const maskContactInfo = (info: string) => {
+        if (!info) return "N/A";
+        if (info.length <= 2) return info;
+        return info.substring(0, 2) + "888" + "*".repeat(Math.max(0, info.length - 5));
+    };
 
     return (
         <div className={styles.dashboard}>
@@ -88,41 +113,67 @@ const AdvisorActivity = () => {
                     {loading ? (
                         <div className={styles.emptyMsg}>Syncing professional activities...</div>
                     ) : filteredActivities.length > 0 ? (
-                        filteredActivities.map((act) => (
-                            <div key={act._id} className={styles.activityItem}>
-                                <div className={styles.activityIcon}>
-                                    {act.type === 'visit' ? <Eye size={18} /> :
-                                        act.type === 'interest' ? <Send size={18} /> :
-                                            act.type === 'superInterest' ? <Star size={18} /> :
-                                                act.type === 'message' || act.type === 'chat_initiated' ? <MessageSquare size={18} /> :
-                                                    act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
+                        filteredActivities.map((act) => {
+                            const isIncoming = !act.isSender;
+                            const showService = act.metadata?.service || act.service;
+
+                            return (
+                                <div key={act._id} className={styles.activityItem}>
+                                    <div className={styles.activityIcon}>
+                                        {act.type === 'visit' ? <Eye size={18} /> :
+                                            act.type === 'interest' ? <Send size={18} /> :
+                                                act.type === 'superInterest' ? <Star size={18} /> :
+                                                    act.type === 'message' || act.type === 'chat_initiated' ? <MessageSquare size={18} /> :
+                                                        act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
+                                    </div>
+                                    <div className={styles.activityDetails}>
+                                        <p className={styles.activityText}>
+                                            {act.status === 'accepted' ? (
+                                                <>
+                                                    Client <strong
+                                                        className={styles.clickableName}
+                                                        onClick={() => isIncoming && handleClientClick(act.isSender ? act.sender : act.receiver)}
+                                                    >
+                                                        {act.partnerName}
+                                                    </strong> has <strong>shortlisted</strong> you for their case.
+                                                </>
+                                            ) : act.type === 'message' || act.type === 'chat_initiated' ? (
+                                                <>New message {act.isSender ? 'to' : 'from'} <strong
+                                                    className={styles.clickableName}
+                                                    onClick={() => handleClientClick(act.isSender ? act.receiver : act.sender)} // If I sent, I want to see receiver. If received, see sender.
+                                                >
+                                                    {act.partnerName}
+                                                </strong></>
+                                            ) : (
+                                                <>
+                                                    <strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'}
+                                                    <strong
+                                                        className={styles.clickableName}
+                                                        onClick={() => handleClientClick(act.isSender ? act.receiver : act.sender)}
+                                                        style={{ cursor: 'pointer', marginLeft: '4px', marginRight: '4px', color: '#2563eb' }}
+                                                    >
+                                                        {act.partnerName}
+                                                    </strong>
+                                                </>
+                                            )}
+                                            {showService && <span className={styles.serviceTag}>Service: {showService}</span>}
+                                            {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
+                                        </p>
+                                        <span className={styles.activityTime}>
+                                            {new Date(act.timestamp).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className={styles.activityStatus}>
+                                        <span className={styles.statusBadge} style={{
+                                            color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
+                                            borderColor: act.status === 'accepted' ? '#10b98140' : act.status === 'declined' ? '#f43f5e40' : '#facc1540'
+                                        }}>
+                                            {act.status === 'accepted' ? 'SHORTLISTED' : act.status.toUpperCase()}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className={styles.activityDetails}>
-                                    <p className={styles.activityText}>
-                                        {act.status === 'accepted' ? (
-                                            <>Client <strong>{act.partnerName}</strong> has <strong>shortlisted</strong> you for their case.</>
-                                        ) : act.type === 'message' || act.type === 'chat_initiated' ? (
-                                            <>New message {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
-                                        ) : (
-                                            <><strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
-                                        )}
-                                        {act.service && <span className={styles.serviceTag}>Service: {act.service}</span>}
-                                        {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
-                                    </p>
-                                    <span className={styles.activityTime}>
-                                        {new Date(act.timestamp).toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className={styles.activityStatus}>
-                                    <span className={styles.statusBadge} style={{
-                                        color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
-                                        borderColor: act.status === 'accepted' ? '#10b98140' : act.status === 'declined' ? '#f43f5e40' : '#facc1540'
-                                    }}>
-                                        {act.status === 'accepted' ? 'SHORTLISTED' : act.status.toUpperCase()}
-                                    </span>
-                                </div>
-                            </div>
-                        ))
+                            );
+                        })
                     ) : (
                         <div className={styles.emptyMsg}>
                             <p>No activity records available.</p>
@@ -130,6 +181,59 @@ const AdvisorActivity = () => {
                     )}
                 </div>
             </div>
+
+            {/* Client Details Popup */}
+            {selectedClient && (
+                <div className={styles.overlay} onClick={() => setSelectedClient(null)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Client Details</h3>
+                            <button onClick={() => setSelectedClient(null)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.profileHeader}>
+                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={styles.avatar} />
+                                <div>
+                                    <h4>{selectedClient.firstName} {selectedClient.lastName}</h4>
+                                    <p className={styles.uid}>{selectedClient.unique_id}</p>
+                                </div>
+                            </div>
+
+                            <div className={styles.infoGrid}>
+                                <div className={styles.infoItem}>
+                                    <label>Email</label>
+                                    <p>{maskContactInfo(selectedClient.email)}</p>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Mobile</label>
+                                    <p>{maskContactInfo(selectedClient.mobile)}</p>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Location</label>
+                                    <p>{selectedClient.location?.city || 'N/A'}, {selectedClient.location?.state || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            {selectedClient.legalHelp && (
+                                <div className={styles.legalSection}>
+                                    <h5>Legal Requirement</h5>
+                                    <div className={styles.tagContainer}>
+                                        <span className={styles.tag}>{selectedClient.legalHelp.category}</span>
+                                        <span className={styles.tag}>{selectedClient.legalHelp.specialization}</span>
+                                        {selectedClient.legalHelp.subDepartment && <span className={styles.tag}>{selectedClient.legalHelp.subDepartment}</span>}
+                                    </div>
+                                    {selectedClient.legalHelp.issueDescription && (
+                                        <div className={styles.descBox}>
+                                            <label>Issue Description:</label>
+                                            <p>{selectedClient.legalHelp.issueDescription}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

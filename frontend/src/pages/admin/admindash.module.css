@@ -463,3 +463,297 @@
 .actionButton:hover {
     background: #2563eb;
 }
+
+
+
+/* =====================================================
+   LARGE SCREENS (≥ 1600px)
+===================================================== */
+@media (min-width: 1600px) {
+    .dashboard {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 40px;
+    }
+
+    .topSection {
+        grid-template-columns: 3.5fr 1.5fr;
+    }
+
+    .table {
+        min-width: 1400px;
+    }
+}
+
+/* =====================================================
+   LAPTOPS (≤ 1280px)
+===================================================== */
+@media (max-width: 1280px) {
+    .dashboard {
+        padding: 24px;
+    }
+
+    .topSection {
+        grid-template-columns: 2.5fr 1.5fr;
+    }
+
+    .graphCard {
+        padding: 20px;
+    }
+}
+
+/* =====================================================
+   TABLETS (≤ 1024px)
+===================================================== */
+@media (max-width: 1024px) {
+    .topSection {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .rightStats {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .statBox {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .summaryGrid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .container {
+        padding: 16px;
+    }
+}
+
+/* =====================================================
+   SMALL TABLETS / LARGE PHONES (≤ 768px)
+===================================================== */
+@media (max-width: 768px) {
+    .dashboard {
+        padding: 16px;
+    }
+
+    .topSection {
+        margin-top: 20px;
+    }
+
+    .rightStats {
+        flex-direction: column;
+    }
+
+    .statBox p {
+        font-size: 1.5rem;
+    }
+
+    .summaryGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* TABLE → SCROLL SAFE */
+    .tableWrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        min-width: 1100px;
+    }
+
+    .actionButton {
+        padding: 8px 12px;
+        font-size: 0.7rem;
+    }
+}
+
+/* =====================================================
+   MOBILE (≤ 480px)
+===================================================== */
+@media (max-width: 480px) {
+    .dashboard {
+        padding: 12px;
+    }
+
+    .pageTitle {
+        font-size: 1.6rem;
+    }
+
+    .summaryGrid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .summaryCard {
+        padding: 14px;
+    }
+
+    .summaryCard p {
+        font-size: 1.4rem;
+    }
+
+    .statBox {
+        padding: 16px;
+    }
+
+    .statBox p {
+        font-size: 1.4rem;
+    }
+
+    /* TABLE: tighter cells */
+    .table th,
+    .table td {
+        padding: 10px 12px;
+        font-size: 0.75rem;
+    }
+
+    .nameCell {
+        gap: 8px;
+    }
+
+    .avatarPlaceholder {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+
+    .statusSelect {
+        font-size: 0.7rem;
+        padding: 6px 8px;
+    }
+
+    .actionButton {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* =====================================================
+   TEXT OVERFLOW SAFETY
+===================================================== */
+.nameCell strong,
+.idCode,
+.table td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* =====================================================
+   TOUCH TARGETS (MOBILE FRIENDLY)
+===================================================== */
+@media (pointer: coarse) {
+
+    button,
+    select {
+        min-height: 44px;
+    }
+}
+
+
+/* ================= MANAGER PERMISSION CARD ================= */
+
+.permissionSection {
+    margin-top: 0;
+}
+
+.permissionCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+
+    padding: 24px;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 18px;
+}
+
+/* LEFT CONTENT */
+.permissionLeft {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.permissionIcon {
+    padding: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.permissionText h2 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #e5e7eb;
+}
+
+.permissionText p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+/* BUTTON */
+.permissionBtn {
+    padding: 12px 24px;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.permissionBtn:hover {
+    background: #2563eb;
+}
+
+/* ================= TABLET ================= */
+@media (max-width: 1024px) {
+    .permissionCard {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .permissionBtn {
+        align-self: flex-end;
+    }
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 640px) {
+    .permissionCard {
+        padding: 16px;
+        margin-top: 20px;
+    }
+
+    .permissionLeft {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .permissionText h2 {
+        font-size: 1.05rem;
+    }
+
+    .permissionText p {
+        font-size: 0.85rem;
+    }
+
+    .permissionBtn {
+        width: 100%;
+        text-align: center;
+        padding: 14px;
+    }
+}

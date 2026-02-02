@@ -108,12 +108,53 @@
     letter-spacing: 0.05em;
 }
 
-/* QUICK VIEW GRIDS */
-.gridsWrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 40px;
+@media (max-width: 1024px) {
+    .analyticsRow {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .gridsWrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .filterTop {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pillsContainer {
+        grid-template-columns: 1fr;
+    }
+
+    .statusGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .gridSection {
+        grid-template-columns: 1fr;
+    }
+
+    .modalBody {
+        padding: 20px;
+    }
+
+    .modalHeader {
+        padding: 20px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .titleArea {
+        align-items: flex-start;
+    }
 }
 
 .gridContainer {

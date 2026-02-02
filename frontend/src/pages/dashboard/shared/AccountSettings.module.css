@@ -1,6 +1,7 @@
 .page {
   min-height: 100vh;
   padding: 30px;
+  padding-bottom: 120px;
   background: #0a0c10;
   color: #e2e8f0;
   font-family: 'Inter', sans-serif;
@@ -456,4 +457,51 @@
   cursor: not-allowed;
   filter: grayscale(1);
 }
-.qrSection { margin-top: 20px; padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; align-items: center; gap: 15px; } .qrBox { background: #fff; padding: 12px; border-radius: 12px; } .qrInstruction { font-size: 0.85rem; color: #94a3b8; text-align: center; } .verifyBtn { width: 100%; padding: 14px; background: #10b981; color: #fff; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; } .verifyBtn:hover { background: #059669; } .cancelLink { background: none; border: none; color: #64748b; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+
+.qrSection {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.qrBox {
+  background: #fff;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.qrInstruction {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.verifyBtn {
+  width: 100%;
+  padding: 14px;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.verifyBtn:hover {
+  background: #059669;
+}
+
+.cancelLink {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}

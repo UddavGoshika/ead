@@ -1,5 +1,6 @@
 .container {
     padding: 30px;
+    padding-bottom: 150px;
     color: #e2e8f0;
     max-width: 1200px;
     margin: 0 auto;
@@ -798,6 +799,36 @@
     75% {
         transform: translateX(6px);
     }
+}
+
+/* TAX SUMMARY */
+.taxSummary {
+    margin-top: 15px;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.taxRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.taxRow:last-child {
+    margin-bottom: 0;
+}
+
+.totalRow {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    color: #facc15;
+    font-weight: 800;
+    font-size: 1.1rem;
 }
 
 .confirmWithdraw {

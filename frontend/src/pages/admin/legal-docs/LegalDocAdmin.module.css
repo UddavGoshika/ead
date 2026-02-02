@@ -337,7 +337,29 @@
     transition: all 0.2s;
 }
 
-.actionIcon:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+@media (max-width: 768px) {
+    .headerArea {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .statsRow {
+        grid-template-columns: 1fr;
+    }
+
+    .pillsGrid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .tableHeader {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
 }

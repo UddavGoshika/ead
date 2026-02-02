@@ -59,11 +59,13 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         }
 
         // Log to Activity model - ALWAYS attempt this
+        const { service, ...otherMeta } = req.body;
         const newActivity = new Activity({
             sender: userId,
             receiver: target ? (target.userId || targetId) : targetId,
             type: action === 'superInterest' ? 'superInterest' : action,
-            status: ['interest', 'superInterest'].includes(action) ? 'pending' : 'none'
+            status: ['interest', 'superInterest'].includes(action) ? 'pending' : 'none',
+            metadata: { service, ...otherMeta }
         });
         await newActivity.save();
 

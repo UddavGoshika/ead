@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { MdLogout } from 'react-icons/md';
 import styles from './AdminSidebar.module.css';
 
 import {
@@ -101,6 +103,7 @@ export const MENU_SCHEMA: MenuItem[] = [
             { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits", badge: "3892" },
             { id: "notices", name: "Notices", path: "/admin/legal-docs/notices", badge: "5120" },
             { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers", badge: "Active" },
+            { id: "legal-doc-services", name: "Legal Document Services", path: "/admin/legal-docs/services", badge: "New" },
         ],
     },
     {
@@ -324,13 +327,14 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
 
 const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) => {
     const [search, setSearch] = useState('');
+    const { logout } = useAuth();
 
     return (
         <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
             <div className={styles.header}>
                 {!collapsed ? (
                     <>
-                        <div className={styles.logo}>E-Advcoate</div>
+                        <div className={styles.logo}>E-Advocate</div>
                         <div className={styles.logoSubtitle}>SUPER ADMIN</div>
                     </>
                 ) : (
@@ -355,6 +359,17 @@ const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) 
                     <MenuItem key={item.id} item={item} search={search} collapsed={collapsed} />
                 ))}
             </nav>
+
+            <div className={styles.footer}>
+                <button
+                    className={styles.logoutBtn}
+                    onClick={() => logout()}
+                    title={collapsed ? "Logout" : ""}
+                >
+                    <MdLogout className={styles.logoutIcon} />
+                    {!collapsed && <span>Logout</span>}
+                </button>
+            </div>
         </aside>
     );
 };

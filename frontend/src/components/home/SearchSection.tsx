@@ -179,19 +179,9 @@ const SearchSection: React.FC = () => {
 
     const maskId = (id: string) => {
         if (!id) return "********";
-        let letterCount = 0;
-        let numberCount = 0;
-        return id.split('').map(char => {
-            if (/[a-zA-Z]/.test(char)) {
-                letterCount++;
-                return letterCount <= 2 ? char : '*';
-            }
-            if (/[0-9]/.test(char)) {
-                numberCount++;
-                return numberCount <= 2 ? char : '*';
-            }
-            return char;
-        }).join('');
+        // Show first 2 chars
+        if (id.length <= 2) return id;
+        return id.substring(0, 2) + '*'.repeat(id.length - 2);
     };
 
     const maskName = (name: string) => {
@@ -199,7 +189,7 @@ const SearchSection: React.FC = () => {
         const parts = name.trim().split(/\s+/);
         return parts.map(part => {
             if (part.length <= 2) return part;
-            return part.substring(0, 2) + "**";
+            return part.substring(0, 2) + "*".repeat(part.length - 2);
         }).join(" ");
     };
 
@@ -386,7 +376,16 @@ const SearchSection: React.FC = () => {
                                 const initial = name.charAt(0).toUpperCase();
 
                                 return (
-                                    <div key={profile.id || profile._id} className={styles.luxuryCard}>
+                                    <div
+                                        key={profile.id || profile._id}
+                                        className={styles.luxuryCard}
+                                        onClick={(e) => {
+                                            // Don't navigate if clicking action buttons
+                                            if ((e.target as HTMLElement).closest('button')) return;
+                                            navigate(`/profile/${profile.unique_id || profile.id || profile._id}`);
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className={styles.cardContent}>
                                             {profile.profilePicPath ? (
                                                 <img
@@ -445,6 +444,7 @@ const SearchSection: React.FC = () => {
                         ) : <div className={styles.noResults}><p>No {searchRole} found.</p></div>}
                     </div>
                 )}
+
             </div>
 
             <ConfirmationModal

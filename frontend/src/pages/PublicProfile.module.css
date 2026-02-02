@@ -638,3 +638,64 @@
         border-radius: 0;
     }
 }
+
+/* New Login Banner Styles */
+.loginBanner {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 600px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    border-radius: 16px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loginBanner span {
+    color: #cbd5e1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.loginBannerIcon {
+    color: #facc15;
+    margin-right: 12px;
+}
+
+.loginBtnSmall {
+    background: #facc15;
+    color: #0f172a;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.loginBtnSmall:hover {
+    background: #fff;
+    transform: translateY(-1px);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}

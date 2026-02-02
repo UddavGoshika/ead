@@ -915,3 +915,66 @@
     color: #ef4444;
     font-style: italic;
 }
+
+@media (max-width: 768px) {
+    .topActionsRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .leftActions,
+    .actionButtons {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .statusActionRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .verificationFilters {
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .filterBtn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .actionGridRowMini {
+        justify-content: space-between;
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .actionGridRowMini button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .unifiedFilterGrid {
+        grid-template-columns: 1fr;
+        padding: 15px;
+    }
+
+    .inputComboCompact {
+        flex-direction: column;
+        gap: 10px;
+        background: transparent;
+        border: none;
+    }
+
+    .inputComboCompact select,
+    .inputComboCompact input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+}

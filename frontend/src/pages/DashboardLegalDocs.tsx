@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import styles from './LegalDocumentationPage.module.css';
+import styles from './DashboardLegalDocs.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
     ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
@@ -698,7 +698,7 @@ const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose
 
 // --- Main Page Component ---
 
-const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
+const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
     const { isLoggedIn, openAuthModal, user } = useAuth();
     const location = useLocation();
     const [activeNav, setActiveNav] = useState('home');
@@ -1322,7 +1322,7 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                     <ArrowRight size={16} style={{ transform: 'rotate(180deg)' }} /> Back to Home
                 </button>
             )}
-            {!isEmbedded && <div className={styles.navBackground}>
+            <div className={styles.navBackground}>
                 <nav className={styles.subNavBar}>
                     <div className={styles.subNavBarInner}>
                         {navItems.map((item) => (
@@ -1342,11 +1342,11 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                         ))}
                     </div>
                 </nav>
-            </div>}
+            </div>
 
             <div className={styles.mainContent} ref={contentRef}>
                 <AnimatePresence mode="wait">
-                    {activeNav === 'home' ? (isEmbedded ? renderServiceView() : renderHomeView()) : (isLoaded && renderServiceView())}
+                    {activeNav === 'home' ? renderHomeView() : (isLoaded && renderServiceView())}
                 </AnimatePresence>
 
                 {/* Task 3 & 4: Full Grid and Bottom Support */}
@@ -1519,4 +1519,4 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
     );
 };
 
-export default LegalDocumentationPage;
+export default DashboardLegalDocs;

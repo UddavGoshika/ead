@@ -54,6 +54,7 @@ const PaymentCredentials: React.FC = () => {
         sslcommerz: { isActive: true, mode: 'sandbox', credentials: {} },
         phonepe: { isActive: true, mode: 'sandbox', credentials: {} },
         upi: { isActive: true, mode: 'sandbox', credentials: {} },
+        cashfree: { isActive: false, mode: 'sandbox', credentials: {} },
     });
 
     const [loading, setLoading] = useState(true);
@@ -215,6 +216,38 @@ const PaymentCredentials: React.FC = () => {
                     onChange={(e) => updateCreds('upi', 'payeeName', e.target.value)}
                 />
             </Section>
+
+            {/* CASHFREE */}
+            <Section
+                title="Cashfree Payments"
+                isActive={settings.cashfree?.isActive ?? false}
+                onToggle={(val) => updateStatus('cashfree', val)}
+                onSave={() => handleSave('cashfree')}
+            >
+                <div style={{ marginBottom: '15px', color: '#cbd5e1', fontSize: '13px' }}>
+                    <span style={{ color: '#facc15' }}>Note:</span> Platform Fee is <strong>2%</strong> per transaction.
+                </div>
+                <select
+                    value={settings.cashfree?.mode || 'sandbox'}
+                    onChange={(e) => updateMode('cashfree', e.target.value as any)}
+                >
+                    <option value="live">Production</option>
+                    <option value="sandbox">Sandbox</option>
+                </select>
+                <input
+                    placeholder="App ID (Client ID)"
+                    type="text"
+                    value={settings.cashfree?.credentials?.appId || ''}
+                    onChange={(e) => updateCreds('cashfree', 'appId', e.target.value)}
+                />
+                <input
+                    placeholder="Secret Key (Client Secret)"
+                    type="password"
+                    value={settings.cashfree?.credentials?.secretKey || ''}
+                    onChange={(e) => updateCreds('cashfree', 'secretKey', e.target.value)}
+                />
+            </Section>
+
         </div>
     );
 };

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { advocateService } from '../../../../services/api';
 import type { Advocate } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, ScrollText } from 'lucide-react';
 import { interactionService } from '../../../../services/interactionService';
 import { useAuth } from '../../../../context/AuthContext';
 import styles from '../AdvocateList.module.css';
@@ -68,6 +68,14 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 <button className={styles.backLink} onClick={() => showsidePage('normalfccards')}>
                     <ArrowLeft size={18} />
                     <span>Switch to Profiles</span>
+                </button>
+                <button
+                    className={styles.backLink}
+                    onClick={() => window.open('/dashboard/legal-docs', '_blank')}
+                    style={{ marginLeft: '15px' }}
+                >
+                    <ScrollText size={18} />
+                    <span>Legal Documentation</span>
                 </button>
 
                 <div className={styles.planInfo}>

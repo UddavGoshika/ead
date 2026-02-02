@@ -72,16 +72,15 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawError, setWithdrawError] = useState('');
 
-    // Mock Business Logic Data
-    const [balance] = useState(12450.00);
-    const [rewardPoints] = useState(480);
+    const [balance, setBalance] = useState(12450.00);
+    const [rewardPoints, setRewardPoints] = useState(480);
 
     const [banks] = useState<BankAccount[]>([
         { id: '1', bankName: 'State Bank of India', accountNumber: '****6789', ifsc: 'SBIN0001234', isPrimary: true, holderName: 'ALEX DOE', cardType: 'VISA' },
         { id: '2', bankName: 'HDFC Priority', accountNumber: '****4321', ifsc: 'HDFC0005678', isPrimary: false, holderName: 'ALEX DOE', cardType: 'Mastercard' }
     ]);
 
-    const [transactions] = useState<Transaction[]>([
+    const [transactions, setTransactions] = useState<Transaction[]>([
         { id: 'TXN882', type: 'credit', amount: 5000, description: 'Wallet Recharge - UPI', date: '25 Jan 2026, 10:30 AM', status: 'Completed', method: 'UPI', category: 'Recharge' },
         { id: 'TXN881', type: 'debit', amount: 1500, description: 'Consultation Fee - Adv. Kapoor', date: '24 Jan 2026, 02:15 PM', status: 'Completed', method: 'Wallet', category: 'Legal Fee' },
         { id: 'TXN880', type: 'credit', amount: 200, description: 'Loyalty Cashback Reward', date: '23 Jan 2026, 09:00 AM', status: 'Completed', method: 'Promo', category: 'Reward' },
@@ -90,6 +89,15 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
     // Insights Chart Simulation
     const chartData = [40, 70, 45, 90, 65, 80, 50]; // Monday to Sunday
+
+    // Helper to calculate totals
+    const calculateTotalPayable = (base: number) => {
+        const cgst = base * 0.09;
+        const sgst = base * 0.09;
+        const feePercent = selectedGateway === 'cashfree' ? 0.02 : 0.003;
+        const convFee = base * feePercent;
+        return base + cgst + sgst + convFee;
+    };
 
     const handleWithdraw = () => {
         const amt = parseFloat(withdrawAmount);
@@ -101,8 +109,24 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setWithdrawError('Insufficient balance in your account.');
             return;
         }
+        // Deduct balance immediately for demo (or waiting for approval state)
+        // For accurate ledger, we might just set it to 'Pending' transaction
         setWithdrawalStep(2);
         setWithdrawError('');
+
+        // Optimistic Update
+        setBalance(prev => prev - amt);
+        const newTxn: Transaction = {
+            id: 'TXN' + Math.floor(Math.random() * 10000),
+            type: 'debit',
+            amount: amt,
+            description: 'Withdrawal Request',
+            date: new Date().toLocaleString(),
+            status: 'Pending',
+            method: 'Bank Transfer',
+            category: 'Withdrawal'
+        };
+        setTransactions([newTxn, ...transactions]);
     };
 
     return (
@@ -115,7 +139,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                 <div className={styles.balanceSection}>
                     <div className={styles.balanceInfo}>
                         <span>AVAILABLE LIQUIDITY</span>
-                        <h3>₹ {balance.toLocaleString('en-IN')}</h3>
+                        <h3>₹ {balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                     </div>
                     <div className={styles.balanceActions}>
                         <button className={styles.addBtn} onClick={() => setShowAddMoney(true)}><Plus size={18} /> Add Funds</button>
@@ -124,6 +148,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                 </div>
             </div>
 
+            {/* ... navigation tabs ... */}
             <nav className={styles.tabs}>
                 {['history', 'insights', 'bank', 'bills', 'kyc', 'settings'].map(tab => (
                     <button key={tab} className={`${styles.tab} ${activeTab === tab ? styles.active : ''}`} onClick={() => setActiveTab(tab as any)}>
@@ -295,11 +320,49 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                                 {gw.gateway === 'stripe' && <Building2 size={18} />}
                                                 {gw.gateway === 'invoice' && <Receipt size={18} />}
                                                 {gw.gateway === 'upi' && <QrCode size={18} />}
+                                                {gw.gateway === 'cashfree' && <Zap size={18} />}
                                                 <span style={{ textTransform: 'capitalize' }}>{gw.gateway}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* TAX SUMMARY SECTION */}
+                                {addAmount && parseFloat(addAmount) > 0 && (
+                                    <div className={styles.taxSummary}>
+                                        <div className={styles.taxRow}>
+                                            <span>Base Amount</span>
+                                            <span>₹{parseFloat(addAmount).toFixed(2)}</span>
+                                        </div>
+                                        <div className={styles.taxRow}>
+                                            <span>CGST (9%)</span>
+                                            <span>+ ₹{(parseFloat(addAmount) * 0.09).toFixed(2)}</span>
+                                        </div>
+                                        <div className={styles.taxRow}>
+                                            <span>SGST (9%)</span>
+                                            <span>+ ₹{(parseFloat(addAmount) * 0.09).toFixed(2)}</span>
+                                        </div>
+                                        <div className={styles.taxRow}>
+                                            <span>
+                                                {selectedGateway === 'cashfree' ? 'Platform Fee (2%)' : 'Convenience Fee (0.3%)'}
+                                            </span>
+                                            <span>
+                                                + ₹{(parseFloat(addAmount) * (selectedGateway === 'cashfree' ? 0.02 : 0.003)).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className={`${styles.taxRow} ${styles.totalRow}`}>
+                                            <span>Total Payable</span>
+                                            <span>
+                                                ₹{(
+                                                    parseFloat(addAmount) +
+                                                    (parseFloat(addAmount) * 0.09) +
+                                                    (parseFloat(addAmount) * 0.09) +
+                                                    (parseFloat(addAmount) * (selectedGateway === 'cashfree' ? 0.02 : 0.003))
+                                                ).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {upiUrl ? (
                                     <div className={styles.qrStep}>
@@ -354,15 +417,21 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
                                             setIsProcessing(true);
                                             try {
+                                                // Calculate full amount for payment gateway
+                                                const baseVal = Number(addAmount);
+                                                // Dynamic Fee Calculation
+                                                const feePercent = selectedGateway === 'cashfree' ? 0.02 : 0.003;
+                                                const totalVal = baseVal + (baseVal * 0.09) + (baseVal * 0.09) + (baseVal * feePercent);
+
                                                 const result = await PaymentManager.getInstance().processPayment(
                                                     selectedGateway,
                                                     'wallet_recharge',
-                                                    Number(addAmount),
+                                                    totalVal, // Send TOTAL amount to gateway
                                                     'INR',
                                                     {
                                                         userName: user?.name,
                                                         userEmail: user?.email,
-                                                        description: `Wallet Recharge: ₹${addAmount}`
+                                                        description: `Wallet Recharge: ₹${baseVal} + Taxes`
                                                     }
                                                 );
 
@@ -370,10 +439,27 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                                     if (selectedGateway === 'upi' && result.metadata?.upiUrl) {
                                                         setUpiUrl(result.metadata.upiUrl);
                                                         setCurrentOrderId(result.orderId);
+                                                    } else if (selectedGateway === 'cashfree') {
+                                                        // Cashfree adapter handles redirect. 
+                                                        // We just wait or show a 'Redirecting' state if needed.
+                                                        console.log("Redirecting to Cashfree...");
                                                     } else {
                                                         alert(result.message || "Payment completed successfully");
                                                         setShowAddMoney(false);
-                                                        window.location.reload();
+
+                                                        // Optimistic Update: Add BASE amount to wallet
+                                                        setBalance(prev => prev + baseVal);
+                                                        const newTxn: Transaction = {
+                                                            id: 'TXN' + Math.floor(Math.random() * 10000),
+                                                            type: 'credit',
+                                                            amount: baseVal,
+                                                            description: 'Wallet Recharge',
+                                                            date: new Date().toLocaleString(),
+                                                            status: 'Completed',
+                                                            method: selectedGateway.toUpperCase(),
+                                                            category: 'Recharge'
+                                                        };
+                                                        setTransactions([newTxn, ...transactions]);
                                                     }
                                                 } else {
                                                     alert(`Payment failed: ${result.error}`);

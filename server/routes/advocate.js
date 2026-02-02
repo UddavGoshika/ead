@@ -23,12 +23,14 @@ const advUpload = upload.fields([
 ]);
 
 // Helper to generate unique ID
-async function generateAdvocateId() {
+async function generateAdvocateId(role = 'advocate') {
     let id;
     let exists = true;
+    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAW' : 'TP-EAD-ADV';
+
     while (exists) {
         const randomNum = Math.floor(10000 + Math.random() * 90000); // 5 digits
-        id = `TP-EAD-ADV${randomNum}`;
+        id = `${prefix}${randomNum}`;
         const existing = await Advocate.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
@@ -90,7 +92,7 @@ router.post('/register', (req, res, next) => {
         });
 
         // 2. Generate Unique Advocate ID
-        const advId = await generateAdvocateId();
+        const advId = await generateAdvocateId(req.body.role);
 
         // 3. Create Advocate Profile
         const files = req.files || {};

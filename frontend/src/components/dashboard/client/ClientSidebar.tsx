@@ -63,21 +63,26 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
                         <button
                             key={item.id}
                             className={`${styles.link} ${currentPage === item.id ? styles.active : ''}`}
-                            onClick={() => showsidePage(item.id)}
+                            onClick={() => {
+                                if (item.id === 'legal-documentation') {
+                                    window.open('/dashboard/legal-docs', '_blank');
+                                } else {
+                                    showsidePage(item.id);
+                                }
+                            }}
                         >
                             <Icon size={22} />
                             <span>{item.label}</span>
                         </button>
                     );
                 })}
-            </nav>
-
-            <div className={styles.footer}>
+                <div className={styles.divider}></div>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Logout</span>
                 </button>
-            </div>
+            </nav>
+
         </aside>
     );
 };
