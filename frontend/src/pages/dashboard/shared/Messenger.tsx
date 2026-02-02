@@ -4,8 +4,10 @@ import {
     Send,
     Paperclip,
     ArrowLeft,
-    MessageSquare
+    MessageSquare,
+    X
 } from "lucide-react";
+import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 import { interactionService } from "../../../services/interactionService";
 import type { Message, Conversation } from "../../../services/interactionService";
@@ -26,6 +28,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
     const [activeTab, setActiveTab] = useState<'accepted' | 'sent' | 'received'>('accepted');
     const [messages, setMessages] = useState<Message[]>([]);
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const [selectedClient, setSelectedClient] = useState<any>(null);
+    const [popupLoading, setPopupLoading] = useState(false);
 
     // Filtered lists for tabs
     const [sentInterests, setSentInterests] = useState<any[]>([]);
@@ -119,6 +124,34 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
         }
     };
 
+    const handleClientClick = async (partnerId: string | undefined, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        if (!partnerId) return;
+
+        try {
+            setPopupLoading(true);
+            const response = await api.get(`/client/${partnerId}`);
+            if (response.data.success) {
+                setSelectedClient(response.data.client);
+            } else {
+                // If not found as client, maybe advocate? But popup is designed for client details mostly.
+                // For now alerting if not found.
+                // alert("Could not fetch client details.");
+            }
+        } catch (error) {
+            console.error("Error fetching client details:", error);
+            // alert("Error fetching client details.");
+        } finally {
+            setPopupLoading(false);
+        }
+    };
+
+    const maskContactInfo = (info: string) => {
+        if (!info) return "N/A";
+        if (info.length <= 2) return info;
+        return info.substring(0, 2) + "888" + "*".repeat(Math.max(0, info.length - 5));
+    };
+
     if (selectedConversation || view === 'chat') {
         const activeConv = selectedConversation;
         const displayName = activeConv?.advocate.name || selectedAdvocate?.name || 'User';
@@ -191,13 +224,27 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 className={styles.convItem}
                                 onClick={() => handleSelectConversation(conv)}
                             >
-                                <div className={styles.convAvatar}>{conv.advocate.name?.charAt(0) || 'U'}</div>
+                                <img
+                                    src={(conv.advocate as any).profilePic || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'}
+                                    alt={conv.advocate.name}
+                                    className={styles.convAvatar}
+                                    onClick={(e) => handleClientClick(String(conv.advocate.id), e)}
+                                />
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
                                         <h4>{conv.advocate.name}</h4>
                                         <span className={styles.convTime}>
                                             {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleDateString() : ''}
                                         </span>
+                                    </div>
+                                    <div className={styles.convSub}>
+                                        <span>{conv.advocate.unique_id || 'ID: N/A'}</span>
+                                        {conv.advocate.location && conv.advocate.location !== 'N/A' && (
+                                            <>
+                                                <span>•</span>
+                                                <span>{conv.advocate.location}</span>
+                                            </>
+                                        )}
                                     </div>
                                     <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
                                 </div>
@@ -215,7 +262,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     <div className={styles.conversationList}>
                         {sentInterests.map(act => (
                             <div key={act.id} className={styles.convItem}>
-                                <div className={styles.convAvatar}>{act.advocateName.charAt(0)}</div>
+                                <div className={styles.convAvatarPlaceholder} onClick={(e) => handleClientClick(act.advocateId, e)}>
+                                    {act.advocateName ? act.advocateName.charAt(0) : 'U'}
+                                </div>
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
                                         <h4>{act.advocateName}</h4>
@@ -237,7 +286,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     <div className={styles.conversationList}>
                         {receivedInterests.map(act => (
                             <div key={act.id} className={styles.convItem}>
-                                <div className={styles.convAvatar}>{act.clientName.charAt(0)}</div>
+                                <div className={styles.convAvatarPlaceholder} onClick={(e) => handleClientClick(act.clientId, e)}>
+                                    {act.clientName ? act.clientName.charAt(0) : 'U'}
+                                </div>
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
                                         <h4>{act.clientName}</h4>
@@ -278,6 +329,59 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             </div>
 
             {renderList()}
+
+            {/* Client Details Popup */}
+            {selectedClient && (
+                <div className={styles.overlay} onClick={() => setSelectedClient(null)}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Client Details</h3>
+                            <button onClick={() => setSelectedClient(null)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.profileHeader}>
+                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={styles.avatar} />
+                                <div>
+                                    <h4>{selectedClient.firstName} {selectedClient.lastName}</h4>
+                                    <p className={styles.uid}>{selectedClient.unique_id}</p>
+                                </div>
+                            </div>
+
+                            <div className={styles.infoGrid}>
+                                <div className={styles.infoItem}>
+                                    <label>Email</label>
+                                    <p>{maskContactInfo(selectedClient.email)}</p>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Mobile</label>
+                                    <p>{maskContactInfo(selectedClient.mobile)}</p>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Location</label>
+                                    <p>{selectedClient.location?.city || 'N/A'}, {selectedClient.location?.state || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            {selectedClient.legalHelp && (
+                                <div className={styles.legalSection}>
+                                    <h5>Legal Requirement</h5>
+                                    <div className={styles.tagContainer}>
+                                        <span className={styles.tag}>{selectedClient.legalHelp.category}</span>
+                                        <span className={styles.tag}>{selectedClient.legalHelp.specialization}</span>
+                                        {selectedClient.legalHelp.subDepartment && <span className={styles.tag}>{selectedClient.legalHelp.subDepartment}</span>}
+                                    </div>
+                                    {selectedClient.legalHelp.issueDescription && (
+                                        <div className={styles.descBox}>
+                                            <label>Issue Description:</label>
+                                            <p>{selectedClient.legalHelp.issueDescription}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

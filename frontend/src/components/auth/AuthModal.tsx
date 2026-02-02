@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
-import { X, Mail, Lock, Scale, UserCheck, AlertCircle } from 'lucide-react';
+import { X, Mail, Lock, Scale, UserCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AuthModal.module.css';
 
@@ -21,6 +21,7 @@ const AuthModal: React.FC = () => {
     // Form states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     React.useEffect(() => {
         setActiveTab(authTab);
@@ -59,15 +60,6 @@ const AuthModal: React.FC = () => {
                 let target = '/dashboard/advocate';
                 if (mockUser.role === 'legal_provider') target = '/dashboard/advisor';
                 if (email === 'advisor@gmail.com') target = '/dashboard/advisor';
-
-                // If user is already on a public page, stay there.
-                const currentPath = window.location.pathname;
-                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
-                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
-
-                if (isPublicPage) {
-                    target = currentPath;
-                }
 
                 navigate(target, { replace: true });
                 setLoading(false);
@@ -111,14 +103,6 @@ const AuthModal: React.FC = () => {
                 }
 
                 console.log('Redirecting to:', target);
-                // If user is already on a public page, stay there.
-                const currentPath = window.location.pathname;
-                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
-                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
-
-                if (isPublicPage && response.data.user.role !== 'admin' && response.data.user.role !== 'ADMIN') {
-                    target = currentPath;
-                }
                 navigate(target, { replace: true });
             }
         } catch (err: any) {
@@ -166,14 +150,6 @@ const AuthModal: React.FC = () => {
                 if (response.data.user.role === 'advocate') target = '/dashboard/advocate';
                 else if (response.data.user.role === 'legal_provider') target = '/dashboard/advisor';
 
-                // If user is already on a public page, stay there.
-                const currentPath = window.location.pathname;
-                const publicPages = ['legal-documentation', 'blogs', 'about', 'faq', 'search', 'profile', 'careers'];
-                const isPublicPage = publicPages.some(p => currentPath.includes(p)) || currentPath === '/';
-
-                if (isPublicPage && response.data.user.role !== 'admin' && response.data.user.role !== 'ADMIN') {
-                    target = currentPath;
-                }
                 navigate(target, { replace: true });
                 console.log('Redirecting to:', target);
             }
@@ -306,13 +282,22 @@ const AuthModal: React.FC = () => {
                                                         Forgot Password?
                                                     </button>
                                                 </div>
-                                                <input
-                                                    type="password"
-                                                    placeholder="••••••••"
-                                                    required
-                                                    value={password}
-                                                    onChange={e => setPassword(e.target.value)}
-                                                />
+                                                <div className={styles.passwordWrapper}>
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        placeholder="••••••••"
+                                                        required
+                                                        value={password}
+                                                        onChange={e => setPassword(e.target.value)}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className={styles.togglePasswordBtn}
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                    >
+                                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                    </button>
+                                                </div>
                                             </div>
                                             <button type="submit" className={styles.submitBtn} disabled={loading}>
                                                 {loading ? 'Logging in...' : 'Login to Account'}
@@ -378,13 +363,22 @@ const AuthModal: React.FC = () => {
                                                 </div>
                                                 <div className={styles.formGroup}>
                                                     <label><Lock size={16} /> Password</label>
-                                                    <input
-                                                        type="password"
-                                                        placeholder="••••••••"
-                                                        required
-                                                        value={password}
-                                                        onChange={e => setPassword(e.target.value)}
-                                                    />
+                                                    <div className={styles.passwordWrapper}>
+                                                        <input
+                                                            type={showPassword ? "text" : "password"}
+                                                            placeholder="••••••••"
+                                                            required
+                                                            value={password}
+                                                            onChange={e => setPassword(e.target.value)}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className={styles.togglePasswordBtn}
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                        >
+                                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <button type="submit" className={styles.submitBtn} disabled={loading}>
                                                     {loading ? 'Creating Account...' : 'Create Account'}

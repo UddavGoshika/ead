@@ -149,82 +149,95 @@
     margin-top: 25px;
 }
 
+
 .activityItem {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 18px;
+    padding: 16px;
     display: flex;
-    align-items: center;
-    gap: 18px;
+    align-items: flex-start;
+    /* Align top */
+    gap: 16px;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .activityItem:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(250, 204, 21, 0.2);
-    transform: translateX(5px);
 }
 
-.activityIcon {
-    width: 40px;
-    height: 40px;
-    background: rgba(250, 204, 21, 0.1);
-    color: #facc15;
-    border-radius: 10px;
+.activityAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.activityContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activityHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activityName {
+    font-size: 16px;
+    font-weight: 600;
+    color: #3b82f6;
+    /* Blueish like screenshot */
+}
+
+.activityName:hover {
+    text-decoration: underline;
+}
+
+.activityDate {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.activitySub {
+    font-size: 13px;
+    color: #94a3b8;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-.activityDetails {
-    flex: 1;
-    text-align: left;
-}
-
-.activityText {
-    margin: 0;
+.activityMessage {
     font-size: 14px;
-    color: #fff;
-    line-height: 1.4;
-}
-
-.activityText strong {
-    color: #facc15;
-}
-
-.activityTime {
-    font-size: 11px;
-    color: #64748b;
-    display: block;
+    color: #cbd5e1;
     margin-top: 4px;
 }
 
+/* Status badge floating or inline? */
 .statusBadge {
-    padding: 4px 10px;
-    background: rgba(250, 204, 21, 0.05);
-    border: 1px solid rgba(250, 204, 21, 0.2);
-    border-radius: 20px;
+    padding: 2px 8px;
+    border-radius: 12px;
     font-size: 10px;
     font-weight: 700;
-    color: #facc15;
     text-transform: uppercase;
+    margin-left: auto;
+    /* Push to right if needed */
 }
 
-.serviceTag {
-    display: inline-block;
-    padding: 2px 8px;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 4px;
-    color: #3b82f6;
-    font-size: 10px;
-    font-weight: 600;
-    margin-left: 10px;
-    text-transform: uppercase;
+/* Hide old icon styles if not used, or keep for fallback */
+.activityIcon {
+    display: none;
 }
 
-/* Responsive */
+/* ... responsive ... */
 @media (max-width: 768px) {
     .statsRow {
         grid-template-columns: 1fr;
@@ -252,6 +265,9 @@
         padding: 20px;
     }
 }
+
+/* ... modal styles remain ... */
+
 
 .clickableName {
     cursor: pointer;

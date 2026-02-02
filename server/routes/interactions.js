@@ -227,10 +227,23 @@ router.get('/conversations/:userId', async (req, res) => {
                     }
                 }
 
+                const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
+
+                let partnerLocation = 'N/A';
+                if (partnerProfile) {
+                    if (partnerProfile.address) {
+                        partnerLocation = `${partnerProfile.address.city || ''} ${partnerProfile.address.state || ''}`.trim() || 'India';
+                    } else if (partnerProfile.location) {
+                        partnerLocation = `${partnerProfile.location.city || ''} ${partnerProfile.location.state || ''}`.trim() || 'India';
+                    }
+                }
+
                 conversations.push({
                     partnerId,
                     partnerName: partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User',
                     partnerUniqueId: partnerProfile ? partnerProfile.unique_id : null,
+                    partnerImg,
+                    partnerLocation,
                     lastMessage: msg.text,
                     timestamp: msg.timestamp
                 });
@@ -266,10 +279,23 @@ router.get('/all/:userId', async (req, res) => {
                 }
             }
 
+            const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
+
+            let partnerLocation = 'N/A';
+            if (partnerProfile) {
+                if (partnerProfile.address) {
+                    partnerLocation = `${partnerProfile.address.city || ''} ${partnerProfile.address.state || ''}`.trim() || 'India';
+                } else if (partnerProfile.location) {
+                    partnerLocation = `${partnerProfile.location.city || ''} ${partnerProfile.location.state || ''}`.trim() || 'India';
+                }
+            }
+
             detailedActivities.push({
                 ...act,
                 partnerName: partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User',
                 partnerUniqueId: partnerProfile ? partnerProfile.unique_id : null,
+                partnerImg,
+                partnerLocation,
                 isSender
             });
         }

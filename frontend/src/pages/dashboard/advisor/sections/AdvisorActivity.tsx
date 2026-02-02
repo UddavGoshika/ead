@@ -118,59 +118,61 @@ const AdvisorActivity = () => {
                             const showService = act.metadata?.service || act.service;
 
                             return (
-                                <div key={act._id} className={styles.activityItem}>
-                                    <div className={styles.activityIcon}>
-                                        {act.type === 'visit' ? <Eye size={18} /> :
-                                            act.type === 'interest' ? <Send size={18} /> :
-                                                act.type === 'superInterest' ? <Star size={18} /> :
-                                                    act.type === 'message' || act.type === 'chat_initiated' ? <MessageSquare size={18} /> :
-                                                        act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
-                                    </div>
-                                    <div className={styles.activityDetails}>
-                                        <p className={styles.activityText}>
-                                            {act.status === 'accepted' ? (
+                                <div
+                                    key={act._id}
+                                    className={styles.activityItem}
+                                    onClick={() => isIncoming && handleClientClick(act.isSender ? act.sender : act.receiver)}
+                                >
+                                    <img
+                                        src={act.partnerImg}
+                                        alt={act.partnerName}
+                                        className={styles.activityAvatar}
+                                    />
+                                    <div className={styles.activityContent}>
+                                        <div className={styles.activityHeader}>
+                                            <span className={styles.activityName}>{act.partnerName}</span>
+                                            <span className={styles.activityDate}>
+                                                {new Date(act.timestamp).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <div className={styles.activitySub}>
+                                            <span>{act.partnerUniqueId || 'ID: N/A'}</span>
+                                            {act.partnerLocation && act.partnerLocation !== 'N/A' && (
                                                 <>
-                                                    Client <strong
-                                                        className={styles.clickableName}
-                                                        onClick={() => isIncoming && handleClientClick(act.isSender ? act.sender : act.receiver)}
-                                                    >
-                                                        {act.partnerName}
-                                                    </strong> has <strong>shortlisted</strong> you for their case.
-                                                </>
-                                            ) : act.type === 'message' || act.type === 'chat_initiated' ? (
-                                                <>New message {act.isSender ? 'to' : 'from'} <strong
-                                                    className={styles.clickableName}
-                                                    onClick={() => handleClientClick(act.isSender ? act.receiver : act.sender)} // If I sent, I want to see receiver. If received, see sender.
-                                                >
-                                                    {act.partnerName}
-                                                </strong></>
-                                            ) : (
-                                                <>
-                                                    <strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'}
-                                                    <strong
-                                                        className={styles.clickableName}
-                                                        onClick={() => handleClientClick(act.isSender ? act.receiver : act.sender)}
-                                                        style={{ cursor: 'pointer', marginLeft: '4px', marginRight: '4px', color: '#2563eb' }}
-                                                    >
-                                                        {act.partnerName}
-                                                    </strong>
+                                                    <span>•</span>
+                                                    <span>{act.partnerLocation}</span>
                                                 </>
                                             )}
-                                            {showService && <span className={styles.serviceTag}>Service: {showService}</span>}
-                                            {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
-                                        </p>
-                                        <span className={styles.activityTime}>
-                                            {new Date(act.timestamp).toLocaleString()}
-                                        </span>
+                                            {showService && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span style={{ color: '#3b82f6' }}>{showService}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className={styles.activityMessage}>
+                                            {act.status === 'accepted' ? (
+                                                <span style={{ color: '#10b981' }}>Client shortlisted you for their case.</span>
+                                            ) : act.type === 'message' || act.type === 'chat_initiated' ? (
+                                                <span>New message {act.isSender ? 'sent' : 'received'}</span>
+                                            ) : (
+                                                <span>{act.isSender ? 'Interest Sent' : 'Interest Received'}</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className={styles.activityStatus}>
-                                        <span className={styles.statusBadge} style={{
-                                            color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
-                                            borderColor: act.status === 'accepted' ? '#10b98140' : act.status === 'declined' ? '#f43f5e40' : '#facc1540'
-                                        }}>
-                                            {act.status === 'accepted' ? 'SHORTLISTED' : act.status.toUpperCase()}
-                                        </span>
-                                    </div>
+
+                                    {/* Optional Badge */}
+                                    {act.status !== 'none' && (
+                                        <div
+                                            className={styles.statusBadge}
+                                            style={{
+                                                color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
+                                                background: act.status === 'accepted' ? '#10b98120' : act.status === 'declined' ? '#f43f5e20' : '#facc1520',
+                                            }}
+                                        >
+                                            {act.status.toUpperCase()}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })

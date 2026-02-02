@@ -108,7 +108,9 @@ export const interactionService = {
                 unique_id: c.partnerUniqueId,
                 id: c.partnerId,
                 name: c.partnerName,
-            } as Advocate,
+                profilePic: c.partnerImg,
+                location: c.partnerLocation,
+            } as any as Advocate,
             lastMessage: {
                 id: 'last',
                 senderId: '',

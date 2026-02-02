@@ -7,6 +7,7 @@ import {
     Loader2, Scale, GraduationCap, Gavel, Award, BookOpen, Clock,
     Coins, CheckCircle2, MessageSquare, Lock
 } from 'lucide-react';
+import { interactionService } from '../services/interactionService';
 import { useAuth } from '../context/AuthContext';
 import styles from './PublicProfile.module.css';
 
@@ -30,7 +31,7 @@ const PublicProfile: React.FC = () => {
     const [message, setMessage] = useState('');
     const [showCoinNotice, setShowCoinNotice] = useState(false);
     const [hasConsentedToCoins, setHasConsentedToCoins] = useState(false);
-    const { isLoggedIn, openAuthModal } = useAuth();
+    const { user, isLoggedIn, openAuthModal } = useAuth();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -60,22 +61,74 @@ const PublicProfile: React.FC = () => {
         if (uniqueId) fetchProfile();
     }, [uniqueId]);
 
-    const handleAction = (action: string) => {
+    const [sending, setSending] = useState(false);
+
+    const handleSendMessage = async () => {
+        if (!message.trim()) return;
+        try {
+            setSending(true);
+            const senderId = String(user?.id);
+            // Profile objects from API usually have _id. Use that for interactions.
+            const receiverId = String(profile.userId || profile._id);
+
+            await interactionService.sendMessage(senderId, receiverId, message);
+
+            // Also trigger 'chat' interaction to deduct coins if needed
+            // NOTE: interactions.js handles coin deduction on 'chat' action
+            await interactionService.recordActivity(profile.role, profile._id, 'chat', senderId);
+
+            setMessage('');
+            alert("Message sent successfully!");
+            setChatMode(false); // Close chat overlay after sending or keep open?
+        } catch (err) {
+            console.error("Failed to send message", err);
+            alert("Failed to send message. Please try again.");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleAction = async (action: string) => {
         if (!isLoggedIn) {
             openAuthModal('login');
             return;
         }
+
+        const senderId = String(user?.id);
+        const targetId = String(profile._id); // We need the MongoDB _id for the interaction route lookup
+
         if (action === 'Chat') {
             if (!hasConsentedToCoins) {
                 setShowCoinNotice(true);
             } else {
                 setChatMode(true);
             }
+        } else if (action === 'Interest') {
+            // "Hire" -> Send Interest
+            try {
+                setSending(true);
+                await interactionService.recordActivity(profile.role, targetId, 'interest', senderId);
+                alert("Interest sent! The advocate has been notified.");
+            } catch (err) {
+                console.error("Error sending interest:", err);
+                alert("Failed to send interest.");
+            } finally {
+                setSending(false);
+            }
+        } else if (action === 'Shortlist') {
+            try {
+                setSending(true);
+                await interactionService.recordActivity(profile.role, targetId, 'shortlist', senderId);
+                alert("Profile shortlisted.");
+            } catch (err) {
+                console.error("Error shortlisting:", err);
+                alert("Failed to shortlist.");
+            } finally {
+                setSending(false);
+            }
         } else if (action === 'Comment') {
             const comment = prompt("Enter your comment for the advocate:");
             if (comment) alert("Comment submitted for review.");
-        } else {
-            alert(`Feature under development`);
         }
     };
 
@@ -352,7 +405,7 @@ const PublicProfile: React.FC = () => {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                             />
-                            <button className={styles.sendBtn} onClick={() => alert('Log in to send message')}>
+                            <button className={styles.sendBtn} onClick={handleSendMessage} disabled={sending}>
                                 <Send size={22} />
                             </button>
                         </div>
