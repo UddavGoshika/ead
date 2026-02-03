@@ -8,74 +8,168 @@ const Activity = require('../models/Activity');
 const mongoose = require('mongoose');
 const { createNotification } = require('../utils/notif');
 
-// Action can be: shortlist, interest, superInterest, chat, visit
+// Action can be: shortlist, interest, superInterest, chat_unlock, view_contact
 router.post('/:targetRole/:targetId/:action', async (req, res) => {
     try {
         const { targetRole, targetId, action } = req.params;
         const { userId } = req.body;
 
-        const mongoose = require('mongoose');
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // Mock-safe user lookup
-        let user;
-        if (mongoose.Types.ObjectId.isValid(userId)) {
-            user = await User.findById(userId);
+        // PLAN & PREMIUM CHECK
+        const plan = (user.plan || 'Free').toLowerCase();
+        const isPremium = user.isPremium || (plan !== 'free' && plan !== '');
+
+        // Spec: "Free clients: Cannot spend coins"
+        // Spec: "Coins are available only for premium users"
+        // Thus, ANY action requiring > 0 coins is blocked for Free users.
+
+        // COIN TABLE (Rule 9)
+        const COIN_COSTS = {
+            interest: 1,
+            superInterest: 2,
+            shortlist: 0,
+            view_contact: 1,
+            chat: 1 // Rule 9: Chat (unlock) is 1 coin
+        };
+
+        if (!Object.keys(COIN_COSTS).includes(action)) {
+            return res.status(400).json({ error: 'Invalid action' });
         }
 
-        // If user not in DB, use a mock object for coins logic
-        if (!user) {
-            user = { id: userId, coins: 100, save: () => Promise.resolve() };
-        }
+        let cost = COIN_COSTS[action];
 
+        // Fetch Target Details
         let targetModel;
         if (targetRole === 'advocate') targetModel = Advocate;
         else if (targetRole === 'client') targetModel = Client;
         else return res.status(400).json({ error: 'Invalid target role' });
 
-        let target;
+        let target = null;
         if (mongoose.Types.ObjectId.isValid(targetId)) {
-            target = await targetModel.findById(targetId);
+            target = await targetModel.findById(targetId).populate('userId', 'email phone isPremium premiumExpiry');
+        }
+        if (!target) return res.status(404).json({ error: 'Target profile not found' });
+
+        const targetUserId = target.userId?._id || target.userId;
+        const isTargetPremium = target.userId?.isPremium || false;
+
+        // Rule 12: Premium <-> Premium Chat is Free
+        if (action === 'chat' && isPremium && isTargetPremium) {
+            cost = 0;
         }
 
-        // Processing logic
-        try {
-            if (action === 'chat') {
-                if (user.coins < 2) {
-                    return res.status(400).json({ error: 'Insufficient coins.' });
-                }
-                user.coins -= 2;
-                await user.save();
-            } else if (target && ['shortlist', 'interest', 'superInterest'].includes(action)) {
-                const field = action === 'shortlist' ? 'shortlists' :
-                    action === 'interest' ? 'interests' : 'superInterests';
+        // Rule 15: PREMIUM User with Zero Coins
+        if (isPremium && user.coins <= 0 && cost > 0) {
+            return res.status(403).json({
+                error: 'ZERO_COINS',
+                message: 'Your tokens are empty. Please top up.',
+                isZeroCoins: true
+            });
+        }
 
-                if (!target[field].includes(userId)) {
-                    target[field].push(userId);
-                    await target.save();
+        // Logic For Free Users (Rule 8: Coins only for premium)
+        if (!isPremium && cost > 0) {
+            return res.status(403).json({
+                error: 'UPGRADE_REQUIRED',
+                message: 'This action requires a Premium Plan.'
+            });
+        }
+
+        // VALIDITY CHECKS (Chat 3 months, Contact Plan + 1 month)
+        const alreadyPerformed = await Activity.findOne({
+            sender: userId,
+            receiver: targetUserId,
+            type: action
+        }).sort({ timestamp: -1 });
+
+        if (alreadyPerformed) {
+            if (action === 'chat') {
+                // Rule 12: Chat valid for 3 months
+                const monthsDiff = (Date.now() - new Date(alreadyPerformed.timestamp).getTime()) / (1000 * 60 * 60 * 24 * 30);
+                if (monthsDiff < 3) cost = 0;
+            }
+            if (action === 'view_contact') {
+                // Rule 11: Contact Visibility = Premium Active + 1 Month Grace
+                const targetPremiumExpiry = target.userId?.premiumExpiry ? new Date(target.userId.premiumExpiry) : new Date(0);
+                const gracePeriodExpiry = new Date(targetPremiumExpiry.getTime() + (30 * 24 * 60 * 60 * 1000));
+
+                if (Date.now() < gracePeriodExpiry.getTime()) {
+                    cost = 0; // Still in grace period or plan is active
                 }
             }
-        } catch (updateErr) {
-            console.error('Profile update failed during interaction, but activity will still be logged:', updateErr);
         }
 
-        // Log to Activity model - ALWAYS attempt this
-        const { service, ...otherMeta } = req.body;
+        // Rule 13: INTERACTION LIMIT: Max 3 interactions per profile
+        if (action !== 'shortlist') {
+            const interactionTypes = ['interest', 'superInterest', 'chat', 'view_contact'];
+            const interactions = await Activity.distinct('type', {
+                sender: userId,
+                receiver: targetUserId,
+                type: { $in: interactionTypes }
+            });
+
+            if (!interactions.includes(action) && interactions.length >= 3) {
+                return res.status(403).json({
+                    error: 'INTERACTION_LIMIT',
+                    message: 'You’ve reached the interaction limit for this profile (Max 3).'
+                });
+            }
+        }
+
+        // DEDUCT COINS
+        if (user.coins < cost) {
+            return res.status(400).json({ error: 'INSUFFICIENT_COINS', message: 'Not enough coins.' });
+        }
+        if (cost > 0) {
+            user.coins -= cost;
+            user.coinsUsed = (user.coinsUsed || 0) + cost;
+            await user.save();
+        }
+
+        // PERFORM ACTION (Push ID to target's arrays if applicable)
+        if (['shortlist', 'interest', 'superInterest'].includes(action)) {
+            const field = action === 'shortlist' ? 'shortlists' : action === 'interest' ? 'interests' : 'superInterests';
+            if (Array.isArray(target[field]) && !target[field].includes(userId)) {
+                target[field].push(userId);
+                await target.save();
+            }
+        }
+
+        // LOG ACTIVITY
         const newActivity = new Activity({
-            sender: userId,
-            receiver: target ? (target.userId || targetId) : targetId,
-            type: action === 'superInterest' ? 'superInterest' : action,
+            sender: userId.toString(),
+            receiver: targetUserId.toString(),
+            type: action,
             status: ['interest', 'superInterest'].includes(action) ? 'pending' : 'none',
-            metadata: { service, ...otherMeta }
+            metadata: { cost }
         });
         await newActivity.save();
 
-        // NOTIFICATION: INTERACTION
-        createNotification(action, `New interaction: ${action} from User ${userId}`, '', userId, { targetId, targetRole });
+        if (action === 'view_contact') {
+            const contactEmail = target.email || (target.userId && target.userId.email) || 'N/A';
+            const contactPhone = target.mobile || target.phone || target.contact || (target.userId && target.userId.phone) || 'N/A';
+
+            return res.json({
+                success: true,
+                coins: user.coins,
+                message: 'Contact Unlocked',
+                contact: {
+                    email: contactEmail,
+                    mobile: contactPhone,
+                }
+            });
+        }
+
+        // NOTIFICATION
+        createNotification(action, `New interaction: ${action} from User`, '', userId, { targetId, targetRole });
 
         res.json({
             success: true,
             coins: user.coins,
-            message: `Activity ${action} recorded`
+            message: `Action ${action} successful`,
+            cost
         });
     } catch (err) {
         console.error('Interaction Error:', err);
@@ -166,6 +260,49 @@ router.get('/my-requests/:role/:userId', async (req, res) => {
 router.post('/messages', async (req, res) => {
     try {
         const { sender, receiver, text } = req.body;
+
+        const user = await User.findById(sender);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const plan = (user.plan || 'Free').toLowerCase();
+        const isPremium = user.isPremium || !plan.includes('free');
+
+        // Check if receiver is a featured advocate
+        let receiverProfile = await Advocate.findOne({ userId: receiver });
+        if (!receiverProfile) {
+            receiverProfile = await Client.findOne({ userId: receiver });
+        }
+
+        const isTargetFeatured = receiverProfile && receiverProfile.isFeatured;
+
+        if (!isPremium && isTargetFeatured) {
+            const messagedProfiles = await Activity.distinct('receiver', {
+                sender,
+                type: 'chat'
+            });
+
+            if (!messagedProfiles.includes(receiver)) {
+                if (messagedProfiles.length >= 10) {
+                    return res.status(403).json({
+                        error: 'FEATURED_CHAT_LIMIT',
+                        message: 'Free users can only chat with 10 Featured Profiles. Please upgrade!'
+                    });
+                }
+            } else {
+                const msgCount = await Activity.countDocuments({
+                    sender,
+                    receiver,
+                    type: 'chat'
+                });
+                if (msgCount >= 10) {
+                    return res.status(403).json({
+                        error: 'MESSAGE_COUNT_LIMIT',
+                        message: 'Message limit reached for this profile (10 messages). Please upgrade!'
+                    });
+                }
+            }
+        }
+
         const newMessage = new Message({ sender, receiver, text });
         await newMessage.save();
 
@@ -301,6 +438,18 @@ router.get('/all/:userId', async (req, res) => {
         }
 
         res.json({ success: true, activities: detailedActivities });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE ACTIVITY
+router.delete('/:activityId', async (req, res) => {
+    try {
+        const { activityId } = req.params;
+        const deleted = await Activity.findByIdAndDelete(activityId);
+        if (!deleted) return res.status(404).json({ error: 'Activity not found' });
+        res.json({ success: true, message: 'Activity deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

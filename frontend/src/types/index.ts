@@ -6,12 +6,22 @@ export interface User {
     name: string;
     email: string;
     role: UserRole;
+    phone?: string;
     isPremium?: boolean;
     plan?: string;
     coins?: number;
+    walletBalance?: number;
     status?: string;
     mustChangePassword?: boolean;
     tempPassword?: string;
+    image_url?: string;
+    demoUsed?: boolean;
+    demoExpiry?: string;
+    premiumExpiry?: string;
+    planType?: string;
+    planTier?: string;
+    coinsReceived?: number;
+    coinsUsed?: number;
 }
 
 export interface AuthResponse {
@@ -26,19 +36,28 @@ export interface AuthResponse {
 }
 
 export interface Case {
-    id: number;
-    user_id: number;
+    _id?: string;
+    caseId: string;
+    clientId?: string | any;
+    advocateId?: any; // Populated User
     title: string;
-    type: string;
-    status: 'Pending' | 'Active' | 'Resolved' | 'Closed' | 'Open';
-    filing_date: string;
-    next_hearing: string;
-    case_number: string;
+    description: string;
+    category: string;
+    status: string;
+    location?: string;
+    court?: string;
+    department?: string;
+    subDepartment?: string;
+    lastUpdate?: string;
+    updatedAt?: string;
+    createdAt?: string;
 }
 
 export interface Advocate {
     id: number | string;
+    userId?: string;
     unique_id: string;
+    display_id?: string;
     name: string;
     firstName?: string;
     lastName?: string;
@@ -72,6 +91,7 @@ export interface Advocate {
     motherTongue?: string;
     maritalStatus?: string;
     bar_council_id?: string;
+    isMasked?: boolean;
 }
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 

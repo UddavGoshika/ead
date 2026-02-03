@@ -179,6 +179,23 @@
     background-color: #ffffff;
 }
 
+.resetBtn {
+    background: transparent;
+    color: #fbfafa;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    padding: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(250, 52, 21, 0.095);
+}
+
+.resetBtn:hover {
+    background: #db04045a;
+    transform: translateY(-2px);
+}
+
 .chevron {
     position: absolute;
     right: 14px;

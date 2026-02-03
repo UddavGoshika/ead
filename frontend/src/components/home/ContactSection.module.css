@@ -1,3 +1,67 @@
+/* Notification Toast */
+.notification {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 320px;
+    max-width: 450px;
+}
+
+.notification.success {
+    border-left: 4px solid #10b981;
+}
+
+.notification.error {
+    border-left: 4px solid #ef4444;
+}
+
+.notification p {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #f1f5f9;
+    flex: 1;
+}
+
+.notification svg {
+    flex-shrink: 0;
+}
+
+.notification.success svg {
+    color: #10b981;
+}
+
+.notification.error svg {
+    color: #ef4444;
+}
+
+.closeNotif {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.closeNotif:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .section {
     background:
         radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
@@ -6,7 +70,8 @@
     padding: 100px 20px;
     color: white;
     border-bottom: 1px solid rgb(32, 32, 32);
-
+    position: relative;
+    /* Ensure it stays below fixed elements */
 }
 
 .container {

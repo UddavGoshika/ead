@@ -51,7 +51,7 @@ const Grievances: React.FC = () => {
                     </p>
 
                     <ul>
-                        <li>📧 Email: <strong>[official grievance / support email]</strong></li>
+                        <li>📧 Email: <strong> info.eadvocateservices@gmail.com</strong></li>
                         <li>📌 Subject Line: <strong>Grievance – E-Advocate Services</strong></li>
                     </ul>
 

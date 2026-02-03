@@ -174,3 +174,128 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Detail View Styles */
+.detailContainer {
+    color: #fff;
+    padding: 10px;
+}
+
+.detailContent h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #ffd700;
+}
+
+.detailContent p {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.detailContent ul {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 25px;
+}
+
+.detailContent li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.detailContent li::before {
+    content: "•";
+    color: #ffd700;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.actionBtn {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actionBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.linkList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.linkList a {
+    color: #add8e6;
+    text-decoration: none;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.linkList a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.chatBoxPlaceholder {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.contactLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    color: #ffd700;
+    text-decoration: none;
+    background: rgba(255, 215, 0, 0.1);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.contactLink:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.backBtn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-right: 10px;
+}
+
+.backBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}

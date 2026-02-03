@@ -3,108 +3,11 @@ import { MoreVertical, Search, Filter, Download, User, Mail, Phone, Calendar, Re
 import styles from "./WalletHistory.module.css";
 import type { Transaction, SortState, FilterState, SortField } from "./types";
 
-const initialTransactions: Transaction[] = [
-    {
-        id: "TXN1001",
-        name: "Rohan Mehta",
-        userId: "ADV-001",
-        email: "rohan.mehta@example.com",
-        phone: "+91 98765-43210",
-        role: "Advocate",
-        wallet: "main",
-        source: "recharge",
-        plan: "Pro Gold",
-        refBy: "-",
-        type: "credit",
-        amount: 5000,
-        status: "completed",
-        date: "2026-01-20",
-        gateway: "razorpay",
-        paymentMethod: "upi",
-        notes: "Recharge for annual plan upgrade",
-        ip: "103.45.67.89",
-    },
-    {
-        id: "TXN1002",
-        name: "Sunil Verma",
-        userId: "CLI-042",
-        email: "sunil.v@verified.in",
-        phone: "+91 88221-55443",
-        role: "Client",
-        wallet: "main",
-        source: "case_payment",
-        plan: "-",
-        refBy: "-",
-        type: "debit",
-        amount: 1500,
-        status: "completed",
-        date: "2026-01-21",
-        gateway: "internal",
-        paymentMethod: "wallet",
-        notes: "Payment for case ID #8821",
-        ip: "115.12.34.56",
-    },
-    {
-        id: "TXN1003",
-        name: "Arya Stark",
-        userId: "ADV-109",
-        email: "arya.stark@winterfell.org",
-        phone: "+91 70012-33445",
-        role: "Advocate",
-        wallet: "referral",
-        source: "referral",
-        plan: "-",
-        refBy: "Jon Snow",
-        type: "credit",
-        amount: 250,
-        status: "completed",
-        date: "2026-01-22",
-        gateway: "system",
-        paymentMethod: "referral_program",
-        notes: "Bonus for successful referral",
-        ip: "152.0.11.22",
-    },
-    {
-        id: "TXN1004",
-        name: "Vikram Singh",
-        userId: "CLI-990",
-        email: "vikram.singh@corporate.co",
-        phone: "+91 99887-76655",
-        role: "Client",
-        wallet: "main",
-        source: "recharge",
-        plan: "-",
-        refBy: "-",
-        type: "credit",
-        amount: 1000,
-        status: "pending",
-        date: "2026-01-23",
-        gateway: "manual",
-        paymentMethod: "bank_transfer",
-        notes: "Awaiting bank verification",
-        ip: "192.168.1.10",
-    },
-    {
-        id: "TXN1005",
-        name: "Meera Bai",
-        userId: "ADV-205",
-        email: "meera.b@temple.in",
-        phone: "+91 91122-33445",
-        role: "Advocate",
-        wallet: "bonus",
-        source: "promo_code",
-        plan: "-",
-        refBy: "-",
-        type: "credit",
-        amount: 500,
-        status: "completed",
-        date: "2026-01-24",
-        gateway: "system",
-        paymentMethod: "coupon",
-        notes: "Republic Day Promo",
-        ip: "45.67.89.01",
-    }
-];
+import axios from "axios";
+
+const API_BASE_URL = window.location.hostname === 'localhost' ? "http://localhost:5000" : "";
+
+const initialTransactions: Transaction[] = [];
 
 const WalletHistory: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
@@ -130,6 +33,63 @@ const WalletHistory: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
+
+    // Move fetch logic here
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
+
+    const fetchTransactions = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/transactions`);
+            if (res.data.success) {
+                // Filter only wallet/withdrawal transactions
+                const walletTxns = res.data.transactions.filter((t: any) => {
+                    const pid = (t.packageName || "").toLowerCase();
+                    // Wallet recharge or Withdrawal
+                    return pid.includes('wallet') || pid.includes('withdrawal');
+                });
+
+                const formatted: Transaction[] = walletTxns.map((t: any) => {
+                    const isWithdrawal = (t.packageName || "").toLowerCase().includes('withdrawal');
+                    // Parse amount string "₹1,000" -> 1000
+                    const rawAmount = typeof t.amount === 'string'
+                        ? parseFloat(t.amount.replace(/[^0-9.-]+/g, ""))
+                        : Number(t.amount);
+
+                    return {
+                        id: String(t.id), // Mongo ID for actions
+                        displayId: t.transactionId, // Visual ID
+                        name: t.memberName,
+                        userId: t.memberId,
+                        email: t.email,
+                        phone: t.mobile,
+                        role: t.role,
+                        wallet: "Main",
+                        source: isWithdrawal ? "Payout" : "Recharge",
+                        plan: "-",
+                        refBy: "-",
+                        type: isWithdrawal ? "debit" : "credit",
+                        amount: isNaN(rawAmount) ? 0 : rawAmount,
+                        status: t.status.toLowerCase() as any, // "completed" | "pending" | "failed"
+                        date: t.transactionDate.split(',')[0], // Simple date extraction
+                        gateway: t.paymentMethod,
+                        paymentMethod: "Online",
+                        notes: `${isWithdrawal ? 'Withdrawal' : 'Recharge'} Request via ${t.paymentMethod}`,
+                        ip: "N/A"
+                    };
+                });
+
+                setTransactions(formatted);
+                setFiltered(formatted);
+            }
+        } catch (err) {
+            console.error("Failed to fetch wallet history:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Close menu on click outside
     useEffect(() => {
@@ -206,18 +166,47 @@ const WalletHistory: React.FC = () => {
         setPage(1);
     };
 
-    const handleReject = (id: string) => {
+    const handleReject = async (id: string) => {
         if (window.confirm("Are you sure you want to reject this transaction?")) {
-            setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'failed' } : t));
-            setOpenMenuId(null);
-            setSelectedTx(null);
+            try {
+                // Determine real ID (in formatted it might be transactionId or _id, best to look up original if possible or store _id as id)
+                // For simplicity assuming id corresponds to DB _id or we need to find filtered object's original _id?
+                // The API expects the MongoDB _id. 
+                // In formatting: id: t.transactionId || String(t.id). t.id is t._id from backend.
+                // Wait, backend admin.js returns id: t._id. So t.id IS the mongo ID. 
+                // But formatting uses t.transactionId (e.g. order_123) preferentially.
+                // WE SHOULD USE THE MONGO ID FOR API CALLS.
+                // Let's fix the map above to store mongoId separate if needed, or stick to mongoId as 'id'.
+                // I will modify the map above to ensure 'id' is usable or 'transactionId' is visual.
+                // Actually, backend returns `transactionId` as the payment_id/order_id. `id` is the `_id`.
+                // In my frontend map: `id: t.transactionId || String(t.id)`. This might lose the mongo ID if transactionId exists.
+                // I will blindly try to patch using the ID. If it fails, I'll need to refactor.
+                // For now let's assume `id` is the key. But wait, `PackagePayments` uses `t.id` (mongo id).
+                // I should probably use `t.id` (mongo id) for the `id` field in frontend to be safe for actions.
+
+                const res = await axios.patch(`${API_BASE_URL}/api/admin/transactions/${id}/status`, { status: 'Failed' });
+                if (res.data.success) {
+                    setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'failed' } : t));
+                    setOpenMenuId(null);
+                    setSelectedTx(null);
+                }
+            } catch (err) {
+                alert("Action failed");
+            }
         }
     };
 
-    const handleApproveAction = (id: string) => {
-        setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' } : t));
-        setOpenMenuId(null);
-        setSelectedTx(null);
+    const handleApproveAction = async (id: string) => {
+        try {
+            const res = await axios.patch(`${API_BASE_URL}/api/admin/transactions/${id}/status`, { status: 'Completed' });
+            if (res.data.success) {
+                setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' } : t));
+                setOpenMenuId(null);
+                setSelectedTx(null);
+            }
+        } catch (err) {
+            alert("Action failed");
+        }
     };
 
     const handleViewUserHistory = (userId: string) => {
@@ -249,7 +238,10 @@ const WalletHistory: React.FC = () => {
     }, [filtered]);
 
     useEffect(() => {
-        applyFilters();
+        // Only run local filters if transactions are loaded
+        if (transactions.length > 0) {
+            applyFilters();
+        }
     }, [filters, sort, transactions]);
 
     return (
@@ -439,7 +431,7 @@ const WalletHistory: React.FC = () => {
                                 <td>
                                     <div className={styles.dateCell}>
                                         <span>{tx.date}</span>
-                                        <small className={styles.txnId}>{tx.id}</small>
+                                        <small className={styles.txnId}>{tx.displayId || tx.id}</small>
                                     </div>
                                 </td>
 

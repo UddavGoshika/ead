@@ -68,7 +68,13 @@
 
 /* Blur effect for free plan users */
 .blurredImage {
-    filter: blur(12px);
+    filter: blur(4px);
+}
+
+.blurredText {
+    filter: blur(0px);
+    pointer-events: none;
+    user-select: none;
 }
 
 /* Profile Text Overlay (Bottom Left) */

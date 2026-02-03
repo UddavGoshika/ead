@@ -53,27 +53,32 @@ const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" })
             setLoading(true);
             const res = await axios.get(`${API_BASE_URL}/api/admin/transactions`);
             if (res.data.success) {
-                const formattedPayments = res.data.transactions.map((t: any) => {
-                    const { finalPkg, finalSub } = formatPackageNames(t.packageName, t.subPackage);
-                    return {
-                        id: t.id,
-                        memberName: t.memberName,
-                        memberId: t.memberId,
-                        email: t.email,
-                        mobile: t.mobile,
-                        role: t.role,
-                        packageName: finalPkg,
-                        subPackage: finalSub,
-                        paymentMethod: t.paymentMethod,
-                        amount: t.amount,
-                        discount: t.discount,
-                        tax: t.tax,
-                        netAmount: t.netAmount,
-                        status: t.status === 'Success' ? 'Paid' : t.status,
-                        transactionId: t.transactionId,
-                        transactionDate: t.transactionDate
-                    };
-                });
+                const formattedPayments = res.data.transactions
+                    .filter((t: any) => {
+                        const pid = (t.packageName || "").toLowerCase();
+                        return !pid.includes('wallet') && !pid.includes('withdrawal');
+                    })
+                    .map((t: any) => {
+                        const { finalPkg, finalSub } = formatPackageNames(t.packageName, t.subPackage);
+                        return {
+                            id: t.id,
+                            memberName: t.memberName,
+                            memberId: t.memberId,
+                            email: t.email,
+                            mobile: t.mobile,
+                            role: t.role,
+                            packageName: finalPkg,
+                            subPackage: finalSub,
+                            paymentMethod: t.paymentMethod,
+                            amount: t.amount,
+                            discount: t.discount,
+                            tax: t.tax,
+                            netAmount: t.netAmount,
+                            status: t.status === 'Success' ? 'Paid' : t.status,
+                            transactionId: t.transactionId,
+                            transactionDate: t.transactionDate
+                        };
+                    });
                 setPayments(formattedPayments);
             }
         } catch (error) {

@@ -40,8 +40,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
-  width: 42px;
-  height: 42px;
+
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -264,8 +263,12 @@
 .modal {
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 32px;
-  width: 500px;
+  border-radius: 24px;
+  width: 750px;
+  max-width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   box-shadow: 0 0 100px rgba(0, 0, 0, 0.6);
   animation: slideModal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -282,11 +285,13 @@
 }
 
 .modalHeader {
-  padding: 25px 35px;
+  padding: 20px 30px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+  background: #0f172a;
 }
 
 .modalHeader h3 {
@@ -311,48 +316,61 @@
 }
 
 .modalBody {
-  padding: 35px;
+  padding: 30px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 .inputGroup {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .inputGroup label {
   display: block;
   color: #94a3b8;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
-.inputGroup input {
+.inputGroup input,
+.inputGroup select {
   width: 100%;
   background: #1e293b;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  padding: 15px 20px;
-  border-radius: 14px;
-  font-size: 1rem;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s;
 }
 
-.inputGroup input:focus {
+.inputGroup input:focus,
+.inputGroup select:focus {
   border-color: #facc15;
 }
 
 .modalActions {
-  padding: 0 35px 35px;
+  padding: 20px 30px;
   display: flex;
   gap: 15px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0f172a;
 }
 
 .modalActions button {
   flex: 1;
   padding: 14px;
   border-radius: 12px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -375,6 +393,11 @@
 }
 
 @media (max-width: 768px) {
+  .modalGrid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
   .profileHero {
     flex-direction: column;
     text-align: center;

@@ -130,5 +130,15 @@ export const interactionService = {
     getAllActivities: async (userId: string) => {
         const response = await api.get(`/interactions/all/${userId}`);
         return response.data.activities;
+    },
+
+    respondToActivity: async (activityId: string, status: 'accepted' | 'declined') => {
+        const response = await api.post(`/interactions/respond/${activityId}/${status}`);
+        return response.data;
+    },
+
+    deleteActivity: async (activityId: string) => {
+        const response = await api.delete(`/interactions/${activityId}`);
+        return response.data;
     }
 };

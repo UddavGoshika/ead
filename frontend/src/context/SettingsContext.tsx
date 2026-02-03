@@ -14,13 +14,17 @@ interface Settings {
     footer_text: string;
     contact_email: string;
     contact_phone: string;
-    social_links: {
-        instagram: string;
-        facebook: string;
-        linkedin: string;
-        twitter: string;
-        whatsapp: string;
-    };
+    social_links: Array<{
+        platform: string;
+        url: string;
+        icon: string;
+        active: boolean;
+    }>;
+    footer_pages: Array<{
+        title: string;
+        link: string;
+        active: boolean;
+    }>;
     ecosystem_links: Array<{ label: string; link: string; icon_url: string }>;
     manager_permissions: Record<string, boolean>;
     appearance: {
@@ -44,8 +48,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const refreshSettings = async () => {
         try {
-            const response = await axios.get('/api/settings');
-            setSettings(response.data);
+            const response = await axios.get('/api/settings/site');
+            if (response.data.success) {
+                setSettings(response.data.settings);
+            }
         } catch (error) {
             console.error('Error fetching settings:', error);
         } finally {
@@ -55,7 +61,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updateSettings = async (newSettings: Partial<Settings>) => {
         try {
-            const response = await axios.post('/api/settings', newSettings);
+            const response = await axios.post('/api/settings/site', newSettings);
             if (response.data.success) {
                 setSettings(response.data.settings);
                 // Trigger sync for other tabs

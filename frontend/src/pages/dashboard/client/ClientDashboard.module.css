@@ -92,6 +92,53 @@
     }
 }
 
+.topBarCenter {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.profileHeader {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 16px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profileInfoQuick {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.miniProfileImg {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #facc15;
+}
+
+.miniNameStack {
+    display: flex;
+    flex-direction: column;
+}
+
+.miniName {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.miniId {
+    font-size: 10px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+}
+
 .topBarRight {
     margin-left: auto;
     display: flex;
@@ -201,13 +248,30 @@
     gap: 8px;
 }
 
-.badgeStack {
+.coinBadge {
     display: flex;
-    gap: 8px;
     align-items: center;
+    gap: 8px;
+    background: rgba(250, 204, 21, 0.1);
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(250, 204, 21, 0.2);
 }
 
-.planBadge {
+.coinCount {
+    color: #facc15;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.coinLabel {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badgePlan {
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -225,14 +289,13 @@
     cursor: default;
 }
 
-.planBadge::before {
+.badgePlan::before {
     content: '';
     position: absolute;
     top: -50%;
     left: -50%;
     width: 200%;
     height: 200%;
-    color: #fbfbfc;
     background: linear-gradient(45deg,
             transparent,
             rgba(255, 255, 255, 0.1),
@@ -297,4 +360,161 @@
         box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
         border-color: #ffffff;
     }
+}
+
+/* Notification Dropdown */
+.notificationWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.notificationDropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 380px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    margin-top: 15px;
+    z-index: 1000;
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notifHeader {
+    padding: 15px 20px;
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notifHeader h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.clearAllBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.clearAllBtn:hover {
+    color: #facc15;
+}
+
+.notifList {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.notifItem {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.notifItem:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notifIcon {
+    width: 32px;
+    height: 32px;
+    background: rgba(250, 204, 21, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #facc15;
+    flex-shrink: 0;
+}
+
+.notifContent {
+    flex: 1;
+}
+
+.notifMessage {
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.notifTime {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.notifCloseBtn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 5px;
+    opacity: 0;
+    transition: all 0.2s;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.notifItem:hover .notifCloseBtn {
+    opacity: 1;
+}
+
+.notifCloseBtn:hover {
+    color: #ef4444;
+}
+
+.noNotifs {
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.badgeCount {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #0f172a;
 }

@@ -78,7 +78,7 @@ const AdvocateHowItWorks: React.FC = () => {
 
                             <div className={styles.advhowitworksImage}>
                                 <img
-                                    src="https://img.freepik.com/free-vector/modern-online-registration-compositio_23-2147993866.jpg?semt=ais_hybrid&w=740&q=80"
+                                    src="/assets/advoateregister.png"
                                     alt="Secure advocate onboarding & verification"
                                 />
                                 <div className={styles.advhowitworksCaption}>

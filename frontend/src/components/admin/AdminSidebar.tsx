@@ -79,6 +79,7 @@ export const MENU_SCHEMA: MenuItem[] = [
             },
             { id: "profile-sections", name: "Profile Sections", path: "/admin/members/profile-sections" },
             { id: "member-verification-form", name: "Member Verification Form", path: "/admin/members/verification" },
+            { id: "login-member-details", name: "Login Member Details", path: "/admin/members/login-details" },
         ],
     },
     {

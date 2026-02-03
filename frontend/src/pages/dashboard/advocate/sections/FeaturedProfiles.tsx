@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { advocateService } from '../../../../services/api';
 import type { Advocate } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
-import { Loader2, ArrowLeft, ScrollText } from 'lucide-react';
+import { Loader2, ArrowLeft, ScrollText, Shield } from 'lucide-react';
 import { interactionService } from '../../../../services/interactionService';
 import { useAuth } from '../../../../context/AuthContext';
 import styles from '../AdvocateList.module.css';
+import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
+import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
+import TokenTopupModal from '../../../../components/dashboard/shared/TokenTopupModal';
 
 interface Props {
     showDetailedProfile: (id: string) => void;
@@ -15,26 +18,40 @@ interface Props {
 }
 
 const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }) => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
+    const [showTopup, setShowTopup] = useState(false);
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
-        specialization: 'Department',
-        court: 'Select Court',
-        location: 'Location',
-        experience: 'Experience'
+        specialization: '',
+        subDepartment: '',
+        court: '',
+        state: '',
+        district: '',
+        city: '',
+        experience: ''
     });
+
+    // Derived Data for Dropdowns
+    const availableDistricts = filters.state && LOCATION_DATA_RAW[filters.state] ? Object.keys(LOCATION_DATA_RAW[filters.state]) : [];
+    const availableCities = filters.state && filters.district && LOCATION_DATA_RAW[filters.state][filters.district] ? LOCATION_DATA_RAW[filters.state][filters.district] : [];
+    const availableSubDepartments = filters.specialization && LEGAL_DOMAINS[filters.specialization] ? LEGAL_DOMAINS[filters.specialization] : [];
 
     const fetchAdvocates = async () => {
         setLoading(true);
         try {
             const params: any = {};
+            params.category = 'featured'; // Rule 3: STRICTLY FEATURED (Premium Plans)
+
             if (filters.search) params.search = filters.search;
-            if (filters.specialization !== 'Department') params.specialization = filters.specialization;
-            if (filters.court !== 'Select Court') params.court = filters.court;
-            if (filters.location !== 'Location') params.city = filters.location;
-            if (filters.experience !== 'Experience') params.experience = filters.experience;
+            if (filters.specialization) params.specialization = filters.specialization;
+            if (filters.subDepartment) params.subSpecialization = filters.subDepartment;
+            if (filters.court) params.court = filters.court;
+            if (filters.state) params.state = filters.state;
+            if (filters.district) params.district = filters.district;
+            if (filters.city) params.city = filters.city;
+            if (filters.experience) params.experience = filters.experience;
 
             const response = await advocateService.getAdvocates(params);
             setAdvocates(response.data.advocates || []);
@@ -51,7 +68,21 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+
+        let newFilters = { ...filters, [name]: value };
+
+        // Cascading Resets
+        if (name === 'state') {
+            newFilters.district = '';
+            newFilters.city = '';
+        } else if (name === 'district') {
+            newFilters.city = '';
+        } else if (name === 'specialization') {
+            newFilters.subDepartment = '';
+        }
+
+        setFilters(newFilters);
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -100,8 +131,8 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 </div>
             </div>
 
-            <div className={styles.searchSection}>
-                <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
+            <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
+                <form className={styles.searchContainer} onSubmit={handleSearchSubmit} style={{ width: '100%' }}>
                     <input
                         type="text"
                         name="search"
@@ -113,39 +144,85 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                     <button type="submit" className={styles.searchBtnInside}>Search</button>
                 </form>
 
-                <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Department</option>
-                    <option>Criminal Law</option>
-                    <option>Civil Law</option>
-                    <option>Family Law</option>
-                    <option>Corporate Law</option>
-                    <option>Taxation</option>
-                </select>
-                <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Select Court</option>
-                    <option>Supreme Court</option>
-                    <option>High Court</option>
-                    <option>District Court</option>
-                </select>
-                <select name="location" value={filters.location} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Location</option>
-                    <option>Delhi</option>
-                    <option>Mumbai</option>
-                    <option>Bangalore</option>
-                </select>
-                <select name="experience" value={filters.experience} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Experience</option>
-                    <option>0-2 Years</option>
-                    <option>2-5 Years</option>
-                    <option>5-10 Years</option>
-                </select>
+                {/* Filter Grid Row 1: Legal Domain */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', width: '100%' }}>
+                    <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All Departments</option>
+                        {Object.keys(LEGAL_DOMAINS).map(dept => (
+                            <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                    </select>
 
-                <button className={styles.submitBtnDashboard} onClick={fetchAdvocates}>Submit</button>
+                    <select name="subDepartment" value={filters.subDepartment} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.specialization}>
+                        <option value="">All Sub-Departments</option>
+                        {availableSubDepartments.map(sub => (
+                            <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                    </select>
+
+                    <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All Courts</option>
+                        <option>Supreme Court</option>
+                        <option>High Court</option>
+                        <option>District Court</option>
+                        <option>Session Court</option>
+                        <option>Family Court</option>
+                        <option>Consumer Forum</option>
+                        <option>Tribunal</option>
+                    </select>
+                </div>
+
+                {/* Filter Grid Row 2: Location */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', width: '100%' }}>
+                    <select name="state" value={filters.state} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All States</option>
+                        {Object.keys(LOCATION_DATA_RAW).sort().map(st => (
+                            <option key={st} value={st}>{st}</option>
+                        ))}
+                    </select>
+
+                    <select name="district" value={filters.district} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.state}>
+                        <option value="">All Districts</option>
+                        {availableDistricts.sort().map(dist => (
+                            <option key={dist} value={dist}>{dist}</option>
+                        ))}
+                    </select>
+
+                    <select name="city" value={filters.city} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.district}>
+                        <option value="">All Cities</option>
+                        {availableCities.sort().map(city => (
+                            <option key={city} value={city}>{city}</option>
+                        ))}
+                    </select>
+
+                    <select name="experience" value={filters.experience} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All Experience</option>
+                        <option value="0-2 Years">0-2 Years</option>
+                        <option value="2-5 Years">2-5 Years</option>
+                        <option value="5-10 Years">5-10 Years</option>
+                        <option value="10+ Years">10+ Years</option>
+                    </select>
+                </div>
+
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ width: '200px' }}>Apply Filters</button>
+                </div>
             </div>
 
             {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
                     <Loader2 className="animate-spin" size={40} color="#facc15" />
+                </div>
+            ) : !isPremium ? (
+                <div className={styles.premiumOverlay}>
+                    <div className={styles.premiumLockCard}>
+                        <Shield size={64} color="#facc15" strokeWidth={1} />
+                        <h2>Featured Profiles Locked</h2>
+                        <p>Upgrade to a Premium Plan to view and interact with our top-rated featured advocates.</p>
+                        <button className={styles.upgradeNowBtn} onClick={() => showsidePage('upgrade')}>
+                            Upgrade to Premium
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <div className={styles.grid}>
@@ -154,28 +231,55 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                             <AdvocateCard
                                 advocate={adv}
                                 variant="featured"
-                                isPremium={user?.isPremium}
+                                isPremium={isPremium}
                                 onAction={async (action, data) => {
                                     if (user) {
                                         const targetId = String(adv.id);
                                         const userId = String(user.id);
                                         const targetRole = 'advocate';
 
-                                        if (action === 'interest_initiated' || action === 'interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                            showToast(`Interest sent to ${adv.name}`);
-                                        } else if (action === 'super_interest_sent' || action === 'super-interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                            showToast(`Super Interest sent to ${adv.name}!`);
-                                        } else if (action === 'shortlisted') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                            showToast(`${adv.name} added to shortlist`);
-                                        } else if (action === 'openFullChatPage') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                                            onSelectForChat(adv);
-                                        } else if (action === 'message_sent' && data) {
-                                            await interactionService.sendMessage(userId, targetId, data);
-                                            showToast(`Message sent to ${adv.name}`);
+                                        try {
+                                            let res;
+                                            if (action === 'interest') {
+                                                res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                showToast(`Interest sent to ${adv.name}`);
+                                            } else if (action === 'superInterest') {
+                                                res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                showToast(`Super Interest sent to ${adv.name}!`);
+                                            } else if (action === 'shortlist') {
+                                                res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                showToast(`${adv.name} added to shortlist`);
+                                            } else if (action === 'openFullChatPage') {
+                                                // Rule 12: Chat Unlock
+                                                res = await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                onSelectForChat(adv);
+                                            } else if (action === 'message_sent' && data) {
+                                                await interactionService.sendMessage(userId, targetId, data);
+                                                showToast(`Message sent to ${adv.name}`);
+                                            }
+
+                                            // Update local user state if tokens were spent
+                                            if (res && res.coins !== undefined) {
+                                                refreshUser({
+                                                    coins: res.coins,
+                                                    coinsUsed: res.coinsUsed
+                                                });
+                                            }
+                                        } catch (err: any) {
+                                            const errorData = err.response?.data;
+                                            const msg = errorData?.message || 'Action failed';
+                                            const errorCode = errorData?.error;
+
+                                            if (errorCode === 'INTERACTION_LIMIT') {
+                                                showToast("You’ve reached the interaction limit for this profile (Max 3)");
+                                            } else if (errorCode === 'ZERO_COINS' || errorCode === 'INSUFFICIENT_COINS') {
+                                                setShowTopup(true); // Rule 15
+                                            } else if (errorCode === 'UPGRADE_REQUIRED') {
+                                                showToast("Upgrade to premium to perform this action.");
+                                                showsidePage('upgrade');
+                                            } else {
+                                                showToast(msg);
+                                            }
                                         }
                                     }
                                 }}
@@ -184,6 +288,12 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                     ))}
                 </div>
             )}
+
+            <TokenTopupModal
+                isOpen={showTopup}
+                onClose={() => setShowTopup(false)}
+                onTopup={() => showsidePage('upgrade')}
+            />
         </div>
     );
 };

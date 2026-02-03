@@ -1,13 +1,15 @@
+/* ================= BLOG SECTION ================= */
 .blogSection {
-    padding: 40px 0;
+    padding: clamp(60px, 8vw, 100px) 0;
     background:
-        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
-        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
+        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.42), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.64), transparent 35%),
         linear-gradient(180deg, #0b122f, #0b102a);
     position: relative;
     overflow: hidden;
 }
 
+/* Decorative glows */
 .blogSection::before {
     content: '';
     position: absolute;
@@ -15,7 +17,7 @@
     left: -10%;
     width: 40%;
     height: 40%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -26,31 +28,33 @@
     right: -10%;
     width: 40%;
     height: 40%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
     pointer-events: none;
 }
 
+/* ================= CONTAINER ================= */
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 clamp(20px, 4vw, 40px);
     position: relative;
     z-index: 1;
 }
 
+/* ================= HEADER ================= */
 .header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: clamp(40px, 6vw, 70px);
 }
 
 .title {
     font-family: 'Playfair Display', serif;
-    font-size: 3.5rem;
+    font-size: clamp(2rem, 4vw, 3.5rem);
     font-weight: 700;
     margin-bottom: 20px;
-    background: linear-gradient(to right, #60a5fa, #fff, #6366f1);
-    background-clip: text;
+    background: linear-gradient(to right, #60a5fa, #ffffff, #6366f1);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -1px;
 }
@@ -58,30 +62,45 @@
 .subtitle {
     font-family: 'Outfit', sans-serif;
     color: #94a3b8;
-    max-width: 700px;
+    max-width: 720px;
     margin: 0 auto;
-    font-size: 1.1rem;
-    line-height: 1.6;
+    font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+    line-height: 1.65;
 }
 
+/* ================= GRID (CRITICAL FIX) ================= */
+/* Desktop & Laptop → ALWAYS 3 columns */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 50px;
-    justify-content: center;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(28px, 3vw, 50px);
+    align-items: stretch;
 }
 
+/* ================= LARGE LAPTOP TUNING ================= */
+@media (max-width: 1280px) {
+    .grid {
+        gap: 32px;
+    }
+
+    .container {
+        padding: 0 24px;
+    }
+}
+
+/* ================= TABLET (2 COLUMNS) ================= */
 @media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 28px;
+    }
+
     .title {
         font-size: 2.5rem;
     }
-
-    .grid {
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 30px;
-    }
 }
 
+/* ================= MOBILE (1 COLUMN) ================= */
 @media (max-width: 768px) {
     .blogSection {
         padding: 60px 0;
@@ -101,12 +120,17 @@
 
     .grid {
         grid-template-columns: 1fr;
-        gap: 25px;
+        gap: 24px;
     }
 }
 
+/* ================= SMALL MOBILE ================= */
 @media (max-width: 480px) {
     .title {
         font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
     }
 }

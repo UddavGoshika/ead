@@ -146,6 +146,20 @@ const Footer: React.FC = () => {
         }
     };
 
+    const getIconComponent = (iconName: string) => {
+        const name = iconName.toLowerCase();
+        if (name.includes('insta')) return <FaInstagram />;
+        if (name.includes('facebook') || name.includes('fb')) return <FaFacebookF />;
+        if (name.includes('linkedin')) return <FaLinkedinIn />;
+        if (name.includes('pinterest')) return <FaPinterestP />;
+        if (name.includes('youtube')) return <FaYoutube />;
+        if (name.includes('twitter') || name.includes('x')) return <FaXTwitter />;
+        if (name.includes('threads')) return <FaThreads />;
+        if (name.includes('telegram')) return <FaTelegram />;
+        if (name.includes('whatsapp')) return <FaWhatsapp />;
+        return <FaInstagram />; // Default
+    };
+
     return (
         <footer className={styles.footer}>
             <div className={styles.container}>
@@ -180,6 +194,11 @@ const Footer: React.FC = () => {
                             <li><Link to="/careers">Careers</Link></li>
                             <li><Link to="/how-it-works">How it Works</Link></li>
                             <li><Link to="/documentation-how-it-works">Documentation - How It Works</Link></li>
+                            {settings?.footer_pages?.filter(p => p.active).map((page, idx) => (
+                                <li key={idx}>
+                                    <Link to={page.link}>{page.title}</Link>
+                                </li>
+                            ))}
                             <li><Link to="#" onClick={(e) => { e.preventDefault(); openModal('credits'); }}>Credits</Link></li>
                             <li><Link to="/site-map">Site Map</Link></li>
                             <li><Link to="/about">About Us</Link></li>
@@ -189,7 +208,8 @@ const Footer: React.FC = () => {
                         <h3>For Advocates</h3>
                         <ul>
                             <li><Link to="#search" onClick={(e) => handleSearchClick(e, 'clients')}>Find Clients</Link></li>
-                            <li><Link to="/advocate-how-it-works">How it Works</Link></li>
+                            <li><Link to="/advocate-how-it-works">Advocate How it Works</Link></li>
+
                         </ul>
                     </div>
                 </div>
@@ -201,6 +221,7 @@ const Footer: React.FC = () => {
                         <ul>
                             <li><Link to="#search" onClick={(e) => handleSearchClick(e, 'advocates')}>Find Advocates</Link></li>
                             <li><Link to="/client-how-it-works">How it Works</Link></li>
+
                         </ul>
                     </div>
                     <div className={styles.column}>
@@ -223,8 +244,8 @@ const Footer: React.FC = () => {
                     <div className={styles.column}>
                         <h3>Privacy Features</h3>
                         <ul>
-                            <li><Link to="/summons">Summons / Notices</Link></li>
-                            <li><Link to="/grievances">Grievances</Link></li>
+                            <li><Link to="/summons-and-notices">Summons / Notices</Link></li>
+                            <li><Link to="/grievance-redressal">Grievances</Link></li>
                             <li><Link to="/refund">Refund Policy</Link></li>
                         </ul>
                     </div>
@@ -283,104 +304,20 @@ const Footer: React.FC = () => {
                         <h3 className={styles.heading}>Connect With Us</h3>
 
                         <div className={styles.socials}>
-                            {/* Instagram */}
-                            <a
-                                href="https://www.instagram.com/e_advocate_services/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Instagram"
-                                className={styles.social}
-                            >
-                                <FaInstagram />
-                            </a>
 
-                            {/* Facebook */}
-                            <a
-                                href="https://www.facebook.com/eadvocateservices"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Facebook"
-                                className={styles.social}
-                            >
-                                <FaFacebookF />
-                            </a>
 
-                            {/* LinkedIn */}
-                            <a
-                                href="https://www.linkedin.com/in/e-advocate-services/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="LinkedIn"
-                                className={styles.social}
-                            >
-                                <FaLinkedinIn />
-                            </a>
-
-                            {/* Pinterest */}
-                            <a
-                                href="https://www.pinterest.com/eadvocateservices/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Pinterest"
-                                className={styles.social}
-                            >
-                                <FaPinterestP />
-                            </a>
-
-                            {/* YouTube */}
-                            <a
-                                href="https://www.youtube.com/channel/UCkl_3tG975FVRBEmleOZRng"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="YouTube"
-                                className={styles.social}
-                            >
-                                <FaYoutube />
-                            </a>
-
-                            {/* Twitter / X */}
-                            <a
-                                href="https://x.com/eadvocateservic"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Twitter X"
-                                className={styles.social}
-                            >
-                                <FaXTwitter />
-                            </a>
-
-                            {/* Threads */}
-                            <a
-                                href="https://www.threads.com/@e_advocate_services"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Threads"
-                                className={styles.social}
-                            >
-                                <FaThreads />
-                            </a>
-
-                            {/* Telegram */}
-                            <a
-                                href="https://t.me/tatitoprojects"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Telegram"
-                                className={styles.social}
-                            >
-                                <FaTelegram />
-                            </a>
-
-                            {/* WhatsApp */}
-                            <a
-                                href="https://wa.me/917093704706"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="WhatsApp"
-                                className={styles.social}
-                            >
-                                <FaWhatsapp />
-                            </a>
+                            {(settings?.social_links && Array.isArray(settings.social_links) ? settings.social_links : (settings?.social_links ? Object.entries(settings.social_links as any).map(([k, v]) => ({ platform: k, url: v as string, icon: k, active: true })) : [])).filter((l: any) => l.active && l.url && l.url !== '#').map((link: any, idx: number) => (
+                                <a
+                                    key={idx}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={link.platform}
+                                    className={styles.social}
+                                >
+                                    {getIconComponent(link.icon || link.platform)}
+                                </a>
+                            ))}
                         </div>
 
                         <div className={styles.contact}>

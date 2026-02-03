@@ -733,7 +733,9 @@
 }
 
 .blurredImage {
-    filter: blur(12px) grayscale(0.5);
+    filter: blur(20px);
+    transform: scale(1.1);
+    /* Prevent edge bleeding */
 }
 
 .premiumLockCard {

@@ -16,7 +16,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        // If user is logged in but doesn't have the right role
+        // Smart Redirect based on Role
+        if (user.role === 'client') return <Navigate to="/dashboard/client" replace />;
+        if (user.role === 'advocate') return <Navigate to="/dashboard/advocate" replace />;
+        if (user.role === 'legal_provider') return <Navigate to="/dashboard/advisor" replace />;
+        if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+
         return <Navigate to="/" replace />;
     }
 

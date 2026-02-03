@@ -141,7 +141,9 @@ const PrivacyPolicy: React.FC = () => {
 
                 <div className={styles.contact}>
                     Requests can be sent to:<br />
-                    📧 <strong>[your official support email]</strong>
+                    📧 <strong>support@tatitoprojects.com
+
+                    </strong>
                 </div>
 
                 <h4>9. Third-Party Links</h4>

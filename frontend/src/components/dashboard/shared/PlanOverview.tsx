@@ -42,7 +42,9 @@ const PlanOverview: React.FC = () => {
     }, [user?.id]);
 
     const coinsAvailable = user?.coins || 0;
-    const coinsPackage = features.monthlyCoins === 'unlimited' ? '∞' : features.monthlyCoins;
+    const planType = user?.planType || 'Free';
+    const planTier = user?.planTier || (user?.plan?.includes('Silver') ? 'Silver' : user?.plan?.includes('Gold') ? 'Gold' : user?.plan?.includes('Platinum') ? 'Platinum' : '');
+    const fullPlanLabel = planTier ? `${planType} - ${planTier}` : user?.plan || 'Free';
 
     const stats = [
         {
@@ -57,21 +59,21 @@ const PlanOverview: React.FC = () => {
             val: statsData?.sent || 0,
             icon: Star,
             color: '#facc15',
-            spent: (statsData?.sent || 0) * 5
+            spent: (statsData?.sent || 0) * 2
         },
         {
-            label: 'Profiles Viewed',
-            val: statsData?.visits || 0,
+            label: 'Contact Unlocks',
+            val: activities.filter(a => a.type === 'view_contact').length,
             icon: ShieldCheck,
             color: '#8b5cf6',
-            spent: (statsData?.visits || 0) * 0.5
+            spent: activities.filter(a => a.type === 'view_contact').length * 1
         },
         {
-            label: 'Active Chats',
-            val: statsData?.accepted || 0,
+            label: 'Chat Unlocks',
+            val: activities.filter(a => a.type === 'chat').length,
             icon: MessageCircle,
             color: '#3b82f6',
-            spent: (statsData?.accepted || 0) * 3
+            spent: activities.filter(a => a.type === 'chat').length * 1
         }
     ];
 
@@ -84,13 +86,25 @@ const PlanOverview: React.FC = () => {
         "Access to Legal Research Tools"
     ];
 
-    const getActionCost = (type: string) => {
-        switch (type) {
-            case 'superInterest': return 5;
-            case 'interest': return 1;
-            case 'chat': return 3;
-            case 'visit': return 0.5;
-            default: return 0;
+    const handleActivateDemo = async () => {
+        try {
+            const response = await fetch('/api/auth/activate-demo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `user-token-${user?.id}`
+                },
+                body: JSON.stringify({ userId: user?.id })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Temporary – 1 Day Trial Activated Successfully!');
+                window.location.reload();
+            } else {
+                alert(data.error);
+            }
+        } catch (err) {
+            console.error(err);
         }
     };
 
@@ -99,21 +113,27 @@ const PlanOverview: React.FC = () => {
             <div className={styles.headerRow}>
                 <div className={styles.titleInfo}>
                     <h1>My Subscription</h1>
-                    <p>Manage your intelligence plan and credit utilization</p>
+                    <p>Manage your intelligence plan and token utilization</p>
                 </div>
+                {!user?.isPremium && !user?.demoUsed && (
+                    <button className={styles.upgradeBtn} style={{ background: '#facc15', color: '#000' }} onClick={handleActivateDemo}>
+                        <Zap size={18} />
+                        <span>Activate 1-Day Trial</span>
+                    </button>
+                )}
                 <button className={styles.upgradeBtn}>
                     <ArrowUpRight size={18} />
-                    <span>Change Plan</span>
+                    <span>Upgrade Plan</span>
                 </button>
             </div>
 
             <div className={styles.subscriptionGrid}>
-                {/* Left Column: Wallet & Current Plan */}
+                {/* Left Column: Wallet & Current Plan (Rule 16) */}
                 <div className={styles.leftCol}>
                     <div className={styles.glassCard}>
                         <div className={styles.cardHeader}>
                             <Zap size={20} color="#d4af37" />
-                            <span>Plan Status: <span style={{ color: '#d4af37' }}>{packageName}</span></span>
+                            <span>Current Plan: <span style={{ color: '#d4af37', fontWeight: 700 }}>{fullPlanLabel}</span></span>
                         </div>
 
                         <div className={styles.walletDisplay}>
@@ -121,18 +141,46 @@ const PlanOverview: React.FC = () => {
                                 <Coins size={32} color="#fbbf24" />
                                 <span>{coinsAvailable}</span>
                             </div>
-                            <p className={styles.subtext}>Tokens remaining in current cycle</p>
+                            <p className={styles.subtext}>Tokens remaining in your account</p>
                         </div>
 
                         <div className={styles.limitsList}>
                             <div className={styles.limitItem}>
-                                <span>Monthly Allocation</span>
-                                <b>{coinsPackage} Tokens</b>
+                                <span>Plan Type</span>
+                                <b>{planType}</b>
                             </div>
                             <div className={styles.limitItem}>
-                                <span>Plan Expiry</span>
-                                <b>28 Days Remaining</b>
+                                <span>Sub-Package</span>
+                                <b style={{ color: '#facc15' }}>{planTier || 'Standard'}</b>
                             </div>
+                            <div className={styles.limitItem}>
+                                <span>Total Tokens Received</span>
+                                <b>{user?.coinsReceived || 0}</b>
+                            </div>
+                            <div className={styles.limitItem}>
+                                <span>Tokens Used</span>
+                                <b>{user?.coinsUsed || 0}</b>
+                            </div>
+                            <div className={styles.limitItem}>
+                                <span>Remaining Tokens</span>
+                                <b style={{ color: '#10b981' }}>{coinsAvailable}</b>
+                            </div>
+                            {user?.premiumExpiry && (
+                                <div className={styles.limitItem}>
+                                    <span>Plan Expiry</span>
+                                    <b style={{ color: '#ef4444' }}>
+                                        {new Date(user.premiumExpiry).toLocaleDateString()}
+                                    </b>
+                                </div>
+                            )}
+                            {user?.demoExpiry && (
+                                <div className={styles.limitItem}>
+                                    <span>Trial Expiry (12 Hrs)</span>
+                                    <b style={{ color: '#ef4444' }}>
+                                        {new Date(user.demoExpiry).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </b>
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.benefitSection}>
@@ -154,7 +202,7 @@ const PlanOverview: React.FC = () => {
                     <div className={styles.glassCard}>
                         <div className={styles.cardHeader}>
                             <TrendingUp size={20} color="#3b82f6" />
-                            <span>Intelligence Utilization</span>
+                            <span>Token Consumption Stats</span>
                         </div>
 
                         <div className={styles.statsRow}>
@@ -173,7 +221,7 @@ const PlanOverview: React.FC = () => {
                                     <History size={18} />
                                     <h4>Intelligence Ledger</h4>
                                 </div>
-                                <span>Recent Consumption</span>
+                                <span>Usage History</span>
                             </div>
 
                             <div className={styles.ledgerList}>
@@ -184,14 +232,14 @@ const PlanOverview: React.FC = () => {
                                         </div>
                                         <div className={styles.ledgerInfo}>
                                             <b>{act.type.charAt(0).toUpperCase() + act.type.slice(1)}</b>
-                                            <span>{act.partnerName || 'System Action'}</span>
+                                            <span>{act.partnerName || 'Platform Service'}</span>
                                         </div>
                                         <div className={styles.ledgerCost}>
-                                            -{getActionCost(act.type)}
+                                            {act.metadata?.cost ? `-${act.metadata.cost} Tokens` : '0 Tokens'}
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className={styles.emptyLedger}>No recent intelligence consumption</div>
+                                    <div className={styles.emptyLedger}>No token consumption history</div>
                                 )}
                             </div>
                         </div>

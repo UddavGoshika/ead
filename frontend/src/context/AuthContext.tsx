@@ -7,6 +7,7 @@ interface AuthContextType {
     isLoggedIn: boolean;
     login: (user: User, token?: string) => void;
     logout: () => void;
+    refreshUser: (updates: Partial<User>) => void;
     isAuthModalOpen: boolean;
     openAuthModal: (tab?: 'login' | 'register') => void;
     closeAuthModal: () => void;
@@ -67,9 +68,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return localStorage.getItem('isImpersonating') === 'true';
     });
 
-    // Initial logging
+    // Initial logging & Token Verification
     useEffect(() => {
         console.log('AuthProvider: Mounted, isLoggedIn:', isLoggedIn);
+        const verifyToken = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const { authService } = await import('../services/api');
+                    const res = await authService.getCurrentUser();
+                    if (res.data.success) {
+                        console.log('[AUTH] Verified User & Plan:', res.data.user.plan);
+                        setUser(res.data.user);
+                        localStorage.setItem('user', JSON.stringify(res.data.user));
+                        localStorage.setItem('userRole', res.data.user.role);
+                    } else {
+                        // If verification fails (e.g. invalid token), logout?
+                        // keeping silent for now to avoid disrupting if just a network blip, 
+                        // but ideally should handle invalid token.
+                    }
+                } catch (error) {
+                    console.error('[AUTH] Token verification failed:', error);
+                    // Optional: logout() if 401
+                }
+            }
+        };
+        verifyToken();
     }, []);
 
     const login = (userData: User, token?: string) => {
@@ -195,12 +219,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const refreshUser = (updates: Partial<User>) => {
+        if (user) {
+            const updatedUser = { ...user, ...updates };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            console.log('[AUTH] User refreshed:', updatedUser);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
             isLoggedIn,
             login,
             logout,
+            refreshUser, // Added
             isAuthModalOpen,
             openAuthModal,
             closeAuthModal,

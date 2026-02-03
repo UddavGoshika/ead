@@ -5,7 +5,8 @@ import {
     Paperclip,
     ArrowLeft,
     MessageSquare,
-    X
+    X,
+    Trash2
 } from "lucide-react";
 import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
@@ -29,6 +30,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
     const [messages, setMessages] = useState<Message[]>([]);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
+    const [allActivities, setAllActivities] = useState<any[]>([]);
     const [selectedClient, setSelectedClient] = useState<any>(null);
     const [popupLoading, setPopupLoading] = useState(false);
 
@@ -47,40 +49,96 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
         }
     }, [selectedAdvocate]);
 
-    useEffect(() => {
-        if (user) {
-            const fetchData = async () => {
-                try {
-                    const myId = String(user.id); // Use MongoDB ID for backend
-                    // 1. Get Conversations (Accepted/Ongoing)
-                    const convs = await interactionService.getConversations(myId);
+    const fetchData = async () => {
+        if (!user) return;
+        try {
+            const myId = String(user.id);
+            // 1. Get All Activities (Interests/Requests/Chats)
+            const activities = await interactionService.getAllActivities(myId);
+            setAllActivities(activities);
 
-                    // Filter to only those with real messages for "Accepted"
-                    const acceptedConvs = convs.filter(c => c.lastMessage && !c.lastMessage.id.startsWith('act-'));
-                    setConversations(acceptedConvs);
+            // 2. Get Active Conversations (from Messages)
+            const convs = await interactionService.getConversations(myId);
 
-                    // 2. Get Interests (Sent/Received)
-                    // We can reuse getActivities here
-                    const myRole = user.role;
-                    const activities = await interactionService.getActivities(myRole, myId);
+            // Filter for Sent Tab: Things I sent that aren't accepted yet
+            // Includes both Interests and those I've messaged but aren't accepted
+            const sent = activities.filter((a: any) =>
+                a.isSender &&
+                a.status !== 'accepted' &&
+                ['interest', 'superInterest', 'chat'].includes(a.type)
+            );
+            setSentInterests(sent);
 
-                    if (myRole === 'advocate') {
-                        setReceivedInterests(activities.filter(a => a.type === 'interest' || a.type === 'super-interest'));
-                        setSentInterests(activities.filter(a => a.type === 'message_sent'));
-                    } else {
-                        setSentInterests(activities.filter(a => a.type === 'interest' || a.type === 'super-interest'));
-                        setReceivedInterests(activities.filter(a => a.type === 'message_sent'));
-                    }
+            // Filter for Received Tab: Things I received that aren't accepted yet
+            setReceivedInterests(activities.filter((a: any) =>
+                !a.isSender &&
+                a.status !== 'accepted' &&
+                ['interest', 'superInterest'].includes(a.type)
+            ));
 
-                } catch (error) {
-                    console.error("Error fetching data:", error);
+            // 3. Accepted Conversations: Only those where status is 'accepted'
+            const acceptedPartners = new Set(activities.filter((a: any) => a.status === 'accepted').map((a: any) => a.isSender ? String(a.receiver) : String(a.sender)));
+
+            const acceptedConvs = convs.filter(c => acceptedPartners.has(String(c.advocate.id)));
+
+            // Also add partners who are accepted but we haven't messaged yet
+            activities.filter((a: any) => a.status === 'accepted').forEach((act: any) => {
+                const partnerId = act.isSender ? String(act.receiver) : String(act.sender);
+                if (!acceptedConvs.some(c => String(c.advocate.id) === partnerId)) {
+                    acceptedConvs.push({
+                        advocate: {
+                            id: partnerId,
+                            unique_id: act.partnerUniqueId,
+                            name: act.partnerName,
+                            profilePic: act.partnerImg,
+                            location: act.partnerLocation
+                        } as any,
+                        lastMessage: {
+                            id: `act-${act._id}`,
+                            senderId: act.sender,
+                            receiverId: act.receiver,
+                            text: 'Request accepted. Start chatting!',
+                            timestamp: act.timestamp
+                        },
+                        unreadCount: 0
+                    });
                 }
-            };
-            fetchData();
-            const interval = setInterval(fetchData, 4000);
-            return () => clearInterval(interval);
+            });
+
+            setConversations(acceptedConvs);
+
+        } catch (error) {
+            console.error("Error fetching messenger data:", error);
         }
+    };
+
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 4000);
+        return () => clearInterval(interval);
     }, [user]);
+
+    const handleDeleteActivity = async (activityId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this interaction?")) return;
+        try {
+            await interactionService.deleteActivity(activityId);
+            fetchData();
+        } catch (error) {
+            console.error("Failed to delete activity:", error);
+        }
+    };
+
+    const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await interactionService.respondToActivity(activityId, status);
+            // If accepted, maybe send a greeting? (Optional)
+            fetchData(); // Refresh lists
+        } catch (error) {
+            console.error("Failed to respond:", error);
+        }
+    };
 
     useEffect(() => {
         if (user && (selectedConversation || selectedAdvocate)) {
@@ -133,14 +191,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             const response = await api.get(`/client/${partnerId}`);
             if (response.data.success) {
                 setSelectedClient(response.data.client);
-            } else {
-                // If not found as client, maybe advocate? But popup is designed for client details mostly.
-                // For now alerting if not found.
-                // alert("Could not fetch client details.");
             }
         } catch (error) {
             console.error("Error fetching client details:", error);
-            // alert("Error fetching client details.");
         } finally {
             setPopupLoading(false);
         }
@@ -176,7 +229,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
                 <div className={styles.chatArea}>
                     {messages.map(msg => (
-                        <div key={msg.id} className={msg.senderId === String(user?.unique_id) ? styles.myMsg : styles.theirMsg}>
+                        <div key={msg.id} className={msg.senderId === String(user?.id) ? styles.myMsg : styles.theirMsg}>
                             <div className={styles.msgBubble}>
                                 {msg.text}
                                 <span className={styles.msgTime}>
@@ -213,7 +266,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                 return conversations.length === 0 ? (
                     <div className={styles.emptyState}>
                         <MessageSquare size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
-                        <h3>No accepted chats</h3>
+                        <h3>No active chats</h3>
                         <p>When you start messaging, they will appear here.</p>
                     </div>
                 ) : (
@@ -225,7 +278,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 onClick={() => handleSelectConversation(conv)}
                             >
                                 <img
-                                    src={(conv.advocate as any).profilePic || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'}
+                                    src={(conv.advocate as any).profilePic || (conv.advocate as any).img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'}
                                     alt={conv.advocate.name}
                                     className={styles.convAvatar}
                                     onClick={(e) => handleClientClick(String(conv.advocate.id), e)}
@@ -234,7 +287,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     <div className={styles.convTitleRow}>
                                         <h4>{conv.advocate.name}</h4>
                                         <span className={styles.convTime}>
-                                            {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleDateString() : ''}
+                                            {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                         </span>
                                     </div>
                                     <div className={styles.convSub}>
@@ -257,21 +310,33 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     <div className={styles.emptyState}>
                         <Send size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
                         <h3>No sent interests</h3>
+                        <p>Requests you've sent will appear here until accepted.</p>
                     </div>
                 ) : (
                     <div className={styles.conversationList}>
                         {sentInterests.map(act => (
-                            <div key={act.id} className={styles.convItem}>
-                                <div className={styles.convAvatarPlaceholder} onClick={(e) => handleClientClick(act.advocateId, e)}>
-                                    {act.advocateName ? act.advocateName.charAt(0) : 'U'}
-                                </div>
+                            <div key={act._id} className={styles.convItem}>
+                                <img
+                                    src={act.partnerImg}
+                                    className={styles.convAvatar}
+                                    alt={act.partnerName}
+                                    onClick={(e) => handleClientClick(act.advocateId || act.receiver, e)}
+                                />
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
-                                        <h4>{act.advocateName}</h4>
+                                        <h4>{act.partnerName}</h4>
                                         <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
                                     </div>
-                                    <p className={styles.lastMsg}>Type: {act.type}</p>
+                                    <div className={styles.convSub}>
+                                        <span>{act.partnerUniqueId}</span>
+                                        <span>•</span>
+                                        <span style={{ color: '#facc15', fontWeight: 'bold' }}>PENDING</span>
+                                    </div>
+                                    <p className={styles.lastMsg}>Interaction: {act.type}</p>
                                 </div>
+                                <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(act._id, e)}>
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -281,20 +346,38 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     <div className={styles.emptyState}>
                         <MessageSquare size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
                         <h3>No received interests</h3>
+                        <p>Requests from others will appear here for your response.</p>
                     </div>
                 ) : (
                     <div className={styles.conversationList}>
                         {receivedInterests.map(act => (
-                            <div key={act.id} className={styles.convItem}>
-                                <div className={styles.convAvatarPlaceholder} onClick={(e) => handleClientClick(act.clientId, e)}>
-                                    {act.clientName ? act.clientName.charAt(0) : 'U'}
-                                </div>
+                            <div key={act._id} className={styles.convItem} style={{ cursor: 'default' }}>
+                                <img
+                                    src={act.partnerImg}
+                                    className={styles.convAvatar}
+                                    alt={act.partnerName}
+                                    onClick={(e) => handleClientClick(act.clientId || act.sender, e)}
+                                    style={{ cursor: 'pointer' }}
+                                />
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
-                                        <h4>{act.clientName}</h4>
-                                        <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                                        <h4>{act.partnerName}</h4>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                                            <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(act._id, e)}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <p className={styles.lastMsg}>Type: {act.type}</p>
+                                    <div className={styles.convSub}>
+                                        <span>{act.partnerUniqueId}</span>
+                                        <span>•</span>
+                                        <span style={{ color: '#38bdf8' }}>{act.type.toUpperCase()}</span>
+                                    </div>
+                                    <div className={styles.actButtons}>
+                                        <button className={styles.acceptBtn} onClick={(e) => handleResponse(act._id, 'accepted', e)}>Accept</button>
+                                        <button className={styles.declineBtn} onClick={(e) => handleResponse(act._id, 'declined', e)}>Ignore</button>
+                                    </div>
                                 </div>
                             </div>
                         ))}

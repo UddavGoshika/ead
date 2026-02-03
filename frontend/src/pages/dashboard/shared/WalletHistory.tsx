@@ -22,6 +22,7 @@ import QRCode from 'react-qr-code';
 import { PaymentManager } from '../../../services/payment/PaymentManager';
 import type { PaymentGatewayConfig, PaymentGateway } from '../../../types/payment';
 import { useAuth } from '../../../context/AuthContext';
+import { walletService } from '../../../services/api';
 
 interface Transaction {
     id: string;
@@ -54,7 +55,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
     const [isProcessing, setIsProcessing] = useState(false);
     const [upiUrl, setUpiUrl] = useState<string | null>(null);
     const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-    const { user } = useAuth();
+    const { user } = useAuth(); // Removed refreshUser
 
     useEffect(() => {
         const loadGateways = async () => {
@@ -62,7 +63,30 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setEnabledGateways(gateways);
         };
         loadGateways();
+        fetchTransactions();
     }, []);
+
+    const fetchTransactions = async () => {
+        try {
+            const response = await walletService.getHistory(); // Using our new service
+            if (response.data.success) {
+                // Map backend transactions to frontend interface
+                const mappedTxns = response.data.transactions.map((t: any) => ({
+                    id: t.orderId || t._id,
+                    type: (t.packageId === 'withdrawal' || t.type === 'debit' ? 'debit' : 'credit') as 'debit' | 'credit',
+                    amount: t.amount,
+                    description: t.packageId === 'withdrawal' ? 'Withdrawal Request' : (t.gateway + ' Transaction'),
+                    date: new Date(t.createdAt).toLocaleString(),
+                    status: (t.status.charAt(0).toUpperCase() + t.status.slice(1)) as 'Completed' | 'Pending' | 'Failed',
+                    method: t.gateway,
+                    category: (t.packageId === 'withdrawal' ? 'Withdrawal' : 'Recharge') as 'Recharge' | 'Withdrawal'
+                }));
+                setTransactions(mappedTxns);
+            }
+        } catch (err) {
+            console.error("Failed to load wallet history", err);
+        }
+    };
 
 
     // UI States
@@ -72,20 +96,23 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawError, setWithdrawError] = useState('');
 
-    const [balance, setBalance] = useState(12450.00);
-    const [rewardPoints, setRewardPoints] = useState(480);
+    const [balance, setBalance] = useState(user?.walletBalance || 0); // Init from user
+    const [rewardPoints, setRewardPoints] = useState(user?.coins || 0);
+
+    // Sync balance if user updates
+    useEffect(() => {
+        if (user) {
+            setBalance(user.walletBalance || 0);
+            setRewardPoints(user.coins || 0);
+        }
+    }, [user]);
 
     const [banks] = useState<BankAccount[]>([
         { id: '1', bankName: 'State Bank of India', accountNumber: '****6789', ifsc: 'SBIN0001234', isPrimary: true, holderName: 'ALEX DOE', cardType: 'VISA' },
         { id: '2', bankName: 'HDFC Priority', accountNumber: '****4321', ifsc: 'HDFC0005678', isPrimary: false, holderName: 'ALEX DOE', cardType: 'Mastercard' }
     ]);
 
-    const [transactions, setTransactions] = useState<Transaction[]>([
-        { id: 'TXN882', type: 'credit', amount: 5000, description: 'Wallet Recharge - UPI', date: '25 Jan 2026, 10:30 AM', status: 'Completed', method: 'UPI', category: 'Recharge' },
-        { id: 'TXN881', type: 'debit', amount: 1500, description: 'Consultation Fee - Adv. Kapoor', date: '24 Jan 2026, 02:15 PM', status: 'Completed', method: 'Wallet', category: 'Legal Fee' },
-        { id: 'TXN880', type: 'credit', amount: 200, description: 'Loyalty Cashback Reward', date: '23 Jan 2026, 09:00 AM', status: 'Completed', method: 'Promo', category: 'Reward' },
-        { id: 'TXN879', type: 'debit', amount: 1200, description: 'Annual Membership Renewal', date: '22 Jan 2026, 04:45 PM', status: 'Pending', method: 'Wallet', category: 'Membership' },
-    ]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
 
     // Insights Chart Simulation
     const chartData = [40, 70, 45, 90, 65, 80, 50]; // Monday to Sunday
@@ -99,7 +126,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
         return base + cgst + sgst + convFee;
     };
 
-    const handleWithdraw = () => {
+    const handleWithdraw = async () => {
         const amt = parseFloat(withdrawAmount);
         if (!amt || amt < 1000) {
             setWithdrawError('Minimum withdrawal is ₹1,000.');
@@ -109,24 +136,18 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setWithdrawError('Insufficient balance in your account.');
             return;
         }
-        // Deduct balance immediately for demo (or waiting for approval state)
-        // For accurate ledger, we might just set it to 'Pending' transaction
-        setWithdrawalStep(2);
-        setWithdrawError('');
 
-        // Optimistic Update
-        setBalance(prev => prev - amt);
-        const newTxn: Transaction = {
-            id: 'TXN' + Math.floor(Math.random() * 10000),
-            type: 'debit',
-            amount: amt,
-            description: 'Withdrawal Request',
-            date: new Date().toLocaleString(),
-            status: 'Pending',
-            method: 'Bank Transfer',
-            category: 'Withdrawal'
-        };
-        setTransactions([newTxn, ...transactions]);
+        try {
+            const response = await walletService.withdraw({ amount: amt, bankDetails: banks[0] }); // defaulting to primary bank
+            if (response.data.success) {
+                setWithdrawalStep(2);
+                setWithdrawError('');
+                setBalance(response.data.balance); // Update local balance
+                fetchTransactions(); // Refresh history
+            }
+        } catch (err: any) {
+            setWithdrawError(err.response?.data?.error || 'Withdrawal request failed');
+        }
     };
 
     return (

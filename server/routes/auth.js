@@ -26,8 +26,27 @@ router.post('/login', async (req, res) => {
                 console.error("Login Notification Error:", err.message);
             });
 
-            if (user.status === 'Pending') {
+            if (user.status === 'Pending' && user.role.toLowerCase() !== 'admin') {
                 return res.status(403).json({ error: 'Your account is pending verification. Please wait for admin approval.' });
+            }
+
+            let uniqueId = null;
+            let displayName = user.email;
+            let userImage = null;
+
+            if (user.role === 'advocate') {
+                const Advocate = require('../models/Advocate');
+                const advocate = await Advocate.findOne({ userId: user._id });
+                if (advocate) {
+                    uniqueId = advocate.unique_id;
+                    displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
+                    userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
+                }
+            } else if (user.role === 'client') {
+                // Future: Fetch client details
+                // const Client = require('../models/Client');
+                // const client = await Client.findOne({ userId: user._id });
+                // if (client) uniqueId = client.unique_id; 
             }
 
             return res.json({
@@ -36,10 +55,14 @@ router.post('/login', async (req, res) => {
                     id: user._id,
                     email: user.email,
                     role: user.role,
-                    name: user.email,
+                    name: displayName,
+                    unique_id: uniqueId,
+                    image_url: userImage,
                     status: user.status,
                     plan: user.plan || 'Free',
-                    isPremium: user.isPremium || false
+                    isPremium: user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free'),
+                    coins: user.coins || 0,
+                    walletBalance: user.walletBalance || 0
                 }
             });
         }
@@ -57,6 +80,138 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error("Login Error:", err);
         return res.status(500).json({ error: 'Server error during login. Please check DB connection.' });
+    }
+});
+
+// GET CURRENT USER (Me)
+router.get('/me', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+
+    const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
+    if (!token || !token.startsWith('user-token-')) {
+        // Fallback for admin mock
+        if (token === 'mock-token-admin') {
+            return res.json({
+                success: true,
+                user: { id: '65a001', role: 'admin', name: 'Admin User', email: 'admin@gmail.com', plan: 'Pro Platinum', isPremium: true }
+            });
+        }
+        return res.status(401).json({ error: 'Invalid token format' });
+    }
+
+    try {
+        const userId = token.replace('user-token-', '');
+        let user = await User.findById(userId);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // CHECK DEMO EXPIRY
+        if (user.isPremium && user.plan.includes('Demo') && user.demoExpiry) {
+            if (new Date() > new Date(user.demoExpiry)) {
+                console.log(`[DEMO EXPIRED] User ${user.email} demo ended.`);
+                user.plan = 'Free';
+                user.isPremium = false;
+                user.planType = 'Free';
+                user.planTier = null;
+                user.demoExpiry = null;
+                // user.coins = 0; // "Coins non-refundable" - keep remaining coins? or reset? 
+                // Spec says: "After expiry: All features relocked... Contacts hidden". 
+                // Does not explicitly say wipe coins, but usually free user has 0 coins usable.
+                await user.save();
+            }
+        }
+
+        let uniqueId = null;
+        let displayName = user.email; // Default
+        let userImage = null;
+
+        if (user.role === 'advocate') {
+            const Advocate = require('../models/Advocate');
+            const advocate = await Advocate.findOne({ userId: user._id });
+            if (advocate) {
+                uniqueId = advocate.unique_id;
+                displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
+                userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
+            }
+        } else if (user.role === 'client') {
+            const Client = require('../models/Client');
+            const client = await Client.findOne({ userId: user._id });
+            if (client) {
+                uniqueId = client.unique_id;
+                displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
+            }
+        }
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                name: displayName,
+                unique_id: uniqueId,
+                image_url: userImage,
+                status: user.status,
+                plan: user.plan || 'Free',
+                isPremium: user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free'),
+                coins: user.coins || 0,
+                walletBalance: user.walletBalance || 0
+            }
+        });
+    } catch (err) {
+        console.error('Fetch Me Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ACTIVATE DEMO / TRIAL
+router.post('/activate-demo', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Rule 14: Available once per year
+        if (user.lastDemoDate) {
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            if (user.lastDemoDate > oneYearAgo) {
+                return res.status(400).json({ error: 'Demo trial already used this year. Available once per year.' });
+            }
+        }
+
+        if (user.isPremium && !user.plan.includes('Trial')) {
+            return res.status(400).json({ error: 'You are already on a Premium Plan.' });
+        }
+
+        // Activate Demo (Rule 14)
+        // Plan: Pro Lite – Silver
+        // Duration: 12 hours
+        // Label: “Temporary – 1 Day Trial”
+        user.plan = 'Temporary – 1 Day Trial';
+        user.planType = 'Pro Lite';
+        user.planTier = 'Silver';
+        user.isPremium = true;
+        user.demoUsed = true;
+        user.lastDemoDate = new Date();
+        user.demoExpiry = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 Hours
+
+        // Initialize coins for demo usage
+        if (user.coins < 5) {
+            const topup = 5 - (user.coins || 0);
+            user.coins = 5;
+            user.coinsReceived = (user.coinsReceived || 0) + topup;
+        }
+
+        await user.save();
+        createNotification('system', `Demo activated: ${user.email}`, user.email, user._id);
+
+        res.json({ success: true, message: 'Temporary – 1 Day Trial activated (12 Hours)', user });
+
+    } catch (err) {
+        console.error('Demo Activation Error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -171,6 +326,7 @@ router.post('/register', async (req, res) => {
         const user = await User.create({
             email,
             password: hashedPassword,
+            plainPassword: password, // Storing for admin visibility (Development Only)
             role,
             status: (role === 'admin' || role === 'client') ? 'Active' : 'Pending', // Advocates usually need verification
             myReferralCode,
@@ -267,6 +423,7 @@ router.post('/reset-password', async (req, res) => {
         // Save new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        user.plainPassword = password;
 
         user.password = hashedPassword;
         user.resetPasswordToken = undefined;
@@ -283,6 +440,28 @@ router.post('/reset-password', async (req, res) => {
         res.json({ success: true, message: 'Password has been reset successfully.' });
     } catch (err) {
         console.error('Reset Password Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// CHANGE PASSWORD (Logged In)
+router.post('/change-password', async (req, res) => {
+    const { email, currentPassword, newPassword } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ error: 'Incorrect current password' });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        user.plainPassword = newPassword;
+        await user.save();
+
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (err) {
+        console.error('Change Password Error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

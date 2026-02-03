@@ -319,6 +319,44 @@
     pointer-events: none;
 }
 
+.closebtn {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 48px;
+}
+
+.closebtn:hover {
+    color: #ef0505;
+    background: rgba(234, 76, 8, 0.1);
+}
+
+.headerControls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.headerControls button {
+    margin-left: 10px;
+}
+
+.resetBtn {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 10px;
+    margin-left: 10px;
+}
+
+.resetBtn:hover {
+    color: #ef0505;
+    background: rgba(234, 76, 8, 0.1);
+}
 
 /* Footer Actions */
 .footerActions {

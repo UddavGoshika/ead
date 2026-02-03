@@ -154,6 +154,67 @@
     margin-top: 2px;
 }
 
+.actButtons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.acceptBtn {
+    padding: 8px 20px;
+    background: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+
+.acceptBtn:hover {
+    background: #16a34a;
+    transform: translateY(-1px);
+}
+
+.declineBtn {
+    padding: 8px 20px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.declineBtn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.deleteBtn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.deleteBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    opacity: 1;
+}
+
 /* Chat Full View */
 .fullChatContainer {
 

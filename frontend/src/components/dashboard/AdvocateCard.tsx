@@ -22,35 +22,31 @@ interface AdvocateCardProps {
 
 const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant = 'normal', isPremium = false }) => {
     const [interactionStage, setInteractionStage] = useState<'none' | 'interest_sent' | 'chat_input' | 'chat_active'>('none');
-    const [popupType, setPopupType] = useState<'none' | 'interest_upgrade' | 'super_interest_confirm' | 'chat_confirm'>('none');
+    const [popupType, setPopupType] = useState<'none' | 'interest_upgrade' | 'super_interest_confirm' | 'chat_confirm' | 'need_interest'>('none');
+    const [interestSent, setInterestSent] = useState(false);
     const [message, setMessage] = useState('');
 
+    const IS_MASKED = !isPremium;
+
     const maskName = (name: string) => {
-        if (isPremium || variant === 'normal') return name;
-        if (!name) return "**";
-        // Show first 2 characters, mask the rest
-        return name.substring(0, 2) + "**";
+        if (!IS_MASKED) return name;
+        if (!name) return "***";
+        if (name.includes('...')) return name;
+        return name.substring(0, 2) + "...";
     };
 
     const maskId = (id: string) => {
-        if (isPremium || variant === 'normal') return id;
-        if (!id) return "****";
-        // Show first 2 or 3 characters based on length
-        const prefix = id.length > 5 ? id.substring(0, 3) : id.substring(0, 2);
-        return prefix + "****";
+        if (!IS_MASKED) return id;
+        if (!id) return "***";
+        if (id.includes('...')) return id;
+        return id.substring(0, 2) + "...";
     };
 
     const handleInterestClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        setInterestSent(true);
+        onAction?.('interest');
         setPopupType('interest_upgrade');
-        onAction?.('interest_initiated');
-    };
-
-    const handleUpgradeToSuper = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setPopupType('none');
-        setInteractionStage('chat_input'); // Matches "closeAndShowChatInput" logic after action
-        onAction?.('super_interest_sent');
     };
 
     const handleSuperInterestClick = (e: React.MouseEvent) => {
@@ -61,18 +57,22 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
     const confirmSuperInterest = (e: React.MouseEvent) => {
         e.stopPropagation();
         setPopupType('none');
+        setInterestSent(true);
         setInteractionStage('chat_input');
-        onAction?.('super_interest_sent');
+        onAction?.('superInterest');
     };
 
     const handleShortlistClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        setInteractionStage('chat_input');
-        onAction?.('shortlisted');
+        onAction?.('shortlist');
     };
 
     const handleChatClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!interestSent) {
+            setPopupType('need_interest');
+            return;
+        }
         setPopupType('chat_confirm');
     };
 
@@ -82,11 +82,85 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
         onAction?.('openFullChatPage');
     };
 
+    const handleSendMessage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!message.trim()) return;
+        onAction?.('message_sent', message);
+        setMessage('');
+        setInteractionStage('none');
+    };
+
+    const handleUpgradeToSuper = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setPopupType('none');
+        setInteractionStage('chat_input');
+        onAction?.('superInterest');
+    };
+
     const cardClass = `${styles.card} ${variant === 'featured' ? styles.cardFeatured : styles.cardNormal}`;
-    const shouldBlur = !isPremium && variant === 'featured';
+    const shouldBlur = IS_MASKED;
 
     return (
         <div className={cardClass}>
+            {/* Unified Popups */}
+            {popupType !== 'none' && (
+                <div className={styles.popupOverlay} onClick={() => setPopupType('none')}>
+                    <div className={styles.popupCard} onClick={e => e.stopPropagation()}>
+                        <button className={styles.popupCloseBtn} onClick={() => setPopupType('none')}>
+                            <X size={18} />
+                        </button>
+                        <div className={styles.popupContent}>
+                            {popupType === 'need_interest' && (
+                                <>
+                                    <h4 className={styles.popupTitle}>Send Interest First</h4>
+                                    <p className={styles.popupMsg}>You must express interest in this advocate before you can start a chat.</p>
+                                    <div className={styles.popupActions}>
+                                        <button className={styles.confirmBtn} onClick={() => setPopupType('none')}>Got it</button>
+                                    </div>
+                                </>
+                            )}
+
+                            {popupType === 'super_interest_confirm' && (
+                                <>
+                                    <h4 className={styles.popupTitle}>Confirm Super Interest</h4>
+                                    <p className={styles.popupMsg}>Prioritize your profile for a more direct connection. Continue?</p>
+                                    <div className={styles.popupActions}>
+                                        <button className={styles.cancelBtn} onClick={() => setPopupType('none')}>Cancel</button>
+                                        <button className={styles.confirmBtn} onClick={confirmSuperInterest}>Send Super Interest</button>
+                                    </div>
+                                </>
+                            )}
+
+                            {popupType === 'chat_confirm' && (
+                                <>
+                                    <h4 className={styles.popupTitle}>Initiate Chat</h4>
+                                    <p className={styles.popupMsg}>Open a secure chat connection with this expert?</p>
+                                    <div className={styles.popupActions}>
+                                        <button className={styles.cancelBtn} onClick={() => setPopupType('none')}>Cancel</button>
+                                        <button className={styles.confirmBtn} onClick={confirmChat}>Open Chat</button>
+                                    </div>
+                                </>
+                            )}
+
+                            {popupType === 'interest_upgrade' && (
+                                <>
+                                    <h4 className={styles.popupTitle}>Interest Sent</h4>
+                                    <p className={styles.popupMsg}>Boost your visibility with Super Interest?</p>
+                                    <div className={styles.popupActions}>
+                                        <button className={styles.upgradeBtn} onClick={handleUpgradeToSuper}>
+                                            Upgrade to Super Interest
+                                        </button>
+                                        <button className={styles.noThanksBtn} onClick={() => { setPopupType('none'); setInteractionStage('chat_input'); }}>
+                                            No Thanks
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className={styles.avatarSection}>
                 <div className={styles.imageContainer}>
                     {advocate.image_url ? (
@@ -99,19 +173,17 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                             }}
                         />
                     ) : (
-                        <div className={`${styles.bgInitial} ${shouldBlur ? styles.blurredImage : ''}`}>{advocate.name.charAt(0)}</div>
+                        <div className={`${styles.bgInitial} ${shouldBlur ? styles.blurredImage : ''}`}>{advocate.name?.charAt(0) || 'A'}</div>
                     )}
                     <div className={styles.imageOverlay}></div>
                 </div>
 
-                {/* Featured Star Badge */}
                 {variant === 'featured' && advocate.isFeatured && (
                     <div className={styles.featuredBadge}>
                         <Star size={24} fill="#facc15" color="#facc15" className={styles.glossyStar} />
                     </div>
                 )}
 
-                {/* Unified Verified ID Badge - Top Right */}
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
                         <span className={styles.topIdText}>{maskId(advocate.unique_id)}</span>
@@ -119,16 +191,8 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                         {variant === 'featured' ? (
                             <div className={styles.premiumVerified}>
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    {/* Bold Round Outer Glow/Base */}
                                     <circle cx="12" cy="12" r="11" fill="url(#blue_grad_bold)" />
-                                    {/* Thicker Checkmark */}
-                                    <path
-                                        d="M7.5 12.5L10.5 15.5L16.5 8.5"
-                                        stroke="white"
-                                        strokeWidth="3"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
+                                    <path d="M7.5 12.5L10.5 15.5L16.5 8.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                                     <defs>
                                         <linearGradient id="blue_grad_bold" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
                                             <stop stopColor="#38bdf8" />
@@ -144,8 +208,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                     </div>
                 </div>
 
-                {/* Info Overlay - Bottom Left */}
-                <div className={styles.profileTextOverlay}>
+                <div className={`${styles.profileTextOverlay} ${shouldBlur ? styles.blurredText : ''}`}>
                     <h3 className={styles.overlayName}>{maskName(advocate.name)}, {advocate.age || 27}</h3>
                     <div className={styles.overlayDetails}>
                         <p>{advocate.location}</p>
@@ -153,7 +216,6 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                     </div>
                 </div>
 
-                {/* Right Side Badge Stack - Bottom Right */}
                 <div className={styles.rightBadgeStack}>
                     <div className={styles.overlayDepartmentBadge}>
                         {Array.isArray(advocate.specialties) ? advocate.specialties[0] : (advocate.specialties || 'General')}
@@ -165,9 +227,13 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                 </div>
             </div>
 
-            {/* Interaction Layer */}
             <div className={styles.interactionLayer}>
-                {interactionStage === 'chat_input' ? (
+                {interactionStage === 'interest_sent' ? (
+                    <div className={styles.interestSentSuccess}>
+                        <CheckCircle2 size={24} color="#10b981" />
+                        <span>Interest Sent Successfully!</span>
+                    </div>
+                ) : interactionStage === 'chat_input' ? (
                     <div className={styles.chatInputContainer}>
                         <button className={styles.chatCloseBtn} onClick={(e) => { e.stopPropagation(); setInteractionStage('none'); }}>
                             <X size={18} />
@@ -180,15 +246,15 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                             onChange={(e) => { e.stopPropagation(); setMessage(e.target.value); }}
                             onClick={(e) => e.stopPropagation()}
                         />
-                        <button className={styles.sendIconBtn} onClick={(e) => { e.stopPropagation(); onAction?.('message_sent', message); }}>
+                        <button className={styles.sendIconBtn} onClick={handleSendMessage}>
                             <Send size={20} />
                         </button>
                     </div>
                 ) : (
-                    <div className={`${styles.actions} ${interactionStage === 'interest_sent' ? styles.actionsSliding : ''}`}>
-                        <button className={styles.actionBtn} onClick={handleInterestClick}>
-                            <Handshake size={22} />
-                            <span>Interest</span>
+                    <div className={styles.actions}>
+                        <button className={styles.actionBtn} onClick={handleInterestClick} disabled={interestSent}>
+                            <Handshake size={22} className={interestSent ? styles.activeIcon : ''} />
+                            <span>{interestSent ? 'Interested' : 'Interest'}</span>
                         </button>
                         <button className={styles.actionBtn} onClick={handleSuperInterestClick}>
                             {variant === 'featured' ? <Star size={22} /> : <Zap size={22} />}
@@ -205,56 +271,6 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                     </div>
                 )}
             </div>
-
-            {/* Glassmorphism Modals based on popupType */}
-            {popupType !== 'none' && (
-                <div className={styles.popupOverlay}>
-                    <div className={styles.popupCard}>
-                        <button className={styles.popupCloseBtn} onClick={(e) => { e.stopPropagation(); setPopupType('none'); }}>
-                            <X size={18} />
-                        </button>
-
-                        <div className={styles.popupContent}>
-                            {popupType === 'interest_upgrade' && (
-                                <>
-                                    <h4 className={styles.popupTitle}>Interest Sent</h4>
-                                    <p className={styles.popupMsg}>Boost your visibility with Super Interest?</p>
-                                    <div className={styles.popupActions}>
-                                        <button className={styles.upgradeBtn} onClick={handleUpgradeToSuper}>
-                                            Upgrade to Super Interest
-                                        </button>
-                                        <button className={styles.noThanksBtn} onClick={(e) => { e.stopPropagation(); setPopupType('none'); setInteractionStage('chat_input'); }}>
-                                            No Thanks
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-
-                            {popupType === 'super_interest_confirm' && (
-                                <>
-                                    <h4 className={styles.popupTitle}>Confirm Super Interest</h4>
-                                    <p className={styles.popupMsg}>Proceed with Super Interest?</p>
-                                    <div className={styles.popupActions}>
-                                        <button className={styles.confirmBtn} onClick={confirmSuperInterest}>Confirm</button>
-                                        <button className={styles.cancelBtn} onClick={(e) => { e.stopPropagation(); setPopupType('none'); }}>Cancel</button>
-                                    </div>
-                                </>
-                            )}
-
-                            {popupType === 'chat_confirm' && (
-                                <>
-                                    <h4 className={styles.popupTitle}>Initiate Chat</h4>
-                                    <p className={styles.popupMsg}>2 coins will be deducted. Continue?</p>
-                                    <div className={styles.popupActions}>
-                                        <button className={styles.confirmBtn} onClick={confirmChat}>Proceed</button>
-                                        <button className={styles.cancelBtn} onClick={(e) => { e.stopPropagation(); setPopupType('none'); }}>Cancel</button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

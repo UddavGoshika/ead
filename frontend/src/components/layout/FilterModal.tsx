@@ -488,6 +488,11 @@ const FilterModal: React.FC = () => {
                             <button className={styles.searchActionBtn} onClick={handleApply}>Search</button>
                         </div>
                     </div>
+                    <div className={styles.headerControls}>
+                        <button className={styles.closebtn} onClick={closeFilterModal}>X</button>
+                    </div>
+
+
                 </div>
 
                 <div className={styles.scrollArea}>
@@ -593,7 +598,14 @@ const FilterModal: React.FC = () => {
                 <div className={styles.footerActions}>
                     <button className={styles.applyActionButton} onClick={handleApply}>Apply Filters</button>
                     {/* Hidden/Removed Reset Button as per visual req, or if needed can add back subtly */}
+
+                    <button className={styles.resetBtn} onClick={handleReset}>Reset</button>
+
+
                 </div>
+
+
+
             </motion.div>
         </div>
     );

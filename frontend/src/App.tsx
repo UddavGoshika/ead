@@ -62,6 +62,7 @@ import ReportedMembers from './pages/admin/members/ReportedMembers';
 import UnapprovedPictures from './pages/admin/members/UnapprovedPictures';
 import ProfileSections from './pages/admin/members/ProfileSections';
 import MemberVerification from './pages/admin/members/MemberVerification';
+import LoginMemberDetails from './pages/admin/members/LoginMemberDetails';
 
 // Admin Attributes
 import Country from './pages/admin/attributes/Country';
@@ -250,6 +251,8 @@ const App: React.FC = () => {
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="cookie-policy" element={<CookiePolicy />} />
               <Route path="refund" element={<RefundPolicy />} />
+              <Route path="summons-and-notices" element={<Summons />} />
+              <Route path="grievance-redressal" element={<Grievances />} />
               <Route path="reset-password/:token" element={<ResetPassword />} />
               <Route path="legal-documentation" element={<LegalDocumentationPage />} />
               <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
@@ -264,13 +267,13 @@ const App: React.FC = () => {
 
             {/* PROTECTED DASHBOARD ROUTES */}
             <Route path="/dashboard/client" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['client']}>
                 <ClientDashboard />
               </ProtectedRoute>
             } />
 
             <Route path="/dashboard/advocate" element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['advocate']}>
                 <AdvocateDashboard />
               </ProtectedRoute>
             } />
@@ -322,6 +325,7 @@ const App: React.FC = () => {
 
               <Route path="members/profile-sections" element={<ProfileSections />} />
               <Route path="members/verification" element={<MemberVerification />} />
+              <Route path="members/login-details" element={<LoginMemberDetails />} />
 
               {/* Premium & Finance */}
               <Route path="premium-packages" element={<PremiumPackages />} />

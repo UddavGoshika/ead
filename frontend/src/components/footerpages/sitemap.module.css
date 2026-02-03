@@ -133,6 +133,38 @@
     padding-left: 20px;
 }
 
+.linkBtn {
+    background: none;
+    border: none;
+    text-decoration: none;
+    color: #dbe1ff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    position: relative;
+    padding-left: 16px;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    padding-right: 0;
+    margin: 0;
+}
+
+.linkBtn::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #3b82f6;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.linkBtn:hover {
+    color: #ffffff;
+    padding-left: 20px;
+}
+
 /* ================= EXTERNAL LINKS ================= */
 
 .sitemapGrid a[target="_blank"] {

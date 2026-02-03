@@ -41,28 +41,27 @@ const ContactQueries: React.FC = () => {
     useEffect(() => {
         const fetchTickets = async () => {
             try {
-                const res = await axios.get('/api/admin/tickets');
+                const res = await axios.get('/api/admin/contacts');
                 if (res.data.success) {
-                    // Map Ticket model to Query interface
-                    const mapped: Query[] = res.data.tickets.map((t: any) => ({
-                        id: t.id,
-                        name: t.user || 'Unknown User',
-                        email: t.user?.includes('@') ? t.user : '',
-                        phone: '',
-                        type: t.category,
-                        subject: t.subject,
-                        status: t.status === 'Open' ? 'New' : t.status,
-                        priority: t.priority,
-                        source: 'Website' as Source,
-                        created: t.created || new Date(t.createdAt).toLocaleDateString(),
+                    const mapped: Query[] = res.data.contacts.map((c: any) => ({
+                        id: c._id,
+                        name: c.name || 'Unknown User',
+                        email: c.email || '',
+                        phone: c.phone || '',
+                        type: 'Inquiry',
+                        subject: c.subject || 'General Contact',
+                        status: 'New',
+                        priority: 'Medium',
+                        source: (c.source as Source) || 'Website',
+                        created: new Date(c.createdAt).toLocaleDateString(),
                         lastActive: 'Just now',
-                        assignedTo: t.assignedTo !== 'None' ? t.assignedTo : '',
-                        message: t.messages?.[0]?.text || 'No message content'
+                        assignedTo: '',
+                        message: c.message || 'No content'
                     }));
                     setQueries(mapped);
                 }
             } catch (err) {
-                console.error("Error fetching tickets:", err);
+                console.error("Error fetching contacts:", err);
             } finally {
                 setLoading(false);
             }

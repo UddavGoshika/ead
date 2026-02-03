@@ -7,8 +7,9 @@ import EditProfile from '../shared/EditProfile';
 import SearchPreferences from '../shared/SearchPreferences';
 import SafetyCenter from '../shared/SafetyCenter';
 import DetailedProfile from '../shared/DetailedProfile';
+import HelpSupport from '../shared/HelpSupport';
 import {
-    NormalProfiles, HelpSupport
+    NormalProfiles
 } from './sections/Placeholders';
 import Preservices from '../../../components/footerpages/premiumservices';
 import WalletHistory from '../shared/WalletHistory';
@@ -21,11 +22,18 @@ import FileCase from './sections/FileCase';
 import CreateBlog from './sections/CreateBlog';
 import CreditsPage from '../shared/CreditsPage';
 import LegalDocumentationPage from '../../LegalDocumentationPage';
-import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
+import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare } from 'lucide-react';
 import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
+
+interface Notification {
+    id: string;
+    message: string;
+    type: 'info' | 'success' | 'alert';
+    time: string;
+}
 
 const AdvocateDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -39,6 +47,14 @@ const AdvocateDashboard: React.FC = () => {
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
+
+    // Notification State
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState<Notification[]>([
+        { id: '1', message: 'Welcome to e-Advocate! Complete your profile to get more cases.', type: 'info', time: 'Just now' },
+        { id: '2', message: 'Tip: Upload your license to get verified status.', type: 'success', time: '2 hours ago' }
+    ]);
+
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -64,12 +80,34 @@ const AdvocateDashboard: React.FC = () => {
 
     const bottomNavClick = (page: string) => setCurrentPage(page);
 
+    const addNotification = (msg: string, type: 'info' | 'success' | 'alert' = 'info') => {
+        const newNotif: Notification = {
+            id: Date.now().toString(),
+            message: msg,
+            type,
+            time: 'Just now'
+        };
+        setNotifications(prev => [newNotif, ...prev]);
+    };
+
+    const removeNotification = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    };
+
+    const clearAllNotifications = () => {
+        setNotifications([]);
+    };
+
     const showToast = (msg: string) => {
         const toast = document.createElement('div');
         toast.className = styles.toast;
         toast.innerText = msg;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
+
+        // Add to notification center
+        addNotification(msg, 'info');
     };
 
     const renderPage = () => {
@@ -103,13 +141,9 @@ const AdvocateDashboard: React.FC = () => {
             case 'safety-center':
                 return <SafetyCenter backToHome={backtohome} showToast={showToast} />;
             case 'help-support':
-                return <HelpSupport backToHome={backtohome} />;
+                return <HelpSupport backToHome={backtohome} showToast={showToast} />;
             case 'blogs':
-                return (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                        <BlogFeed />
-                    </div>
-                );
+                return <BlogFeed />;
             case 'activity':
                 return <Activity />;
             case 'my-subscription':
@@ -141,7 +175,7 @@ const AdvocateDashboard: React.FC = () => {
         switch (currentPage) {
             case 'featured-profiles': return 'Featured Profiles';
             case 'normalfccards': return 'Browse All Advocates';
-            case 'detailed-profile-view': return 'Profile Detail';
+            case 'detailed-profile-view': return 'Advocate Detail';
             case 'edit-profile': return 'Edit Profile';
             case 'search-preferences': return 'Search Preferences';
             case 'upgrade': return 'Membership Upgrade';
@@ -184,25 +218,113 @@ const AdvocateDashboard: React.FC = () => {
                         </h1>
                     </div>
 
-                    {currentPage === 'featured-profiles' && (
-                        <div className={styles.newsTicker}>
-                            <span className={styles.tickerText}>✨ Latest News: Someone just posted a new professional blog! Boost your visibility today. ✨</span>
+                    <div className={styles.topBarCenter} style={{ position: 'relative' }}>
+                        {/* News Ticker - Behind Profile (99% width, top:10) */}
+                        <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: 10, zIndex: 0, opacity: 0.8 }}>
+                            <span className={styles.tickerText}>
+                                ✨ LATEST NEWS: SOMEONE JUST POSTED A NEW PROFESSIONAL BLOG! BOOST YOUR VISIBILITY TODAY • COMPLETE YOUR PROFILE TO GET MORE LEADS ✨
+                            </span>
                         </div>
-                    )}
+
+                        {/* Profile Header - On Top */}
+                        <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
+                            <div className={styles.profileInfoQuick}>
+                                <img
+                                    src={user?.image_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400'}
+                                    className={styles.miniProfileImg}
+                                    alt="Profile"
+                                />
+                                <div className={styles.miniNameStack}>
+                                    <span className={styles.miniName}>{user?.name}</span>
+                                    <span className={styles.miniId}>{user?.unique_id}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className={styles.topBarRight}>
+                        <div className={styles.statusGroup} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {/* Coins & Plan */}
+                            {/* <div className={styles.coinBadge} style={{ marginRight: '0' }}>
+                                <span className={styles.coinCount}>{user?.coins || 0}</span>
+                                <span className={styles.coinLabel}>Coins</span>
+                            </div> */}
+
+                            {/* <div className={styles.badgeStack}>
+                                {isPremium && plan.toLowerCase() !== 'free' ? (
+                                    <span className={`${styles.badgePlan} ${isUltra ? styles.ultraBadge : isPro ? styles.proBadge : styles.liteBadge}`}>
+                                        {plan.toUpperCase()} PLAN
+                                    </span>
+                                ) : (
+                                    <span className={`${styles.badgePlan} ${styles.freeBadge}`}>FREE MEMBER</span>
+                                )}
+                            </div> */}
+                        </div>
+
+                        {/* Special Action: Write Blog (Only if Premium & on Blog Page) */}
                         {currentPage === 'blogs' && isPremium && (
                             <button
                                 className={styles.writeBlogBtn}
                                 onClick={() => setShowCreateBlog(true)}
+                                style={{ marginRight: '15px' }}
                             >
                                 <PenLine size={18} />
                                 <span>Write Blog</span>
                             </button>
                         )}
-                        <button className={styles.notificationBtn}>
-                            <Bell size={24} />
-                        </button>
+
+                        {/* Notification Button & Dropdown */}
+                        <div className={styles.notificationWrapper}>
+                            <button
+                                className={styles.notificationBtn}
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                style={{ position: 'relative' }}
+                            >
+                                <Bell size={24} />
+                                {notifications.length > 0 && (
+                                    <span className={styles.badgeCount}>{notifications.length}</span>
+                                )}
+                            </button>
+
+                            {showNotifications && (
+                                <div className={styles.notificationDropdown}>
+                                    <div className={styles.notifHeader}>
+                                        <h3>Notifications</h3>
+                                        {notifications.length > 0 && (
+                                            <button className={styles.clearAllBtn} onClick={clearAllNotifications}>
+                                                Clear All
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className={styles.notifList}>
+                                        {notifications.length > 0 ? (
+                                            notifications.map(notif => (
+                                                <div key={notif.id} className={styles.notifItem}>
+                                                    <div className={styles.notifIcon}>
+                                                        {notif.type === 'success' ? <CheckCircle size={16} /> :
+                                                            notif.type === 'alert' ? <MessageSquare size={16} /> : <Info size={16} />}
+                                                    </div>
+                                                    <div className={styles.notifContent}>
+                                                        <p className={styles.notifMessage}>{notif.message}</p>
+                                                        <span className={styles.notifTime}>{notif.time}</span>
+                                                    </div>
+                                                    <button
+                                                        className={styles.notifCloseBtn}
+                                                        onClick={(e) => removeNotification(notif.id, e)}
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className={styles.noNotifs}>
+                                                No new notifications
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -221,7 +343,6 @@ const AdvocateDashboard: React.FC = () => {
                         onClose={() => setShowCreateBlog(false)}
                         onSuccess={() => {
                             showToast("Blog submitted for approval!");
-                            // Optionally refresh blog feed if we add a ref
                         }}
                     />
                 </div>

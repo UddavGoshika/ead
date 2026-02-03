@@ -92,7 +92,9 @@ const RefundPolicy: React.FC = () => {
                     </p>
 
                     <ul>
-                        <li>📧 Email: <strong>[official support / billing email]</strong></li>
+                        <li>📧 Email: <strong>support@tatitoprojects.com
+
+                        </strong></li>
                         <li>📌 Subject: <strong>Refund Request – E-Advocate Services</strong></li>
                     </ul>
 

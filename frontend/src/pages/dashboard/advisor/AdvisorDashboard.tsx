@@ -72,11 +72,7 @@ const AdvisorDashboard: React.FC = () => {
             case 'help-support':
                 return <HelpSupport backToHome={backtohome} />;
             case 'blogs':
-                return (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                        <BlogFeed />
-                    </div>
-                );
+                return <BlogFeed />;
             case 'activity':
                 return <AdvisorActivity />;
             case 'my-subscription':
