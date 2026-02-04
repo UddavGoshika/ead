@@ -12,11 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
-<<<<<<< HEAD
-import { WebRTCService } from '../../../services/WebRTCService';
-=======
 import { useCall } from '../../../context/CallContext';
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
@@ -207,17 +203,6 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     </div>
 
                     <div className={styles.quickActionsRow}>
-<<<<<<< HEAD
-                        <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
-                            <Mail size={18} />
-                            Send Interest
-                        </button>
-                        <button className={styles.callOptionBtn} onClick={() => handleCall('voice')}>
-                            <Phone size={18} />
-                            <span>Audio</span>
-                        </button>
-                        <button className={styles.callOptionBtn} onClick={() => handleCall('video')}>
-=======
                         {interactionStatus !== 'superInterest' ? (
                             <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
                                 <Mail size={18} />
@@ -239,7 +224,6 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                             <span>Audio</span>
                         </button>
                         <button className={styles.callOptionBtn} onClick={() => handleVideoCall()}>
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
                             <Video size={18} />
                             <span>Video</span>
                         </button>

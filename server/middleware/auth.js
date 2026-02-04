@@ -1,34 +1,3 @@
-<<<<<<< HEAD
-const User = require('../models/User');
-
-const auth = async (req, res, next) => {
-    try {
-        const authHeader = req.header('Authorization');
-        if (!authHeader) {
-            return res.status(401).json({ success: false, error: 'No authentication token provided' });
-        }
-
-        const token = authHeader.replace('Bearer ', '');
-
-        // Simple mock token logic matching auth.js
-        if (token.startsWith('user-token-')) {
-            const userId = token.split('user-token-')[1];
-            const user = await User.findById(userId);
-            if (!user) throw new Error();
-
-            req.user = { id: user._id, role: user.role, email: user.email }; // Normalize req.user.id
-            req.token = token;
-            next();
-        } else if (token === 'mock-token-admin') {
-            req.user = { id: '65a001', role: 'admin', email: 'admin@gmail.com' };
-            req.token = token;
-            next();
-        } else {
-            res.status(401).json({ success: false, error: 'Invalid token' });
-        }
-    } catch (error) {
-        res.status(401).json({ success: false, error: 'Please authenticate' });
-=======
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
@@ -86,7 +55,6 @@ const auth = async (req, res, next) => {
     } catch (err) {
         console.error("Auth Middleware Error:", err);
         res.status(401).json({ error: 'Token is not valid' });
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
     }
 };
 

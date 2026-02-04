@@ -243,22 +243,6 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <SettingsProvider>
-<<<<<<< HEAD
-        <CallOverlay />
-        <Router>
-          <ScrollToTop />
-          <ImpersonationBanner />
-          <Routes>
-            {/* PUBLIC ROUTES */}
-            <Route path="/" element={
-              <HomeLayout />
-            }>
-              <Route index element={<HomePage />} />
-              <Route path="about" element={<AboutUs />} />
-              <Route path="faq" element={<FAQPage />} />
-              <Route path="blogs" element={<BlogPage />} />
-              <Route path="search" element={<SearchPage />} />
-=======
         <CallProvider>
           <Router>
             <CallWindow />
@@ -274,7 +258,6 @@ const App: React.FC = () => {
                 <Route path="faq" element={<FAQPage />} />
                 <Route path="blogs" element={<BlogPage />} />
                 <Route path="search" element={<SearchPage />} />
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 
                 <Route path="profile/:uniqueId" element={<PublicProfile />} />
                 <Route path="file-a-case" element={<PlaceholderPage />} />
@@ -712,40 +695,29 @@ const App: React.FC = () => {
                 <Route path="members/:status" element={<TelecallerMembers />} />
               </Route>
 
-<<<<<<< HEAD
-            <Route path="/staff/portal" element={
-              <ProtectedRoute allowedRoles={[
-                'SUPPORT', 'TELECALLER', 'CUSTOMER_CARE', 'ADMIN', 'MANAGER', 'TEAMLEAD', 'HR', 'DATA_ENTRY',
-                'CHAT_SUPPORT', 'LIVE_CHAT', 'CALL_SUPPORT', 'PERSONAL_ASSISTANT', 'INFLUENCER', 'MARKETER',
-                'support', 'telecaller', 'customer_care', 'admin', 'manager', 'teamlead', 'hr', 'data_entry',
-                'chat_support', 'live_chat', 'call_support', 'personal_assistant', 'influencer', 'marketer'
-              ]}>
-                <StaffGlobalDashboard />
-              </ProtectedRoute>
-            } />
+              <Route path="/staff/portal" element={
+                <ProtectedRoute allowedRoles={[
+                  'SUPPORT', 'TELECALLER', 'CUSTOMER_CARE', 'ADMIN', 'MANAGER', 'TEAMLEAD', 'HR', 'DATA_ENTRY',
+                  'CHAT_SUPPORT', 'LIVE_CHAT', 'CALL_SUPPORT', 'PERSONAL_ASSISTANT', 'INFLUENCER', 'MARKETER',
+                  'support', 'telecaller', 'customer_care', 'admin', 'manager', 'teamlead', 'hr', 'data_entry',
+                  'chat_support', 'live_chat', 'call_support', 'personal_assistant', 'influencer', 'marketer'
+                ]}>
+                  <StaffGlobalDashboard />
+                </ProtectedRoute>
+              } />
 
-            {/* REDIRECT LEGACY SUPPORT LINKS TO NEW PROFESSIONAL DASHBOARDS */}
-            <Route path="/dashboard/support/roles" element={<Navigate to="/telecaller" replace />} />
-            <Route path="/support/chat" element={<Navigate to="/telecaller" replace />} />
-            <Route path="/support/call" element={<Navigate to="/call-support" replace />} />
-            <Route path="/support/live" element={<Navigate to="/live-chat" replace />} />
-            <Route path="/support/care" element={<Navigate to="/customer-care" replace />} />
-
-            {/* CATCH ALL */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-=======
               {/* REDIRECT LEGACY SUPPORT LINKS TO NEW PROFESSIONAL DASHBOARDS */}
               <Route path="/dashboard/support/roles" element={<Navigate to="/telecaller" replace />} />
               <Route path="/support/chat" element={<Navigate to="/telecaller" replace />} />
               <Route path="/support/call" element={<Navigate to="/call-support" replace />} />
               <Route path="/support/live" element={<Navigate to="/live-chat" replace />} />
               <Route path="/support/care" element={<Navigate to="/customer-care" replace />} />
+
+              {/* CATCH ALL */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>
         </CallProvider>
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
       </SettingsProvider>
     </AuthProvider>
   );

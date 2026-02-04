@@ -10,13 +10,10 @@ const Blog = require('../models/Blog');
 const AuditLog = require('../models/AuditLog');
 const Transaction = require('../models/Transaction'); // Added Transaction model
 const LegalRequest = require('../models/LegalRequest');
-<<<<<<< HEAD
 const StaffProfile = require('../models/StaffProfile');
 const StaffReport = require('../models/StaffReport');
 const Lead = require('../models/Lead');
-=======
 const Contact = require('../models/Contact');
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -689,12 +686,8 @@ router.post('/onboard-staff', async (req, res) => {
         const newUser = await User.create({
             email,
             password: hashedPassword,
-<<<<<<< HEAD
-            role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
-=======
             plainPassword: tempPassword,
-            role: role.toUpperCase(),
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
+            role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
             status: 'Active',
             coins: 0
         });

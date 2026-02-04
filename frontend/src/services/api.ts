@@ -15,14 +15,6 @@ const api = axios.create({
     baseURL: '/api',
 });
 
-<<<<<<< HEAD
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-=======
 // Add a request interceptor to attach the token
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
@@ -32,7 +24,6 @@ api.interceptors.request.use((config) => {
     return config;
 }, (error) => {
     return Promise.reject(error);
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 });
 
 export const authService = {
@@ -44,12 +35,9 @@ export const authService = {
     verifyOtp: (email: string, otp: string) => api.post<any>('/auth/verify-otp', { email, otp }),
     forgotPassword: (email: string) => api.post<any>('/auth/forgot-password', { email }),
     resetPassword: (data: any) => api.post<any>('/auth/reset-password', data),
-<<<<<<< HEAD
-    getProfile: () => api.get<{ success: boolean, user: any }>('/auth/me'),
-=======
     changePassword: (data: any) => api.post<any>('/auth/change-password', data),
+    getProfile: () => api.get<{ success: boolean, user: any }>('/auth/me'),
     getCurrentUser: () => api.get<any>('/auth/me'),
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 };
 
 export const advocateService = {
@@ -91,15 +79,12 @@ export const clientService = {
 
 export const adminService = {
     onboardStaff: (data: any) => api.post<{ success: boolean; message: string; userId: string; mailSent: boolean }>('/admin/onboard-staff', data),
-<<<<<<< HEAD
     getStaff: () => api.get<{ success: boolean; staff: any[] }>('/admin/staff'),
     getStaffReports: (staffId: string, frequency?: string) => api.get<{ success: boolean; reports: any[] }>(`/admin/staff/${staffId}/reports`, { params: { frequency } }),
     getReportLeads: (reportId: string) => api.get<{ success: boolean; leads: any[] }>(`/admin/reports/${reportId}/leads`),
     getStaffWorkLogs: (staffId: string) => api.get<{ success: boolean; logs: any[] }>(`/admin/staff/${staffId}/work-logs`),
     allocateProject: (staffId: string, project: string) => api.post<{ success: boolean; profile: any }>(`/admin/staff/${staffId}/allocate`, { project }),
-=======
     updateTransactionStatus: (id: string, status: string, remarks?: string) => api.patch<{ success: boolean; transaction: any }>(`/admin/transactions/${id}/status`, { status, remarks }),
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 };
 
 export const caseService = {
@@ -111,13 +96,13 @@ export const caseService = {
         api.get<any>('/metrics', { params: { userId } }),
 };
 
-<<<<<<< HEAD
 export const staffService = {
     getMyLeads: () => api.get<{ success: boolean; leads: any[] }>('/staff/my-leads'),
     updateLead: (id: string, data: { status: string; notes?: string; callData?: any }) =>
         api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
     getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
-=======
+};
+
 export const walletService = {
     getHistory: () => api.get<{ success: boolean; transactions: any[] }>('/payments/history'),
     withdraw: (data: { amount: number; bankDetails?: any }) => api.post<{ success: boolean; message: string; balance: number }>('/payments/withdraw', data),
@@ -129,7 +114,6 @@ export const settingsService = {
     deactivateAccount: () => api.post<{ success: boolean }>('/settings/deactivate'),
     deleteAccount: () => api.post<{ success: boolean }>('/settings/delete'),
     syncPresets: (presets: any[]) => api.post<{ success: boolean; presets: any[] }>('/settings/presets', { presets }),
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 };
 
 export default api;

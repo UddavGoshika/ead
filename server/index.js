@@ -54,14 +54,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
-<<<<<<< HEAD
 app.use('/api/staff', staffRoutes);
-=======
 const caseRoutes = require('./routes/cases');
 const callRoutes = require('./routes/calls');
 app.use('/api/cases', caseRoutes);
 app.use('/api/calls', callRoutes);
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.
