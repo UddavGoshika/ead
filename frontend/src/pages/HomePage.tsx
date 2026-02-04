@@ -19,12 +19,32 @@ const HomePage: React.FC = () => {
 
     useEffect(() => {
         if (isLoggedIn && user) {
-            const role = user.role.toLowerCase();
-            if (role === 'client') navigate('/dashboard/client');
-            else if (role === 'advocate') navigate('/dashboard/advocate');
-            else if (role === 'legal_provider') navigate('/dashboard/advisor');
-            else if (role === 'admin' || role === 'super_admin') navigate('/admin');
-            else navigate('/dashboard/user');
+            const role = (user.role || '').toLowerCase();
+
+            if (role === 'admin' || role === 'super_admin') {
+                navigate('/admin/dashboard');
+            } else if (role === 'advocate') {
+                navigate('/dashboard/advocate');
+            } else if (role === 'client') {
+                navigate('/dashboard/client');
+            } else if (role === 'legal_provider') {
+                navigate('/dashboard/advisor');
+            } else if (role === 'verifier') {
+                navigate('/dashboard/verifier');
+            } else if (role === 'finance') {
+                navigate('/dashboard/finance');
+            } else if ([
+                'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
+                'chat_support', 'live_chat', 'call_support', 'data_entry',
+                'personal_assistant', 'personal_agent', 'influencer', 'marketer'
+            ].includes(role)) {
+                navigate('/staff/portal');
+            } else if (role === 'user') {
+                navigate('/dashboard/user');
+            } else {
+                // Default fallback
+                navigate('/dashboard/client');
+            }
         }
     }, [isLoggedIn, user, navigate]);
 

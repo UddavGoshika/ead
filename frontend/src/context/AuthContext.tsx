@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { authService } from '../services/api';
 import type { User } from '../types';
 
 interface AuthContextType {
     user: User | null;
     isLoggedIn: boolean;
+    isAuthLoading: boolean; // Added this
     login: (user: User, token?: string) => void;
     logout: () => void;
     isAuthModalOpen: boolean;
@@ -55,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const hasFlag = localStorage.getItem('isLoggedIn') === 'true';
         return hasToken && hasFlag;
     });
+    const [isAuthLoading, setIsAuthLoading] = useState(true); // Added isAuthLoading state
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -68,20 +71,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Initial logging
+    // Initial Session Verification
     useEffect(() => {
-        console.log('AuthProvider: Mounted, isLoggedIn:', isLoggedIn);
+        const checkAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    setIsAuthLoading(true); // Set loading to true
+                    console.log('AuthProvider: Verifying session with DB...');
+                    const { data } = await authService.getProfile();
+                    if (data.success && data.user) {
+                        const validatedUser = data.user;
+                        setUser(validatedUser);
+                        setIsLoggedIn(true);
+
+                        // Sync specific fields to ensure role accuracy
+                        localStorage.setItem('user', JSON.stringify(validatedUser));
+                        localStorage.setItem('userRole', validatedUser.role);
+                        localStorage.setItem('isLoggedIn', 'true');
+                        console.log('[AuthContext] Session verified. Role:', validatedUser.role);
+                    }
+                } catch (err) {
+                    console.error('[AuthContext] Session validation failed. Keeping local state but warning user.', err);
+                } finally {
+                    setIsAuthLoading(false); // Set loading to false after check
+                }
+            } else {
+                setIsAuthLoading(false); // If no token, not loading
+            }
+        };
+        checkAuth();
     }, []);
 
     const login = (userData: User, token?: string) => {
-        setUser(userData);
-        setIsLoggedIn(true);
+        // SET STORAGE FIRST
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userRole', userData.role);
-        // If token is provided, set it. Otherwise assume it was set by the caller.
         if (token) localStorage.setItem('token', token);
+
+        // THEN UPDATE STATE
+        setUser(userData);
+        setIsLoggedIn(true);
         console.log('[AUTH] Login successful, token set:', !!localStorage.getItem('token'));
         setIsAuthModalOpen(false);
+        // isAuthLoading should already be false or will be set to false by useEffect if it was true
     };
 
     const logout = () => {
@@ -91,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userRole');
         localStorage.removeItem('token'); // ENSURE TOKEN IS REMOVED
+        setIsAuthLoading(false); // Set loading to false on logout
         window.location.href = '/';
     };
 
@@ -154,6 +189,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (role === 'advocate') window.location.href = '/dashboard/advocate';
                 else if (role === 'client') window.location.href = '/dashboard/client';
                 else if (role === 'legal_provider') window.location.href = '/dashboard/advisor';
+                else if (['manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care', 'chat_support', 'live_chat', 'call_support', 'data_entry'].includes(role)) {
+                    window.location.href = '/staff/portal';
+                }
                 else window.location.href = '/dashboard/user';
             } else {
                 alert(res.data.error || 'Failed to impersonate member');
@@ -199,6 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <AuthContext.Provider value={{
             user,
             isLoggedIn,
+            isAuthLoading, // Added this
             login,
             logout,
             isAuthModalOpen,

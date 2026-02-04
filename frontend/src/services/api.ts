@@ -15,6 +15,14 @@ const api = axios.create({
     baseURL: '/api',
 });
 
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export const authService = {
     login: (credentials: any) => api.post<AuthResponse>('/auth/login', credentials),
     register: (data: any) => api.post<AuthResponse>('/auth/register', data),
@@ -24,6 +32,7 @@ export const authService = {
     verifyOtp: (email: string, otp: string) => api.post<any>('/auth/verify-otp', { email, otp }),
     forgotPassword: (email: string) => api.post<any>('/auth/forgot-password', { email }),
     resetPassword: (data: any) => api.post<any>('/auth/reset-password', data),
+    getProfile: () => api.get<{ success: boolean, user: any }>('/auth/me'),
 };
 
 export const advocateService = {
@@ -61,6 +70,11 @@ export const clientService = {
 
 export const adminService = {
     onboardStaff: (data: any) => api.post<{ success: boolean; message: string; userId: string; mailSent: boolean }>('/admin/onboard-staff', data),
+    getStaff: () => api.get<{ success: boolean; staff: any[] }>('/admin/staff'),
+    getStaffReports: (staffId: string, frequency?: string) => api.get<{ success: boolean; reports: any[] }>(`/admin/staff/${staffId}/reports`, { params: { frequency } }),
+    getReportLeads: (reportId: string) => api.get<{ success: boolean; leads: any[] }>(`/admin/reports/${reportId}/leads`),
+    getStaffWorkLogs: (staffId: string) => api.get<{ success: boolean; logs: any[] }>(`/admin/staff/${staffId}/work-logs`),
+    allocateProject: (staffId: string, project: string) => api.post<{ success: boolean; profile: any }>(`/admin/staff/${staffId}/allocate`, { project }),
 };
 
 export const caseService = {
@@ -70,6 +84,13 @@ export const caseService = {
         api.post<{ message: string; caseId: number }>('/cases', caseData),
     getMetrics: (userId: number | string) =>
         api.get<any>('/metrics', { params: { userId } }),
+};
+
+export const staffService = {
+    getMyLeads: () => api.get<{ success: boolean; leads: any[] }>('/staff/my-leads'),
+    updateLead: (id: string, data: { status: string; notes?: string; callData?: any }) =>
+        api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
+    getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
 };
 
 export default api;

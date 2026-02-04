@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
+import { WebRTCService } from '../../../services/WebRTCService';
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
@@ -65,8 +66,23 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
         alert('Interest sent to ' + advocate.name);
     };
 
-    const handleCall = () => {
-        alert(`Calling ${advocate.name}...`);
+    const handleCall = async (type: 'voice' | 'video') => {
+        try {
+            const service = new WebRTCService();
+            const streams = await service.startLocalStream(type === 'video');
+
+            // For now, we use the advocate's Mongo ID as the target signal ID
+            const targetId = String(advocate.id);
+            const callerName = user?.name || "Eadvocate User";
+
+            await service.createCall(targetId, callerName, type);
+            // The global CallOverlay will handle the UI if we emit an event or state
+            // But for the caller, we might want to show they are calling
+            alert(`Calling ${advocate.name}... WebRTC session initiated.`);
+        } catch (err) {
+            console.error("Call failed:", err);
+            alert("Could not start call. Please check camera/mic permissions.");
+        }
     };
 
     const handleAddContact = () => {
@@ -128,11 +144,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                             <Mail size={18} />
                             Send Interest
                         </button>
-                        <button className={styles.callOptionBtn} onClick={handleCall}>
+                        <button className={styles.callOptionBtn} onClick={() => handleCall('voice')}>
                             <Phone size={18} />
                             <span>Audio</span>
                         </button>
-                        <button className={styles.callOptionBtn} onClick={() => alert('Starting video call...')}>
+                        <button className={styles.callOptionBtn} onClick={() => handleCall('video')}>
                             <Video size={18} />
                             <span>Video</span>
                         </button>

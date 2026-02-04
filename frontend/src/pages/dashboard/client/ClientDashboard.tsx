@@ -29,6 +29,7 @@ import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
+import SupportHub from '../shared/SupportHub';
 
 const ClientDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -256,6 +257,7 @@ const ClientDashboard: React.FC = () => {
                     onClose={() => setActiveChatAdvocate(null)}
                 />
             )}
+            <SupportHub />
         </div>
     );
 };

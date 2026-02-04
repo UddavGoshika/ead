@@ -10,6 +10,9 @@ const Blog = require('../models/Blog');
 const AuditLog = require('../models/AuditLog');
 const Transaction = require('../models/Transaction'); // Added Transaction model
 const LegalRequest = require('../models/LegalRequest');
+const StaffProfile = require('../models/StaffProfile');
+const StaffReport = require('../models/StaffReport');
+const Lead = require('../models/Lead');
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -140,9 +143,11 @@ router.get('/stats', async (req, res) => {
             totalUsers: await User.countDocuments(),
             totalAdvocates: await User.countDocuments({ role: 'advocate' }),
             totalClients: await User.countDocuments({ role: 'client' }),
-            totalManagers: await User.countDocuments({ role: 'manager' }),
-            totalTeamLeads: await User.countDocuments({ role: 'teamlead' }),
-            totalStaff: await User.countDocuments({ role: { $in: ['verifier', 'finance', 'support'] } }),
+            totalManagers: await User.countDocuments({ role: { $in: ['manager', 'MANAGER'] } }),
+            totalTeamLeads: await User.countDocuments({ role: { $in: ['teamlead', 'TEAMLEAD'] } }),
+            totalStaff: await User.countDocuments({
+                role: { $nin: ['client', 'advocate', 'admin'], $exists: true }
+            }),
             hrMetrics: {
                 attritionRate: 2.1,
                 engagementScore: 88,
@@ -155,7 +160,15 @@ router.get('/stats', async (req, res) => {
             activeUnits: await User.countDocuments({ status: 'Active' }),
             blockedUnits: await User.countDocuments({ status: 'Blocked' }),
             deactivatedUnits: await User.countDocuments({ status: 'Deactivated' }),
-            deletedUnits: await User.countDocuments({ status: 'Deleted' })
+            deletedUnits: await User.countDocuments({ status: 'Deleted' }),
+            totalRevenue: await (async () => {
+                const Transaction = require('../models/Transaction');
+                const agg = await Transaction.aggregate([
+                    { $match: { status: { $in: ['success', 'completed'] } } },
+                    { $group: { _id: null, total: { $sum: "$amount" } } }
+                ]);
+                return agg[0] ? agg[0].total : 0;
+            })()
         };
 
         res.json({ success: true, stats });
@@ -476,7 +489,7 @@ router.post('/blogs/:id/approve', async (req, res) => {
 // ONBOARD STAFF MEMBER
 router.post('/onboard-staff', async (req, res) => {
     try {
-        const { email, fullName, loginId, tempPassword, role } = req.body;
+        const { email, fullName, loginId, tempPassword, role, department, vendor, level } = req.body;
 
         if (!email || !fullName || !loginId || !tempPassword || !role) {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -493,9 +506,18 @@ router.post('/onboard-staff', async (req, res) => {
         const newUser = await User.create({
             email,
             password: hashedPassword,
-            role: role.toUpperCase(),
+            role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
             status: 'Active',
             coins: 0
+        });
+
+        // Create Staff Profile
+        await StaffProfile.create({
+            userId: newUser._id,
+            staffId: loginId,
+            department: department || 'General',
+            vendor: vendor || 'Internal',
+            level: level || 'Junior'
         });
 
         const emailSubject = `Welcome to E-Advocate: Your Professional Credentials for ${role}`;
@@ -522,6 +544,82 @@ router.post('/onboard-staff', async (req, res) => {
 
     } catch (err) {
         console.error('Onboarding Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET ALL STAFF WITH PROFILES
+router.get('/staff', async (req, res) => {
+    try {
+        // Fetch all users EXCEPT 'client' and 'advocate' to include all staff roles
+        const users = await User.find({
+            role: { $nin: ['client', 'advocate'], $exists: true }
+        });
+
+        const staffList = await Promise.all(users.map(async (u) => {
+            const profile = await StaffProfile.findOne({ userId: u._id });
+            return {
+                id: u._id,
+                email: u.email,
+                role: u.role,
+                status: u.status,
+                createdAt: u.createdAt,
+                profile: profile || {}
+            };
+        }));
+
+        res.json({ success: true, staff: staffList });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET STAFF PERFORMANCE REPORTS
+router.get('/staff/:id/reports', async (req, res) => {
+    try {
+        const { frequency } = req.query;
+        let query = { staffId: req.params.id };
+        if (frequency) query.frequency = frequency;
+
+        const reports = await StaffReport.find(query).sort({ createdAt: -1 });
+        res.json({ success: true, reports });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET STAFF DETAILED WORK LOGS
+router.get('/staff/:id/work-logs', async (req, res) => {
+    try {
+        const WorkLog = require('../models/WorkLog');
+        const logs = await WorkLog.find({ staffId: req.params.id }).sort({ timestamp: -1 });
+        res.json({ success: true, logs });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET REPORT LEADS
+router.get('/reports/:id/leads', async (req, res) => {
+    try {
+        const leads = await Lead.find({ reportId: req.params.id });
+        res.json({ success: true, leads });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ALLOCATE PROJECT TO STAFF
+router.post('/staff/:id/allocate', async (req, res) => {
+    try {
+        const { project } = req.body;
+        const profile = await StaffProfile.findOneAndUpdate(
+            { userId: req.params.id },
+            { currentProject: project },
+            { new: true }
+        );
+        res.json({ success: true, profile });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });

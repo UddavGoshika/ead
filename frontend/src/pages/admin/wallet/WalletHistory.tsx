@@ -139,8 +139,48 @@ const WalletHistory: React.FC = () => {
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
+        fetchAllTransactions();
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const fetchAllTransactions = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.get('/api/payments/admin/all-transactions', {
+                headers: { Authorization: token || '' }
+            });
+
+            if (data.success) {
+                const mapped: Transaction[] = data.transactions.map((t: any) => ({
+                    id: t.orderId.split('_').pop() || t.orderId,
+                    name: t.user?.name || 'End User',
+                    userId: t.userId.substring(0, 8).toUpperCase(),
+                    email: t.user?.email || 'N/A',
+                    phone: t.metadata?.phone || 'N/A',
+                    role: t.user?.role === 'client' ? 'Client' : 'Advocate',
+                    wallet: t.packageId && t.packageId.includes('wallet') ? 'main' : 'premium',
+                    source: t.packageId || 'Transfer',
+                    plan: t.user?.plan || '-',
+                    refBy: '-',
+                    type: t.status === 'success' || t.status === 'completed' ? 'credit' : 'debit',
+                    amount: t.amount,
+                    status: t.status.toLowerCase() as any,
+                    date: new Date(t.createdAt).toISOString().split('T')[0],
+                    gateway: t.gateway,
+                    paymentMethod: t.paymentId ? 'System' : 'Pending',
+                    notes: t.message || '',
+                    ip: t.metadata?.ip || 'Internal'
+                }));
+                setTransactions(mapped);
+                setFiltered(mapped);
+            }
+        } catch (err) {
+            console.error("Admin Ledger Fetch Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Apply filters, sorting & pagination
     const applyFilters = () => {
@@ -206,18 +246,52 @@ const WalletHistory: React.FC = () => {
         setPage(1);
     };
 
-    const handleReject = (id: string) => {
+    const handleReject = async (orderId: string) => {
         if (window.confirm("Are you sure you want to reject this transaction?")) {
-            setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'failed' } : t));
-            setOpenMenuId(null);
-            setSelectedTx(null);
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const { data } = await axios.post(`/api/payments/admin/transactions/${orderId}/reject`,
+                    { reason: 'Manual Rejection by Admin' },
+                    { headers: { Authorization: token || '' } }
+                );
+
+                if (data.success) {
+                    alert("Transaction marked as failed.");
+                    fetchAllTransactions();
+                }
+            } catch (err) {
+                alert("Action failed: Unauthorized or network error.");
+            } finally {
+                setLoading(false);
+                setOpenMenuId(null);
+                setSelectedTx(null);
+            }
         }
     };
 
-    const handleApproveAction = (id: string) => {
-        setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' } : t));
-        setOpenMenuId(null);
-        setSelectedTx(null);
+    const handleApproveAction = async (orderId: string) => {
+        if (!window.confirm("Authorize this transaction and update user account?")) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post(`/api/payments/admin/transactions/${orderId}/verify`,
+                {},
+                { headers: { Authorization: token || '' } }
+            );
+
+            if (data.success) {
+                alert("Transaction approved and user account updated!");
+                fetchAllTransactions();
+            }
+        } catch (err) {
+            alert("Approval failed.");
+        } finally {
+            setLoading(false);
+            setOpenMenuId(null);
+            setSelectedTx(null);
+        }
     };
 
     const handleViewUserHistory = (userId: string) => {
@@ -257,8 +331,8 @@ const WalletHistory: React.FC = () => {
             <div className={styles.topHeader}>
                 <h1 className={styles.pageTitle}>Wallet History</h1>
                 <div className={styles.topActions}>
-                    <button className={styles.iconBtn} onClick={applyFilters} title="Refresh Data"><RefreshCcw size={18} /></button>
-                    <button className={styles.btnPrimary} onClick={() => { }}><Download size={18} /> Export Overview</button>
+                    <button className={styles.iconBtn} onClick={fetchAllTransactions} title="Refresh Ledger"><RefreshCcw size={18} /></button>
+                    <button className={styles.btnPrimary} onClick={() => { }}><Download size={18} /> Export Oversight</button>
                 </div>
             </div>
 
@@ -487,7 +561,7 @@ const WalletHistory: React.FC = () => {
                                         {openMenuId === tx.id && (
                                             <div className={styles.dropdownMenu} ref={menuRef}>
                                                 <button onClick={() => { setSelectedTx(tx); setOpenMenuId(null); }}>
-                                                    <Eye size={14} /> View Details
+                                                    <Eye size={14} /> View Manifest
                                                 </button>
 
                                                 {tx.status === "pending" && (
@@ -496,7 +570,7 @@ const WalletHistory: React.FC = () => {
                                                             className={styles.approveMenuBtn}
                                                             onClick={() => handleApproveAction(tx.id)}
                                                         >
-                                                            <CheckCircle size={14} /> Approve
+                                                            <CheckCircle size={14} /> Authorize
                                                         </button>
                                                         <button
                                                             className={styles.deleteMenuBtn}

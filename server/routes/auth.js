@@ -3,9 +3,34 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const User = require('../models/User');
+const StaffProfile = require('../models/StaffProfile');
 const Otp = require('../models/Otp');
 const { sendEmail } = require('../utils/mailer');
 const { createNotification } = require('../utils/notif');
+const authMiddleware = require('../middleware/auth');
+
+// VALIDATE SESSION (DATABASE CHECK)
+router.get('/me', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id || req.user._id).select('-password');
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                status: user.status,
+                plan: user.plan || 'Free',
+                isPremium: user.isPremium || false
+            }
+        });
+    } catch (err) {
+        console.error('Session Check Error:', err);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
 
 // LOGIN
 router.post('/login', async (req, res) => {
@@ -16,7 +41,16 @@ router.post('/login', async (req, res) => {
     }
 
     try {
-        const user = await User.findOne({ email });
+        let user = await User.findOne({ email });
+
+        // If not found by email, try searching by staffId in StaffProfile
+        if (!user) {
+            const profile = await StaffProfile.findOne({ staffId: email });
+            if (profile) {
+                user = await User.findById(profile.userId);
+            }
+        }
+
         if (user) {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
@@ -56,7 +90,7 @@ router.post('/login', async (req, res) => {
 
     } catch (err) {
         console.error("Login Error:", err);
-        return res.status(500).json({ error: 'Server error during login. Please check DB connection.' });
+        return res.status(500).json({ success: false, error: err.message, stack: err.stack });
     }
 });
 

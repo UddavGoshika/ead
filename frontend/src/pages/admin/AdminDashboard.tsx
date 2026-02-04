@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import styles from "./admindash.module.css";
 import RevenueChart from "./revenuechart";
 import axios from "axios";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import MemberDetailModal from "../../components/admin/MemberDetailModal";
 import { useAuth } from "../../context/AuthContext";
+import StaffManagement from "../../components/admin/StaffManagement";
 
 /* ================= TYPES ================= */
 type MemberStatus = "Active" | "Blocked" | "Deactivated" | "Deleted";
@@ -141,6 +142,26 @@ const AdminDashboard: React.FC = () => {
                         Manage Permissions
                     </Link>
                 </div>
+
+                <div className={`${styles.graphCard} ${styles.staffHubCard}`} style={{ marginLeft: '20px' }}>
+                    <div className={styles.permissionLeft}>
+                        <div className={styles.permissionIcon} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                            <Briefcase size={32} />
+                        </div>
+                        <div className={styles.permissionText}>
+                            <h2>Operational Staff Hub</h2>
+                            <p>Access the unified outbound calling and lead management portal.</p>
+                        </div>
+                    </div>
+
+                    <Link
+                        to="/staff/dashboard"
+                        className={`${styles.actionButton}`}
+                        style={{ background: '#3b82f6' }}
+                    >
+                        Open Staff Hub
+                    </Link>
+                </div>
             </section>
 
 
@@ -241,6 +262,10 @@ const AdminDashboard: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* ================= STAFF & PARTNERS SECTION ================= */}
+            <StaffManagement />
+
             {selectedMember && (
                 <MemberDetailModal member={selectedMember} onClose={() => setSelectedMember(null)} />
             )}

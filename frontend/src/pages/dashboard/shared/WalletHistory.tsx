@@ -62,7 +62,35 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setEnabledGateways(gateways);
         };
         loadGateways();
+        fetchRealWalletData();
     }, []);
+
+    const fetchRealWalletData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const [balanceRes, txRes] = await Promise.all([
+                axios.get('/api/payments/balance', { headers: { Authorization: token || '' } }),
+                axios.get('/api/payments/my-transactions', { headers: { Authorization: token || '' } })
+            ]);
+
+            if (balanceRes.data.success) setBalance(balanceRes.data.balance);
+            if (txRes.data.success) {
+                const mapped: Transaction[] = txRes.data.transactions.map((t: any) => ({
+                    id: t.orderId.split('_').pop() || t.orderId,
+                    type: t.status === 'success' || t.status === 'completed' ? 'credit' : 'debit', // simplistic for now
+                    amount: t.amount,
+                    description: t.packageId || 'Wallet Operation',
+                    date: new Date(t.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    status: t.status.charAt(0).toUpperCase() + t.status.slice(1),
+                    method: t.gateway.toUpperCase(),
+                    category: t.packageId && t.packageId.includes('wallet') ? 'Recharge' : 'Membership'
+                }));
+                setTransactions(mapped);
+            }
+        } catch (err) {
+            console.error("Wallet Fetch Error:", err);
+        }
+    };
 
 
     // UI States
@@ -137,6 +165,10 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                     <h2>Wallet & History</h2>
                 </div>
                 <div className={styles.balanceSection}>
+                    <div className={styles.secureBadgeRow}>
+                        <div className={styles.secureBadge}><ShieldCheck size={14} /> 256-BIT SSL SECURE</div>
+                        <div className={styles.secureBadge}><CreditCard size={14} /> PCI-DSS COMPLIANT</div>
+                    </div>
                     <div className={styles.balanceInfo}>
                         <span>AVAILABLE LIQUIDITY</span>
                         <h3>₹ {balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>

@@ -23,44 +23,30 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
                 return <Navigate to="/dashboard/client" replace />;
             case 'user':
                 return <Navigate to="/dashboard/user" replace />;
-            case 'manager':
-                return <Navigate to="/manager/dashboard" replace />;
-            case 'teamlead':
-                return <Navigate to="/team-lead/workspace" replace />;
-            case 'hr':
-                return <Navigate to="/hr/workspace" replace />;
+            case 'legal_provider':
+                return <Navigate to="/dashboard/advisor" replace />;
             case 'verifier':
                 return <Navigate to="/dashboard/verifier" replace />;
             case 'finance':
                 return <Navigate to="/dashboard/finance" replace />;
-            case 'support':
-                return <Navigate to="/dashboard/support" replace />;
-            case 'legal_provider':
-                return <Navigate to="/dashboard/advisor" replace />;
+            case 'manager':
+            case 'teamlead':
+            case 'hr':
             case 'telecaller':
-                return <Navigate to="/telecaller" replace />;
-            case 'customer-care':
-                return <Navigate to="/customer-care" replace />;
-            case 'data-entry':
-                return <Navigate to="/data-entry" replace />;
-            case 'personal-assistant':
-                return <Navigate to="/personal-assistant" replace />;
+            case 'support':
+            case 'customer_care':
+            case 'chat_support':
+            case 'live_chat':
+            case 'call_support':
+            case 'data_entry':
+            case 'personal_assistant':
+            case 'personal_agent':
             case 'influencer':
-                return <Navigate to="/influencer" replace />;
             case 'marketer':
-                return <Navigate to="/marketer" replace />;
-            case 'marketing-agency':
-                return <Navigate to="/marketing-agency" replace />;
-            case 'chat-support':
-                return <Navigate to="/chat-support" replace />;
-            case 'call-support':
-                return <Navigate to="/call-support" replace />;
-            case 'live-chat':
-                return <Navigate to="/live-chat" replace />;
-            case 'personal-agent':
-                return <Navigate to="/personal-agent" replace />;
+            case 'marketing_agency':
+                return <Navigate to="/staff/portal" replace />;
             default:
-                return <Navigate to="/dashboard" replace />;
+                return <Navigate to="/dashboard/client" replace />;
         }
     }
 

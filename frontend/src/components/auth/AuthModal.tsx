@@ -22,6 +22,7 @@ const AuthModal: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loginType, setLoginType] = useState<'user' | 'staff'>('user');
 
     React.useEffect(() => {
         setActiveTab(authTab);
@@ -84,22 +85,26 @@ const AuthModal: React.FC = () => {
 
                 // Redirect based on role
                 let target = '/dashboard/client';
-                if (response.data.user.role === 'admin') {
+                const role = (response.data.user.role || '').toLowerCase();
+
+                if (role === 'admin' || role === 'superadmin') {
                     target = '/admin/dashboard';
-                } else if (response.data.user.role === 'advocate') {
+                } else if (role === 'advocate') {
                     target = '/dashboard/advocate';
-                } else if (response.data.user.role === 'ADMIN') {
-                    target = '/dashboard/admin';
-                } else if (response.data.user.role === 'VERIFIER') {
+                } else if (role === 'verifier') {
                     target = '/dashboard/verifier';
-                } else if (response.data.user.role === 'FINANCE') {
+                } else if (role === 'finance') {
                     target = '/dashboard/finance';
-                } else if (response.data.user.role === 'SUPPORT') {
-                    target = '/dashboard/support';
-                } else if (response.data.user.role === 'USER') {
-                    target = '/dashboard/user';
-                } else if (response.data.user.role === 'legal_provider') {
+                } else if (role === 'legal_provider') {
                     target = '/dashboard/advisor';
+                } else if ([
+                    'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
+                    'chat_support', 'live_chat', 'call_support', 'data_entry',
+                    'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
+                ].includes(role)) {
+                    target = '/staff/portal';
+                } else if (role === 'user') {
+                    target = '/dashboard/user';
                 }
 
                 console.log('Redirecting to:', target);
@@ -255,7 +260,25 @@ const AuthModal: React.FC = () => {
                                         exit={{ opacity: 0, x: 20 }}
                                     >
                                         <h2>Welcome Back</h2>
-                                        <p className={styles.subtitle}>Enter your details to access your dashboard</p>
+                                        <div className={styles.loginTypeToggle}>
+                                            <button
+                                                className={loginType === 'user' ? styles.activeLoginType : ''}
+                                                onClick={() => setLoginType('user')}
+                                            >
+                                                Member Login
+                                            </button>
+                                            <button
+                                                className={loginType === 'staff' ? styles.activeLoginType : ''}
+                                                onClick={() => setLoginType('staff')}
+                                            >
+                                                Staff & Partner
+                                            </button>
+                                        </div>
+                                        <p className={styles.subtitle}>
+                                            {loginType === 'user'
+                                                ? "Enter your details to access your dashboard"
+                                                : "Login using your designated ID and passcode"}
+                                        </p>
 
                                         {error && (
                                             <div className={styles.errorBox}>
@@ -266,10 +289,13 @@ const AuthModal: React.FC = () => {
 
                                         <form onSubmit={handleLogin}>
                                             <div className={styles.formGroup}>
-                                                <label><Mail size={16} /> Email Address</label>
+                                                <label>
+                                                    {loginType === 'user' ? <Mail size={16} /> : <UserCheck size={16} />}
+                                                    {loginType === 'user' ? " Email Address" : " Login ID"}
+                                                </label>
                                                 <input
-                                                    type="email"
-                                                    placeholder="name@example.com"
+                                                    type={loginType === 'user' ? "email" : "text"}
+                                                    placeholder={loginType === 'user' ? "name@example.com" : "EAD-XXXX-XXXX"}
                                                     required
                                                     value={email}
                                                     onChange={e => setEmail(e.target.value)}
@@ -277,7 +303,7 @@ const AuthModal: React.FC = () => {
                                             </div>
                                             <div className={styles.formGroup}>
                                                 <div className={styles.labelWrapper}>
-                                                    <label><Lock size={16} /> Password</label>
+                                                    <label><Lock size={16} /> {loginType === 'user' ? "Password" : "Passcode"}</label>
                                                     <button type="button" className={styles.forgotLink} onClick={() => setIsForgotPassword(true)}>
                                                         Forgot Password?
                                                     </button>

@@ -39,6 +39,7 @@ const adminRoutes = require('./routes/admin');
 const blogRoutes = require('./routes/blog');
 const notificationRoutes = require('./routes/notifications');
 const paymentRoutes = require('./routes/payments');
+const staffRoutes = require('./routes/staff');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/client', clientRoutes);
@@ -51,6 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/staff', staffRoutes);
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.

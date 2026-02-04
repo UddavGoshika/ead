@@ -539,10 +539,98 @@ router.post('/cashfree-callback', async (req, res) => {
     res.redirect(`http://localhost:3000/dashboard?status=success&order_id=${orderId || ''}`);
 });
 
-router.get('/cashfree-callback', async (req, res) => {
-    console.log("[CASHFREE] GET Callback received:", req.query);
-    const { order_id } = req.query;
-    res.redirect(`http://localhost:3000/dashboard?status=success&order_id=${order_id}`);
+// GET MY TRANSACTIONS
+router.get('/my-transactions', authenticate, async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ userId: req.user.id || req.user._id }).sort({ createdAt: -1 });
+        res.json({ success: true, transactions });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET MY BALANCE
+router.get('/balance', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id || req.user._id);
+        res.json({ success: true, balance: user.coins || 0 });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ADMIN: GET ALL TRANSACTIONS
+router.get('/admin/all-transactions', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access Denied' });
+
+        // Populate user details for the admin ledger
+        const rawTransactions = await Transaction.find().sort({ createdAt: -1 });
+
+        // Enhance with user details if possible
+        const enhanced = await Promise.all(rawTransactions.map(async (tx) => {
+            const user = await User.findById(tx.userId).select('name email role');
+            return {
+                ...tx.toObject(),
+                user: user || { name: 'Unknown', email: 'N/A', role: 'N/A' }
+            };
+        }));
+
+        res.json({ success: true, transactions: enhanced });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ADMIN: VERIFY/APPROVE TRANSACTION (Manual)
+router.post('/admin/transactions/:orderId/verify', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access Denied' });
+
+        const transaction = await Transaction.findOne({ orderId: req.params.orderId });
+        if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
+
+        if (transaction.status === 'success' || transaction.status === 'completed') {
+            return res.json({ success: true, message: 'Already approved' });
+        }
+
+        transaction.status = 'completed';
+        await transaction.save();
+
+        // Update user balance/plan after manual approval
+        const user = await User.findById(transaction.userId);
+        if (user) {
+            if (transaction.packageId && transaction.packageId.includes('wallet')) {
+                const coinsAdded = Math.floor(transaction.amount / 10);
+                user.coins = (user.coins || 0) + coinsAdded;
+            } else if (transaction.packageId) {
+                user.plan = transaction.packageId;
+                user.isPremium = true;
+            }
+            await user.save();
+        }
+
+        res.json({ success: true, message: 'Transaction verified and account updated' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ADMIN: REJECT TRANSACTION
+router.post('/admin/transactions/:orderId/reject', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access Denied' });
+
+        const transaction = await Transaction.findOneAndUpdate(
+            { orderId: req.params.orderId },
+            { status: 'failed', message: req.body.reason || 'Admin rejection' },
+            { new: true }
+        );
+
+        res.json({ success: true, transaction });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 module.exports = router;

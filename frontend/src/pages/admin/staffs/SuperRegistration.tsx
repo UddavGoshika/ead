@@ -140,12 +140,31 @@ const SuperRegistration: React.FC = () => {
 
         setSubmitting(true);
         try {
+            const roleMapping: { [key: string]: string } = {
+                'Manager': 'manager',
+                'Team Lead': 'teamlead',
+                'HR': 'hr',
+                'Influencer': 'influencer',
+                'Marketer': 'marketer',
+                'Marketing Agency': 'marketing_agency',
+                'Call Support': 'call_support',
+                'Chat Support': 'chat_support',
+                'Personal Agent': 'personal_agent',
+                'Live Chat': 'live_chat',
+                'Telecaller': 'telecaller',
+                'Customer Care': 'customer_care',
+                'Data Entry': 'data_entry',
+                'Personal Assistant': 'personal_assistant'
+            };
+
+            const backendRole = roleMapping[selectedRole] || selectedRole.toLowerCase().replace(/\s+/g, '_');
+
             const response = await adminService.onboardStaff({
                 email: formData.email,
                 fullName: formData.fullName,
                 loginId: formData.loginId,
                 tempPassword: formData.tempPassword,
-                role: selectedRole,
+                role: backendRole,
                 formData: formData.roleSpecific
             });
 
@@ -551,10 +570,10 @@ const SuperRegistration: React.FC = () => {
                                         />
                                     </div>
                                     <div className={styles.inputGroup}>
-                                        <label>Temporary Password</label>
+                                        <label>Initial Passcode (Password)</label>
                                         <input
                                             type="text" name="tempPassword" value={formData.tempPassword}
-                                            onChange={handleInputChange} placeholder="System-generated if empty"
+                                            onChange={handleInputChange} placeholder="Create a strong passcode"
                                         />
                                     </div>
                                     <div className={styles.inputGroup}>

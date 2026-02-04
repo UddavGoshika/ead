@@ -211,11 +211,14 @@ import RoleReports from './pages/manager/oversight/RoleReports';
 import InformSuperAdmin from './pages/manager/communications/InformSuperAdmin';
 import ManagerPermissions from './pages/admin/settings/ManagerPermissions';
 import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
+import StaffGlobalDashboard from './pages/staff/StaffGlobalDashboard';
+import CallOverlay from './components/CallOverlay';
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <SettingsProvider>
+        <CallOverlay />
         <Router>
           <ScrollToTop />
           <ImpersonationBanner />
@@ -658,12 +661,26 @@ const App: React.FC = () => {
               <Route path="members/:status" element={<TelecallerMembers />} />
             </Route>
 
+            <Route path="/staff/portal" element={
+              <ProtectedRoute allowedRoles={[
+                'SUPPORT', 'TELECALLER', 'CUSTOMER_CARE', 'ADMIN', 'MANAGER', 'TEAMLEAD', 'HR', 'DATA_ENTRY',
+                'CHAT_SUPPORT', 'LIVE_CHAT', 'CALL_SUPPORT', 'PERSONAL_ASSISTANT', 'INFLUENCER', 'MARKETER',
+                'support', 'telecaller', 'customer_care', 'admin', 'manager', 'teamlead', 'hr', 'data_entry',
+                'chat_support', 'live_chat', 'call_support', 'personal_assistant', 'influencer', 'marketer'
+              ]}>
+                <StaffGlobalDashboard />
+              </ProtectedRoute>
+            } />
+
             {/* REDIRECT LEGACY SUPPORT LINKS TO NEW PROFESSIONAL DASHBOARDS */}
             <Route path="/dashboard/support/roles" element={<Navigate to="/telecaller" replace />} />
             <Route path="/support/chat" element={<Navigate to="/telecaller" replace />} />
             <Route path="/support/call" element={<Navigate to="/call-support" replace />} />
             <Route path="/support/live" element={<Navigate to="/live-chat" replace />} />
             <Route path="/support/care" element={<Navigate to="/customer-care" replace />} />
+
+            {/* CATCH ALL */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </SettingsProvider>

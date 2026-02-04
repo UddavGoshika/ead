@@ -1,3 +1,349 @@
+/* WORK HISTORY MODAL - ULTRA PREMIUM EXPANSION */
+.workHistoryModal {
+    background: #0f172a;
+    /* Deep dark blue for base */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    width: 1000px;
+    /* Much wider */
+    max-width: 95vw;
+    height: 90vh;
+    /* Taller */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9);
+    animation: modalSpring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.modalHeader {
+    padding: 30px 40px;
+    background: linear-gradient(to right, rgba(15, 23, 42, 1), rgba(30, 41, 59, 0.8));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.modalHeader h2 {
+    font-size: 24px;
+    color: white;
+    margin: 0;
+}
+
+/* STATS RIBBON */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 20px 40px;
+    background: rgba(15, 23, 42, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+}
+
+.statItem {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.statLabel {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.statTrend {
+    font-size: 11px;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* MAIN CONTENT AREA */
+.workLogContainer {
+    padding: 30px 40px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.logItem {
+    display: flex;
+    gap: 30px;
+    position: relative;
+}
+
+/* Timeline Line */
+.logItem::before {
+    content: '';
+    position: absolute;
+    left: 100px;
+    top: 40px;
+    bottom: -40px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 0;
+}
+
+.logItem:last-child::before {
+    display: none;
+}
+
+.logTime {
+    min-width: 100px;
+    text-align: right;
+    padding-top: 4px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.logDate {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.logHour {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* CARD DESIGN */
+.logContentCard {
+    flex: 1;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.logContentCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Card Header */
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.logTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.durationBadge {
+    background: rgba(15, 23, 42, 0.6);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Description */
+.logDesc {
+    font-size: 14px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Metadata Grid */
+.metaGrid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 24px;
+}
+
+.sectionLabel {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Tags */
+.tagsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skillTag {
+    font-size: 11px;
+    padding: 4px 10px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+/* FILES GRID */
+.filesGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.fileCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 180px;
+}
+
+.fileCard:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.fileIcon {
+    color: #f59e0b;
+    /* Default generic file color */
+}
+
+.fileCard.pdf .fileIcon {
+    color: #ef4444;
+}
+
+.fileCard.doc .fileIcon {
+    color: #3b82f6;
+}
+
+.fileCard.xls .fileIcon {
+    color: #10b981;
+}
+
+.fileName {
+    font-size: 12px;
+    color: #e2e8f0;
+    font-weight: 500;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.downloadIcon {
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #94a3b8;
+}
+
+.fileCard:hover .downloadIcon {
+    opacity: 1;
+}
+
+.modalFooter {
+    padding: 30px;
+    background: rgba(15, 23, 42, 0.4);
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.loaderContainer {
+    padding: 100px;
+    text-align: center;
+    color: #64748b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.spin {
+    animation: rotate 1s linear infinite;
+    color: #3b82f6;
+}
+
+@keyframes rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.emptyLogs {
+    padding: 80px;
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+}
+
+.downloadBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+}
+
+.downloadBtn:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+}
+
+/* Original styles below */
 .page {
     padding: 30px;
     background: #020617;
@@ -318,6 +664,7 @@
 .statusBadge.active {
     background: rgba(16, 185, 129, 0.1);
     color: #10b981;
+    color: #10b981;
 }
 
 .statusBadge.inactive {
@@ -480,30 +827,7 @@
     }
 }
 
-.modalHeader {
-    padding: 32px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.02);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modalHeader h2 {
-    margin: 0;
-    color: #fff;
-    font-size: 24px;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-}
-
-.closeBtn {
-    background: none;
-    border: none;
-    color: #475569;
-    font-size: 32px;
-    cursor: pointer;
-}
-
+/* For forms mainly */
 .registrationForm {
     padding: 32px;
 }
@@ -572,4 +896,12 @@
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: #475569;
+    font-size: 32px;
+    cursor: pointer;
 }

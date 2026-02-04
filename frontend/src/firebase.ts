@@ -1,8 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Replace these with your actual Firebase project configuration
-// You can find this in your Firebase Console: Project Settings -> General -> Your apps
 const firebaseConfig = {
     apiKey: "AIzaSyBkFmvuKeD6nEB4nNCtMh8e6u3TSC72ilE",
     authDomain: "advocate-890ae.firebaseapp.com",
@@ -14,3 +14,4 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);

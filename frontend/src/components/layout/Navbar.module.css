@@ -31,7 +31,10 @@
   border-bottom: 1px solid var(--glass-border);
   transition: all 0.3s ease;
   width: 100%;
+  max-width: 100vw;
   box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 /* DOCK STYLING (LATERALLY) */
@@ -44,6 +47,8 @@
   flex-shrink: 0;
   transition: all 0.3s ease;
   z-index: 10;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .leftLogo img,
@@ -74,6 +79,8 @@
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .mobileLogoMain {
@@ -99,6 +106,7 @@
   align-items: center;
   width: 100%;
   padding: 0 15px;
+  box-sizing: border-box;
 }
 
 .marquee {
@@ -153,6 +161,8 @@
   align-items: center;
   padding: 0 15px;
   box-shadow: var(--glass-shadow);
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .mainNav .inner {
@@ -160,12 +170,14 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .navLinks {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .navLinks button {
@@ -176,7 +188,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  padding: 5px 8px;
+  padding: 4px 6px;
   border-radius: 6px;
   white-space: nowrap;
 }
@@ -189,8 +201,8 @@
 /* SEARCH BAR */
 .searchContainer {
   position: relative;
-  width: 220px;
-  margin: 0 10px;
+  width: 180px;
+  margin: 0 8px;
   transition: all 0.3s ease;
 }
 
@@ -414,9 +426,8 @@
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   display: flex;
-
   align-items: center;
-  overflow-x: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
   /* Hide scrollbar for Firefox */
 }
@@ -430,6 +441,8 @@
   display: flex;
   gap: 12px;
   padding: 0 15px;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .ecoBar a {
@@ -641,7 +654,7 @@
   }
 
   .searchContainer {
-    width: 240px;
+    width: 200px;
   }
 }
 
@@ -660,12 +673,11 @@
 
   .navLinks button {
     font-size: 13px;
-    gap: 10px;
   }
 
   .searchContainer {
-    width: 200px;
-    margin: 0 10px;
+    width: 170px;
+    margin: 0 8px;
   }
 }
 
