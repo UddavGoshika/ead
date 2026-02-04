@@ -139,13 +139,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Export app for Vercel
-module.exports = app;
-
-// Only listen if run directly (not in Serverless environment)
-if (require.main === module) {
-    server.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-        startRejectionReminders();
-    });
-}
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    startRejectionReminders();
+});
