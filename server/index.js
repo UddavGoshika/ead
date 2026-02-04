@@ -139,13 +139,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Export app for serverless
-module.exports = app;
-
-// Only listen if run directly (not imported as a module)
-if (require.main === module) {
-    server.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-        startRejectionReminders();
-    });
-}
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    startRejectionReminders();
+});

@@ -11,8 +11,12 @@ export interface ClientProfile {
     img: string;
 }
 
+const getBaseUrl = () => {
+    return import.meta.env.VITE_BACKEND_URL ? `${import.meta.env.VITE_BACKEND_URL}/api` : '/api';
+};
+
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: getBaseUrl(),
 });
 
 // Add a request interceptor to attach the token
