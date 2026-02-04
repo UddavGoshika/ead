@@ -7,11 +7,16 @@ import {
     UserPlus,
     Send,
     Mail,
-    Video
+    Video,
+    X
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
+<<<<<<< HEAD
 import { WebRTCService } from '../../../services/WebRTCService';
+=======
+import { useCall } from '../../../context/CallContext';
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
@@ -22,39 +27,66 @@ interface ChatPopupProps {
 }
 
 const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
-    const { user } = useAuth();
     const [messageText, setMessageText] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isMoreOpen, setIsMoreOpen] = useState(false);
+    const [interactionStatus, setInteractionStatus] = useState<'none' | 'interest' | 'superInterest'>('none');
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const { user, refreshUser } = useAuth();
+    const { initiateCall } = useCall();
+
+    // Spec: Coins exist ONLY for premium users
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     useEffect(() => {
         if (user && advocate) {
             const currentUserId = String(user.id);
-            const partnerId = String(advocate.id); // Use MongoDB ID
+            const partnerUserId = String(advocate.userId || advocate.id); // Prefer User ID for matching
 
             const fetchMsgs = async () => {
-                const msgs = await interactionService.getConversationMessages(currentUserId, partnerId);
+                const msgs = await interactionService.getConversationMessages(currentUserId, partnerUserId);
                 setMessages(msgs);
                 chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             };
+
+            const fetchStatus = async () => {
+                const activities = await interactionService.getAllActivities(currentUserId);
+                const isSuper = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'superInterest');
+                if (isSuper) {
+                    setInteractionStatus('superInterest');
+                } else {
+                    const isInt = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'interest');
+                    if (isInt) setInteractionStatus('interest');
+                    else setInteractionStatus('none');
+                }
+            };
+
             fetchMsgs();
+            fetchStatus();
         }
     }, [user, advocate]);
 
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
         const currentUserId = String(user?.id);
-        const partnerId = String(advocate.id);
+        const partnerUserId = String(advocate.userId || advocate.id);
 
-        if (!messageText.trim() || !currentUserId || !partnerId) return;
+        if (!messageText.trim() || !currentUserId || !partnerUserId) return;
 
-        const sentMsg = await interactionService.sendMessage(currentUserId, partnerId, messageText);
-        setMessages(prev => [...prev, sentMsg]);
+        const sentMsg = await interactionService.sendMessage(currentUserId, partnerUserId, messageText);
+        setMessages((prev: Message[]) => [...prev, sentMsg]);
         setMessageText("");
 
         // Record activity for "Real time" flow
-        await interactionService.recordActivity('advocate', partnerId, 'chat', currentUserId);
+        const res = await interactionService.recordActivity('advocate', String(advocate.id), 'chat', currentUserId);
+        if (res && res.coins !== undefined) {
+            refreshUser({
+                coins: res.coins,
+                coinsUsed: res.coinsUsed,
+                coinsReceived: res.coinsReceived
+            });
+        }
 
         if (onSent) onSent();
     };
@@ -62,10 +94,27 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const handleSendInterest = async () => {
         const currentUserId = String(user?.id);
         const targetId = String(advocate.id);
-        await interactionService.recordActivity('advocate', targetId, 'interest', currentUserId);
-        alert('Interest sent to ' + advocate.name);
+        const action = interactionStatus === 'interest' ? 'superInterest' : 'interest';
+
+        try {
+            const res = await interactionService.recordActivity('advocate', targetId, action, currentUserId);
+            if (res.success) {
+                if (res.coins !== undefined) {
+                    refreshUser({
+                        coins: res.coins,
+                        coinsUsed: res.coinsUsed,
+                        coinsReceived: res.coinsReceived
+                    });
+                }
+                setInteractionStatus(action);
+                alert(`${action === 'superInterest' ? 'Super Interest' : 'Interest'} sent to ${advocate.name}`);
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Action failed');
+        }
     };
 
+<<<<<<< HEAD
     const handleCall = async (type: 'voice' | 'video') => {
         try {
             const service = new WebRTCService();
@@ -83,6 +132,16 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
             console.error("Call failed:", err);
             alert("Could not start call. Please check camera/mic permissions.");
         }
+=======
+    const handleCall = () => {
+        const partnerUserId = String(advocate.userId || advocate.id);
+        initiateCall(partnerUserId, 'audio');
+    };
+
+    const handleVideoCall = () => {
+        const partnerUserId = String(advocate.userId || advocate.id);
+        initiateCall(partnerUserId, 'video');
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
     };
 
     const handleAddContact = () => {
@@ -108,7 +167,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     <div className={styles.titleInfo}>
                         <h3>{advocate.name}</h3>
                         <div className={styles.idStatusRow}>
-                            <span className={styles.uniqueId}>{advocate.unique_id}</span>
+                            <span className={styles.uniqueId}>
+                                {advocate.isMasked ? (advocate.display_id || (advocate.unique_id && advocate.unique_id.substring(0, 2) + "...")) : advocate.unique_id}
+                            </span>
                             <span className={styles.status}>• Online</span>
                         </div>
                     </div>
@@ -123,6 +184,12 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                             {isMoreOpen && (
                                 <div className={styles.dropdown}>
                                     <button onClick={() => alert('Profile shared')}>Share Profile</button>
+                                    <button onClick={async () => {
+                                        if (confirm("Delete this conversation?")) {
+                                            alert("Conversation deleted (feature coming soon)");
+                                            onClose();
+                                        }
+                                    }}>Delete Chat</button>
                                     <button onClick={handleBlock} className={styles.blockBtn}>Block User</button>
                                     <button onClick={() => alert('Reported')}>Report User</button>
                                 </div>
@@ -140,6 +207,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     </div>
 
                     <div className={styles.quickActionsRow}>
+<<<<<<< HEAD
                         <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
                             <Mail size={18} />
                             Send Interest
@@ -149,6 +217,29 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                             <span>Audio</span>
                         </button>
                         <button className={styles.callOptionBtn} onClick={() => handleCall('video')}>
+=======
+                        {interactionStatus !== 'superInterest' ? (
+                            <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
+                                <Mail size={18} />
+                                {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
+                            </button>
+                        ) : (
+                            <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={async () => {
+                                if (confirm("Withdraw your Super Interest? Tokens are non-refundable.")) {
+                                    alert("Interest withdrawn");
+                                    setInteractionStatus('interest'); // Fallback to normal interest for UI state
+                                }
+                            }}>
+                                <X size={18} />
+                                Delete
+                            </button>
+                        )}
+                        <button className={styles.callOptionBtn} onClick={handleCall}>
+                            <Phone size={18} />
+                            <span>Audio</span>
+                        </button>
+                        <button className={styles.callOptionBtn} onClick={() => handleVideoCall()}>
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
                             <Video size={18} />
                             <span>Video</span>
                         </button>
@@ -158,28 +249,46 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                 <div className={styles.divider}></div>
 
                 <div className={styles.chatArea}>
-                    {messages.map(msg => (
-                        <div key={msg.id} className={msg.senderId === String(user?.unique_id || user?.id) ? styles.myMsg : styles.theirMsg}>
-                            {msg.text}
-                        </div>
-                    ))}
+                    {messages.length === 0 && <p className={styles.emptyNotice}>No messages yet. Send an interest or 1 token to unlock chat.</p>}
+                    {messages.map(msg => {
+                        const isMine = msg.senderId === String(user?.id);
+                        // Rule: Free users see locked content notice
+                        const showLocked = msg.isLocked && !isPremium && !isMine;
+
+                        return (
+                            <div key={msg.id} className={isMine ? styles.myMsg : styles.theirMsg}>
+                                {showLocked ? (
+                                    <span className={styles.lockedMsg}>Someone sent you a message. Upgrade to view.</span>
+                                ) : msg.text}
+                            </div>
+                        );
+                    })}
                     <div ref={chatEndRef} />
                 </div>
 
                 <div className={styles.inputArea}>
-                    <p className={styles.tipText}>Sending message will also send this member your interest</p>
-                    <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
-                        <input
-                            type="text"
-                            className={styles.input}
-                            placeholder="Write here ..."
-                            value={messageText}
-                            onChange={e => setMessageText(e.target.value)}
-                        />
-                        <button type="submit" className={styles.sendBtn}>
-                            <Send size={18} />➤
-                        </button>
-                    </form>
+                    {isPremium ? (
+                        <>
+                            <p className={styles.tipText}>Chat is valid for 3 months from unlock date.</p>
+                            <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="Write here ..."
+                                    value={messageText}
+                                    onChange={e => setMessageText(e.target.value)}
+                                />
+                                <button type="submit" className={styles.sendBtn}>
+                                    <Send size={18} />
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <div className={styles.upgradeNotice}>
+                            <p>Upgrade to Premium to reply and view message content.</p>
+                            <button className={styles.miniUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>Upgrade Now</button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

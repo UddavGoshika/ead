@@ -17,7 +17,23 @@ const faqs = [
     },
     {
         question: "What are the payment options for legal fees?",
-        answer: "E-Advocate supports multiple secure payment methods including credit/debit cards, UPI, and net banking. We also offer an escrow-based payment system where the fee is only released to the advocate after the agreed-upon milestones are met."
+        answer:
+            "Payments can be made via cards, UPI, net banking, or escrow-based milestone payments.",
+    },
+    {
+        question: "How are advocates verified?",
+        answer:
+            "Advocates are verified through Bar Council registration and internal checks.",
+    },
+    {
+        question: "Is online consultation available?",
+        answer:
+            "Yes, chat, call, and video consultation options are supported.",
+    },
+    {
+        question: "Do you offer refunds?",
+        answer:
+            "Refunds are processed as per our cancellation and milestone policy.",
     }
 ];
 

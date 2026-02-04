@@ -28,16 +28,23 @@ const ProviderSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.profileSection}>
-                <div className={styles.avatar}>
-                    {user?.name?.charAt(0) || 'P'}
+                <div className={styles.avatarContainer}>
+                    {user?.image_url ? (
+                        <img src={user.image_url} alt={user.name} className={styles.profileAvatar} />
+                    ) : (
+                        <div className={styles.avatarFallback}>
+                            {user?.name?.charAt(0) || 'P'}
+                        </div>
+                    )}
                 </div>
                 <div className={styles.userInfo}>
-                    <h3>{user?.name || 'Provider'}</h3>
-                    <p>SP - {user?.id ? String(user.id).slice(-5) : '12345'}</p>
+                    <h3 className={styles.userName}>{user?.name || 'Service Provider'}</h3>
+                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <div className={styles.roleLabel}>Legal Advisor</div>
                 </div>
 
                 <button className={styles.upgradeBtn} onClick={() => showsidePage('upgrade')}>
-                    Premium Provider
+                    Elite Membership
                 </button>
             </div>
 

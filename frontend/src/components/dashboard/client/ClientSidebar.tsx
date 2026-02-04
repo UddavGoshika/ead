@@ -36,19 +36,28 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.profileSection}>
-                <div className={styles.profile}>
-                    <div className={styles.avatar}>
-                        {user?.name?.charAt(0) || 'A'}
-                    </div>
+                <div className={styles.avatarContainer}>
+                    {user?.image_url ? (
+                        <img src={user.image_url} alt={user.name} className={styles.profileAvatar} />
+                    ) : (
+                        <div className={styles.avatarFallback}>
+                            {user?.name?.charAt(0) || 'U'}
+                        </div>
+                    )}
+                </div>
 
-                    <div className={styles.userInfo}>
-                        <h3>{user?.name || 'Alex'}</h3>
-                        <p>ID - {user?.id || '12345'}</p>
+                <div className={styles.userInfo}>
+                    <h3 className={styles.userName}>{user?.name || 'Client Member'}</h3>
+                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <div className={styles.roleLabel}>
+                        {user?.role === 'legal_provider' ? 'Advisor' :
+                            user?.role === 'advocate' ? 'Advocate' :
+                                user?.role === 'client' ? 'Client' :
+                                    'Client'}
                     </div>
                 </div>
 
-
-                <button className={styles.upgradeBtn}>
+                <button className={styles.upgradeBtn} onClick={() => showsidePage('upgrade')}>
                     Upgrade Membership
                 </button>
                 <div className={styles.upgradeText}>
@@ -76,6 +85,57 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
                         </button>
                     );
                 })}
+                <div className={styles.divider}></div>
+
+                {/* TOKEN TRACKER (Rule 16) */}
+                {isPremium && (
+                    <div className={styles.tokenTracker}>
+                        <div className={styles.tokenHeader}>
+                            <Coins size={16} />
+                            <span>Token Tracker</span>
+                        </div>
+                        <div className={styles.tokenStats}>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Total Tokens</span>
+                                <span className={styles.statValue}>{user?.coinsReceived || 0}</span>
+                            </div>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Tokens Spent</span>
+                                <span className={styles.statValue}>{user?.coinsUsed || 0}</span>
+                            </div>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Remaining</span>
+                                <span className={styles.statValueHighlight}>{user?.coins || 0}</span>
+                            </div>
+                            <div className={styles.tokenProgressBase}>
+                                <div
+                                    className={styles.tokenProgressBar}
+                                    style={{ width: `${Math.min(((user?.coins || 0) / (user?.coinsReceived || 1)) * 100, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* SUBSCRIPTION INFO (Rule 11) */}
+                <div className={styles.subscriptionDetails}>
+                    <div className={styles.subRow}>
+                        <span>Current Plan</span>
+                        <strong>{plan}</strong>
+                    </div>
+                    {isPremium && user?.premiumExpiry && (
+                        <div className={styles.subRow}>
+                            <span>Expiry Date</span>
+                            <strong>{new Date(user.premiumExpiry).toLocaleDateString()}</strong>
+                        </div>
+                    )}
+                    <div className={styles.subRow}>
+                        <span>Interactions</span>
+                        <strong>Live</strong>
+                    </div>
+                    <a className={styles.renewLink} onClick={() => showsidePage('upgrade')}>Manage Plan</a>
+                </div>
+
                 <div className={styles.divider}></div>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />

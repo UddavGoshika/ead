@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { CallProvider } from './context/CallContext';
 import HomeLayout from './layouts/HomeLayout';
 import HomePage from './pages/HomePage';
 import FAQPage from './pages/FAQPage';
@@ -40,6 +41,7 @@ import ClientLegalDocumentation from './pages/dashboard/client/LegalDocumentatio
 import AdvocateLegalDocumentation from './pages/dashboard/advocate/LegalDocumentation';
 import AdvisorLegalDocumentation from './pages/dashboard/advisor/LegalDocumentation';
 import DashboardLegalDocs from './pages/DashboardLegalDocs';
+import CallWindow from './components/shared/CallWindow';
 
 // Admin Members
 import MemberTable from './components/admin/MemberTable';
@@ -62,6 +64,7 @@ import ReportedMembers from './pages/admin/members/ReportedMembers';
 import UnapprovedPictures from './pages/admin/members/UnapprovedPictures';
 import ProfileSections from './pages/admin/members/ProfileSections';
 import MemberVerification from './pages/admin/members/MemberVerification';
+import LoginMemberDetails from './pages/admin/members/LoginMemberDetails';
 
 // Admin Attributes
 import Country from './pages/admin/attributes/Country';
@@ -214,10 +217,33 @@ import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
 import StaffGlobalDashboard from './pages/staff/StaffGlobalDashboard';
 import CallOverlay from './components/CallOverlay';
 
+import { useAuth } from './context/AuthContext';
+
+// Helper component to redirect to the specific user's dashboard URL
+const DashboardRedirect: React.FC<{ defaultRole?: string }> = ({ defaultRole }) => {
+  const { user, isLoggedIn } = useAuth();
+
+  if (!isLoggedIn || !user) {
+    return <Navigate to="/" replace />;
+  }
+
+  const role = user.role.toLowerCase();
+  const id = user.unique_id || user.id;
+
+  // Custom mapping for role-to-path
+  let pathRole = role;
+  if (role === 'legal_provider') pathRole = 'advisor';
+
+  // If a defaultRole was provided but doesn't match the current user, 
+  // we still redirect them to their correct dashboard
+  return <Navigate to={`/dashboard/${pathRole}/${id}`} replace />;
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <SettingsProvider>
+<<<<<<< HEAD
         <CallOverlay />
         <Router>
           <ScrollToTop />
@@ -232,435 +258,461 @@ const App: React.FC = () => {
               <Route path="faq" element={<FAQPage />} />
               <Route path="blogs" element={<BlogPage />} />
               <Route path="search" element={<SearchPage />} />
+=======
+        <CallProvider>
+          <Router>
+            <CallWindow />
+            <ScrollToTop />
+            <ImpersonationBanner />
+            <Routes>
+              {/* PUBLIC ROUTES */}
+              <Route path="/" element={
+                <HomeLayout />
+              }>
+                <Route index element={<HomePage />} />
+                <Route path="about" element={<AboutUs />} />
+                <Route path="faq" element={<FAQPage />} />
+                <Route path="blogs" element={<BlogPage />} />
+                <Route path="search" element={<SearchPage />} />
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 
-              <Route path="profile/:uniqueId" element={<PublicProfile />} />
-              <Route path="file-a-case" element={<PlaceholderPage />} />
-              <Route path="case-status" element={<PlaceholderPage />} />
-              <Route path="premium-services" element={<Preservices />} />
-              <Route path="careers" element={<Careers />} />
-              <Route path="how-it-works" element={<SiteHowItWorks />} />
-              <Route path="advocate-how-it-works" element={<AdvHowIt />} />
-              <Route path="client-how-it-works" element={<ClientHowIt />} />
-              <Route path="credits" element={<Credits />} />
-              <Route path="site-map" element={<SiteMap />} />
-              <Route path="find-clients" element={<PlaceholderPage />} />
-              <Route path="find-advocates" element={<PlaceholderPage />} />
-              <Route path="help" element={<PlaceholderPage />} />
-              <Route path="centers" element={<AdvCenters />} />
-              <Route path="fraud-alert" element={<FraudAlert />} />
-              <Route path="terms" element={<TermsOfUse />} />
-              <Route path="third-party-terms" element={<ThirdPartyTerms />} />
-              <Route path="privacy" element={<PrivacyPolicy />} />
-              <Route path="cookie-policy" element={<CookiePolicy />} />
-              <Route path="refund" element={<RefundPolicy />} />
-              <Route path="reset-password/:token" element={<ResetPassword />} />
-              <Route path="legal-documentation" element={<LegalDocumentationPage />} />
-              <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
-            </Route>
+                <Route path="profile/:uniqueId" element={<PublicProfile />} />
+                <Route path="file-a-case" element={<PlaceholderPage />} />
+                <Route path="case-status" element={<PlaceholderPage />} />
+                <Route path="premium-services" element={<Preservices />} />
+                <Route path="careers" element={<Careers />} />
+                <Route path="how-it-works" element={<SiteHowItWorks />} />
+                <Route path="advocate-how-it-works" element={<AdvHowIt />} />
+                <Route path="client-how-it-works" element={<ClientHowIt />} />
+                <Route path="credits" element={<Credits />} />
+                <Route path="site-map" element={<SiteMap />} />
+                <Route path="find-clients" element={<PlaceholderPage />} />
+                <Route path="find-advocates" element={<PlaceholderPage />} />
+                <Route path="help" element={<PlaceholderPage />} />
+                <Route path="centers" element={<AdvCenters />} />
+                <Route path="fraud-alert" element={<FraudAlert />} />
+                <Route path="terms" element={<TermsOfUse />} />
+                <Route path="third-party-terms" element={<ThirdPartyTerms />} />
+                <Route path="privacy" element={<PrivacyPolicy />} />
+                <Route path="cookie-policy" element={<CookiePolicy />} />
+                <Route path="refund" element={<RefundPolicy />} />
+                <Route path="summons-and-notices" element={<Summons />} />
+                <Route path="grievance-redressal" element={<Grievances />} />
+                <Route path="reset-password/:token" element={<ResetPassword />} />
+                <Route path="legal-documentation" element={<LegalDocumentationPage />} />
+                <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
+              </Route>
 
-            {/* STANDALONE ROUTES (No Header/Footer) */}
-            {/* DASHBOARD SPECIFIC LEGAL DOCS */}
-            <Route path="/dashboard/client/legal-docs" element={<ClientLegalDocumentation isEmbedded={true} />} />
-            <Route path="/dashboard/advocate/legal-docs" element={<AdvocateLegalDocumentation isEmbedded={true} />} />
-            <Route path="/dashboard/advisor/legal-docs" element={<AdvisorLegalDocumentation isEmbedded={true} />} />
-            <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs isEmbedded={true} />} />
+              {/* STANDALONE ROUTES (No Header/Footer) */}
+              {/* DASHBOARD SPECIFIC LEGAL DOCS */}
+              <Route path="/dashboard/client/legal-docs" element={<ClientLegalDocumentation isEmbedded={true} />} />
+              <Route path="/dashboard/advocate/legal-docs" element={<AdvocateLegalDocumentation isEmbedded={true} />} />
+              <Route path="/dashboard/advisor/legal-docs" element={<AdvisorLegalDocumentation isEmbedded={true} />} />
+              <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs isEmbedded={true} />} />
 
-            {/* PROTECTED DASHBOARD ROUTES */}
-            <Route path="/dashboard/client" element={
-              <ProtectedRoute>
-                <ClientDashboard />
-              </ProtectedRoute>
-            } />
+              {/* PROTECTED DASHBOARD ROUTES */}
+              <Route path="/dashboard/client/:uniqueId" element={
+                <ProtectedRoute allowedRoles={['client']}>
+                  <ClientDashboard />
+                </ProtectedRoute>
+              } />
 
-            <Route path="/dashboard/advocate" element={
-              <ProtectedRoute>
-                <AdvocateDashboard />
-              </ProtectedRoute>
-            } />
+              <Route path="/dashboard/advocate/:uniqueId" element={
+                <ProtectedRoute allowedRoles={['advocate']}>
+                  <AdvocateDashboard />
+                </ProtectedRoute>
+              } />
 
-            <Route path="/dashboard/advisor" element={
-              <ProtectedRoute allowedRoles={['legal_provider']}>
-                <AdvisorDashboard />
-              </ProtectedRoute>
-            } />
+              <Route path="/dashboard/advisor/:uniqueId" element={
+                <ProtectedRoute allowedRoles={['legal_provider']}>
+                  <AdvisorDashboard />
+                </ProtectedRoute>
+              } />
 
-            <Route path="/dashboard/user" element={
-              <ProtectedRoute allowedRoles={['USER']}>
-                <UserDashboard />
-              </ProtectedRoute>
-            } />
+              <Route path="/dashboard/user/:uniqueId" element={
+                <ProtectedRoute allowedRoles={['USER']}>
+                  <UserDashboard />
+                </ProtectedRoute>
+              } />
 
-            <Route path="/dashboard" element={<Navigate to="/dashboard/client" replace />} />
-            {/* AUTH ROUTES */}
-            <Route path="/auth/force-password-change" element={<ForcePasswordChange />} />
+              {/* DASHBOARD AUTO-REDIRECT TO UNIQUE URL */}
+              <Route path="/dashboard/client" element={<DashboardRedirect defaultRole="client" />} />
+              <Route path="/dashboard/advocate" element={<DashboardRedirect defaultRole="advocate" />} />
+              <Route path="/dashboard/advisor" element={<DashboardRedirect defaultRole="advisor" />} />
+              <Route path="/dashboard/user" element={<DashboardRedirect defaultRole="user" />} />
+              <Route path="/dashboard" element={<DashboardRedirect />} />
+              {/* AUTH ROUTES */}
+              <Route path="/auth/force-password-change" element={<ForcePasswordChange />} />
 
-            {/* SUPER ADMIN ROUTES */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
+              {/* SUPER ADMIN ROUTES */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
 
-              {/* Members Section */}
-              <Route path="members/free" element={<FreeMembers />} />
-              <Route path="members/premium" element={<PremiumMembers />} />
-              <Route path="members/approved" element={<ApprovedMembers />} />
-              <Route path="members/pending" element={<PendingMembers />} />
-              <Route path="members/bulk-add" element={<BulkMemberAdd />} />
-              <Route path="members/deactivated" element={<DeactivatedMembers />} />
-              <Route path="members/blocked" element={<BlockedMembers />} />
-              <Route path="members/deleted" element={<DeletedMembers />} />
-              <Route path="members/reported" element={<ReportedMembers />} />
-              <Route path="members/unapproved-pictures" element={<UnapprovedPictures />} />
+                {/* Members Section */}
+                <Route path="members/free" element={<FreeMembers />} />
+                <Route path="members/premium" element={<PremiumMembers />} />
+                <Route path="members/approved" element={<ApprovedMembers />} />
+                <Route path="members/pending" element={<PendingMembers />} />
+                <Route path="members/bulk-add" element={<BulkMemberAdd />} />
+                <Route path="members/deactivated" element={<DeactivatedMembers />} />
+                <Route path="members/blocked" element={<BlockedMembers />} />
+                <Route path="members/deleted" element={<DeletedMembers />} />
+                <Route path="members/reported" element={<ReportedMembers />} />
+                <Route path="members/unapproved-pictures" element={<UnapprovedPictures />} />
 
-              {/* Profile Attributes Section */}
-              <Route path="attributes/practice-areas" element={<PracticeAreas />} />
-              <Route path="attributes/courts" element={<Courts />} />
-              <Route path="attributes/specializations" element={<Specializations />} />
-              <Route path="attributes/case-types" element={<CaseTypes />} />
-              <Route path="attributes/language" element={<MemberLanguage />} />
-              <Route path="attributes/country" element={<Country />} />
-              <Route path="attributes/state" element={<State />} />
-              <Route path="attributes/city" element={<City />} />
-              <Route path="attributes/id-proof" element={<IdProofTypes />} />
-              <Route path="attributes/experience" element={<ExperienceLevels />} />
+                {/* Profile Attributes Section */}
+                <Route path="attributes/practice-areas" element={<PracticeAreas />} />
+                <Route path="attributes/courts" element={<Courts />} />
+                <Route path="attributes/specializations" element={<Specializations />} />
+                <Route path="attributes/case-types" element={<CaseTypes />} />
+                <Route path="attributes/language" element={<MemberLanguage />} />
+                <Route path="attributes/country" element={<Country />} />
+                <Route path="attributes/state" element={<State />} />
+                <Route path="attributes/city" element={<City />} />
+                <Route path="attributes/id-proof" element={<IdProofTypes />} />
+                <Route path="attributes/experience" element={<ExperienceLevels />} />
 
-              <Route path="members/profile-sections" element={<ProfileSections />} />
-              <Route path="members/verification" element={<MemberVerification />} />
+                <Route path="members/profile-sections" element={<ProfileSections />} />
+                <Route path="members/verification" element={<MemberVerification />} />
+                <Route path="members/login-details" element={<LoginMemberDetails />} />
 
-              {/* Premium & Finance */}
-              <Route path="premium-packages" element={<PremiumPackages />} />
-              <Route path="package-payments" element={<PackagePayments />} />
-              <Route path="wallet/history" element={<WalletHistory />} />
-              <Route path="wallet/recharge" element={<WalletRecharge />} />
+                {/* Premium & Finance */}
+                <Route path="premium-packages" element={<PremiumPackages />} />
+                <Route path="package-payments" element={<PackagePayments />} />
+                <Route path="wallet/history" element={<WalletHistory />} />
+                <Route path="wallet/recharge" element={<WalletRecharge />} />
 
-              {/* Content & Blog */}
-              <Route path="blog/posts" element={<AllPosts />} />
-              <Route path="blog/categories" element={<BlogCategories />} />
-              <Route path="marketing/newsletter" element={<Newsletter />} />
-              <Route path="contact-queries" element={<ContactQueries />} />
+                {/* Content & Blog */}
+                <Route path="blog/posts" element={<AllPosts />} />
+                <Route path="blog/categories" element={<BlogCategories />} />
+                <Route path="marketing/newsletter" element={<Newsletter />} />
+                <Route path="contact-queries" element={<ContactQueries />} />
 
-              {/* Referrals & Support */}
-              <Route path="referral/commission" element={<ReferralCommission />} />
-              <Route path="referral/users" element={<ReferralUsers />} />
-              <Route path="referral/earnings" element={<ReferralEarnings />} />
-              <Route path="referral/withdraw" element={<WalletWithdraw />} />
+                {/* Referrals & Support */}
+                <Route path="referral/commission" element={<ReferralCommission />} />
+                <Route path="referral/users" element={<ReferralUsers />} />
+                <Route path="referral/earnings" element={<ReferralEarnings />} />
+                <Route path="referral/withdraw" element={<WalletWithdraw />} />
 
-              <Route path="support/active" element={<ActiveTickets />} />
-              <Route path="support/my" element={<MyTickets />} />
-              <Route path="support/solved" element={<SolvedTickets />} />
-              <Route path="support/settings/category" element={<SupportCategory />} />
-              <Route path="support/settings/agent" element={<AssignedAgent />} />
+                <Route path="support/active" element={<ActiveTickets />} />
+                <Route path="support/my" element={<MyTickets />} />
+                <Route path="support/solved" element={<SolvedTickets />} />
+                <Route path="support/settings/category" element={<SupportCategory />} />
+                <Route path="support/settings/agent" element={<AssignedAgent />} />
 
-              {/* Addons */}
-              <Route path="otp/templates" element={<SmsTemplates />} />
-              <Route path="otp/credentials" element={<OtpCredentials />} />
-              <Route path="otp/send" element={<SendSms />} />
-              <Route path="offline-payments/manual" element={<ManualPayments />} />
-              <Route path="uploaded-files" element={<UploadedFiles />} />
+                {/* Addons */}
+                <Route path="otp/templates" element={<SmsTemplates />} />
+                <Route path="otp/credentials" element={<OtpCredentials />} />
+                <Route path="otp/send" element={<SendSms />} />
+                <Route path="offline-payments/manual" element={<ManualPayments />} />
+                <Route path="uploaded-files" element={<UploadedFiles />} />
 
-              {/* Legal Documentation Admin */}
-              <Route path="legal-docs/agreements" element={<AgreementsList />} />
-              <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
-              <Route path="legal-docs/notices" element={<NoticesList />} />
-              <Route path="legal-docs/providers" element={<DocumentationProviders />} />
-              <Route path="legal-docs/services" element={<LegalDocumentServices />} />
+                {/* Legal Documentation Admin */}
+                <Route path="legal-docs/agreements" element={<AgreementsList />} />
+                <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
+                <Route path="legal-docs/notices" element={<NoticesList />} />
+                <Route path="legal-docs/providers" element={<DocumentationProviders />} />
+                <Route path="legal-docs/services" element={<LegalDocumentServices />} />
 
-              {/* Setup & Settings */}
-              <Route path="setup/header" element={<HeaderSetup />} />
-              <Route path="setup/footer" element={<FooterSetup />} />
-              <Route path="setup/pages" element={<PagesSetup />} />
-              <Route path="setup/appearance" element={<AppearanceSetup />} />
-              <Route path="setup/ecosystem" element={<EcosystemSetup />} />
+                {/* Setup & Settings */}
+                <Route path="setup/header" element={<HeaderSetup />} />
+                <Route path="setup/footer" element={<FooterSetup />} />
+                <Route path="setup/pages" element={<PagesSetup />} />
+                <Route path="setup/appearance" element={<AppearanceSetup />} />
+                <Route path="setup/ecosystem" element={<EcosystemSetup />} />
 
-              <Route path="settings/general" element={<GeneralSettings />} />
-              <Route path="settings/language" element={<LanguageSettings />} />
-              <Route path="settings/currency" element={<CurrencySettings />} />
-              <Route path="settings/payments" element={<PaymentMethods />} />
-              <Route path="settings/smtp" element={<SmtpSettings />} />
-              <Route path="settings/email-templates" element={<EmailTemplates />} />
-              <Route path="settings/third-party" element={<ThirdPartySettings />} />
-              <Route path="settings/social-login" element={<SocialLogin />} />
-              <Route path="settings/push-notification" element={<PushNotification />} />
+                <Route path="settings/general" element={<GeneralSettings />} />
+                <Route path="settings/language" element={<LanguageSettings />} />
+                <Route path="settings/currency" element={<CurrencySettings />} />
+                <Route path="settings/payments" element={<PaymentMethods />} />
+                <Route path="settings/smtp" element={<SmtpSettings />} />
+                <Route path="settings/email-templates" element={<EmailTemplates />} />
+                <Route path="settings/third-party" element={<ThirdPartySettings />} />
+                <Route path="settings/social-login" element={<SocialLogin />} />
+                <Route path="settings/push-notification" element={<PushNotification />} />
 
-              <Route path="staffs/all" element={<AllStaffs />} />
-              <Route path="staffs/roles" element={<StaffRoles />} />
-              <Route path="staffs/outsourced" element={<Outsourcing />} />
-              <Route path="staffs/registration" element={<SuperRegistration />} />
-              <Route path="system/update" element={<SystemUpdate />} />
-              <Route path="system/status" element={<ServerStatus />} />
-              <Route path="manager-permissions" element={<ManagerPermissions />} />
-              <Route path="addon-manager" element={<AddonManager />} />
-            </Route>
+                <Route path="staffs/all" element={<AllStaffs />} />
+                <Route path="staffs/roles" element={<StaffRoles />} />
+                <Route path="staffs/outsourced" element={<Outsourcing />} />
+                <Route path="staffs/registration" element={<SuperRegistration />} />
+                <Route path="system/update" element={<SystemUpdate />} />
+                <Route path="system/status" element={<ServerStatus />} />
+                <Route path="manager-permissions" element={<ManagerPermissions />} />
+                <Route path="addon-manager" element={<AddonManager />} />
+              </Route>
 
-            {/* NEW ROLE-BASED DASHBOARDS */}
-            {/* ADMIN DASHBOARD */}
-            <Route path="/dashboard/admin" element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
-                <RoleDashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<AdminDashHome />} />
-              <Route path="approvals" element={<AdvocateApprovals />} />
-              <Route path="clients" element={<ClientsList />} />
-              <Route path="verifications" element={<Verifications />} />
-              <Route path="cases" element={<Cases />} />
-              <Route path="disputes" element={<Disputes />} />
-              <Route path="tickets" element={<AdminTickets />} />
-            </Route>
+              {/* NEW ROLE-BASED DASHBOARDS */}
+              {/* ADMIN DASHBOARD */}
+              <Route path="/dashboard/admin" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <RoleDashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<AdminDashHome />} />
+                <Route path="approvals" element={<AdvocateApprovals />} />
+                <Route path="clients" element={<ClientsList />} />
+                <Route path="verifications" element={<Verifications />} />
+                <Route path="cases" element={<Cases />} />
+                <Route path="disputes" element={<Disputes />} />
+                <Route path="tickets" element={<AdminTickets />} />
+              </Route>
 
-            {/* VERIFIER DASHBOARD */}
-            <Route path="/dashboard/verifier" element={
-              <ProtectedRoute allowedRoles={['VERIFIER']}>
-                <RoleDashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<AssignedVerifications />} />
-              <Route path="assigned" element={<AssignedVerifications />} />
-              <Route path="history" element={<VerificationHistory />} />
-            </Route>
+              {/* VERIFIER DASHBOARD */}
+              <Route path="/dashboard/verifier" element={
+                <ProtectedRoute allowedRoles={['VERIFIER']}>
+                  <RoleDashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<AssignedVerifications />} />
+                <Route path="assigned" element={<AssignedVerifications />} />
+                <Route path="history" element={<VerificationHistory />} />
+              </Route>
 
-            {/* FINANCE DASHBOARD */}
-            <Route path="/dashboard/finance" element={
-              <ProtectedRoute allowedRoles={['FINANCE']}>
-                <RoleDashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Transactions />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="payouts" element={<Payouts />} />
-              <Route path="refunds" element={<Refunds />} />
-              <Route path="reports" element={<FinanceReports />} />
-            </Route>
+              {/* FINANCE DASHBOARD */}
+              <Route path="/dashboard/finance" element={
+                <ProtectedRoute allowedRoles={['FINANCE']}>
+                  <RoleDashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Transactions />} />
+                <Route path="transactions" element={<Transactions />} />
+                <Route path="payouts" element={<Payouts />} />
+                <Route path="refunds" element={<Refunds />} />
+                <Route path="reports" element={<FinanceReports />} />
+              </Route>
 
-            <Route path="/dashboard/support" element={
-              <ProtectedRoute allowedRoles={['SUPPORT']}>
-                <RoleDashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<TicketsInbox />} />
-              <Route path="inbox" element={<TicketsInbox />} />
-            </Route>
+              <Route path="/dashboard/support" element={
+                <ProtectedRoute allowedRoles={['SUPPORT']}>
+                  <RoleDashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<TicketsInbox />} />
+                <Route path="inbox" element={<TicketsInbox />} />
+              </Route>
 
-            {/* ========================================================================
+              {/* ========================================================================
                 STAFF ROLE ARCHITECTURE ROUTES
                 ======================================================================== */}
 
-            {/* 1. PROFESSIONAL ADMINISTRATIVE ROLES (Standard Architecture) */}
-            <Route path="/manager" element={<ManagerLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={
-                <ManagerPermissionGuard permissionId="dashboard">
-                  <ManagerDashboard />
-                </ManagerPermissionGuard>
-              } />
+              {/* 1. PROFESSIONAL ADMINISTRATIVE ROLES (Standard Architecture) */}
+              <Route path="/manager" element={<ManagerLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={
+                  <ManagerPermissionGuard permissionId="dashboard">
+                    <ManagerDashboard />
+                  </ManagerPermissionGuard>
+                } />
 
-              {/* Members Section */}
-              <Route path="members/free" element={<ManagerPermissionGuard permissionId="free-members" parentId="members"><FreeMembers /></ManagerPermissionGuard>} />
-              <Route path="members/premium" element={<ManagerPermissionGuard permissionId="premium-members" parentId="members"><PremiumMembers /></ManagerPermissionGuard>} />
-              <Route path="members/approved" element={<ManagerPermissionGuard permissionId="members"><ApprovedMembers /></ManagerPermissionGuard>} />
-              <Route path="members/pending" element={<ManagerPermissionGuard permissionId="members"><PendingMembers /></ManagerPermissionGuard>} />
-              <Route path="members/bulk-add" element={<ManagerPermissionGuard permissionId="bulk-member-add" parentId="members"><BulkMemberAdd /></ManagerPermissionGuard>} />
-              <Route path="members/deactivated" element={<ManagerPermissionGuard permissionId="members"><DeactivatedMembers /></ManagerPermissionGuard>} />
-              <Route path="members/blocked" element={<ManagerPermissionGuard permissionId="members"><BlockedMembers /></ManagerPermissionGuard>} />
-              <Route path="members/deleted" element={<ManagerPermissionGuard permissionId="members"><DeletedMembers /></ManagerPermissionGuard>} />
-              <Route path="members/reported" element={<ManagerPermissionGuard permissionId="members"><ReportedMembers /></ManagerPermissionGuard>} />
-              <Route path="members/unapproved-pictures" element={<ManagerPermissionGuard permissionId="members"><UnapprovedPictures /></ManagerPermissionGuard>} />
+                {/* Members Section */}
+                <Route path="members/free" element={<ManagerPermissionGuard permissionId="free-members" parentId="members"><FreeMembers /></ManagerPermissionGuard>} />
+                <Route path="members/premium" element={<ManagerPermissionGuard permissionId="premium-members" parentId="members"><PremiumMembers /></ManagerPermissionGuard>} />
+                <Route path="members/approved" element={<ManagerPermissionGuard permissionId="members"><ApprovedMembers /></ManagerPermissionGuard>} />
+                <Route path="members/pending" element={<ManagerPermissionGuard permissionId="members"><PendingMembers /></ManagerPermissionGuard>} />
+                <Route path="members/bulk-add" element={<ManagerPermissionGuard permissionId="bulk-member-add" parentId="members"><BulkMemberAdd /></ManagerPermissionGuard>} />
+                <Route path="members/deactivated" element={<ManagerPermissionGuard permissionId="members"><DeactivatedMembers /></ManagerPermissionGuard>} />
+                <Route path="members/blocked" element={<ManagerPermissionGuard permissionId="members"><BlockedMembers /></ManagerPermissionGuard>} />
+                <Route path="members/deleted" element={<ManagerPermissionGuard permissionId="members"><DeletedMembers /></ManagerPermissionGuard>} />
+                <Route path="members/reported" element={<ManagerPermissionGuard permissionId="members"><ReportedMembers /></ManagerPermissionGuard>} />
+                <Route path="members/unapproved-pictures" element={<ManagerPermissionGuard permissionId="members"><UnapprovedPictures /></ManagerPermissionGuard>} />
 
-              {/* Profile Attributes Section */}
-              <Route path="attributes/practice-areas" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><PracticeAreas /></ManagerPermissionGuard>} />
-              <Route path="attributes/courts" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Courts /></ManagerPermissionGuard>} />
-              <Route path="attributes/specializations" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Specializations /></ManagerPermissionGuard>} />
-              <Route path="attributes/case-types" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><CaseTypes /></ManagerPermissionGuard>} />
-              <Route path="attributes/language" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><MemberLanguage /></ManagerPermissionGuard>} />
-              <Route path="attributes/country" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Country /></ManagerPermissionGuard>} />
-              <Route path="attributes/state" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><State /></ManagerPermissionGuard>} />
-              <Route path="attributes/city" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><City /></ManagerPermissionGuard>} />
-              <Route path="attributes/id-proof" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><IdProofTypes /></ManagerPermissionGuard>} />
-              <Route path="attributes/experience" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><ExperienceLevels /></ManagerPermissionGuard>} />
+                {/* Profile Attributes Section */}
+                <Route path="attributes/practice-areas" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><PracticeAreas /></ManagerPermissionGuard>} />
+                <Route path="attributes/courts" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Courts /></ManagerPermissionGuard>} />
+                <Route path="attributes/specializations" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Specializations /></ManagerPermissionGuard>} />
+                <Route path="attributes/case-types" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><CaseTypes /></ManagerPermissionGuard>} />
+                <Route path="attributes/language" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><MemberLanguage /></ManagerPermissionGuard>} />
+                <Route path="attributes/country" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><Country /></ManagerPermissionGuard>} />
+                <Route path="attributes/state" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><State /></ManagerPermissionGuard>} />
+                <Route path="attributes/city" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><City /></ManagerPermissionGuard>} />
+                <Route path="attributes/id-proof" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><IdProofTypes /></ManagerPermissionGuard>} />
+                <Route path="attributes/experience" element={<ManagerPermissionGuard permissionId="profile-attributes" parentId="members"><ExperienceLevels /></ManagerPermissionGuard>} />
 
-              <Route path="members/profile-sections" element={<ManagerPermissionGuard permissionId="members"><ProfileSections /></ManagerPermissionGuard>} />
-              <Route path="members/verification" element={<ManagerPermissionGuard permissionId="members"><MemberVerification /></ManagerPermissionGuard>} />
+                <Route path="members/profile-sections" element={<ManagerPermissionGuard permissionId="members"><ProfileSections /></ManagerPermissionGuard>} />
+                <Route path="members/verification" element={<ManagerPermissionGuard permissionId="members"><MemberVerification /></ManagerPermissionGuard>} />
 
-              {/* Premium & Finance */}
-              <Route path="premium-packages" element={<ManagerPermissionGuard permissionId="premium-packages"><PremiumPackages /></ManagerPermissionGuard>} />
-              <Route path="package-payments" element={<ManagerPermissionGuard permissionId="package-payments"><PackagePayments /></ManagerPermissionGuard>} />
-              <Route path="wallet/history" element={<ManagerPermissionGuard permissionId="wallet"><WalletHistory /></ManagerPermissionGuard>} />
-              <Route path="wallet/recharge" element={<ManagerPermissionGuard permissionId="wallet"><WalletRecharge /></ManagerPermissionGuard>} />
+                {/* Premium & Finance */}
+                <Route path="premium-packages" element={<ManagerPermissionGuard permissionId="premium-packages"><PremiumPackages /></ManagerPermissionGuard>} />
+                <Route path="package-payments" element={<ManagerPermissionGuard permissionId="package-payments"><PackagePayments /></ManagerPermissionGuard>} />
+                <Route path="wallet/history" element={<ManagerPermissionGuard permissionId="wallet"><WalletHistory /></ManagerPermissionGuard>} />
+                <Route path="wallet/recharge" element={<ManagerPermissionGuard permissionId="wallet"><WalletRecharge /></ManagerPermissionGuard>} />
 
-              {/* Content & Blog */}
-              <Route path="blog/posts" element={<ManagerPermissionGuard permissionId="all-posts" parentId="blog-system"><AllPosts /></ManagerPermissionGuard>} />
-              <Route path="blog/categories" element={<ManagerPermissionGuard permissionId="categories" parentId="blog-system"><BlogCategories /></ManagerPermissionGuard>} />
-              <Route path="marketing/newsletter" element={<ManagerPermissionGuard permissionId="newsletter" parentId="marketing"><Newsletter /></ManagerPermissionGuard>} />
-              <Route path="contact-queries" element={<ManagerPermissionGuard permissionId="contact-us-queries" parentId="support-ticket"><ContactQueries /></ManagerPermissionGuard>} />
+                {/* Content & Blog */}
+                <Route path="blog/posts" element={<ManagerPermissionGuard permissionId="all-posts" parentId="blog-system"><AllPosts /></ManagerPermissionGuard>} />
+                <Route path="blog/categories" element={<ManagerPermissionGuard permissionId="categories" parentId="blog-system"><BlogCategories /></ManagerPermissionGuard>} />
+                <Route path="marketing/newsletter" element={<ManagerPermissionGuard permissionId="newsletter" parentId="marketing"><Newsletter /></ManagerPermissionGuard>} />
+                <Route path="contact-queries" element={<ManagerPermissionGuard permissionId="contact-us-queries" parentId="support-ticket"><ContactQueries /></ManagerPermissionGuard>} />
 
-              {/* Referrals & Support */}
-              <Route path="referral/commission" element={<ManagerPermissionGuard permissionId="set-referral-commission" parentId="referral"><ReferralCommission /></ManagerPermissionGuard>} />
-              <Route path="referral/users" element={<ManagerPermissionGuard permissionId="referral-users" parentId="referral"><ReferralUsers /></ManagerPermissionGuard>} />
-              <Route path="referral/earnings" element={<ManagerPermissionGuard permissionId="referral-earnings" parentId="referral"><ReferralEarnings /></ManagerPermissionGuard>} />
-              <Route path="referral/withdraw" element={<ManagerPermissionGuard permissionId="wallet-withdraw-request" parentId="referral"><WalletWithdraw /></ManagerPermissionGuard>} />
+                {/* Referrals & Support */}
+                <Route path="referral/commission" element={<ManagerPermissionGuard permissionId="set-referral-commission" parentId="referral"><ReferralCommission /></ManagerPermissionGuard>} />
+                <Route path="referral/users" element={<ManagerPermissionGuard permissionId="referral-users" parentId="referral"><ReferralUsers /></ManagerPermissionGuard>} />
+                <Route path="referral/earnings" element={<ManagerPermissionGuard permissionId="referral-earnings" parentId="referral"><ReferralEarnings /></ManagerPermissionGuard>} />
+                <Route path="referral/withdraw" element={<ManagerPermissionGuard permissionId="wallet-withdraw-request" parentId="referral"><WalletWithdraw /></ManagerPermissionGuard>} />
 
-              <Route path="support/active" element={<ManagerPermissionGuard permissionId="active-tickets" parentId="support-ticket"><ActiveTickets /></ManagerPermissionGuard>} />
-              <Route path="support/my" element={<ManagerPermissionGuard permissionId="support-ticket"><MyTickets /></ManagerPermissionGuard>} />
-              <Route path="support/solved" element={<ManagerPermissionGuard permissionId="support-ticket"><SolvedTickets /></ManagerPermissionGuard>} />
-              <Route path="support/settings/category" element={<ManagerPermissionGuard permissionId="category" parentId="support-ticket"><SupportCategory /></ManagerPermissionGuard>} />
-              <Route path="support/settings/agent" element={<ManagerPermissionGuard permissionId="default-assigned-agent" parentId="support-ticket"><AssignedAgent /></ManagerPermissionGuard>} />
+                <Route path="support/active" element={<ManagerPermissionGuard permissionId="active-tickets" parentId="support-ticket"><ActiveTickets /></ManagerPermissionGuard>} />
+                <Route path="support/my" element={<ManagerPermissionGuard permissionId="support-ticket"><MyTickets /></ManagerPermissionGuard>} />
+                <Route path="support/solved" element={<ManagerPermissionGuard permissionId="support-ticket"><SolvedTickets /></ManagerPermissionGuard>} />
+                <Route path="support/settings/category" element={<ManagerPermissionGuard permissionId="category" parentId="support-ticket"><SupportCategory /></ManagerPermissionGuard>} />
+                <Route path="support/settings/agent" element={<ManagerPermissionGuard permissionId="default-assigned-agent" parentId="support-ticket"><AssignedAgent /></ManagerPermissionGuard>} />
 
-              {/* Addons & Restricted */}
-              <Route path="otp/templates" element={<ManagerPermissionGuard permissionId="sms-templates" parentId="otp-system"><SmsTemplates /></ManagerPermissionGuard>} />
-              <Route path="otp/credentials" element={<ManagerPermissionGuard permissionId="set-otp-credentials" parentId="otp-system"><OtpCredentials /></ManagerPermissionGuard>} />
-              <Route path="otp/send" element={<ManagerPermissionGuard permissionId="send-sms" parentId="otp-system"><SendSms /></ManagerPermissionGuard>} />
-              <Route path="offline-payments/manual" element={<AdminOnlyPage />} />
-              <Route path="uploaded-files" element={<UploadedFiles />} />
+                {/* Addons & Restricted */}
+                <Route path="otp/templates" element={<ManagerPermissionGuard permissionId="sms-templates" parentId="otp-system"><SmsTemplates /></ManagerPermissionGuard>} />
+                <Route path="otp/credentials" element={<ManagerPermissionGuard permissionId="set-otp-credentials" parentId="otp-system"><OtpCredentials /></ManagerPermissionGuard>} />
+                <Route path="otp/send" element={<ManagerPermissionGuard permissionId="send-sms" parentId="otp-system"><SendSms /></ManagerPermissionGuard>} />
+                <Route path="offline-payments/manual" element={<AdminOnlyPage />} />
+                <Route path="uploaded-files" element={<UploadedFiles />} />
 
-              {/* Setup & Settings - Restricted */}
-              <Route path="website-setup" element={<AdminOnlyPage />} />
-              <Route path="setup/header" element={<AdminOnlyPage />} />
-              <Route path="setup/footer" element={<AdminOnlyPage />} />
-              <Route path="setup/pages" element={<AdminOnlyPage />} />
-              <Route path="setup/appearance" element={<AdminOnlyPage />} />
-              <Route path="setup/ecosystem" element={<AdminOnlyPage />} />
+                {/* Setup & Settings - Restricted */}
+                <Route path="website-setup" element={<AdminOnlyPage />} />
+                <Route path="setup/header" element={<AdminOnlyPage />} />
+                <Route path="setup/footer" element={<AdminOnlyPage />} />
+                <Route path="setup/pages" element={<AdminOnlyPage />} />
+                <Route path="setup/appearance" element={<AdminOnlyPage />} />
+                <Route path="setup/ecosystem" element={<AdminOnlyPage />} />
 
-              <Route path="settings" element={<AdminOnlyPage />} />
-              <Route path="settings/general" element={<AdminOnlyPage />} />
-              <Route path="settings/language" element={<AdminOnlyPage />} />
-              <Route path="settings/currency" element={<AdminOnlyPage />} />
-              <Route path="settings/payments" element={<AdminOnlyPage />} />
-              <Route path="settings/smtp" element={<AdminOnlyPage />} />
-              <Route path="settings/email-templates" element={<AdminOnlyPage />} />
-              <Route path="settings/third-party" element={<AdminOnlyPage />} />
-              <Route path="settings/social-login" element={<AdminOnlyPage />} />
-              <Route path="settings/push-notification" element={<AdminOnlyPage />} />
+                <Route path="settings" element={<AdminOnlyPage />} />
+                <Route path="settings/general" element={<AdminOnlyPage />} />
+                <Route path="settings/language" element={<AdminOnlyPage />} />
+                <Route path="settings/currency" element={<AdminOnlyPage />} />
+                <Route path="settings/payments" element={<AdminOnlyPage />} />
+                <Route path="settings/smtp" element={<AdminOnlyPage />} />
+                <Route path="settings/email-templates" element={<AdminOnlyPage />} />
+                <Route path="settings/third-party" element={<AdminOnlyPage />} />
+                <Route path="settings/social-login" element={<AdminOnlyPage />} />
+                <Route path="settings/push-notification" element={<AdminOnlyPage />} />
 
-              <Route path="staffs/all" element={<AllStaffs />} />
-              <Route path="staffs/roles" element={<AdminOnlyPage />} />
-              <Route path="staffs/outsourced" element={<Outsourcing />} />
-              <Route path="staffs/registration" element={<SuperRegistration />} />
+                <Route path="staffs/all" element={<AllStaffs />} />
+                <Route path="staffs/roles" element={<AdminOnlyPage />} />
+                <Route path="staffs/outsourced" element={<Outsourcing />} />
+                <Route path="staffs/registration" element={<SuperRegistration />} />
 
-              <Route path="system" element={<AdminOnlyPage />} />
-              <Route path="system/update" element={<AdminOnlyPage />} />
-              <Route path="system/status" element={<AdminOnlyPage />} />
-              <Route path="addon-manager" element={<AdminOnlyPage />} />
+                <Route path="system" element={<AdminOnlyPage />} />
+                <Route path="system/update" element={<AdminOnlyPage />} />
+                <Route path="system/status" element={<AdminOnlyPage />} />
+                <Route path="addon-manager" element={<AdminOnlyPage />} />
 
-              {/* Oversight & Communications */}
-              <Route path="oversight/team-lead" element={
-                <ManagerPermissionGuard permissionId="tl-performance" parentId="oversight">
-                  <TeamLeadPerformance />
-                </ManagerPermissionGuard>
-              } />
-              <Route path="oversight/hr" element={
-                <ManagerPermissionGuard permissionId="hr-progress" parentId="oversight">
-                  <HRWorkProgress />
-                </ManagerPermissionGuard>
-              } />
-              <Route path="oversight/reports" element={
-                <ManagerPermissionGuard permissionId="role-reports" parentId="oversight">
-                  <RoleReports />
-                </ManagerPermissionGuard>
-              } />
-              <Route path="communications/inform-admin" element={
-                <ManagerPermissionGuard permissionId="inform-admin" parentId="communications">
-                  <InformSuperAdmin />
-                </ManagerPermissionGuard>
-              } />
+                {/* Oversight & Communications */}
+                <Route path="oversight/team-lead" element={
+                  <ManagerPermissionGuard permissionId="tl-performance" parentId="oversight">
+                    <TeamLeadPerformance />
+                  </ManagerPermissionGuard>
+                } />
+                <Route path="oversight/hr" element={
+                  <ManagerPermissionGuard permissionId="hr-progress" parentId="oversight">
+                    <HRWorkProgress />
+                  </ManagerPermissionGuard>
+                } />
+                <Route path="oversight/reports" element={
+                  <ManagerPermissionGuard permissionId="role-reports" parentId="oversight">
+                    <RoleReports />
+                  </ManagerPermissionGuard>
+                } />
+                <Route path="communications/inform-admin" element={
+                  <ManagerPermissionGuard permissionId="inform-admin" parentId="communications">
+                    <InformSuperAdmin />
+                  </ManagerPermissionGuard>
+                } />
 
-              {/* Original Manager Routes - Guarded */}
-              <Route path="workspace" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
-              <Route path="hierarchy" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
-              <Route path="analytics" element={<ManagerPermissionGuard permissionId="oversight"><StaffPayroll /></ManagerPermissionGuard>} />
-              <Route path="resources" element={<ManagerPermissionGuard permissionId="oversight"><ResourcePlanning /></ManagerPermissionGuard>} />
-              <Route path="reports" element={<ManagerPermissionGuard permissionId="role-reports" parentId="oversight"><ProfessionalAudit /></ManagerPermissionGuard>} />
-            </Route>
+                {/* Original Manager Routes - Guarded */}
+                <Route path="workspace" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
+                <Route path="hierarchy" element={<ManagerPermissionGuard permissionId="dashboard"><ManagerWorkspace /></ManagerPermissionGuard>} />
+                <Route path="analytics" element={<ManagerPermissionGuard permissionId="oversight"><StaffPayroll /></ManagerPermissionGuard>} />
+                <Route path="resources" element={<ManagerPermissionGuard permissionId="oversight"><ResourcePlanning /></ManagerPermissionGuard>} />
+                <Route path="reports" element={<ManagerPermissionGuard permissionId="role-reports" parentId="oversight"><ProfessionalAudit /></ManagerPermissionGuard>} />
+              </Route>
 
-            <Route path="/team-lead" element={<TeamLeadLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<TeamLeadWorkspace />} />
-              <Route path="monitoring" element={<TeamLeadWorkspace />} />
-              <Route path="reports" element={<ProfessionalAudit />} />
-              <Route path="queries" element={<ContactQueries />} />
-              <Route path="members" element={<MemberTable title="Registry Audit" />} />
-            </Route>
+              <Route path="/team-lead" element={<TeamLeadLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<TeamLeadWorkspace />} />
+                <Route path="monitoring" element={<TeamLeadWorkspace />} />
+                <Route path="reports" element={<ProfessionalAudit />} />
+                <Route path="queries" element={<ContactQueries />} />
+                <Route path="members" element={<MemberTable title="Registry Audit" />} />
+              </Route>
 
-            <Route path="/hr" element={<HRLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<HRWorkspace />} />
-              <Route path="recruitment" element={<RecruitmentHub />} />
-              <Route path="staff" element={<MemberTable title="Staff Directory" />} />
-              <Route path="roles" element={<ProfessionalAudit />} />
-              <Route path="payroll" element={<StaffPayroll />} />
-              <Route path="planning" element={<ResourcePlanning />} />
-              <Route path="audit" element={<ProfessionalAudit />} />
-            </Route>
+              <Route path="/hr" element={<HRLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<HRWorkspace />} />
+                <Route path="recruitment" element={<RecruitmentHub />} />
+                <Route path="staff" element={<MemberTable title="Staff Directory" />} />
+                <Route path="roles" element={<ProfessionalAudit />} />
+                <Route path="payroll" element={<StaffPayroll />} />
+                <Route path="planning" element={<ResourcePlanning />} />
+                <Route path="audit" element={<ProfessionalAudit />} />
+              </Route>
 
-            <Route path="/influencer" element={<TelecallerLayout />}> {/* Reusing TelecallerLayout for basic structure */}
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<InfluencerWorkspace />} />
-            </Route>
+              <Route path="/influencer" element={<TelecallerLayout />}> {/* Reusing TelecallerLayout for basic structure */}
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<InfluencerWorkspace />} />
+              </Route>
 
-            <Route path="/marketer" element={<TelecallerLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<MarketerWorkspace />} />
-            </Route>
+              <Route path="/marketer" element={<TelecallerLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<MarketerWorkspace />} />
+              </Route>
 
-            <Route path="/marketing-agency" element={<TelecallerLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<MarketingAgencyWorkspace />} />
-            </Route>
-
-
-            {/* 2. E-ADVOCATE PACKAGE SUPPORT ROLES (Premium Dashboard Design) */}
-            <Route path="/chat-support" element={<LiveChatLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<PremiumChat />} />
-            </Route>
-
-            <Route path="/call-support" element={<CallSupportLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<PremiumCall />} />
-              <Route path="queries" element={<ContactQueries />} />
-              <Route path="payments" element={<PackagePayments title="Call Support - Billing Audit" />} />
-            </Route>
-
-            <Route path="/live-chat" element={<LiveChatLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<PremiumLive />} />
-              <Route path="queries" element={<ContactQueries />} />
-              <Route path="payments" element={<PackagePayments title="Live Chat - Package Audit" />} />
-            </Route>
-
-            <Route path="/personal-agent" element={<PersonalAssistantLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<PremiumPersonalAgent />} />
-            </Route>
+              <Route path="/marketing-agency" element={<TelecallerLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<MarketingAgencyWorkspace />} />
+              </Route>
 
 
-            {/* 3. EXTENDED ECHO-SYSTEM ROLES (Standard Architecture) */}
-            <Route path="/telecaller" element={<TelecallerLayout />}>
-              <Route index element={<Navigate to="chat" replace />} />
-              <Route path="chat" element={<TelecallerChat />} />
-              <Route path="members/:status" element={<TelecallerMembers />} />
-            </Route>
+              {/* 2. E-ADVOCATE PACKAGE SUPPORT ROLES (Premium Dashboard Design) */}
+              <Route path="/chat-support" element={<LiveChatLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<PremiumChat />} />
+              </Route>
 
-            <Route path="/customer-care" element={<CustomerCareLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<CustomerCareWorkspace />} />
-              <Route path="queries" element={<ContactQueries />} />
-              <Route path="members/:status" element={<CustomerCareMembers />} />
-            </Route>
+              <Route path="/call-support" element={<CallSupportLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<PremiumCall />} />
+                <Route path="queries" element={<ContactQueries />} />
+                <Route path="payments" element={<PackagePayments title="Call Support - Billing Audit" />} />
+              </Route>
 
-            <Route path="/data-entry" element={<DataEntryLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<DataEntryWorkspace />} />
-              <Route path="bulk-add" element={<BulkMemberAdd />} />
-              <Route path="manual-entry" element={<ManualEntry />} />
-              <Route path="members/:status" element={<DataEntryMembers />} />
-            </Route>
+              <Route path="/live-chat" element={<LiveChatLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<PremiumLive />} />
+                <Route path="queries" element={<ContactQueries />} />
+                <Route path="payments" element={<PackagePayments title="Live Chat - Package Audit" />} />
+              </Route>
 
-            <Route path="/personal-assistant" element={<PersonalAssistantLayout />}>
-              <Route index element={<Navigate to="workspace" replace />} />
-              <Route path="workspace" element={<AssistantWorkspace />} />
-              <Route path="queries" element={<ContactQueries />} />
-              <Route path="members/:status" element={<TelecallerMembers />} />
-            </Route>
+              <Route path="/personal-agent" element={<PersonalAssistantLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<PremiumPersonalAgent />} />
+              </Route>
 
+
+              {/* 3. EXTENDED ECHO-SYSTEM ROLES (Standard Architecture) */}
+              <Route path="/telecaller" element={<TelecallerLayout />}>
+                <Route index element={<Navigate to="chat" replace />} />
+                <Route path="chat" element={<TelecallerChat />} />
+                <Route path="members/:status" element={<TelecallerMembers />} />
+              </Route>
+
+              <Route path="/customer-care" element={<CustomerCareLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<CustomerCareWorkspace />} />
+                <Route path="queries" element={<ContactQueries />} />
+                <Route path="members/:status" element={<CustomerCareMembers />} />
+              </Route>
+
+              <Route path="/data-entry" element={<DataEntryLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<DataEntryWorkspace />} />
+                <Route path="bulk-add" element={<BulkMemberAdd />} />
+                <Route path="manual-entry" element={<ManualEntry />} />
+                <Route path="members/:status" element={<DataEntryMembers />} />
+              </Route>
+
+              <Route path="/personal-assistant" element={<PersonalAssistantLayout />}>
+                <Route index element={<Navigate to="workspace" replace />} />
+                <Route path="workspace" element={<AssistantWorkspace />} />
+                <Route path="queries" element={<ContactQueries />} />
+                <Route path="members/:status" element={<TelecallerMembers />} />
+              </Route>
+
+<<<<<<< HEAD
             <Route path="/staff/portal" element={
               <ProtectedRoute allowedRoles={[
                 'SUPPORT', 'TELECALLER', 'CUSTOMER_CARE', 'ADMIN', 'MANAGER', 'TEAMLEAD', 'HR', 'DATA_ENTRY',
@@ -683,6 +735,17 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
+=======
+              {/* REDIRECT LEGACY SUPPORT LINKS TO NEW PROFESSIONAL DASHBOARDS */}
+              <Route path="/dashboard/support/roles" element={<Navigate to="/telecaller" replace />} />
+              <Route path="/support/chat" element={<Navigate to="/telecaller" replace />} />
+              <Route path="/support/call" element={<Navigate to="/call-support" replace />} />
+              <Route path="/support/live" element={<Navigate to="/live-chat" replace />} />
+              <Route path="/support/care" element={<Navigate to="/customer-care" replace />} />
+            </Routes>
+          </Router>
+        </CallProvider>
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
       </SettingsProvider>
     </AuthProvider>
   );

@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./sitehow.module.css";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import SearchSection from "../home/SearchSection"; // Import SearchSection
 
 const SiteHowItWorks: React.FC = () => {
+    const { openClientReg, openAdvocateReg, openLegalProviderReg } = useAuth();
+    const navigate = useNavigate();
+
+    // handleBrowseProfiles removed as we are using the real component now
+
+    const handleCaseStatus = () => {
+        // Redirect to eCourts or internal page
+        window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank');
+    };
+
     return (
         <div className={styles.page}>
 
@@ -15,7 +28,7 @@ const SiteHowItWorks: React.FC = () => {
                     </p>
 
                     <div className={styles.shwHowItWorksContainer}>
-
+                        {/* Steps content omitted for brevity as it is unchanged from here down to browse profiles */}
                         {/* STEP 1 */}
                         <div className={styles.shwHowItWorksStep}>
                             <div className={styles.shwStepNumber}>1</div>
@@ -48,7 +61,7 @@ const SiteHowItWorks: React.FC = () => {
 
                         {/* REGISTRATION SECTION */}
                         <section id="shw-registration" className={`${styles.shwSection} ${styles.shwRegistrationSection}`}>
-                            <div className={styles.shwContainer}>
+                            <div className={styles.shwContainertwo}>
 
                                 <h2 className={styles.shwSectionTitle}>Get Started</h2>
                                 <p className={styles.shwSectionSubtitle}>
@@ -76,7 +89,10 @@ const SiteHowItWorks: React.FC = () => {
                                             <li><i className="fas fa-check-circle"></i> Case Status Tracking</li>
                                         </ul>
 
-                                        <button className={`${styles.shwBtn} ${styles.shwBtnPrimary}`}>
+                                        <button
+                                            className={`${styles.shwBtn} ${styles.shwBtnPrimary}`}
+                                            onClick={openClientReg}
+                                        >
                                             Register as Client
                                         </button>
                                     </div>
@@ -100,10 +116,41 @@ const SiteHowItWorks: React.FC = () => {
                                             <li><i className="fas fa-check-circle"></i> Secure Consultations</li>
                                         </ul>
 
-                                        <button className={`${styles.shwBtn} ${styles.shwBtnSecondary}`}>
+                                        <button
+                                            className={`${styles.shwBtn} ${styles.shwBtnSecondary}`}
+                                            onClick={openAdvocateReg}
+                                        >
                                             Register as Advocate
                                         </button>
                                     </div>
+
+
+                                    <div className={`${styles.shwRegisterCard} ${styles.shwAdvocateCard}`}>
+                                        <div className={styles.shwRegisterIcon}>
+                                            <i className="fas fa-gavel"></i>
+                                        </div>
+
+                                        <h3>Register as Legal Advisor</h3>
+                                        <p>
+                                            Are you a legal professional? Join E-Advocate to showcase your expertise,
+                                            connect with clients, manage cases, and grow your practice digitally.
+                                        </p>
+
+                                        <ul className={styles.shwRegisterFeatures}>
+                                            <li><i className="fas fa-check-circle"></i> Verified Legal Advisor Profile</li>
+                                            <li><i className="fas fa-check-circle"></i> Client Lead Generation</li>
+                                            <li><i className="fas fa-check-circle"></i> Case & Document Management</li>
+                                            <li><i className="fas fa-check-circle"></i> Secure Consultations</li>
+                                        </ul>
+
+                                        <button
+                                            className={`${styles.shwBtn} ${styles.shwBtnSecondary}`}
+                                            onClick={openLegalProviderReg}
+                                        >
+                                            Register as Legal Advisor
+                                        </button>
+                                    </div>
+
 
                                 </div>
                             </div>
@@ -114,7 +161,7 @@ const SiteHowItWorks: React.FC = () => {
                             <div className={styles.shwStepNumber}>2</div>
 
                             <div className={styles.shwStepContent}>
-                                <h3>Find & Connect</h3>
+                                <h3>Browser Profiles</h3>
                                 <p>
                                     Clients can browse advocate profiles using our advanced filtering system.
                                     Our AI-powered matching algorithm suggests the most suitable advocates based on
@@ -138,10 +185,9 @@ const SiteHowItWorks: React.FC = () => {
                             <div className={styles.shwStepNumber}>3</div>
 
                             <div className={styles.shwStepContent}>
-                                <h3>Consultation & Case Filing</h3>
+                                <h3>File a Case</h3>
                                 <p>
-                                    Schedule consultations via secure video, audio, or chat. Once you've chosen your advocate,
-                                    you can proceed with digital case filing, document submission, and payment processing—
+                                    Once you've chosen your advocate, you can proceed with digital case filing, document submission, and payment processing—
                                     all within our secure platform.
                                 </p>
 
@@ -153,7 +199,7 @@ const SiteHowItWorks: React.FC = () => {
                             </div>
 
                             <div className={styles.shwStepImage}>
-                                Consultation & Case Management
+                                Case Management
                             </div>
                         </div>
 
@@ -162,7 +208,7 @@ const SiteHowItWorks: React.FC = () => {
                             <div className={styles.shwStepNumber}>4</div>
 
                             <div className={styles.shwStepContent}>
-                                <h3>Track & Manage</h3>
+                                <h3>Case Tracking </h3>
                                 <p>
                                     Monitor your case progress in real-time with our tracking dashboard. Receive updates
                                     on hearing dates, document submissions, and advocate communications—all in one
@@ -177,7 +223,7 @@ const SiteHowItWorks: React.FC = () => {
                             </div>
 
                             <div className={styles.shwStepImage}>
-                                Case Tracking & Management
+                                Case Tracking
                             </div>
                         </div>
 
@@ -185,113 +231,14 @@ const SiteHowItWorks: React.FC = () => {
                 </div>
             </section>
 
-            {/* BROWSE PROFILES */}
-            <section id="shw-browse-profiles" className={`${styles.shwSection} ${styles.shwBrowseProfiles}`}>
-                <div className={styles.shwContainer}>
-                    <h2 className={styles.shwSectionTitle}>Browse Profiles</h2>
-                    <p className={styles.shwSectionSubtitle}>
-                        Find the right legal expert for your needs with our comprehensive filtering system
-                    </p>
-
-                    <div className={styles.shwFilterContainer}>
-                        <div className={styles.shwFilterGrid}>
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-language">Select Language</label>
-                                <select id="shw-language">
-                                    <option value="">Any Language</option>
-                                    <option value="english">English</option>
-                                    <option value="hindi">Hindi</option>
-                                    <option value="tamil">Tamil</option>
-                                    <option value="telugu">Telugu</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-experience">Select Experience</label>
-                                <select id="shw-experience">
-                                    <option value="">Any Experience</option>
-                                    <option value="0-5">0-5 Years</option>
-                                    <option value="5-10">5-10 Years</option>
-                                    <option value="10-15">10-15 Years</option>
-                                    <option value="15+">15+ Years</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-city">Select City</label>
-                                <select id="shw-city">
-                                    <option value="">Any City</option>
-                                    <option value="delhi">Delhi</option>
-                                    <option value="mumbai">Mumbai</option>
-                                    <option value="bangalore">Bangalore</option>
-                                    <option value="chennai">Chennai</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-department">Select Department</label>
-                                <select id="shw-department">
-                                    <option value="">Any Department</option>
-                                    <option value="civil">Civil Law</option>
-                                    <option value="criminal">Criminal Law</option>
-                                    <option value="corporate">Corporate Law</option>
-                                    <option value="family">Family Law</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-state">Select State</label>
-                                <select id="shw-state">
-                                    <option value="">Any State</option>
-                                    <option value="delhi">Delhi</option>
-                                    <option value="maharashtra">Maharashtra</option>
-                                    <option value="karnataka">Karnataka</option>
-                                    <option value="tamilnadu">Tamil Nadu</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-mode">Consultation Mode</label>
-                                <select id="shw-mode">
-                                    <option value="">Any Mode</option>
-                                    <option value="online">Online Only</option>
-                                    <option value="offline">Offline Only</option>
-                                    <option value="both">Both</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-role">Select Role</label>
-                                <select id="shw-role">
-                                    <option value="">Any Role</option>
-                                    <option value="advocate">Advocate</option>
-                                    <option value="senior">Senior Advocate</option>
-                                    <option value="legal">Legal Advisor</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.shwFilterGroup}>
-                                <label htmlFor="shw-district">Select District</label>
-                                <select id="shw-district">
-                                    <option value="">Any District</option>
-                                    <option value="central">Central Delhi</option>
-                                    <option value="south">South Mumbai</option>
-                                    <option value="bangalore">Bangalore Urban</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className={styles.shwFilterButtons}>
-                            <button className={`${styles.shwBtn} ${styles.shwBtnSecondary}`}>RESET</button>
-                            <button className={`${styles.shwBtn} ${styles.shwBtnPrimary}`}>APPLY FILTERS</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* BROWSE PROFILES - REAL SEARCH SECTION */}
+            <div style={{ marginTop: '-4rem' }}>
+                <SearchSection />
+            </div>
 
             {/* BLOGS */}
             <section id="shw-blogs" className={styles.shwSection}>
-                <div className={styles.shwContainer}>
+                <div className={styles.shwContainerthree}>
                     <h2 className={styles.shwSectionTitle}>Blogs</h2>
                     <p className={styles.shwSectionSubtitle}>
                         Insights, updates & success stories from advocates & legal experts
@@ -361,7 +308,7 @@ const SiteHowItWorks: React.FC = () => {
 
             {/* ABOUT */}
             <section id="shw-about" className={`${styles.shwSection} ${styles.shwAboutSection}`}>
-                <div className={styles.shwContainer}>
+                <div className={styles.shwContainerthree}>
                     <h2 className={styles.shwSectionTitle}>About E-Advocate</h2>
                     <p className={styles.shwSectionSubtitle}>
                         Revolutionizing Legal Services through Digital Innovation, Connecting Clients
@@ -411,7 +358,7 @@ const SiteHowItWorks: React.FC = () => {
 
             {/* CASE STATUS */}
             <section id="shw-case-status" className={styles.shwSection}>
-                <div className={styles.shwContainer}>
+                <div className={styles.shwContainerthree}>
                     <h2 className={styles.shwSectionTitle}>Case Status</h2>
                     <p className={styles.shwSectionSubtitle}>
                         Access detailed case status using your case number or filing number
@@ -426,7 +373,10 @@ const SiteHowItWorks: React.FC = () => {
 
                         <div className={styles.shwCaseSearch}>
                             <input type="text" placeholder="Enter Case Number or Filing ID" />
-                            <button className={`${styles.shwBtn} ${styles.shwBtnPrimary}`}>
+                            <button
+                                className={`${styles.shwBtn} ${styles.shwBtnPrimary}`}
+                                onClick={handleCaseStatus}
+                            >
                                 Explore
                             </button>
                         </div>

@@ -1,126 +1,106 @@
 const express = require('express');
 const router = express.Router();
+const User = require('../models/User');
 const Settings = require('../models/Settings');
+const auth = require('../middleware/auth'); // Check middleware connection
 
-// GET settings
-router.get('/', async (req, res) => {
+// GET SITE SETTINGS (Public)
+router.get('/site', async (req, res) => {
     try {
         let settings = await Settings.findOne();
-        let needsSave = false;
-
-        const fixPath = (path) => {
-            if (path && (path.includes('src/assets/') || path.includes('./src/assets/'))) {
-                needsSave = true;
-                return path.replace('./src/assets/', '/assets/').replace('src/assets/', '/assets/');
-            }
-            return path;
-        };
-
         if (!settings) {
-            const defaultSettings = {
-                site_name: 'e-Advocate',
-                hero_title: 'e-Advocate Services',
-                hero_subtitle: 'A secure digital bridge between clients and professionals. Discover trusted experts, connect instantly, and manage your legal journey with confidence through our premium platform.',
-                header_menu: [
-                    { label: 'Browse Profiles', link: '/search' },
-                    { label: 'File Case', link: 'https://filing.ecourts.gov.in/pdedev/' },
-                    { label: 'Case Status', link: 'https://services.ecourts.gov.in/ecourtindia_v6/' },
-                    { label: 'Blogs', link: '/blogs' },
-                    { label: 'About', link: '/about' }
-                ],
-                ecosystem_links: [
-                    { label: 'Tatito Edverse', link: '#', icon_url: '/assets/edverse.webp' },
-                    { label: 'Tatito Carrer Hub', link: '#', icon_url: '/assets/carrer.webp' },
-                    { label: 'Tatito Nexus', link: '#', icon_url: '/assets/nexus.webp' },
-                    { label: 'Tatito Civic One', link: '#', icon_url: '/assets/civic.webp' },
-                    { label: 'Tatito Health+', link: '#', icon_url: '/assets/health.webp' },
-                    { label: 'Tatito Fashions', link: '#', icon_url: '/assets/fashion.webp' }
-                ],
-                logo_url_left: '/assets/eadvocate.webp',
-                logo_url_right: '/assets/civic.webp',
-                logo_url_hero: '/assets/image.png'
-            };
-            settings = await Settings.create(defaultSettings);
-        } else {
-            // Force revert branding if it was changed (Auto-healing)
-            let changed = false;
-            if (!settings.hero_title || settings.hero_title.toLowerCase().includes('health')) {
-                settings.hero_title = 'e-Advocate Services';
-                changed = true;
-            }
-            if (!settings.logo_url_left || settings.logo_url_left.includes('health')) {
-                settings.logo_url_left = '/assets/eadvocate.webp';
-                changed = true;
-            }
-            if (!settings.logo_url_hero || settings.logo_url_hero.includes('health')) {
-                settings.logo_url_hero = '/assets/image.png';
-                changed = true;
-            }
-
-            // Fix site_name
-            if (!settings.site_name || settings.site_name.toLowerCase().includes('health') || settings.site_name.includes('Tatito')) {
-                settings.site_name = 'E-Advocate Services';
-                changed = true;
-            }
-
-            // Auto-fix existing path issues in DB and Rename Health links
-            if (settings.ecosystem_links) {
-                settings.ecosystem_links = settings.ecosystem_links.map(link => {
-                    let newLink = { ...link, icon_url: fixPath(link.icon_url) };
-
-                    if (newLink.label && (newLink.label.includes('Health') || newLink.label.includes('Tatito Health'))) {
-                        newLink.label = 'E-Advocate Services';
-                        newLink.icon_url = '/assets/eadvocate.webp';
-                        changed = true;
-                    }
-                    return newLink;
-                });
-            }
-            settings.logo_url_left = fixPath(settings.logo_url_left);
-            settings.logo_url_right = fixPath(settings.logo_url_right);
-            settings.logo_url_hero = fixPath(settings.logo_url_hero);
-
-            if (needsSave || changed) {
-                await settings.save();
-                console.log('Fixed branding, site name, and static asset paths in database settings');
-            }
+            settings = await Settings.create({}); // Create default if missing
         }
-
-        res.json(settings);
+        res.json({ success: true, settings });
     } catch (err) {
-        console.error('Settings GET error:', err);
-        res.status(500).json({ error: err.message });
+        console.error('Fetch Site Settings Error:', err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
-// UPDATE settings
-router.post('/', async (req, res) => {
+// UPDATE SITE SETTINGS (Admin Only)
+router.post('/site', auth, async (req, res) => {
     try {
-        let settings = await Settings.findOne();
-
-        if (settings) {
-            // If updating manager_permissions, handle Mixed type carefully
-            if (req.body.manager_permissions) {
-                settings.manager_permissions = req.body.manager_permissions;
-                settings.markModified('manager_permissions');
-            }
-
-            // Update other fields from req.body
-            Object.keys(req.body).forEach(key => {
-                if (key !== 'manager_permissions') {
-                    settings[key] = req.body[key];
-                }
-            });
-
-            await settings.save();
-        } else {
-            settings = await Settings.create(req.body);
+        if (req.user.role.toLowerCase() !== 'admin' && req.user.role.toLowerCase() !== 'superadmin') {
+            return res.status(403).json({ error: 'Access denied. Admins only.' });
         }
-
+        const update = req.body;
+        const settings = await Settings.findOneAndUpdate({}, update, { new: true, upsert: true });
         res.json({ success: true, settings });
     } catch (err) {
-        console.error('Settings POST error:', err);
-        res.status(500).json({ error: err.message });
+        console.error('Update Site Settings Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GET USER SETTINGS
+router.get('/', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        res.json({
+            success: true,
+            privacy: user.privacySettings,
+            presets: user.searchPresets,
+            status: user.status
+        });
+    } catch (err) {
+        console.error('Get Settings Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// UPDATE PRIVACY
+router.put('/privacy', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const { showProfile, showContact, showEmail } = req.body;
+
+        if (showProfile !== undefined) user.privacySettings.showProfile = showProfile;
+        if (showContact !== undefined) user.privacySettings.showContact = showContact;
+        if (showEmail !== undefined) user.privacySettings.showEmail = showEmail;
+
+        await user.save();
+        res.json({ success: true, privacy: user.privacySettings });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// DEACTIVATE ACCOUNT
+router.post('/deactivate', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.status = 'Deactivated';
+        await user.save();
+        res.json({ success: true, message: 'Account deactivated' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// DELETE ACCOUNT (Hard Delete or Soft Delete)
+router.post('/delete', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.status = 'Deleted'; // Soft delete
+        await user.save();
+        res.json({ success: true, message: 'Account marked for deletion' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// SEARCH PRESETS
+router.post('/presets', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.searchPresets = req.body.presets; // Sync whole array
+        await user.save();
+        res.json({ success: true, presets: user.searchPresets });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save presets' });
     }
 });
 

@@ -118,6 +118,31 @@ const MemberActions: React.FC<{
         }
     };
 
+    const handleRestore = async () => {
+        try {
+            const res = await axios.patch(`/api/admin/members/${member.id}/restore`);
+            if (res.data.success) {
+                onStatusUpdate(member.id, "Active");
+                alert("Member restored successfully");
+            }
+        } catch (err) {
+            alert("Error restoring member");
+        }
+    };
+
+    const handlePermanentDelete = async () => {
+        if (window.confirm(`CRITICAL: Are you sure you want to PERMANENTLY delete ${member.name}? This action cannot be undone.`)) {
+            try {
+                const res = await axios.delete(`/api/admin/members/${member.id}/permanent`);
+                if (res.data.success) {
+                    onDelete(member.id);
+                }
+            } catch (err) {
+                alert("Error in permanent deletion");
+            }
+        }
+    };
+
     return (
         <div className={styles.actions} ref={ref}>
             <button className={styles.kebab} onClick={() => setOpen(!open)}>
@@ -170,7 +195,15 @@ const MemberActions: React.FC<{
                     <button onClick={() => { setOpen(false); onPackage(member); }}>Manage Package</button>
                     <button onClick={() => { setOpen(false); onWallet(member); }}>Wallet Balance</button>
                     <button onClick={() => { setOpen(false); onImpersonate(member); }}>Log in as Member</button>
-                    <button className={styles.delete} onClick={handleDelete}>Delete Permanently</button>
+
+                    {member.status === 'Deleted' ? (
+                        <>
+                            <button className={styles.primaryAction} style={{ color: '#10b981' }} onClick={() => { setOpen(false); handleRestore(); }}>Restore Member</button>
+                            <button className={styles.delete} onClick={() => { setOpen(false); handlePermanentDelete(); }}>Delete Permanently</button>
+                        </>
+                    ) : (
+                        <button className={styles.delete} onClick={() => { setOpen(false); handleDelete(); }}>Delete Member</button>
+                    )}
                 </div>
             )}
         </div>
@@ -292,13 +325,14 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
     const fetchMembers = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('/api/admin/members');
+            // Pass context for strict server-side filtering
+            const res = await axios.get('/api/admin/members', { params: { context } });
             if (res.data.success) {
                 const mapped: Member[] = res.data.members.map((m: any) => {
                     const role = (m.role || "").toLowerCase();
                     return {
                         id: m.id,
-                        code: m.unique_id || (role === 'advocate' ? `TP-EAD-ADV${m.id.slice(-5)}` : `TP-EAD-CL${m.id.slice(-5)}`),
+                        code: m.unique_id || (role === 'advocate' ? `EA-ADV-${m.id.slice(-6).toUpperCase()}` : `EA-CLI-${m.id.slice(-6).toUpperCase()}`),
                         role: role === 'advocate' ? 'Advocate' : 'Client',
                         name: m.name || 'Anonymous',
                         email: m.email,
@@ -306,7 +340,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                         location: m.location || 'N/A',
                         gender: m.gender || 'N/A',
                         verified: m.verified,
-                        reported: 0,
+                        reported: m.reported || 0,
                         view: 0,
                         plan: m.plan || 'Free',
                         coins: m.coins || 0,
@@ -453,6 +487,8 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
             matchesContext = m.status === 'Deactivated';
         } else if (context === 'blocked') {
             matchesContext = m.status === 'Blocked';
+        } else if (context === 'deleted') {
+            matchesContext = m.status === 'Deleted';
         } else if (context === 'reported') {
             matchesContext = m.reported > 0;
         }
@@ -616,7 +652,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                             { name: 'Pro Lite', sub: 'Standard Premium', levels: ['Silver', 'Gold', 'Platinum'] },
                             { name: 'Pro', sub: 'Advanced Features', levels: ['Silver', 'Gold', 'Platinum'] },
                             { name: 'Ultra Pro', sub: 'Executive Support', levels: ['Silver', 'Gold', 'Platinum'] }
-                        ].map(pkg => (
+                        ].filter(pkg => !(context === 'premium' && pkg.name === 'Free')).map(pkg => (
                             <div key={pkg.name} className={`${styles.packageBlock} ${filterCategory === pkg.name ? styles.active : ''}`}>
                                 <div
                                     className={styles.blockTitle}

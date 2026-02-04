@@ -4,7 +4,7 @@ const NotificationSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['registration', 'login', 'blog', 'ticket', 'contact', 'interest', 'superInterest', 'chat', 'shortlist', 'visit', 'profileUpdate', 'payment']
+        enum: ['registration', 'login', 'blog', 'ticket', 'contact', 'interest', 'superInterest', 'chat', 'shortlist', 'visit', 'profileUpdate', 'payment', 'system', 'view_contact']
     },
     message: { type: String, required: true },
     senderName: { type: String },

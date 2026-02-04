@@ -270,6 +270,22 @@
     border-bottom-left-radius: 4px;
 }
 
+.lockedMsg {
+    font-style: italic;
+    color: #94a3b8;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.emptyNotice {
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    margin: 20px 0;
+}
+
 .inputArea {
     padding: 20px 24px;
     background: rgba(0, 0, 0, 0.3);
@@ -383,4 +399,35 @@
 
 .blockBtn {
     color: #ef4444 !important;
+}
+
+.upgradeNotice {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 15px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.upgradeNotice p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.miniUpgradeBtn {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.miniUpgradeBtn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
 }

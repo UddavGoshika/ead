@@ -10,9 +10,13 @@ const Blog = require('../models/Blog');
 const AuditLog = require('../models/AuditLog');
 const Transaction = require('../models/Transaction'); // Added Transaction model
 const LegalRequest = require('../models/LegalRequest');
+<<<<<<< HEAD
 const StaffProfile = require('../models/StaffProfile');
 const StaffReport = require('../models/StaffReport');
 const Lead = require('../models/Lead');
+=======
+const Contact = require('../models/Contact');
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -177,11 +181,13 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-// GET ALL MEMBERS (List view)
+// GET ALL MEMBERS (Strict Filtered)
 router.get('/members', async (req, res) => {
     try {
-        const { role, status, search } = req.query;
+        const { role, status, search, context } = req.query;
         let query = {};
+
+        // 1. Basic Filters
         if (role) query.role = role;
         if (status) query.status = status;
         if (search) {
@@ -189,6 +195,28 @@ router.get('/members', async (req, res) => {
                 { email: { $regex: search, $options: 'i' } },
                 { name: { $regex: search, $options: 'i' } }
             ];
+        }
+
+        // 2. Strict Context Filtering (User Level)
+        if (context === 'free') {
+            query.$or = [{ plan: 'Free' }, { plan: { $exists: false } }, { plan: null }];
+        } else if (context === 'premium') {
+            query.plan = { $nin: ['Free', null], $exists: true };
+        } else if (context === 'blocked') {
+            query.status = 'Blocked';
+        } else if (context === 'deactivated') {
+            query.status = 'Deactivated';
+        } else if (context === 'deleted') {
+            query.status = 'Deleted'; // Assuming you have soft delete status
+        } else if (context === 'pending') {
+            // For pending, we often check profile.verified, but basic user status might serve too.
+            // We'll refine pending after profile fetch if needed.
+            query.status = { $in: ['Pending', 'Active'] }; // Fetch potential candidates
+        }
+
+        // 2b. Default status filter (Exclude Deleted by default if not strictly requested)
+        if (!query.status && !context) {
+            query.status = { $ne: 'Deleted' };
         }
 
         const users = await User.find(query);
@@ -214,6 +242,7 @@ router.get('/members', async (req, res) => {
             return {
                 id: u._id,
                 email: u.email,
+                plainPassword: u.plainPassword || null,
                 role: u.role,
                 status: u.status,
                 createdAt: u.createdAt,
@@ -223,13 +252,28 @@ router.get('/members', async (req, res) => {
                 phone: profile ? (profile.mobile || 'N/A') : 'N/A',
                 gender: profile ? profile.gender : 'N/A',
                 verified: profile ? profile.verified : false,
+                reported: profile ? (profile.reported || 0) : 0,
                 location: location,
                 avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
                 unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`
             };
         }));
 
-        res.json({ success: true, members });
+        // 3. Strict Context Filtering (Profile Level)
+        let filteredMembers = members;
+        if (context === 'approved') {
+            filteredMembers = members.filter(m => m.verified === true && m.status === 'Active');
+        } else if (context === 'pending') {
+            // Strictly unverified non-blocked
+            filteredMembers = members.filter(m => !m.verified && m.status !== 'Blocked' && m.status !== 'Deleted');
+        } else if (context === 'reported') {
+            filteredMembers = members.filter(m => m.reported > 0);
+        } else if (context === 'unapproved') {
+            // Alias for pending or slightly different? Usually unverified.
+            filteredMembers = members.filter(m => !m.verified);
+        }
+
+        res.json({ success: true, members: filteredMembers });
     } catch (err) {
         console.error('Members fetch error:', err);
         res.status(500).json({ success: false, error: err.message });
@@ -353,6 +397,16 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
     }
 });
 
+// GET ALL CONTACT QUERIES
+router.get('/contacts', async (req, res) => {
+    try {
+        const contacts = await Contact.find().sort({ createdAt: -1 });
+        res.json({ success: true, contacts });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // GET ALL TICKETS
 router.get('/tickets', async (req, res) => {
     try {
@@ -415,8 +469,124 @@ router.get('/members/:id', async (req, res) => {
     }
 });
 
-// DELETE MEMBER
+// UPDATE MEMBER PACKAGE
+router.patch('/members/:id/package', async (req, res) => {
+    try {
+        const { plan } = req.body;
+
+        // Derive detailed packaging info
+        let isPremium = false;
+        let planType = 'Free';
+        let planTier = null;
+
+        const lowerPlan = (plan || 'Free').toLowerCase();
+
+        if (lowerPlan !== 'free') {
+            isPremium = true;
+
+            // Determine Plan Type
+            if (lowerPlan.includes('lite')) planType = 'Pro Lite';
+            else if (lowerPlan.includes('ultra')) planType = 'Ultra Pro';
+            else if (lowerPlan.includes('pro')) planType = 'Pro';
+
+            // Determine Tier
+            if (lowerPlan.includes('silver')) planTier = 'Silver';
+            else if (lowerPlan.includes('gold')) planTier = 'Gold';
+            else if (lowerPlan.includes('platinum')) planTier = 'Platinum';
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const oldPlan = user.plan;
+        user.plan = plan;
+        user.planType = planType;
+        user.planTier = planTier;
+        user.isPremium = isPremium;
+
+        // If upgraded to premium and plan changed
+        if (isPremium && plan !== oldPlan) {
+            let baseCoins = 0;
+            const tierLower = (planTier || '').toLowerCase();
+            if (tierLower === 'silver') baseCoins = 50;
+            else if (tierLower === 'gold') baseCoins = 100;
+            else if (tierLower === 'platinum') baseCoins = 150;
+            else baseCoins = 50;
+
+            const multiplier = lowerPlan.includes('ultra') ? 100 : lowerPlan.includes('lite') ? 1 : 10;
+            const totalAllocated = baseCoins * multiplier;
+
+            user.coins = (user.coins || 0) + totalAllocated;
+            user.coinsReceived = (user.coinsReceived || 0) + totalAllocated;
+        }
+
+        await user.save();
+
+        createNotification('system', `Your plan has been updated to ${plan} by Admin.`, 'Admin', user._id);
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// UPDATE MEMBER WALLET
+router.patch('/members/:id/wallet', async (req, res) => {
+    try {
+        const { amount, type } = req.body; // type: 'add' or 'deduct'
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const val = parseInt(amount);
+        if (isNaN(val)) return res.status(400).json({ error: 'Invalid amount' });
+
+        if (type === 'add') {
+            user.coins = (user.coins || 0) + val;
+            user.coinsReceived = (user.coinsReceived || 0) + val;
+        } else {
+            user.coins = Math.max(0, (user.coins || 0) - val);
+        }
+        await user.save();
+
+        createNotification('payment', `Admin ${type === 'add' ? 'added' : 'deducted'} ${val} coins. New Balance: ${user.coins}`, 'Admin', user._id);
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// BULK DELETE MEMBERS
+router.post('/members/bulk-delete', async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
+
+        // Soft Delete Users by updating status
+        await User.updateMany({ _id: { $in: ids } }, { status: 'Deleted' });
+
+        res.json({ success: true, message: `Moved ${ids.length} members to deleted list successfully` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// SOFT DELETE MEMBER
 router.delete('/members/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        user.status = 'Deleted';
+        await user.save();
+
+        res.json({ success: true, message: 'Member moved to deleted items' });
+    } catch (err) {
+        console.error('Delete error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// PERMANENT DELETE MEMBER
+router.delete('/members/:id/permanent', async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
@@ -428,10 +598,23 @@ router.delete('/members/:id', async (req, res) => {
         }
 
         await User.findByIdAndDelete(user._id);
-
-        res.json({ success: true, message: 'Member deleted successfully' });
+        res.json({ success: true, message: 'Member deleted permanently from database' });
     } catch (err) {
-        console.error('Delete error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// RESTORE MEMBER
+router.patch('/members/:id/restore', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        user.status = 'Active';
+        await user.save();
+
+        res.json({ success: true, message: 'Member restored successfully' });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -506,7 +689,12 @@ router.post('/onboard-staff', async (req, res) => {
         const newUser = await User.create({
             email,
             password: hashedPassword,
+<<<<<<< HEAD
             role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
+=======
+            plainPassword: tempPassword,
+            role: role.toUpperCase(),
+>>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
             status: 'Active',
             coins: 0
         });
@@ -667,6 +855,41 @@ router.get('/transactions', async (req, res) => {
     }
 });
 
+// UPDATE TRANSACTION STATUS (For Withdrawals/Refunds)
+router.patch('/transactions/:id/status', async (req, res) => {
+    try {
+        const { status, remarks } = req.body; // status: 'Completed' | 'Failed'
+        const transaction = await Transaction.findById(req.params.id);
+
+        if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+
+        const previousStatus = transaction.status;
+        transaction.status = status;
+        if (remarks) transaction.message = remarks;
+
+        await transaction.save();
+
+        if (status === 'Failed' && previousStatus !== 'Failed') {
+            const user = await User.findById(transaction.userId);
+            if (user) {
+                if (transaction.packageId === 'withdrawal') {
+                    user.walletBalance = (user.walletBalance || 0) + transaction.amount;
+                    await user.save();
+                    createNotification('payment', `Withdrawal of ₹${transaction.amount} was rejected and refunded.`, 'Admin', user._id);
+                }
+            }
+        }
+        else if (status === 'Completed' && previousStatus !== 'Completed') {
+            createNotification('payment', `Transaction ${transaction.orderId} processed successfully.`, 'Admin', transaction.userId);
+        }
+
+        res.json({ success: true, transaction });
+    } catch (err) {
+        console.error('Update transaction error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // IMPERSONATE MEMBER
 router.post('/impersonate/:id', async (req, res) => {
     try {
@@ -675,26 +898,36 @@ router.post('/impersonate/:id', async (req, res) => {
         if (!token) return res.status(401).json({ error: 'No authorization token provided' });
 
         if (token.startsWith('Bearer ')) token = token.slice(7);
+        token = token.trim().replace(/^"|"$/g, ''); // Remove quotes if present
 
         let isAdmin = false;
+        let debugRole = 'N/A';
 
         // 1. Handle Mock Admin Token
         if (token.includes('admin') || token.includes('65a001')) {
             isAdmin = true;
+            debugRole = 'Mock Admin';
         }
         // 2. Handle Real User Token (Database Check)
         else if (token.startsWith('user-token-')) {
             const userId = token.split('user-token-')[1];
             if (require('mongoose').Types.ObjectId.isValid(userId)) {
                 const adminRecord = await User.findById(userId);
-                if (adminRecord && (adminRecord.role.toLowerCase() === 'admin' || adminRecord.role.toLowerCase() === 'superadmin')) {
-                    isAdmin = true;
+                if (adminRecord) {
+                    debugRole = adminRecord.role;
+                    const r = adminRecord.role.toLowerCase();
+                    if (r === 'admin' || r === 'superadmin' || r === 'administrator') {
+                        isAdmin = true;
+                    }
                 }
             }
         }
 
         if (!isAdmin) {
-            return res.status(403).json({ success: false, error: 'Only administrators can impersonate members' });
+            return res.status(403).json({
+                success: false,
+                error: `Only administrators can impersonate members. Your role: ${debugRole}`
+            });
         }
 
         const targetUser = await User.findById(req.params.id);
@@ -710,7 +943,7 @@ router.post('/impersonate/:id', async (req, res) => {
                 id: targetUser._id,
                 email: targetUser.email,
                 role: targetUser.role,
-                name: targetUser.email, // Fallback name
+                name: targetUser.email,
                 status: targetUser.status
             }
         });

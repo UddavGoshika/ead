@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+
 import { useLocation } from 'react-router-dom';
 import styles from './LegalDocumentationPage.module.css';
 import {
@@ -719,6 +721,79 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
         search: ''
     });
 
+    // --- Query Form State ---
+    const [formData, setFormData] = useState({
+        fullName: '',
+        phone: '',
+        email: '',
+        message: ''
+    });
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('loading');
+
+        try {
+            // 1. Send to Backend (Non-blocking / "Best Effort")
+            try {
+                // Use relative path so Vite proxy handles it correctly regardless of env
+                await axios.post('/api/contact', {
+                    name: formData.fullName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    message: formData.message,
+                    source: 'Legal Documentation Page'
+                });
+            } catch (backendError) {
+                console.warn('Backend logging failed, proceeding with email:', backendError);
+                // Do not throw; proceed to email
+            }
+
+            // 2. Open User's Mail App with pre-filled details
+            const subject = encodeURIComponent(`Legal Query from ${formData.fullName} - E-Advocate Services`);
+            const body = encodeURIComponent(
+                `Name: ${formData.fullName}\n` +
+                `Phone: ${formData.phone}\n` +
+                `Email: ${formData.email}\n\n` +
+                `Query/Message:\n${formData.message}`
+            );
+
+            window.location.href = `mailto:info.eadvocateservices@gmail.com?subject=${subject}&body=${body}`;
+
+            setStatus('success');
+            setFormData({ fullName: '', phone: '', email: '', message: '' });
+            setTimeout(() => setStatus('idle'), 5000);
+        } catch (error) {
+            console.error('Submission failed', error);
+            setStatus('error');
+        }
+    };
+
+    // --- Fraud Form State ---
+    const [fraudData, setFraudData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        description: '',
+        evidence: false
+    });
+    const [fraudStatus, setFraudStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+    const handleFraudSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFraudStatus('loading');
+        try {
+            await axios.post('/api/contact/fraud', fraudData);
+            setFraudStatus('success');
+            setFraudData({ name: '', email: '', phone: '', description: '', evidence: false });
+            setTimeout(() => setFraudStatus('idle'), 5000);
+        } catch (err) {
+            console.error(err);
+            setFraudStatus('error');
+        }
+    };
+
     useEffect(() => {
         setIsLoaded(true);
         // Task 1: auto-select and scroll based on incoming state
@@ -1356,14 +1431,42 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                             <div className={styles.queryFormCard}>
                                 <h3>Submit a Legal Query</h3>
                                 <p>Our experts will get back to you within 24 hours.</p>
-                                <form className={styles.supportForm}>
+                                <form className={styles.supportForm} onSubmit={handleSubmit}>
                                     <div className={styles.formRow}>
-                                        <input type="text" placeholder="Full Name" required />
-                                        <input type="tel" placeholder="Phone Number" required />
+                                        <input
+                                            type="text"
+                                            placeholder="Full Name"
+                                            required
+                                            value={formData.fullName}
+                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                        />
+                                        <input
+                                            type="tel"
+                                            placeholder="Phone Number"
+                                            required
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        />
                                     </div>
-                                    <input type="email" placeholder="Email Address" required />
-                                    <textarea placeholder="Describe your legal requirement or query..." rows={4} required></textarea>
-                                    <button type="submit" className={styles.formSubmitBtn}>Send Message</button>
+                                    <input
+                                        type="email"
+                                        placeholder="Email Address"
+                                        required
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    />
+                                    <textarea
+                                        placeholder="Describe your legal requirement or query..."
+                                        rows={4}
+                                        required
+                                        value={formData.message}
+                                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                                    ></textarea>
+                                    <button type="submit" className={styles.formSubmitBtn} disabled={status === 'loading'}>
+                                        {status === 'loading' ? 'Sending...' : 'Send Message'}
+                                    </button>
+                                    {status === 'success' && <p style={{ color: '#4ade80', marginTop: '10px', fontSize: '0.9rem' }}>Query sent successfully! We will contact you shortly.</p>}
+                                    {status === 'error' && <p style={{ color: '#ef4444', marginTop: '10px', fontSize: '0.9rem' }}>Failed to send query. Please try again.</p>}
                                 </form>
                             </div>
 
@@ -1374,28 +1477,46 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                                 </div>
                                 <div className={styles.alertContent}>
                                     <p className={styles.warningText}>
-                                        <strong>Important:</strong> E-Advocate Services never asks for sensitive otp or bank details over phone.
-                                        Always verify the advocate's unique ID on our portal before making any payments.
+                                        <strong>Important:</strong> Report any suspicious activity, impersonation, or unauthorized payment requests immediately.
                                     </p>
-                                    <ul className={styles.safetyList}>
-                                        <li>Pay only through secured gateway.</li>
-                                        <li>Ask for a digitally signed receipt.</li>
-                                        <li>Report suspicious activity immediately.</li>
-                                    </ul>
-                                    <div className={styles.contactDetails}>
-                                        <div className={styles.contactItem}>
-                                            <Clock size={18} />
-                                            <span>Support:+91 70937 04706
 
-                                            </span>
+                                    <form className={styles.supportForm} onSubmit={handleFraudSubmit} style={{ marginTop: '15px' }}>
+                                        <div className={styles.formRow}>
+                                            <input
+                                                type="text"
+                                                placeholder="Your Name"
+                                                required
+                                                value={fraudData.name}
+                                                onChange={e => setFraudData({ ...fraudData, name: e.target.value })}
+                                                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                            />
+                                            <input
+                                                type="tel"
+                                                placeholder="Phone"
+                                                required
+                                                value={fraudData.phone}
+                                                onChange={e => setFraudData({ ...fraudData, phone: e.target.value })}
+                                                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                            />
                                         </div>
+                                        <textarea
+                                            placeholder="Describe the suspicious activity..."
+                                            rows={2}
+                                            required
+                                            value={fraudData.description}
+                                            onChange={e => setFraudData({ ...fraudData, description: e.target.value })}
+                                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                                        ></textarea>
+                                        <button type="submit" className={styles.formSubmitBtn} disabled={fraudStatus === 'loading'} style={{ background: '#ef4444' }}>
+                                            {fraudStatus === 'loading' ? 'Reporting...' : 'Report Fraud Alert'}
+                                        </button>
+                                        {fraudStatus === 'success' && <p style={{ color: '#4ade80', marginTop: '10px', fontSize: '0.9rem' }}>Report submitted. High priority ticket created.</p>}
+                                    </form>
+
+                                    <div className={styles.contactDetails} style={{ marginTop: '20px' }}>
                                         <div className={styles.contactItem}>
-                                            <MessageCircle size={18} />
-                                            <span>Email: support@tatitoprojects.com
-
-
-
-                                            </span>
+                                            <Clock size={16} />
+                                            <span>Urgent Line: +91 70937 04706</span>
                                         </div>
                                     </div>
                                 </div>

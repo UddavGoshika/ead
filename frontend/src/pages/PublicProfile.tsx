@@ -179,7 +179,13 @@ const PublicProfile: React.FC = () => {
                             />
                             <div className={styles.headerOverlay}>
                                 <div className={styles.verifyBadge}>
-                                    <CheckCircle2 size={16} /> Verified {profile.role === 'client' ? 'Client' : 'Advocate'}
+                                    <CheckCircle2 size={16} />
+                                    Verified {profile.role === 'client' ? 'Client' : 'Advocate'}
+                                    {profile.unique_id && (
+                                        <span style={{ opacity: 0.8, marginLeft: '5px' }}>
+                                            • {profile.unique_id.substring(0, 2)}***
+                                        </span>
+                                    )}
                                 </div>
                                 <h1 className={styles.profileName}>{isLoggedIn ? profile.name : maskText(profile.name)}</h1>
                                 <p className={styles.profileTitle}>
@@ -333,7 +339,7 @@ const PublicProfile: React.FC = () => {
                     </div>
 
                     {/* ID Badge is ALWAYS VISIBLE and NOT BLURRED */}
-                    <div className={styles.profileIdBadge}>ID: {profile.unique_id}</div>
+                    <div className={styles.profileIdBadge}>ID: {profile.unique_id ? `${profile.unique_id.substring(0, 2)}***` : 'N/A'}</div>
 
                     {!isLoggedIn && (
                         <div className={styles.loginBanner}>

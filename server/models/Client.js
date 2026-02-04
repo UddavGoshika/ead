@@ -11,6 +11,7 @@ const ClientSchema = new mongoose.Schema({
     email: String,
     documentType: String,
     documentPath: String, // File upload
+    profilePicPath: String,
     address: {
         country: String,
         state: String,

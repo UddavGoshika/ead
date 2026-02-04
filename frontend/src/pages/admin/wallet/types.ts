@@ -18,6 +18,7 @@ export interface Transaction {
     paymentMethod: string;
     notes?: string;
     ip?: string;
+    displayId?: string; // For showing Order ID while id is MongoID
 }
 
 export type SortField = keyof Pick<Transaction, "date" | "id" | "name" | "userId" | "amount" | "type" | "status">;

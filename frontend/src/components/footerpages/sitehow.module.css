@@ -1,11 +1,16 @@
-.page {}
-
 .shwContainer {
     width: 100%;
     max-width: 1200px;
-    margin: 30px auto;
-    padding: 0 20px;
+    margin: 0px auto;
+    /* padding: 0 20px; */
     margin-top: 120px;
+}
+
+.shwContainertwo,
+.shwContainerthree {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0px auto;
 }
 
 .shwSection {
@@ -68,13 +73,13 @@
 }
 
 .shwBtnSecondary {
-    background: linear-gradient(to right, #f1f5f9, #e2e8f0);
-    color: #bcbec0;
+    background: linear-gradient(to right, #3a7bd5, #00d2ff);
+    color: #f8f9fb;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .shwBtnSecondary:hover {
-    background: linear-gradient(to right, #e2e8f0, #cbd5e1);
+    background: linear-gradient(to right, #3a7bd5, #00d2ff);
     transform: translateY(-2px);
 }
 
@@ -508,9 +513,23 @@
 
 .shwRegistrationGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 40px;
     margin-top: 50px;
+}
+
+@media (max-width: 1024px) {
+    .shwRegistrationGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+}
+
+@media (max-width: 640px) {
+    .shwRegistrationGrid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
 }
 
 .shwRegisterCard {

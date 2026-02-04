@@ -1,19 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './ContactSection.module.css';
+import axios from 'axios';
 import {
     Phone,
     Mail,
     MapPin,
     ArrowRight,
-    Check
+    Check,
+    CheckCircle,
+    AlertCircle,
+    X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ContactSection: React.FC = () => {
     const { openAuthModal } = useAuth();
+    const [sending, setSending] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        message: ''
+    });
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showNotification = (message: string, type: 'success' | 'error') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 5000);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSending(true);
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/contact`, formData);
+            if (res.data.success) {
+                showNotification(res.data.message || 'Message sent successfully!', 'success');
+                setFormData({ name: '', email: '', phone: '', message: '' });
+            }
+        } catch (err: any) {
+            console.error('Contact Form Error:', err);
+            showNotification(err.response?.data?.error || 'Failed to send message. Please try again.', 'error');
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <section id="contact" className={styles.section}>
+            <AnimatePresence>
+                {notification && (
+                    <motion.div
+                        className={`${styles.notification} ${styles[notification.type]}`}
+                        initial={{ x: 300, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 300, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                        {notification.type === 'success' ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
+                        <p>{notification.message}</p>
+                        <button onClick={() => setNotification(null)} className={styles.closeNotif}>
+                            <X size={18} />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className={styles.container}>
                 {/* Left Column */}
                 <div className={styles.leftColumn}>
@@ -95,16 +148,40 @@ const ContactSection: React.FC = () => {
                         <p>We typically respond within 24 hours.</p>
                     </div>
 
-                    <form className={styles.formArea}>
+                    <form className={styles.formArea} onSubmit={handleSubmit}>
                         <div className={styles.formRow}>
                             {/* <input type="text" placeholder="Last Name" required /> */}
                         </div>
-                        <input type="text" placeholder="FUll Name" required />
-                        <input type="tel" placeholder="Phone Number" required />
-                        <input type="email" placeholder="Email Address" required />
-                        <textarea placeholder="Tell us how we can help you..." rows={6} required></textarea>
-                        <button type="submit" className={styles.submitBtn}>
-                            Send Message
+                        <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Phone Number"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            required
+                        />
+                        <input
+                            type="email"
+                            placeholder="Email Address"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            required
+                        />
+                        <textarea
+                            placeholder="Tell us how we can help you..."
+                            rows={6}
+                            value={formData.message}
+                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                            required
+                        ></textarea>
+                        <button type="submit" className={styles.submitBtn} disabled={sending}>
+                            {sending ? 'Sending...' : 'Send Message'}
                         </button>
                     </form>
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import styles from './AdvisorDashboard.module.css';
 
 // Absolute-style relative imports to ensure clarity for the compiler
@@ -33,6 +34,18 @@ const AdvisorDashboard: React.FC = () => {
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<any>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const statePage = location.state?.initialPage;
+        const queryPage = searchParams.get('page');
+        if (statePage) {
+            setCurrentPage(statePage);
+        } else if (queryPage) {
+            setCurrentPage(queryPage);
+        }
+    }, [location.state, searchParams]);
 
     const backtohome = () => setCurrentPage('messenger');
 
@@ -72,11 +85,7 @@ const AdvisorDashboard: React.FC = () => {
             case 'help-support':
                 return <HelpSupport backToHome={backtohome} />;
             case 'blogs':
-                return (
-                    <div style={{ gridColumn: "1 / -1" }}>
-                        <BlogFeed />
-                    </div>
-                );
+                return <BlogFeed />;
             case 'activity':
                 return <AdvisorActivity />;
             case 'my-subscription':

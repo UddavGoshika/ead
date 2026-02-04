@@ -14,9 +14,11 @@ const AdvocateSchema = new mongoose.Schema({
     profilePicPath: String,
     education: {
         degree: String,
+        course: String, // Added
         university: String,
         college: String,
         gradYear: Number,
+        enrollmentYear: Number, // Added
         enrollmentNo: String,
         certificatePath: String
     },
@@ -24,6 +26,7 @@ const AdvocateSchema = new mongoose.Schema({
         court: String,
         experience: String,
         specialization: String,
+        subSpecialization: String, // Added
         barState: String,
         barAssociation: String,
         licensePath: String
@@ -36,10 +39,15 @@ const AdvocateSchema = new mongoose.Schema({
         country: String,
         state: String,
         city: String,
-        pincode: String
+        pincode: String,
+        officeAddress: String, // Added
+        permanentAddress: String // Added
     },
     career: {
         bio: String,
+        firm: String, // Added
+        position: String, // Added
+        workType: String, // Added
         languages: String,
         skills: String
     },

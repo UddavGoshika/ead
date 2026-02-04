@@ -18,13 +18,21 @@ const SettingsSchema = new mongoose.Schema({
     footer_text: { type: String, default: '© 2025 E-Advocate Services. All Rights Reserved.' },
     contact_email: { type: String, default: 'info.eadvocateservices@gmail.com' },
     contact_phone: { type: String, default: '' },
-    social_links: {
-        instagram: { type: String, default: '#' },
-        facebook: { type: String, default: '#' },
-        linkedin: { type: String, default: '#' },
-        twitter: { type: String, default: '#' },
-        whatsapp: { type: String, default: '#' }
-    },
+    social_links: [
+        {
+            platform: { type: String, required: true },
+            url: { type: String, required: true },
+            icon: { type: String, default: 'Link' }, // Lucide Icon Name
+            active: { type: Boolean, default: true }
+        }
+    ],
+    footer_pages: [
+        {
+            title: { type: String, required: true },
+            link: { type: String, required: true }, // e.g. /privacy
+            active: { type: Boolean, default: true }
+        }
+    ],
     member_code_prefix: { type: String, default: 'AMC' },
     male_min_age: { type: Number, default: 21 },
     female_min_age: { type: Number, default: 19 },

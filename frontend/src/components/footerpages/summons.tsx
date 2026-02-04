@@ -49,7 +49,7 @@ const SummonsNotices: React.FC = () => {
 
                     <ul>
                         <li>
-                            📧 Official Email: <strong>[legal@yourdomain.com or support email]</strong>
+                            📧 Official Email: <strong>[ info.eadvocateservices@gmail.com]</strong>
                         </li>
                     </ul>
 

@@ -33,12 +33,19 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
             <div className={styles.profileSection}>
-                <div className={styles.avatar}>
-                    {user?.name?.charAt(0) || 'A'}
+                <div className={styles.avatarContainer}>
+                    {user?.image_url ? (
+                        <img src={user.image_url} alt={user.name} className={styles.profileAvatar} />
+                    ) : (
+                        <div className={styles.avatarFallback}>
+                            {user?.name?.charAt(0) || 'L'}
+                        </div>
+                    )}
                 </div>
                 <div className={styles.userInfo}>
-                    <h3>{user?.name || 'Legal Advisor'}</h3>
-                    <p>OFFICIAL ID - {user?.id || '...'}</p>
+                    <h3 className={styles.userName}>{user?.name || 'Legal Advisor'}</h3>
+                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <div className={styles.roleLabel}>Legal Advisor</div>
                 </div>
 
                 <button className={styles.upgradeBtn} onClick={() => showsidePage('upgrade')}>

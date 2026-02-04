@@ -145,7 +145,7 @@ interface Props {
   showToast?: (msg: string) => void;
 }
 
-const AccountSettings: React.FC<Props> = ({ backToHome }) => {
+const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
   const [page, setPage] = useState<Page>('account-settings');
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | ''>('');
   const [enabledGateways, setEnabledGateways] = useState<PaymentGatewayConfig[]>([]);
@@ -154,13 +154,72 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const { user, logout } = useAuth();
 
+  // Settings State
+  const [privacy, setPrivacy] = useState({ showProfile: true, showContact: false, showEmail: false });
+  const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
+
   useEffect(() => {
-    const loadGateways = async () => {
+    const loadData = async () => {
+      // Load Payment Gateways
       const gateways = await PaymentManager.getInstance().getEnabledGateways();
       setEnabledGateways(gateways);
+
+      // Load User Settings
+      if (user) {
+        try {
+          const { settingsService } = await import('../../../services/api');
+          const res = await settingsService.getSettings();
+          if (res.data.success) {
+            setPrivacy(res.data.privacy || { showProfile: true, showContact: false, showEmail: false });
+          }
+        } catch (e) { console.error("Failed to load settings", e); }
+      }
     };
-    loadGateways();
-  }, []);
+    loadData();
+  }, [user]);
+
+  // Handlers
+  const handlePassChange = async () => {
+    if (passData.new !== passData.confirm) return showToast?.('Passwords do not match');
+    if (passData.new.length < 6) return showToast?.('Password must be 6+ chars');
+    setIsProcessing(true);
+    try {
+      const { authService } = await import('../../../services/api');
+      await authService.changePassword({ email: user?.email, currentPassword: passData.current, newPassword: passData.new });
+      showToast?.('Password updated successfully!');
+      setPassData({ current: '', new: '', confirm: '' });
+      setPage('account-settings');
+    } catch (err: any) {
+      showToast?.(err.response?.data?.error || 'Failed to update password');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePrivacyToggle = async (key: string, val: boolean) => {
+    const newPrivacy = { ...privacy, [key]: val };
+    setPrivacy(newPrivacy); // Optimistic
+    try {
+      const { settingsService } = await import('../../../services/api');
+      await settingsService.updatePrivacy(newPrivacy);
+      showToast?.('Privacy settings saved');
+    } catch (err) {
+      showToast?.('Failed to save privacy settings');
+      setPrivacy(privacy); // Revert
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!window.confirm("Are you sure? Your account will be hidden from everyone.")) return;
+    try {
+      const { settingsService } = await import('../../../services/api');
+      await settingsService.deactivateAccount();
+      showToast?.('Account deactivated.');
+      logout();
+    } catch (err) {
+      showToast?.('Failed to deactivate account');
+    }
+  };
 
   const SUBSCRIPTION_PLANS = [
     {
@@ -188,7 +247,7 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
 
   const BackHeader = ({ title }: { title: string }) => (
     <div className={styles.header}>
-      <ArrowLeft onClick={() => setPage('account-settings')} />
+      <ArrowLeft onClick={() => setPage('account-settings')} style={{ cursor: 'pointer' }} />
       <h1>{title}</h1>
     </div>
   );
@@ -240,24 +299,15 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
     return (
       <div className={styles.page}>
         <BackHeader title="Personal Details" />
-
         <div className={styles.cardGrid}>
-          {[
-            'First Name',
-            'Last Name',
-            'Gender',
-            'Date of Birth',
-            'Mobile Number',
-            'Email'
-          ].map((label) => (
+          {['First Name', 'Last Name', 'Gender', 'Date of Birth', 'Mobile Number', 'Email'].map((label) => (
             <div key={label} className={styles.formGroup}>
               <label>{label}</label>
-              <input placeholder={label} />
+              <input placeholder={label} disabled />
             </div>
           ))}
         </div>
-
-        <Actions />
+        <p style={{ marginTop: '20px', color: '#94a3b8', fontSize: '13px' }}>To edit details, please use the Edit Profile page.</p>
       </div>
     );
   }
@@ -267,10 +317,22 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
     return (
       <div className={styles.page}>
         <BackHeader title="Privacy Settings" />
-        <Toggle label="Show my profile to all members" />
-        <Toggle label="Show my contact number" />
-        <Toggle label="Show my email address" />
-        <Actions />
+        <Toggle
+          label="Show my profile to all members"
+          checked={privacy.showProfile}
+          onChange={(val: boolean) => handlePrivacyToggle('showProfile', val)}
+        />
+        <Toggle
+          label="Show my contact number"
+          checked={privacy.showContact}
+          onChange={(val: boolean) => handlePrivacyToggle('showContact', val)}
+        />
+        <Toggle
+          label="Show my email address"
+          checked={privacy.showEmail}
+          onChange={(val: boolean) => handlePrivacyToggle('showEmail', val)}
+        />
+        <div style={{ padding: '20px', color: '#94a3b8', fontSize: '13px' }}>Changes are saved automatically.</div>
       </div>
     );
   }
@@ -280,10 +342,25 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
     return (
       <div className={styles.page}>
         <BackHeader title="Change Password" />
-        <Input label="Current Password" />
-        <Input label="New Password" />
-        <Input label="Confirm Password" />
-        <Actions primary="Update Password" />
+        <div className={styles.formGroup}>
+          <label>Current Password</label>
+          <input type="password" value={passData.current} onChange={e => setPassData({ ...passData, current: e.target.value })} />
+        </div>
+        <div className={styles.formGroup}>
+          <label>New Password</label>
+          <input type="password" value={passData.new} onChange={e => setPassData({ ...passData, new: e.target.value })} />
+        </div>
+        <div className={styles.formGroup}>
+          <label>Confirm Password</label>
+          <input type="password" value={passData.confirm} onChange={e => setPassData({ ...passData, confirm: e.target.value })} />
+        </div>
+
+        <div className={styles.actions}>
+          <button onClick={() => setPage('account-settings')}>Cancel</button>
+          <button className={styles.primary} onClick={handlePassChange} disabled={isProcessing}>
+            {isProcessing ? 'Updating...' : 'Update Password'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -295,15 +372,17 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
         <BackHeader title="Hide / Delete Profile" />
 
         <DangerCard
-          title="Hide Profile"
-          text="Temporarily hide your profile."
-          button="Hide Profile"
+          title="Deactivate Account"
+          text="Temporarily hide your profile from search results."
+          button="Deactivate Now"
+          onClick={handleDeactivate}
         />
         <DangerCard
           title="Delete Profile"
-          text="This action is irreversible."
+          text="This action is irreversible. All data will be lost."
           danger
-          button="Delete Profile"
+          button="Delete Permanently"
+          onClick={() => { if (window.confirm("CRITICAL: Are you absolutely sure?")) handleDeactivate(); }} // Reusing logic for now
         />
       </div>
     );
@@ -422,6 +501,9 @@ const AccountSettings: React.FC<Props> = ({ backToHome }) => {
                           window.location.reload();
                         }
                       } else {
+                        if (selectedGateway === 'cashfree') {
+                          return; // cashfree payment is handled in redirect
+                        }
                         alert(`Payment failed: ${result.error}`);
                       }
                     } catch (error: any) {
@@ -466,32 +548,36 @@ const Item = ({ label, onClick }: any) => (
   </div>
 );
 
-const Toggle = ({ label }: any) => (
+const Toggle = ({ label, checked, onChange }: any) => (
   <div className={styles.toggleRow}>
     <span>{label}</span>
-    <input type="checkbox" />
+    <input
+      type="checkbox"
+      checked={!!checked}
+      onChange={(e) => onChange && onChange(e.target.checked)}
+    />
   </div>
 );
 
-const Input = ({ label }: any) => (
+const Input = ({ label, type = 'text', value, onChange }: any) => (
   <div className={styles.formGroup}>
     <label>{label}</label>
-    <input />
+    <input type={type} value={value} onChange={onChange} />
   </div>
 );
 
-const Actions = ({ primary = 'Save Changes' }: any) => (
+const Actions = ({ primary = 'Save Changes', onPrimary, onCancel }: any) => (
   <div className={styles.actions}>
-    <button>Cancel</button>
-    <button className={styles.primary}>{primary}</button>
+    <button onClick={onCancel}>Cancel</button>
+    <button className={styles.primary} onClick={onPrimary}>{primary}</button>
   </div>
 );
 
-const DangerCard = ({ title, text, button, danger }: any) => (
+const DangerCard = ({ title, text, button, danger, onClick }: any) => (
   <div className={`${styles.dangerCard} ${danger ? styles.delete : ''}`}>
     <h3>{title}</h3>
     <p>{text}</p>
-    <button>{button}</button>
+    <button onClick={onClick}>{button}</button>
   </div>
 );
 

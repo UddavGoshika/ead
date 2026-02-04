@@ -489,18 +489,29 @@ router.post('/verify', authenticate, async (req, res) => {
 
                 user.plan = `${planPrefix} ${tierCap}`.trim();
 
-                // Add coins based on tier if possible (simplistic mapping for now)
-                if (mode === 'ultra') user.coins = (user.coins || 0) + 1000;
-                else if (mode === 'pro') user.coins = (user.coins || 0) + 500;
-                else if (mode === 'lite') user.coins = (user.coins || 0) + 200;
+                // Add coins based on tier using exact rules
+                let baseCoins = 0;
+                const tierLower = (tier || '').toLowerCase();
+                if (tierLower === 'silver') baseCoins = 50;
+                else if (tierLower === 'gold') baseCoins = 100;
+                else if (tierLower === 'platinum') baseCoins = 150;
+                else baseCoins = 50; // Dynamic default
 
-                console.log(`[PAYMENT] Updated ${user.role} Plan to: ${user.plan} and added bonus coins.`);
+                let multiplier = 1;
+                if (mode === 'lite') multiplier = 1;
+                else if (mode === 'pro') multiplier = 10;
+                else if (mode === 'ultra') multiplier = 100;
+
+                const totalAllocated = baseCoins * multiplier;
+                user.coins = (user.coins || 0) + totalAllocated;
+                user.coinsReceived = (user.coinsReceived || 0) + totalAllocated;
+
+                console.log(`[PAYMENT] Updated ${user.role} Plan to: ${user.plan} and allocated ${totalAllocated} coins.`);
             } else if (transaction.packageId.toLowerCase().includes('wallet')) {
                 // Wallet recharge
                 const amount = transaction.amount;
-                const coinsAdded = Math.floor(amount / 10); // 10 INR = 1 Coin for example
-                user.coins = (user.coins || 0) + coinsAdded;
-                console.log(`[PAYMENT] Recharged wallet with ${coinsAdded} coins.`);
+                user.walletBalance = (user.walletBalance || 0) + amount;
+                console.log(`[PAYMENT] Recharged wallet with ₹${amount}.`);
             } else {
                 user.plan = transaction.packageId.charAt(0).toUpperCase() + transaction.packageId.slice(1);
             }
@@ -630,6 +641,54 @@ router.post('/admin/transactions/:orderId/reject', authenticate, async (req, res
         res.json({ success: true, transaction });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET USER WALLET HISTORY
+router.get('/history', authenticate, async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        res.json({ success: true, transactions });
+    } catch (err) {
+        console.error('Wallet history error:', err);
+        res.status(500).json({ success: false, error: 'Failed to fetch history' });
+    }
+});
+
+// WITHDRAWAL REQUEST
+router.post('/withdraw', authenticate, async (req, res) => {
+    try {
+        const { amount, bankDetails } = req.body;
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (user.walletBalance < amount) {
+            return res.status(400).json({ error: 'Insufficient wallet balance' });
+        }
+
+        // Deduct balance immediately
+        user.walletBalance -= amount;
+        await user.save();
+
+        const transaction = new Transaction({
+            userId: user._id,
+            orderId: `WTH-${Date.now()}`,
+            amount,
+            currency: 'INR',
+            gateway: 'Bank Transfer',
+            status: 'pending', // Pending Admin Approval
+            packageId: 'withdrawal',
+            metadata: { bankDetails, type: 'Payout' }
+        });
+
+        await transaction.save();
+
+        createNotification('payment', `Withdrawal request of ₹${amount} submitted.`, 'Admin', null, { userId: user._id });
+
+        res.json({ success: true, message: 'Withdrawal request submitted', balance: user.walletBalance });
+    } catch (err) {
+        console.error('Withdrawal error:', err);
+        res.status(500).json({ success: false, error: 'Failed to request withdrawal' });
     }
 });
 

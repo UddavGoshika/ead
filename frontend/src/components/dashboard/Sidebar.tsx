@@ -10,12 +10,24 @@ const Sidebar: React.FC = () => {
     return (
         <aside className={styles.sidebar}>
             <div className={styles.profileSection}>
-                <div className={styles.avatar}>
-                    {user?.name?.charAt(0) || 'U'}
+                <div className={styles.avatarContainer}>
+                    {user?.image_url ? (
+                        <img src={user.image_url} alt={user.name} className={styles.profileAvatar} />
+                    ) : (
+                        <div className={styles.avatarFallback}>
+                            {user?.name?.charAt(0) || 'U'}
+                        </div>
+                    )}
                 </div>
                 <div className={styles.userInfo}>
-                    <h3>{user?.name || 'User'}</h3>
-                    <p>ID: {user?.unique_id || '...'}</p>
+                    <h3 className={styles.userName}>{user?.name || 'User'}</h3>
+                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <div className={styles.roleLabel}>
+                        {user?.role === 'legal_provider' ? 'Advisor' :
+                            user?.role === 'advocate' ? 'Advocate' :
+                                user?.role === 'client' ? 'Client' :
+                                    'Member'}
+                    </div>
                 </div>
             </div>
 

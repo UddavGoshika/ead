@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import styles from "./activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
-import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck } from "lucide-react";
+import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, Bookmark, Zap, Trash2, X } from "lucide-react";
+import DetailedProfile from "../../shared/DetailedProfile";
 
 const Activity = () => {
     const { user } = useAuth();
@@ -10,44 +11,69 @@ const Activity = () => {
         visits: 0,
         sent: 0,
         received: 0,
-        accepted: 0
+        accepted: 0,
+        shortlists: 0
     });
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
+    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+    const fetchData = async () => {
+        if (!user) return;
+        try {
+            setLoading(true);
+            const [statsData, activitiesData] = await Promise.all([
+                interactionService.getActivityStats(String(user.id)),
+                interactionService.getAllActivities(String(user.id))
+            ]);
+            // Calculate shortlists count if not provided by backend
+            const shortlistCount = activitiesData.filter((a: any) => a.type === 'shortlist' && a.isSender).length;
+            setStats({ ...statsData, shortlists: shortlistCount });
+            setActivities(activitiesData);
+        } catch (err) {
+            console.error("Error fetching activity data:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (user) {
-            const fetchData = async () => {
-                try {
-                    setLoading(true);
-                    const [statsData, activitiesData] = await Promise.all([
-                        interactionService.getActivityStats(String(user.id)),
-                        interactionService.getAllActivities(String(user.id))
-                    ]);
-                    setStats(statsData);
-                    setActivities(activitiesData);
-                } catch (err) {
-                    console.error("Error fetching activity data:", err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchData();
-        }
+        fetchData();
     }, [user]);
+
+    const handleDelete = async (activityId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm("Delete this activity log?")) return;
+        try {
+            await interactionService.deleteActivity(activityId);
+            setActivities(prev => prev.filter(a => a._id !== activityId));
+            // Refresh stats too
+            const statsData = await interactionService.getActivityStats(String(user?.id));
+            setStats(prev => ({ ...prev, ...statsData }));
+        } catch (err) {
+            console.error("Failed to delete activity:", err);
+            alert("Failed to delete activity.");
+        }
+    };
+
+    const handleProfileClick = (act: any) => {
+        const partnerId = act.isSender ? act.receiver : act.sender;
+        if (partnerId) setSelectedProfileId(String(partnerId));
+    };
 
     const statItems = [
         { label: "Profile Visits", value: stats.visits, icon: <Eye size={22} />, color: "#3b82f6", type: 'visit' },
-        { label: "Interests Sent", value: stats.sent, icon: <Send size={22} />, color: "#facc15", type: 'sent' },
-        { label: "Interests Received", value: stats.received, icon: <Inbox size={22} />, color: "#10b981", type: 'received' },
-        { label: "Accepted Requests", value: stats.accepted, icon: <Star size={22} />, color: "#f43f5e", type: 'accepted' }
+        { label: "Interests", value: stats.sent, icon: <Send size={22} />, color: "#facc15", type: 'sent' },
+        { label: "Shortlisted", value: stats.shortlists, icon: <Bookmark size={22} />, color: "#10b981", type: 'shortlist' },
+        { label: "Accepted", value: stats.accepted, icon: <Star size={22} />, color: "#f43f5e", type: 'accepted' }
     ];
 
     const filteredActivities = activities.filter(act => {
         if (activeFilter === 'all') return true;
         if (activeFilter === 'visit') return act.type === 'visit' && act.isSender;
         if (activeFilter === 'sent') return ['interest', 'superInterest'].includes(act.type) && act.isSender;
+        if (activeFilter === 'shortlist') return act.type === 'shortlist' && act.isSender;
         if (activeFilter === 'received') return ['interest', 'superInterest'].includes(act.type) && !act.isSender;
         if (activeFilter === 'accepted') return act.status === 'accepted';
         return true;
@@ -85,19 +111,20 @@ const Activity = () => {
                         <div className={styles.emptyMsg}>Loading activities...</div>
                     ) : filteredActivities.length > 0 ? (
                         filteredActivities.map((act) => (
-                            <div key={act._id} className={styles.activityItem}>
+                            <div key={act._id} className={styles.activityItem} onClick={() => handleProfileClick(act)} style={{ cursor: 'pointer' }}>
                                 <div className={styles.activityIcon}>
                                     {act.type === 'visit' ? <Eye size={18} /> :
                                         act.type === 'interest' ? <Send size={18} /> :
-                                            act.type === 'superInterest' ? <Star size={18} /> :
-                                                act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
+                                            act.type === 'superInterest' ? <Zap size={18} /> :
+                                                act.type === 'shortlist' ? <Bookmark size={18} /> :
+                                                    act.status === 'accepted' ? <UserCheck size={18} /> : <CheckCircle size={18} />}
                                 </div>
                                 <div className={styles.activityDetails}>
                                     <p className={styles.activityText}>
                                         {act.status === 'accepted' ? (
-                                            <>You have been <strong>shortlisted</strong> for <strong>{act.partnerName}</strong>'s service</>
+                                            <>Connection <strong>accepted</strong> with <strong>{act.partnerName}</strong></>
                                         ) : (
-                                            <><strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'to' : 'from'} <strong>{act.partnerName}</strong></>
+                                            <><strong>{act.type.toUpperCase()}</strong> {act.isSender ? 'sent to' : 'received from'} <strong>{act.partnerName}</strong></>
                                         )}
                                         {act.partnerUniqueId && <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({act.partnerUniqueId})</span>}
                                     </p>
@@ -110,9 +137,12 @@ const Activity = () => {
                                         color: act.status === 'accepted' ? '#10b981' : act.status === 'declined' ? '#f43f5e' : '#facc15',
                                         borderColor: act.status === 'accepted' ? '#10b98140' : act.status === 'declined' ? '#f43f5e40' : '#facc1540'
                                     }}>
-                                        {act.status === 'accepted' ? 'SHORTLISTED' : act.status.toUpperCase()}
+                                        {act.status === 'accepted' ? 'ACTIVE' : act.status.toUpperCase()}
                                     </span>
                                 </div>
+                                <button className={styles.deleteBtn} onClick={(e) => handleDelete(act._id, e)} title="Delete Log">
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                         ))
                     ) : (
@@ -122,6 +152,16 @@ const Activity = () => {
                     )}
                 </div>
             </div>
+
+            {/* Full Depth Detailed Profile Popup */}
+            {selectedProfileId && (
+                <DetailedProfile
+                    profileId={selectedProfileId}
+                    isModal={true}
+                    onClose={() => setSelectedProfileId(null)}
+                    backToProfiles={() => setSelectedProfileId(null)}
+                />
+            )}
         </div>
     );
 };
