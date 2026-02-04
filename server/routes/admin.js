@@ -13,7 +13,9 @@ const LegalRequest = require('../models/LegalRequest');
 const StaffProfile = require('../models/StaffProfile');
 const StaffReport = require('../models/StaffReport');
 const Lead = require('../models/Lead');
+
 const Contact = require('../models/Contact');
+
 const { createNotification } = require('../utils/notif');
 const multer = require('multer');
 const path = require('path');
@@ -686,7 +688,9 @@ router.post('/onboard-staff', async (req, res) => {
         const newUser = await User.create({
             email,
             password: hashedPassword,
+
             plainPassword: tempPassword,
+
             role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
             status: 'Active',
             coins: 0

@@ -71,8 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return localStorage.getItem('isImpersonating') === 'true';
     });
 
-<<<<<<< HEAD
-    // Initial logging
     // Initial Session Verification
     useEffect(() => {
         const checkAuth = async () => {
@@ -103,41 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         };
         checkAuth();
-=======
-    // Initial logging & Token Verification + Background Polling for Live Updates
-    useEffect(() => {
-        console.log('AuthProvider: Mounted, isLoggedIn:', isLoggedIn);
-
-        const verifyToken = async () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const { authService } = await import('../services/api');
-                    const res = await authService.getCurrentUser();
-                    if (res.data.success) {
-                        console.log('[AUTH] Verified User & Plan:', res.data.user.plan);
-                        const updatedUser = res.data.user;
-                        setUser(updatedUser);
-                        localStorage.setItem('user', JSON.stringify(updatedUser));
-                        localStorage.setItem('userRole', updatedUser.role);
-                    }
-                } catch (error) {
-                    console.error('[AUTH] Token verification failed:', error);
-                }
-            }
-        };
-
-        verifyToken();
-
-        // Rule: Live Updates from Server (Every 30s)
-        const pollInterval = setInterval(() => {
-            if (localStorage.getItem('token')) {
-                verifyToken();
-            }
-        }, 30000);
-
-        return () => clearInterval(pollInterval);
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
     }, []);
 
     const login = (userData: User, token?: string) => {
@@ -223,7 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 // Redirect based on role
                 const role = impersonatedUser.role.toLowerCase();
-<<<<<<< HEAD
                 if (role === 'advocate') window.location.href = '/dashboard/advocate';
                 else if (role === 'client') window.location.href = '/dashboard/client';
                 else if (role === 'legal_provider') window.location.href = '/dashboard/advisor';
@@ -231,13 +193,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     window.location.href = '/staff/portal';
                 }
                 else window.location.href = '/dashboard/user';
-=======
-                const uid = impersonatedUser.unique_id || impersonatedUser.id;
-                if (role === 'advocate') window.location.href = `/dashboard/advocate/${uid}`;
-                else if (role === 'client') window.location.href = `/dashboard/client/${uid}`;
-                else if (role === 'legal_provider') window.location.href = `/dashboard/advisor/${uid}`;
-                else window.location.href = `/dashboard/user/${uid}`;
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
             } else {
                 alert(res.data.error || 'Failed to impersonate member');
             }

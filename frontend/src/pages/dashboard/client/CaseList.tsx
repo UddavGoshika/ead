@@ -15,7 +15,7 @@ const CaseList: React.FC = () => {
     useEffect(() => {
         const fetchCases = async () => {
             try {
-                const response = await caseService.getCases(user?.id);
+                const response = await caseService.getCases();
                 const data = response.data.cases || [];
                 setCases(data);
             } catch (err: any) {
@@ -67,7 +67,7 @@ const CaseList: React.FC = () => {
                 <div className={styles.list}>
                     {cases.length > 0 ? (
                         cases.map(item => (
-                            <CaseCard key={item.id} caseData={item} />
+                            <CaseCard key={item._id || item.caseId} caseData={item} />
                         ))
                     ) : (
                         <div className={styles.emptyState}>

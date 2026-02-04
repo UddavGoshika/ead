@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-<<<<<<< HEAD
+    plainPassword: { type: String }, // WARNING: Unsecured, requested by user
     role: {
         type: String,
         enum: [
@@ -13,10 +13,6 @@ const UserSchema = new mongoose.Schema({
         ],
         default: 'client'
     },
-=======
-    plainPassword: { type: String }, // WARNING: Unsecured, requested by user
-    role: { type: String, enum: ['client', 'advocate', 'admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider'], default: 'client' },
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
     status: { type: String, enum: ['Active', 'Blocked', 'Deactivated', 'Deleted', 'Pending'], default: 'Active' },
     coins: { type: Number, default: 10 },
     walletBalance: { type: Number, default: 0 },

@@ -62,7 +62,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
         return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-<<<<<<< HEAD
+
     // 3. Check Role Permission
     if (allowedRoles && allowedRoles.length > 0) {
         let currentUserRole = (user?.role || '').toUpperCase();
@@ -81,16 +81,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
             console.warn(`[ProtectedRoute] Unauthorized role: ${currentUserRole}. Access denied for ${location.pathname}`);
             return <Navigate to="/" replace />;
         }
-=======
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        const uid = user.unique_id || user.id;
-        if (user.role === 'client') return <Navigate to={`/dashboard/client/${uid}`} replace />;
-        if (user.role === 'advocate') return <Navigate to={`/dashboard/advocate/${uid}`} replace />;
-        if (user.role === 'legal_provider') return <Navigate to={`/dashboard/advisor/${uid}`} replace />;
-        if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
 
-        return <Navigate to="/" replace />;
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
     }
 
     // 4. Access Granted - Show children wrapped in a clean container to avoid style leakage

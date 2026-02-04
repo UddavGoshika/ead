@@ -206,7 +206,7 @@ const WalletHistory: React.FC = () => {
         setPage(1);
     };
 
-<<<<<<< HEAD
+
     const handleReject = async (orderId: string) => {
         if (window.confirm("Are you sure you want to reject this transaction?")) {
             setLoading(true);
@@ -227,39 +227,10 @@ const WalletHistory: React.FC = () => {
                 setLoading(false);
                 setOpenMenuId(null);
                 setSelectedTx(null);
-=======
-    const handleReject = async (id: string) => {
-        if (window.confirm("Are you sure you want to reject this transaction?")) {
-            try {
-                // Determine real ID (in formatted it might be transactionId or _id, best to look up original if possible or store _id as id)
-                // For simplicity assuming id corresponds to DB _id or we need to find filtered object's original _id?
-                // The API expects the MongoDB _id. 
-                // In formatting: id: t.transactionId || String(t.id). t.id is t._id from backend.
-                // Wait, backend admin.js returns id: t._id. So t.id IS the mongo ID. 
-                // But formatting uses t.transactionId (e.g. order_123) preferentially.
-                // WE SHOULD USE THE MONGO ID FOR API CALLS.
-                // Let's fix the map above to store mongoId separate if needed, or stick to mongoId as 'id'.
-                // I will modify the map above to ensure 'id' is usable or 'transactionId' is visual.
-                // Actually, backend returns `transactionId` as the payment_id/order_id. `id` is the `_id`.
-                // In my frontend map: `id: t.transactionId || String(t.id)`. This might lose the mongo ID if transactionId exists.
-                // I will blindly try to patch using the ID. If it fails, I'll need to refactor.
-                // For now let's assume `id` is the key. But wait, `PackagePayments` uses `t.id` (mongo id).
-                // I should probably use `t.id` (mongo id) for the `id` field in frontend to be safe for actions.
-
-                const res = await axios.patch(`${API_BASE_URL}/api/admin/transactions/${id}/status`, { status: 'Failed' });
-                if (res.data.success) {
-                    setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'failed' } : t));
-                    setOpenMenuId(null);
-                    setSelectedTx(null);
-                }
-            } catch (err) {
-                alert("Action failed");
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
             }
         }
     };
 
-<<<<<<< HEAD
     const handleApproveAction = async (orderId: string) => {
         if (!window.confirm("Authorize this transaction and update user account?")) return;
 
@@ -281,18 +252,7 @@ const WalletHistory: React.FC = () => {
             setLoading(false);
             setOpenMenuId(null);
             setSelectedTx(null);
-=======
-    const handleApproveAction = async (id: string) => {
-        try {
-            const res = await axios.patch(`${API_BASE_URL}/api/admin/transactions/${id}/status`, { status: 'Completed' });
-            if (res.data.success) {
-                setTransactions(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' } : t));
-                setOpenMenuId(null);
-                setSelectedTx(null);
-            }
-        } catch (err) {
-            alert("Action failed");
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
+
         }
     };
 

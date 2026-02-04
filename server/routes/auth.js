@@ -9,28 +9,7 @@ const { sendEmail } = require('../utils/mailer');
 const { createNotification } = require('../utils/notif');
 const authMiddleware = require('../middleware/auth');
 
-// VALIDATE SESSION (DATABASE CHECK)
-router.get('/me', authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id || req.user._id).select('-password');
-        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-        res.json({
-            success: true,
-            user: {
-                id: user._id,
-                email: user.email,
-                role: user.role,
-                status: user.status,
-                plan: user.plan || 'Free',
-                isPremium: user.isPremium || false
-            }
-        });
-    } catch (err) {
-        console.error('Session Check Error:', err);
-        res.status(500).json({ success: false, error: 'Server error' });
-    }
-});
 
 // LOGIN
 router.post('/login', async (req, res) => {
@@ -116,6 +95,7 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error("Login Error:", err);
         return res.status(500).json({ success: false, error: err.message, stack: err.stack });
+
     }
 });
 
@@ -254,6 +234,7 @@ router.post('/activate-demo', async (req, res) => {
     } catch (err) {
         console.error('Demo Activation Error:', err);
         res.status(500).json({ error: 'Server error' });
+
     }
 });
 

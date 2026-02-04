@@ -63,7 +63,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setEnabledGateways(gateways);
         };
         loadGateways();
-<<<<<<< HEAD
+
         fetchRealWalletData();
     }, []);
 
@@ -91,30 +91,6 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             }
         } catch (err) {
             console.error("Wallet Fetch Error:", err);
-=======
-        fetchTransactions();
-    }, []);
-
-    const fetchTransactions = async () => {
-        try {
-            const response = await walletService.getHistory(); // Using our new service
-            if (response.data.success) {
-                // Map backend transactions to frontend interface
-                const mappedTxns = response.data.transactions.map((t: any) => ({
-                    id: t.orderId || t._id,
-                    type: (t.packageId === 'withdrawal' || t.type === 'debit' ? 'debit' : 'credit') as 'debit' | 'credit',
-                    amount: t.amount,
-                    description: t.packageId === 'withdrawal' ? 'Withdrawal Request' : (t.gateway + ' Transaction'),
-                    date: new Date(t.createdAt).toLocaleString(),
-                    status: (t.status.charAt(0).toUpperCase() + t.status.slice(1)) as 'Completed' | 'Pending' | 'Failed',
-                    method: t.gateway,
-                    category: (t.packageId === 'withdrawal' ? 'Withdrawal' : 'Recharge') as 'Recharge' | 'Withdrawal'
-                }));
-                setTransactions(mappedTxns);
-            }
-        } catch (err) {
-            console.error("Failed to load wallet history", err);
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
         }
     };
 
@@ -173,7 +149,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                 setWithdrawalStep(2);
                 setWithdrawError('');
                 setBalance(response.data.balance); // Update local balance
-                fetchTransactions(); // Refresh history
+                fetchRealWalletData(); // Refresh history
             }
         } catch (err: any) {
             setWithdrawError(err.response?.data?.error || 'Withdrawal request failed');

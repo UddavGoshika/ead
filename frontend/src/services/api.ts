@@ -98,7 +98,7 @@ export const caseService = {
 
 export const staffService = {
     getMyLeads: () => api.get<{ success: boolean; leads: any[] }>('/staff/my-leads'),
-    updateLead: (id: string, data: { status: string; notes?: string; callData?: any }) =>
+    updateLead: (id: string, data: any) =>
         api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
     getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
 };
@@ -115,5 +115,4 @@ export const settingsService = {
     deleteAccount: () => api.post<{ success: boolean }>('/settings/delete'),
     syncPresets: (presets: any[]) => api.post<{ success: boolean; presets: any[] }>('/settings/presets', { presets }),
 };
-
 export default api;

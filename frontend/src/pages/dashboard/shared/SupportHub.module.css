@@ -1,0 +1,637 @@
+.fab {
+    position: fixed;
+    bottom: 110px;
+    right: 30px;
+    z-index: 2000;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6);
+}
+
+.hubOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10001;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 30px;
+}
+
+.overlayBlur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.hubContent {
+    position: relative;
+    width: 450px;
+    height: 650px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: hubFloat 0.5s ease-out;
+}
+
+@keyframes hubFloat {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.hubHeader {
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.headerTitle h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+}
+
+.headerTitle p {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.hubTabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 12px;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.hubTabs button {
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hubTabs button.activeTab {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.chatSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(2, 6, 23, 0.4);
+}
+
+.startChatState {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.shieldIcon {
+    width: 100px;
+    height: 100px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #3b82f6;
+    margin-bottom: 24px;
+}
+
+.startChatState h4 {
+    font-size: 20px;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.startChatState p {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+}
+
+.startBtn {
+    padding: 16px 32px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.activeChat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.connectionStatus {
+    padding: 12px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 800;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.dotActive {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.dotWaiting {
+    width: 8px;
+    height: 8px;
+    background: #f59e0b;
+    border-radius: 50%;
+}
+
+.messagesContainer {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.myMsg,
+.agentMsg {
+    max-width: 80%;
+}
+
+.myMsg {
+    align-self: flex-end;
+}
+
+.agentMsg {
+    align-self: flex-start;
+}
+
+.msgBubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 14px;
+}
+
+.myMsg .msgBubble {
+    background: #3b82f6;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.agentMsg .msgBubble {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-bottom-left-radius: 4px;
+}
+
+.inputArea {
+    padding: 20px;
+    display: flex;
+    gap: 12px;
+    background: #0f172a;
+}
+
+.inputArea input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #fff;
+    outline: none;
+}
+
+.inputArea button {
+    width: 48px;
+    height: 48px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.callSection {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.callFeatures {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.featureItem {
+    display: flex;
+    gap: 16px;
+}
+
+.featureItem h5 {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.featureItem p {
+    color: #64748b;
+    font-size: 12px;
+    margin: 0;
+}
+
+.note {
+    font-size: 11px;
+    color: #3b82f6;
+    margin-top: 40px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.fullCallOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.callContainer {
+    position: relative;
+    width: 90%;
+    max-width: 800px;
+    background: #020617;
+    border-radius: 40px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.incomingBox {
+    padding: 60px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.callerAv {
+    width: 100px;
+    height: 100px;
+    background: #3b82f6;
+    border-radius: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 24px;
+}
+
+.actions {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+}
+
+.answer,
+.hangup {
+    width: 80px;
+    height: 80px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+}
+
+.answer {
+    background: #10b981;
+}
+
+.hangup {
+    background: #ef4444;
+}
+
+.activeCallBox {
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.videoStreamGrid {
+    flex: 1;
+    position: relative;
+    background: #000;
+}
+
+.remoteVid {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.localPreview {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 140px;
+    border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.voiceOnlyAv {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.callInfo {
+    padding: 30px;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.timer {
+    font-family: monospace;
+    font-size: 24px;
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.controls {
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.hangupLarge {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: #ef4444;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+.callInitiation {
+    margin-top: 40px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.callButtons {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.voiceBtn,
+.videoBtn {
+    flex: 1;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voiceBtn {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.voiceBtn:not(:disabled):hover {
+    background: #3b82f6;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+}
+
+.videoBtn {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.videoBtn:not(:disabled):hover {
+    background: #8b5cf6;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+}
+
+.voiceBtn:disabled,
+.videoBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+.callLoader {
+    padding: 24px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 20px;
+    color: #3b82f6;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: rotate 0.8s linear infinite;
+}
+
+@keyframes rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.controlBtn {
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 10px;
+}
+
+.controlBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.controlBtn.active {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.pulseWaves {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pulseWaves::before,
+.pulseWaves::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #3b82f6;
+    opacity: 0.3;
+    animation: pulseWave 2s infinite;
+}
+
+.pulseWaves::after {
+    animation-delay: 1s;
+}
+
+@keyframes pulseWave {
+    0% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.endChatBtn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.endChatBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: rotate(90deg);
+}

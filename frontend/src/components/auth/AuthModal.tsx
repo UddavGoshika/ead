@@ -84,20 +84,21 @@ const AuthModal: React.FC = () => {
                 }
 
                 // Redirect based on role
-<<<<<<< HEAD
-                let target = '/dashboard/client';
-                const role = (response.data.user.role || '').toLowerCase();
+                const u = response.data.user;
+                const role = (u.role || '').toLowerCase();
+                const uid = u.unique_id || u.id;
+                let target = `/dashboard/client/${uid}`;
 
                 if (role === 'admin' || role === 'superadmin') {
                     target = '/admin/dashboard';
                 } else if (role === 'advocate') {
-                    target = '/dashboard/advocate';
+                    target = `/dashboard/advocate/${uid}`;
                 } else if (role === 'verifier') {
                     target = '/dashboard/verifier';
                 } else if (role === 'finance') {
                     target = '/dashboard/finance';
                 } else if (role === 'legal_provider') {
-                    target = '/dashboard/advisor';
+                    target = `/dashboard/advisor/${uid}`;
                 } else if ([
                     'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
                     'chat_support', 'live_chat', 'call_support', 'data_entry',
@@ -105,29 +106,7 @@ const AuthModal: React.FC = () => {
                 ].includes(role)) {
                     target = '/staff/portal';
                 } else if (role === 'user') {
-                    target = '/dashboard/user';
-=======
-                const u = response.data.user;
-                const uid = u.unique_id || u.id;
-                let target = `/dashboard/client/${uid}`;
-
-                if (u.role === 'admin') {
-                    target = '/admin/dashboard';
-                } else if (u.role === 'advocate') {
-                    target = `/dashboard/advocate/${uid}`;
-                } else if (u.role === 'ADMIN') {
-                    target = '/dashboard/admin';
-                } else if (u.role === 'VERIFIER') {
-                    target = '/dashboard/verifier';
-                } else if (u.role === 'FINANCE') {
-                    target = '/dashboard/finance';
-                } else if (u.role === 'SUPPORT') {
-                    target = '/dashboard/support';
-                } else if (u.role === 'USER') {
                     target = `/dashboard/user/${uid}`;
-                } else if (u.role === 'legal_provider') {
-                    target = `/dashboard/advisor/${uid}`;
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
                 }
 
                 console.log('Redirecting to:', target);

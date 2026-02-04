@@ -28,7 +28,7 @@ const CaseCard: React.FC<CaseCardProps> = ({ caseData }) => {
                 <div className={styles.header}>
                     <div className={styles.titleInfo}>
                         <h3 className={styles.title}>{caseData.title}</h3>
-                        <span className={styles.caseNumber}>{caseData.case_number}</span>
+                        <span className={styles.caseNumber}>{caseData.caseId}</span>
                     </div>
                     <div className={`${styles.statusBadge} ${styles[caseData.status.toLowerCase()]}`}>
                         {getStatusIcon(caseData.status)}
@@ -39,17 +39,17 @@ const CaseCard: React.FC<CaseCardProps> = ({ caseData }) => {
                 <div className={styles.details}>
                     <div className={styles.detailItem}>
                         <span className={styles.label}>Case Type</span>
-                        <span className={styles.value}>{caseData.type}</span>
+                        <span className={styles.value}>{caseData.category}</span>
                     </div>
                     <div className={styles.detailItem}>
                         <span className={styles.label}>Filing Date</span>
-                        <span className={styles.value}>{new Date(caseData.filing_date).toLocaleDateString()}</span>
+                        <span className={styles.value}>{caseData.createdAt ? new Date(caseData.createdAt).toLocaleDateString() : 'N/A'}</span>
                     </div>
                     <div className={styles.detailItem}>
-                        <span className={styles.label}>Next Hearing</span>
+                        <span className={styles.label}>Last Update</span>
                         <span className={styles.value}>
                             <Calendar size={14} />
-                            {caseData.next_hearing ? new Date(caseData.next_hearing).toLocaleDateString() : 'TBD'}
+                            {caseData.lastUpdate ? new Date(caseData.lastUpdate).toLocaleDateString() : 'N/A'}
                         </span>
                     </div>
                 </div>

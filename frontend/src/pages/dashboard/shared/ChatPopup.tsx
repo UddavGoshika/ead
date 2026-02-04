@@ -110,25 +110,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
         }
     };
 
-<<<<<<< HEAD
-    const handleCall = async (type: 'voice' | 'video') => {
-        try {
-            const service = new WebRTCService();
-            const streams = await service.startLocalStream(type === 'video');
 
-            // For now, we use the advocate's Mongo ID as the target signal ID
-            const targetId = String(advocate.id);
-            const callerName = user?.name || "Eadvocate User";
-
-            await service.createCall(targetId, callerName, type);
-            // The global CallOverlay will handle the UI if we emit an event or state
-            // But for the caller, we might want to show they are calling
-            alert(`Calling ${advocate.name}... WebRTC session initiated.`);
-        } catch (err) {
-            console.error("Call failed:", err);
-            alert("Could not start call. Please check camera/mic permissions.");
-        }
-=======
     const handleCall = () => {
         const partnerUserId = String(advocate.userId || advocate.id);
         initiateCall(partnerUserId, 'audio');
@@ -137,7 +119,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const handleVideoCall = () => {
         const partnerUserId = String(advocate.userId || advocate.id);
         initiateCall(partnerUserId, 'video');
->>>>>>> 1d75c825403bec99c6b4a6faba396c177aea5604
+
     };
 
     const handleAddContact = () => {
@@ -203,32 +185,36 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     </div>
 
                     <div className={styles.quickActionsRow}>
-                        {interactionStatus !== 'superInterest' ? (
-                            <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
-                                <Mail size={18} />
-                                {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
-                            </button>
-                        ) : (
-                            <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={async () => {
-                                if (confirm("Withdraw your Super Interest? Tokens are non-refundable.")) {
-                                    alert("Interest withdrawn");
-                                    setInteractionStatus('interest'); // Fallback to normal interest for UI state
-                                }
-                            }}>
-                                <X size={18} />
-                                Delete
-                            </button>
-                        )}
+
+                        {
+                            interactionStatus !== 'superInterest' ? (
+                                <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
+                                    <Mail size={18} />
+                                    {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
+                                </button>
+                            ) : (
+                                <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={async () => {
+                                    if (confirm("Withdraw your Super Interest? Tokens are non-refundable.")) {
+                                        alert("Interest withdrawn");
+                                        setInteractionStatus('interest'); // Fallback to normal interest for UI state
+                                    }
+                                }}>
+                                    <X size={18} />
+                                    Delete
+                                </button>
+                            )
+                        }
                         <button className={styles.callOptionBtn} onClick={handleCall}>
                             <Phone size={18} />
                             <span>Audio</span>
                         </button>
                         <button className={styles.callOptionBtn} onClick={() => handleVideoCall()}>
+
                             <Video size={18} />
                             <span>Video</span>
                         </button>
                     </div>
-                </div>
+                </div >
 
                 <div className={styles.divider}></div>
 
@@ -274,8 +260,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
