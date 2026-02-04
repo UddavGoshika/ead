@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
+import { useCall } from '../../../context/CallContext';
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
@@ -28,6 +29,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const [interactionStatus, setInteractionStatus] = useState<'none' | 'interest' | 'superInterest'>('none');
     const chatEndRef = useRef<HTMLDivElement>(null);
     const { user, refreshUser } = useAuth();
+    const { initiateCall } = useCall();
+
+    // Spec: Coins exist ONLY for premium users
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     useEffect(() => {
         if (user && advocate) {
@@ -69,7 +75,14 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
         setMessageText("");
 
         // Record activity for "Real time" flow
-        await interactionService.recordActivity('advocate', String(advocate.id), 'chat', currentUserId);
+        const res = await interactionService.recordActivity('advocate', String(advocate.id), 'chat', currentUserId);
+        if (res && res.coins !== undefined) {
+            refreshUser({
+                coins: res.coins,
+                coinsUsed: res.coinsUsed,
+                coinsReceived: res.coinsReceived
+            });
+        }
 
         if (onSent) onSent();
     };
@@ -82,7 +95,13 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
         try {
             const res = await interactionService.recordActivity('advocate', targetId, action, currentUserId);
             if (res.success) {
-                if (res.coins !== undefined) refreshUser({ coins: res.coins });
+                if (res.coins !== undefined) {
+                    refreshUser({
+                        coins: res.coins,
+                        coinsUsed: res.coinsUsed,
+                        coinsReceived: res.coinsReceived
+                    });
+                }
                 setInteractionStatus(action);
                 alert(`${action === 'superInterest' ? 'Super Interest' : 'Interest'} sent to ${advocate.name}`);
             }
@@ -92,7 +111,13 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     };
 
     const handleCall = () => {
-        alert(`Calling ${advocate.name}...`);
+        const partnerUserId = String(advocate.userId || advocate.id);
+        initiateCall(partnerUserId, 'audio');
+    };
+
+    const handleVideoCall = () => {
+        const partnerUserId = String(advocate.userId || advocate.id);
+        initiateCall(partnerUserId, 'video');
     };
 
     const handleAddContact = () => {
@@ -178,7 +203,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                             <Phone size={18} />
                             <span>Audio</span>
                         </button>
-                        <button className={styles.callOptionBtn} onClick={() => alert('Starting video call...')}>
+                        <button className={styles.callOptionBtn} onClick={() => handleVideoCall()}>
                             <Video size={18} />
                             <span>Video</span>
                         </button>
@@ -188,28 +213,46 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                 <div className={styles.divider}></div>
 
                 <div className={styles.chatArea}>
-                    {messages.map(msg => (
-                        <div key={msg.id} className={msg.senderId === String(user?.id) ? styles.myMsg : styles.theirMsg}>
-                            {msg.text}
-                        </div>
-                    ))}
+                    {messages.length === 0 && <p className={styles.emptyNotice}>No messages yet. Send an interest or 1 token to unlock chat.</p>}
+                    {messages.map(msg => {
+                        const isMine = msg.senderId === String(user?.id);
+                        // Rule: Free users see locked content notice
+                        const showLocked = msg.isLocked && !isPremium && !isMine;
+
+                        return (
+                            <div key={msg.id} className={isMine ? styles.myMsg : styles.theirMsg}>
+                                {showLocked ? (
+                                    <span className={styles.lockedMsg}>Someone sent you a message. Upgrade to view.</span>
+                                ) : msg.text}
+                            </div>
+                        );
+                    })}
                     <div ref={chatEndRef} />
                 </div>
 
                 <div className={styles.inputArea}>
-                    <p className={styles.tipText}>Sending message will also send this member your interest</p>
-                    <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
-                        <input
-                            type="text"
-                            className={styles.input}
-                            placeholder="Write here ..."
-                            value={messageText}
-                            onChange={e => setMessageText(e.target.value)}
-                        />
-                        <button type="submit" className={styles.sendBtn}>
-                            <Send size={18} />➤
-                        </button>
-                    </form>
+                    {isPremium ? (
+                        <>
+                            <p className={styles.tipText}>Chat is valid for 3 months from unlock date.</p>
+                            <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="Write here ..."
+                                    value={messageText}
+                                    onChange={e => setMessageText(e.target.value)}
+                                />
+                                <button type="submit" className={styles.sendBtn}>
+                                    <Send size={18} />
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <div className={styles.upgradeNotice}>
+                            <p>Upgrade to Premium to reply and view message content.</p>
+                            <button className={styles.miniUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>Upgrade Now</button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

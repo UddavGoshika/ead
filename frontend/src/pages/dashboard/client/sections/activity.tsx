@@ -3,6 +3,7 @@ import styles from "./activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, Bookmark, Zap, Trash2, X } from "lucide-react";
+import DetailedProfile from "../../shared/DetailedProfile";
 
 const Activity = () => {
     const { user } = useAuth();
@@ -16,7 +17,7 @@ const Activity = () => {
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
-    const [selectedPartner, setSelectedPartner] = useState<any>(null);
+    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
     const fetchData = async () => {
         if (!user) return;
@@ -57,13 +58,8 @@ const Activity = () => {
     };
 
     const handleProfileClick = (act: any) => {
-        setSelectedPartner({
-            name: act.partnerName,
-            unique_id: act.partnerUniqueId,
-            img: act.partnerImg,
-            location: act.partnerLocation,
-            type: act.type
-        });
+        const partnerId = act.isSender ? act.receiver : act.sender;
+        if (partnerId) setSelectedProfileId(String(partnerId));
     };
 
     const statItems = [
@@ -157,36 +153,14 @@ const Activity = () => {
                 </div>
             </div>
 
-            {/* Profile Popup */}
-            {selectedPartner && (
-                <div className={styles.overlay} onClick={() => setSelectedPartner(null)}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3>Interactee Profile</h3>
-                            <button onClick={() => setSelectedPartner(null)}><X size={20} /></button>
-                        </div>
-                        <div className={styles.modalBody}>
-                            <div className={styles.profileHeader}>
-                                <img src={selectedPartner.img} alt="Profile" className={styles.avatar} />
-                                <div>
-                                    <h4>{selectedPartner.name}</h4>
-                                    <p className={styles.uid}>{selectedPartner.unique_id}</p>
-                                </div>
-                            </div>
-
-                            <div className={styles.infoGrid}>
-                                <div className={styles.infoItem}>
-                                    <label>Location</label>
-                                    <p>{selectedPartner.location}</p>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Last Action</label>
-                                    <p>{selectedPartner.type.toUpperCase()}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {/* Full Depth Detailed Profile Popup */}
+            {selectedProfileId && (
+                <DetailedProfile
+                    profileId={selectedProfileId}
+                    isModal={true}
+                    onClose={() => setSelectedProfileId(null)}
+                    backToProfiles={() => setSelectedProfileId(null)}
+                />
             )}
         </div>
     );

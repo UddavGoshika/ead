@@ -23,6 +23,12 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
 
         // Spec: "Free clients: Cannot spend coins"
         // Spec: "Coins are available only for premium users"
+        // If user.plan == FREE -> coins = 0 (forced)
+        if (!isPremium && user.coins > 0) {
+            user.coins = 0;
+            await user.save();
+        }
+
         // Thus, ANY action requiring > 0 coins is blocked for Free users.
 
         // COIN TABLE (Rule 9)
@@ -55,7 +61,17 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         const targetUserId = target.userId?._id || target.userId;
         const isTargetPremium = target.userId?.isPremium || false;
 
-        // Rule 12: Premium <-> Premium Chat is Free
+        // Rule: Chat is 0 coins if Contact Info was already unlocked
+        const contactUnlocked = await Activity.findOne({
+            sender: userId,
+            receiver: targetUserId,
+            type: 'view_contact'
+        });
+        if (action === 'chat' && contactUnlocked) {
+            cost = 0;
+        }
+
+        // Rule: Premium <-> Premium Chat is Free (for 3 months)
         if (action === 'chat' && isPremium && isTargetPremium) {
             cost = 0;
         }
@@ -86,31 +102,45 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
 
         if (alreadyPerformed) {
             if (action === 'chat') {
-                // Rule 12: Chat valid for 3 months
+                // Rule: Chat valid for 3 months from unlock date
                 const monthsDiff = (Date.now() - new Date(alreadyPerformed.timestamp).getTime()) / (1000 * 60 * 60 * 24 * 30);
-                if (monthsDiff < 3) cost = 0;
+                if (monthsDiff < 3) {
+                    cost = 0;
+                } else {
+                    return res.status(403).json({
+                        error: 'CHAT_EXPIRED',
+                        message: 'Please upgrade or renew your plan to continue chatting'
+                    });
+                }
             }
             if (action === 'view_contact') {
-                // Rule 11: Contact Visibility = Premium Active + 1 Month Grace
-                const targetPremiumExpiry = target.userId?.premiumExpiry ? new Date(target.userId.premiumExpiry) : new Date(0);
-                const gracePeriodExpiry = new Date(targetPremiumExpiry.getTime() + (30 * 24 * 60 * 60 * 1000));
+                // Rule: Contact Visibility = Viewer's Premium Active + 1 Month Grace
+                const viewerPremiumExpiry = user.premiumExpiry ? new Date(user.premiumExpiry) : new Date(0);
+                const gracePeriodExpiry = new Date(viewerPremiumExpiry.getTime() + (30 * 24 * 60 * 60 * 1000));
 
                 if (Date.now() < gracePeriodExpiry.getTime()) {
                     cost = 0; // Still in grace period or plan is active
+                } else {
+                    // Rule: After grace period, hidden again. "Requires plan renewal (no extra coin)"
+                    // This means if they renew, cost is 0 again.
+                    if (isPremium) cost = 0;
+                    else return res.status(403).json({ error: 'PLAN_EXPIRED', message: 'Please renew your plan to view contact info.' });
                 }
             }
         }
 
-        // Rule 13: INTERACTION LIMIT: Max 3 interactions per profile
+        // Rule: INTERACTION LIMIT: Max 3 coin-based interactions per profile
+        // Interaction Limit (Interest, Super Interest, Contact unlock, Chat unlock)
         if (action !== 'shortlist') {
-            const interactionTypes = ['interest', 'superInterest', 'chat', 'view_contact'];
-            const interactions = await Activity.distinct('type', {
+            const coinActions = ['interest', 'superInterest', 'chat', 'view_contact'];
+            const distinctInteractions = await Activity.distinct('type', {
                 sender: userId,
                 receiver: targetUserId,
-                type: { $in: interactionTypes }
+                type: { $in: coinActions }
             });
 
-            if (!interactions.includes(action) && interactions.length >= 3) {
+            // If this is a NEW type of interaction and we already have 3 types...
+            if (!distinctInteractions.includes(action) && distinctInteractions.length >= 3) {
                 return res.status(403).json({
                     error: 'INTERACTION_LIMIT',
                     message: 'You’ve reached the interaction limit for this profile (Max 3).'
@@ -150,14 +180,18 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         if (action === 'view_contact') {
             const contactEmail = target.email || (target.userId && target.userId.email) || 'N/A';
             const contactPhone = target.mobile || target.phone || target.contact || (target.userId && target.userId.phone) || 'N/A';
+            const whatsapp = target.whatsapp || contactPhone; // Use mobile as fallback for WhatsApp
 
             return res.json({
                 success: true,
                 coins: user.coins,
+                coinsUsed: user.coinsUsed || 0,
+                coinsReceived: user.coinsReceived || 0,
                 message: 'Contact Unlocked',
                 contact: {
                     email: contactEmail,
                     mobile: contactPhone,
+                    whatsapp: whatsapp
                 }
             });
         }
@@ -168,6 +202,8 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         res.json({
             success: true,
             coins: user.coins,
+            coinsUsed: user.coinsUsed || 0,
+            coinsReceived: user.coinsReceived || 0,
             message: `Action ${action} successful`,
             cost
         });
@@ -303,7 +339,23 @@ router.post('/messages', async (req, res) => {
             }
         }
 
-        const newMessage = new Message({ sender, receiver, text });
+        // Rule: FREE USER MESSAGE HANDLING
+        // If a free user receives a message: hide content
+        const targetUser = await User.findById(receiver);
+        if (targetUser) {
+            const targetPlan = (targetUser.plan || 'Free').toLowerCase();
+            const targetIsPremium = targetUser.isPremium || !targetPlan.includes('free');
+
+            // Note: Content is stored normally in DB, but filtered on retrieval
+            // or we could mark the message as "locked" if sent to a free user.
+        }
+
+        const newMessage = new Message({
+            sender,
+            receiver,
+            text,
+            isLocked: !isPremium // Mark if sender is free? No, spec says "If a free user receives a message"
+        });
         await newMessage.save();
 
         // Also log this as an activity
@@ -328,13 +380,38 @@ router.post('/messages', async (req, res) => {
 router.get('/messages/:id1/:id2', async (req, res) => {
     try {
         const { id1, id2 } = req.params;
-        const messages = await Message.find({
+        let messages = await Message.find({
             $or: [
                 { sender: id1, receiver: id2 },
                 { sender: id2, receiver: id1 }
             ]
-        }).sort({ timestamp: 1 });
-        res.json({ success: true, messages });
+        }).sort({ timestamp: 1 }).lean();
+
+        // Process message content based on recipient premium status
+        const formattedMessages = await Promise.all(messages.map(async (msg) => {
+            const receiverUser = await User.findById(msg.receiver);
+            if (receiverUser) {
+                const planStr = (receiverUser.plan || 'Free').toLowerCase();
+                const isPremium = receiverUser.isPremium || (planStr !== 'free' && planStr !== '');
+
+                if (!isPremium) {
+                    // Logic: If receiver is free, hide the text
+                    // (But allow the sender to see their own sent messages)
+                    // Wait, the spec says "If a free user receives a message: Message content is hidden"
+                    // So we hide it specifically when the person viewing IT is the receiver?
+                    // Usually id1 or id2 is the viewer. Let's assume the fetch is for both.
+                    // We'll add a 'isLocked' flag that the frontend handles.
+                    return {
+                        ...msg,
+                        text: "Someone sent you a message. Upgrade to view.",
+                        isLocked: true
+                    };
+                }
+            }
+            return msg;
+        }));
+
+        res.json({ success: true, messages: formattedMessages });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

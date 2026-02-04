@@ -371,7 +371,7 @@ router.get('/:uniqueId', async (req, res) => {
         // A robust way: $or: [{unique_id: uniqueId}, {_id: ...}] if valid.
 
         if (require('mongoose').Types.ObjectId.isValid(uniqueId)) {
-            query = { $or: [{ _id: uniqueId }, { unique_id: uniqueId }] };
+            query = { $or: [{ _id: uniqueId }, { unique_id: uniqueId }, { userId: uniqueId }] };
         } else {
             query = { unique_id: uniqueId };
         }

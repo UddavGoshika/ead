@@ -18,6 +18,7 @@ export interface Message {
     receiverId: string;
     text: string;
     timestamp: number;
+    isLocked?: boolean;
 }
 
 export interface Conversation {

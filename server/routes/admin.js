@@ -479,14 +479,32 @@ router.patch('/members/:id/package', async (req, res) => {
             else if (lowerPlan.includes('platinum')) planTier = 'Platinum';
         }
 
-        const user = await User.findByIdAndUpdate(req.params.id, {
-            plan,
-            planType,
-            planTier,
-            isPremium
-        }, { new: true });
-
+        const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const oldPlan = user.plan;
+        user.plan = plan;
+        user.planType = planType;
+        user.planTier = planTier;
+        user.isPremium = isPremium;
+
+        // If upgraded to premium and plan changed
+        if (isPremium && plan !== oldPlan) {
+            let baseCoins = 0;
+            const tierLower = (planTier || '').toLowerCase();
+            if (tierLower === 'silver') baseCoins = 50;
+            else if (tierLower === 'gold') baseCoins = 100;
+            else if (tierLower === 'platinum') baseCoins = 150;
+            else baseCoins = 50;
+
+            const multiplier = lowerPlan.includes('ultra') ? 100 : lowerPlan.includes('lite') ? 1 : 10;
+            const totalAllocated = baseCoins * multiplier;
+
+            user.coins = (user.coins || 0) + totalAllocated;
+            user.coinsReceived = (user.coinsReceived || 0) + totalAllocated;
+        }
+
+        await user.save();
 
         createNotification('system', `Your plan has been updated to ${plan} by Admin.`, 'Admin', user._id);
         res.json({ success: true, user });
@@ -507,6 +525,7 @@ router.patch('/members/:id/wallet', async (req, res) => {
 
         if (type === 'add') {
             user.coins = (user.coins || 0) + val;
+            user.coinsReceived = (user.coinsReceived || 0) + val;
         } else {
             user.coins = Math.max(0, (user.coins || 0) - val);
         }

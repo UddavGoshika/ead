@@ -91,6 +91,57 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
                     );
                 })}
                 <div className={styles.divider}></div>
+
+                {/* TOKEN TRACKER (Rule 16) */}
+                {isPremium && (
+                    <div className={styles.tokenTracker}>
+                        <div className={styles.tokenHeader}>
+                            <Coins size={16} />
+                            <span>Token Tracker</span>
+                        </div>
+                        <div className={styles.tokenStats}>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Total Tokens</span>
+                                <span className={styles.statValue}>{user?.coinsReceived || 0}</span>
+                            </div>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Tokens Spent</span>
+                                <span className={styles.statValue}>{user?.coinsUsed || 0}</span>
+                            </div>
+                            <div className={styles.statRow}>
+                                <span className={styles.statLabel}>Remaining</span>
+                                <span className={styles.statValueHighlight}>{user?.coins || 0}</span>
+                            </div>
+                            <div className={styles.tokenProgressBase}>
+                                <div
+                                    className={styles.tokenProgressBar}
+                                    style={{ width: `${Math.min(((user?.coins || 0) / (user?.coinsReceived || 1)) * 100, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* SUBSCRIPTION INFO (Rule 11) */}
+                <div className={styles.subscriptionDetails}>
+                    <div className={styles.subRow}>
+                        <span>Current Plan</span>
+                        <strong>{plan}</strong>
+                    </div>
+                    {isPremium && user?.premiumExpiry && (
+                        <div className={styles.subRow}>
+                            <span>Expiry Date</span>
+                            <strong>{new Date(user.premiumExpiry).toLocaleDateString()}</strong>
+                        </div>
+                    )}
+                    <div className={styles.subRow}>
+                        <span>Interactions</span>
+                        <strong>Live</strong>
+                    </div>
+                    <a className={styles.renewLink} onClick={() => showsidePage('upgrade')}>Manage Plan</a>
+                </div>
+
+                <div className={styles.divider}></div>
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Logout</span>

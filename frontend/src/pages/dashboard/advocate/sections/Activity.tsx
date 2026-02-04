@@ -3,6 +3,7 @@ import styles from "./Activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck } from "lucide-react";
+import DetailedProfile from "../../shared/DetailedProfile";
 
 const Activity = () => {
     const { user } = useAuth();
@@ -15,6 +16,7 @@ const Activity = () => {
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [loading, setLoading] = useState(true);
+    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -85,7 +87,15 @@ const Activity = () => {
                         <div className={styles.emptyMsg}>Loading activities...</div>
                     ) : filteredActivities.length > 0 ? (
                         filteredActivities.map((act) => (
-                            <div key={act._id} className={styles.activityItem}>
+                            <div
+                                key={act._id}
+                                className={styles.activityItem}
+                                onClick={() => {
+                                    const partnerId = act.isSender ? act.receiver : act.sender;
+                                    if (partnerId) setSelectedProfileId(String(partnerId));
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className={styles.activityIcon}>
                                     {act.type === 'visit' ? <Eye size={18} /> :
                                         act.type === 'interest' ? <Send size={18} /> :
@@ -122,6 +132,15 @@ const Activity = () => {
                     )}
                 </div>
             </div>
+
+            {selectedProfileId && (
+                <DetailedProfile
+                    profileId={selectedProfileId}
+                    isModal={true}
+                    onClose={() => setSelectedProfileId(null)}
+                    backToProfiles={() => setSelectedProfileId(null)}
+                />
+            )}
         </div>
     );
 };

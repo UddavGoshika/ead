@@ -60,8 +60,10 @@ router.post('/login', async (req, res) => {
                     image_url: userImage,
                     status: user.status,
                     plan: user.plan || 'Free',
-                    isPremium: user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free'),
-                    coins: user.coins || 0,
+                    isPremium: (user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free')) && (!user.demoExpiry || new Date() < new Date(user.demoExpiry)),
+                    coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
+                    coinsReceived: user.coinsReceived || 0,
+                    coinsUsed: user.coinsUsed || 0,
                     walletBalance: user.walletBalance || 0
                 }
             });
@@ -115,11 +117,15 @@ router.get('/me', async (req, res) => {
                 user.planType = 'Free';
                 user.planTier = null;
                 user.demoExpiry = null;
-                // user.coins = 0; // "Coins non-refundable" - keep remaining coins? or reset? 
-                // Spec says: "After expiry: All features relocked... Contacts hidden". 
-                // Does not explicitly say wipe coins, but usually free user has 0 coins usable.
+                user.coins = 0; // Forced coins = 0 on target plan change (Free)
                 await user.save();
             }
+        }
+
+        // Forced check for any free plan
+        if (user.plan && user.plan.toLowerCase() === 'free' && user.coins > 0) {
+            user.coins = 0;
+            await user.save();
         }
 
         let uniqueId = null;
@@ -154,8 +160,10 @@ router.get('/me', async (req, res) => {
                 image_url: userImage,
                 status: user.status,
                 plan: user.plan || 'Free',
-                isPremium: user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free'),
-                coins: user.coins || 0,
+                isPremium: (user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free')) && (!user.demoExpiry || new Date() < new Date(user.demoExpiry)),
+                coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
+                coinsReceived: user.coinsReceived || 0,
+                coinsUsed: user.coinsUsed || 0,
                 walletBalance: user.walletBalance || 0
             }
         });
@@ -344,7 +352,10 @@ router.post('/register', async (req, res) => {
                 role: user.role,
                 status: user.status,
                 plan: user.plan || 'Free',
-                isPremium: user.isPremium || false
+                isPremium: user.isPremium || false,
+                coins: user.coins || 0,
+                coinsReceived: user.coinsReceived || 0,
+                coinsUsed: user.coinsUsed || 0
             },
             token: 'user-token-' + user._id
         });

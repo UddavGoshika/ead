@@ -1,0 +1,9 @@
+admin@gmail.com | Coins: 10 | Received: 11 | Prem: true | Plan: Pro Platinum
+advocate1@gmail.com | Coins: 0 | Received: 0 | Prem: false | Plan: Free
+advocate2@gmail.com | Coins: 10 | Received: 10 | Prem: true | Plan: Pro Silver
+advocate3@gmail.com | Coins: 0 | Received: 0 | Prem: false | Plan: Free
+client@gmail.com | Coins: 0 | Received: 51 | Prem: true | Plan: Pro Lite Gold
+suresh@gmail.com | Coins: 0 | Received: 0 | Prem: false | Plan: Free
+shivauddav187@gmail.com | Coins: 83 | Received: 117 | Prem: true | Plan: Pro Lite Gold
+advisor@gmail.com | Coins: 10 | Received: 10 | Prem: true | Plan: Pro
+hoxedin211@ixunbo.com | Coins: 10 | Received: 12 | Prem: true | Plan: Ultra Pro Gold

@@ -68,9 +68,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return localStorage.getItem('isImpersonating') === 'true';
     });
 
-    // Initial logging & Token Verification
+    // Initial logging & Token Verification + Background Polling for Live Updates
     useEffect(() => {
         console.log('AuthProvider: Mounted, isLoggedIn:', isLoggedIn);
+
         const verifyToken = async () => {
             const token = localStorage.getItem('token');
             if (token) {
@@ -79,21 +80,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const res = await authService.getCurrentUser();
                     if (res.data.success) {
                         console.log('[AUTH] Verified User & Plan:', res.data.user.plan);
-                        setUser(res.data.user);
-                        localStorage.setItem('user', JSON.stringify(res.data.user));
-                        localStorage.setItem('userRole', res.data.user.role);
-                    } else {
-                        // If verification fails (e.g. invalid token), logout?
-                        // keeping silent for now to avoid disrupting if just a network blip, 
-                        // but ideally should handle invalid token.
+                        const updatedUser = res.data.user;
+                        setUser(updatedUser);
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                        localStorage.setItem('userRole', updatedUser.role);
                     }
                 } catch (error) {
                     console.error('[AUTH] Token verification failed:', error);
-                    // Optional: logout() if 401
                 }
             }
         };
+
         verifyToken();
+
+        // Rule: Live Updates from Server (Every 30s)
+        const pollInterval = setInterval(() => {
+            if (localStorage.getItem('token')) {
+                verifyToken();
+            }
+        }, 30000);
+
+        return () => clearInterval(pollInterval);
     }, []);
 
     const login = (userData: User, token?: string) => {

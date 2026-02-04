@@ -5,7 +5,7 @@ const ActivitySchema = new mongoose.Schema({
     receiver: { type: String, required: true },
     type: {
         type: String,
-        enum: ['visit', 'interest', 'superInterest', 'shortlist', 'accept', 'decline', 'chat', 'view_contact'],
+        enum: ['visit', 'interest', 'superInterest', 'shortlist', 'accept', 'decline', 'chat', 'view_contact', 'system'],
         required: true
     },
     status: {

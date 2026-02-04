@@ -207,3 +207,115 @@
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
     transform: translateY(-2px);
 }
+
+/* TOKEN TRACKER & SUBSCRIPTION STYLES */
+.tokenTracker {
+    margin: 15px;
+    padding: 15px;
+    background: rgba(43, 62, 85, 0.3);
+    border: 1px solid rgba(250, 204, 21, 0.1);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tokenHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #facc15;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tokenStats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.statRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statLabel {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.statValue {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.statValueHighlight {
+    color: #facc15;
+    font-size: 14px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.tokenProgressBase {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.tokenProgressBar {
+    height: 100%;
+    background: linear-gradient(90deg, #facc15, #f59e0b);
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subscriptionDetails {
+    margin: 0 15px 15px 15px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.subRow {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.subRow span {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.subRow strong {
+    font-size: 10px;
+    color: #e2e8f0;
+    font-weight: 700;
+}
+
+.renewLink {
+    display: block;
+    margin-top: 8px;
+    text-align: center;
+    color: #3b82f6;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.renewLink:hover {
+    text-decoration: underline;
+}

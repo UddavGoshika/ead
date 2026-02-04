@@ -57,6 +57,17 @@ UserSchema.pre('save', function (next) {
             this.isPremium = false;
         }
     }
+
+    // Forced Rule: FREE users have 0 coins
+    if (!this.isPremium) {
+        this.coins = 0;
+        this.coinsReceived = 0;
+    } else {
+        // If they have coins but Received is 0, sync it
+        if (this.coins > 0 && (this.coinsReceived || 0) === 0) {
+            this.coinsReceived = this.coins;
+        }
+    }
     next();
 });
 

@@ -13,6 +13,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { interactionService } from "../../../services/interactionService";
 import type { Message, Conversation } from "../../../services/interactionService";
 import type { Advocate } from "../../../types";
+import DetailedProfile from "./DetailedProfile";
 
 interface MessengerProps {
     view?: 'list' | 'chat';
@@ -32,6 +33,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
     const [allActivities, setAllActivities] = useState<any[]>([]);
     const [selectedClient, setSelectedClient] = useState<any>(null);
+    const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
     const [popupLoading, setPopupLoading] = useState(false);
 
     // Filtered lists for tabs
@@ -185,18 +187,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
     const handleClientClick = async (partnerId: string | undefined, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         if (!partnerId) return;
-
-        try {
-            setPopupLoading(true);
-            const response = await api.get(`/client/${partnerId}`);
-            if (response.data.success) {
-                setSelectedClient(response.data.client);
-            }
-        } catch (error) {
-            console.error("Error fetching client details:", error);
-        } finally {
-            setPopupLoading(false);
-        }
+        setSelectedProfileId(partnerId);
     };
 
     const maskContactInfo = (info: string) => {
@@ -283,7 +274,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     className={styles.convAvatar}
                                     onClick={(e) => handleClientClick(String(conv.advocate.id), e)}
                                 />
-                                <div className={styles.convDetails}>
+                                <div className={styles.convDetails} onClick={(e) => handleClientClick(String(conv.advocate.id), e)}>
                                     <div className={styles.convTitleRow}>
                                         <h4>{conv.advocate.name}</h4>
                                         <span className={styles.convTime}>
@@ -322,7 +313,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     alt={act.partnerName}
                                     onClick={(e) => handleClientClick(act.advocateId || act.receiver, e)}
                                 />
-                                <div className={styles.convDetails}>
+                                <div className={styles.convDetails} onClick={(e) => handleClientClick(act.advocateId || act.receiver, e)}>
                                     <div className={styles.convTitleRow}>
                                         <h4>{act.partnerName}</h4>
                                         <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
@@ -359,9 +350,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     onClick={(e) => handleClientClick(act.clientId || act.sender, e)}
                                     style={{ cursor: 'pointer' }}
                                 />
-                                <div className={styles.convDetails}>
+                                <div className={styles.convDetails} onClick={(e) => handleClientClick(act.clientId || act.sender, e)}>
                                     <div className={styles.convTitleRow}>
-                                        <h4>{act.partnerName}</h4>
+                                        <h4 style={{ cursor: 'pointer' }}>{act.partnerName}</h4>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
                                             <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(act._id, e)}>
@@ -413,57 +404,14 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
             {renderList()}
 
-            {/* Client Details Popup */}
-            {selectedClient && (
-                <div className={styles.overlay} onClick={() => setSelectedClient(null)}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3>Client Details</h3>
-                            <button onClick={() => setSelectedClient(null)}><X size={20} /></button>
-                        </div>
-                        <div className={styles.modalBody}>
-                            <div className={styles.profileHeader}>
-                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={styles.avatar} />
-                                <div>
-                                    <h4>{selectedClient.firstName} {selectedClient.lastName}</h4>
-                                    <p className={styles.uid}>{selectedClient.unique_id}</p>
-                                </div>
-                            </div>
-
-                            <div className={styles.infoGrid}>
-                                <div className={styles.infoItem}>
-                                    <label>Email</label>
-                                    <p>{maskContactInfo(selectedClient.email)}</p>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Mobile</label>
-                                    <p>{maskContactInfo(selectedClient.mobile)}</p>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Location</label>
-                                    <p>{selectedClient.location?.city || 'N/A'}, {selectedClient.location?.state || 'N/A'}</p>
-                                </div>
-                            </div>
-
-                            {selectedClient.legalHelp && (
-                                <div className={styles.legalSection}>
-                                    <h5>Legal Requirement</h5>
-                                    <div className={styles.tagContainer}>
-                                        <span className={styles.tag}>{selectedClient.legalHelp.category}</span>
-                                        <span className={styles.tag}>{selectedClient.legalHelp.specialization}</span>
-                                        {selectedClient.legalHelp.subDepartment && <span className={styles.tag}>{selectedClient.legalHelp.subDepartment}</span>}
-                                    </div>
-                                    {selectedClient.legalHelp.issueDescription && (
-                                        <div className={styles.descBox}>
-                                            <label>Issue Description:</label>
-                                            <p>{selectedClient.legalHelp.issueDescription}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+            {/* Full Depth Detailed Profile Popup */}
+            {selectedProfileId && (
+                <DetailedProfile
+                    profileId={selectedProfileId}
+                    isModal={true}
+                    onClose={() => setSelectedProfileId(null)}
+                    backToProfiles={() => setSelectedProfileId(null)}
+                />
             )}
         </div>
     );

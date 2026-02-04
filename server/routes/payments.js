@@ -504,6 +504,7 @@ router.post('/verify', authenticate, async (req, res) => {
 
                 const totalAllocated = baseCoins * multiplier;
                 user.coins = (user.coins || 0) + totalAllocated;
+                user.coinsReceived = (user.coinsReceived || 0) + totalAllocated;
 
                 console.log(`[PAYMENT] Updated ${user.role} Plan to: ${user.plan} and allocated ${totalAllocated} coins.`);
             } else if (transaction.packageId.toLowerCase().includes('wallet')) {

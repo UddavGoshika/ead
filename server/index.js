@@ -4,6 +4,8 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 const { startRejectionReminders } = require('./utils/rejectionReminders');
+const http = require('http');
+const { Server } = require('socket.io');
 
 // MongoDB Database Connection
 const connectDB = require('./config/db');
@@ -52,7 +54,9 @@ app.use('/api/blogs', blogRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 const caseRoutes = require('./routes/cases');
+const callRoutes = require('./routes/calls');
 app.use('/api/cases', caseRoutes);
+app.use('/api/calls', callRoutes);
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.
@@ -74,7 +78,66 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, error: 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+// Socket.IO Connection Handling
+const userSockets = new Map(); // userId -> socketId
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    socket.on('register', (userId) => {
+        userSockets.set(userId, socket.id);
+        console.log(`User ${userId} registered with socket ${socket.id}`);
+    });
+
+    socket.on('call-user', ({ to, offer, from, type }) => {
+        const targetSocketId = userSockets.get(to);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('incoming-call', { from, offer, type });
+        }
+    });
+
+    socket.on('answer-call', ({ to, answer }) => {
+        const targetSocketId = userSockets.get(to);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('call-answered', { answer });
+        }
+    });
+
+    socket.on('ice-candidate', ({ to, candidate }) => {
+        const targetSocketId = userSockets.get(to);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('ice-candidate', { candidate });
+        }
+    });
+
+    socket.on('hangup', ({ to }) => {
+        const targetSocketId = userSockets.get(to);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('hangup');
+        }
+    });
+
+    socket.on('disconnect', () => {
+        for (const [userId, socketId] of userSockets.entries()) {
+            if (socketId === socket.id) {
+                userSockets.delete(userId);
+                break;
+            }
+        }
+        console.log('User disconnected:', socket.id);
+    });
+});
+
+server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     startRejectionReminders();
 });

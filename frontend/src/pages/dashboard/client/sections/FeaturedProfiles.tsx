@@ -17,7 +17,7 @@ interface Props {
 }
 
 const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }) => {
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
@@ -203,18 +203,23 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
 
                                             try {
                                                 if (action === 'interest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
                                                     showToast(`Interest sent to ${adv.name}`);
                                                 } else if (action === 'superInterest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
                                                     showToast(`Super Interest sent to ${adv.name}!`);
                                                 } else if (action === 'shortlist') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
                                                     showToast(`${adv.name} added to shortlist`);
                                                 } else if (action === 'openFullChatPage') {
                                                     onSelectForChat(adv);
                                                 } else if (action === 'message_sent' && data) {
-                                                    await interactionService.sendMessage(userId, targetId, data);
+                                                    const res = await interactionService.sendMessage(userId, targetId, data);
+                                                    // sendMessage currently doesn't return coins in backend? check interactions.js
+                                                    // Rule: Chat unlock happens via recordActivity('chat'), so sendMessage doesn't deduct.
                                                     showToast(`Message sent to ${adv.name}`);
                                                 }
                                             } catch (err: any) {
