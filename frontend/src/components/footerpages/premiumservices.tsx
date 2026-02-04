@@ -342,8 +342,11 @@ const Preservices: React.FC = () => {
                 </div>
             )}
 
-            <div className={styles.headerSection} style={{ marginTop: '200px' }}>
-                <div className={styles.badge}>ELITE INFRASTRUCTURE</div>
+            <div className={styles.premiumHeader}>
+                <div className={styles.premiumBadge}>
+                    <Crown size={16} className={styles.crownIcon} />
+                    <span>ELITE INFRASTRUCTURE</span>
+                </div>
                 <h1 className={styles.title}>Premium Ecosystem</h1>
                 <p className={styles.subtitle}>Navigate through our futuristic membership tiers designed for total dominance.</p>
             </div>
@@ -442,7 +445,7 @@ const Preservices: React.FC = () => {
                             </div>
 
                             <div className={styles.lockedFeaturesNotice}>
-                                <Lock size={24} color="#3b82f6" style={{ marginBottom: '15px' }} />
+                                <Lock size={24} color="#facc15" style={{ marginBottom: '15px' }} />
                                 <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: '1.6' }}>
                                     Authenticate your account to access the {activeCategory.toUpperCase()} gateway and activate your premium legal membership.
                                 </p>
@@ -496,10 +499,9 @@ const Preservices: React.FC = () => {
                                     />
                                     <button
                                         onClick={() => {
-                                            // Simple mock logic
                                             if (coupon === 'WELCOME10') {
                                                 setAppliedCode(coupon);
-                                                setDiscount(10); // 10%
+                                                setDiscount(10);
                                                 alert('Coupon Applied! 10% Discount.');
                                             } else if (coupon === 'EADVOCATE20') {
                                                 setAppliedCode(coupon);
@@ -512,9 +514,9 @@ const Preservices: React.FC = () => {
                                         style={{
                                             padding: '0 20px',
                                             borderRadius: '12px',
-                                            background: appliedCode ? '#10b981' : '#3b82f6',
+                                            background: appliedCode ? '#10b981' : '#facc15',
                                             border: 'none',
-                                            color: '#fff',
+                                            color: appliedCode ? '#fff' : '#000',
                                             fontWeight: 'bold',
                                             cursor: appliedCode ? 'default' : 'pointer'
                                         }}

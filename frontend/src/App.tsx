@@ -215,6 +215,28 @@ import InformSuperAdmin from './pages/manager/communications/InformSuperAdmin';
 import ManagerPermissions from './pages/admin/settings/ManagerPermissions';
 import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
 
+import { useAuth } from './context/AuthContext';
+
+// Helper component to redirect to the specific user's dashboard URL
+const DashboardRedirect: React.FC<{ defaultRole?: string }> = ({ defaultRole }) => {
+  const { user, isLoggedIn } = useAuth();
+
+  if (!isLoggedIn || !user) {
+    return <Navigate to="/" replace />;
+  }
+
+  const role = user.role.toLowerCase();
+  const id = user.unique_id || user.id;
+
+  // Custom mapping for role-to-path
+  let pathRole = role;
+  if (role === 'legal_provider') pathRole = 'advisor';
+
+  // If a defaultRole was provided but doesn't match the current user, 
+  // we still redirect them to their correct dashboard
+  return <Navigate to={`/dashboard/${pathRole}/${id}`} replace />;
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -270,31 +292,36 @@ const App: React.FC = () => {
               <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs isEmbedded={true} />} />
 
               {/* PROTECTED DASHBOARD ROUTES */}
-              <Route path="/dashboard/client" element={
+              <Route path="/dashboard/client/:uniqueId" element={
                 <ProtectedRoute allowedRoles={['client']}>
                   <ClientDashboard />
                 </ProtectedRoute>
               } />
 
-              <Route path="/dashboard/advocate" element={
+              <Route path="/dashboard/advocate/:uniqueId" element={
                 <ProtectedRoute allowedRoles={['advocate']}>
                   <AdvocateDashboard />
                 </ProtectedRoute>
               } />
 
-              <Route path="/dashboard/advisor" element={
+              <Route path="/dashboard/advisor/:uniqueId" element={
                 <ProtectedRoute allowedRoles={['legal_provider']}>
                   <AdvisorDashboard />
                 </ProtectedRoute>
               } />
 
-              <Route path="/dashboard/user" element={
+              <Route path="/dashboard/user/:uniqueId" element={
                 <ProtectedRoute allowedRoles={['USER']}>
                   <UserDashboard />
                 </ProtectedRoute>
               } />
 
-              <Route path="/dashboard" element={<Navigate to="/dashboard/client" replace />} />
+              {/* DASHBOARD AUTO-REDIRECT TO UNIQUE URL */}
+              <Route path="/dashboard/client" element={<DashboardRedirect defaultRole="client" />} />
+              <Route path="/dashboard/advocate" element={<DashboardRedirect defaultRole="advocate" />} />
+              <Route path="/dashboard/advisor" element={<DashboardRedirect defaultRole="advisor" />} />
+              <Route path="/dashboard/user" element={<DashboardRedirect defaultRole="user" />} />
+              <Route path="/dashboard" element={<DashboardRedirect />} />
               {/* AUTH ROUTES */}
               <Route path="/auth/force-password-change" element={<ForcePasswordChange />} />
 

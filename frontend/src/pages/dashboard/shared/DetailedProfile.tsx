@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-    ArrowLeft, MapPin, Heart, Briefcase,
-    Send, X, Star, MessageCircle, Handshake, UserCheck, Loader2,
-    Bookmark, Phone
+    ArrowLeft, MapPin, Heart, Briefcase, UserCheck, Star,
+    X, Phone, CheckCircle, Handshake, Bookmark, MessageCircle, Send,
+    AlertCircle, Loader2
 } from 'lucide-react';
 import { advocateService, clientService } from '../../../services/api';
 import { interactionService } from '../../../services/interactionService';
@@ -47,37 +47,46 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
             if (!profileId) return;
             try {
                 setLoading(true);
+                let fetchedProfile = null;
+                let profileRole = '';
+
                 // Try fetching as advocate first
                 try {
                     const response = await advocateService.getAdvocateById(profileId);
                     if (response.data.success) {
                         const adv = response.data.advocate;
                         setProfile({ ...adv, role: 'advocate' });
+                        if (adv.contactInfo) setContactInfo(adv.contactInfo);
                         if (user && adv.id) {
                             interactionService.recordActivity('advocate', String(adv.id), 'visit', String(user.id));
                         }
-                        return; // Found advocate
+                        return; // Done
                     }
-                } catch (e) {
-                    console.log("Not an advocate profile, trying client...");
-                }
+                } catch (e) { }
 
-                // If not advocate, try fetching as client
-                const clientRes = await clientService.getClientById(profileId);
-                if (clientRes.data.success) {
-                    const client = clientRes.data.client;
-                    setProfile({
-                        ...client,
-                        role: 'client',
-                        id: client.userId || client.id,
-                        name: client.name || `${client.firstName} ${client.lastName}`,
-                        image_url: client.image_url || client.img,
-                        location: typeof client.location === 'object' ? `${client.location.city}, ${client.location.state}` : client.location,
-                        experience: 'Client',
-                        specialties: client.legalHelp ? [client.legalHelp.category, client.legalHelp.specialization].filter(Boolean) : [],
-                        bio: client.legalHelp?.issueDescription || 'Legal client looking for assistance.'
-                    });
-                }
+                // Try fetching as client
+                try {
+                    const clientRes = await clientService.getClientById(profileId);
+                    if (clientRes.data.success) {
+                        const client = clientRes.data.client;
+                        const formattedClient = {
+                            ...client,
+                            role: 'client',
+                            id: client.userId || client.id,
+                            name: client.name || `${client.firstName} ${client.lastName}`,
+                            image_url: client.image_url || client.img,
+                            location: typeof client.location === 'object' ? `${client.location.city}, ${client.location.state}` : client.location,
+                            experience: 'Client',
+                            specialties: client.legalHelp ? [client.legalHelp.category, client.legalHelp.specialization].filter(Boolean) : [],
+                            bio: client.legalHelp?.issueDescription || 'Legal client looking for assistance.'
+                        };
+                        setProfile(formattedClient);
+                        if (client.contactInfo) setContactInfo(client.contactInfo);
+                        if (user && formattedClient.id) {
+                            interactionService.recordActivity('client', String(formattedClient.id), 'visit', String(user.id));
+                        }
+                    }
+                } catch (e) { }
             } catch (err) {
                 console.error("Error fetching profile as both advocate and client:", err);
             } finally {
@@ -90,7 +99,9 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
     const handleAction = async (action: string) => {
         if (!user || !profile?.id) return;
         try {
-            const res = await interactionService.recordActivity('advocate', String(profile.id), action, String(user.id)) as any;
+            // Determine target role based on profile type
+            const targetRole = profile.role === 'client' ? 'client' : 'advocate';
+            const res = await interactionService.recordActivity(targetRole, String(profile.id), action, String(user.id)) as any;
 
             if (res && res.coins !== undefined) {
                 refreshUser({
@@ -174,24 +185,12 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
 
         return (
             <>
-                {/* Top Bar - Matching Dashboard Style */}
-                <header className={styles.topBar}>
-                    <div className={styles.topBarLeft}>
-                        <button className={styles.backBtn} onClick={isModal ? onClose : backToProfiles}>
-                            <ArrowLeft size={22} />
-                        </button>
-                        <h1 className={styles.pageTitle}>{profile?.role === 'client' ? 'Client Profile' : 'Advocate Profile'}</h1>
-                    </div>
-                    {isModal && (
-                        <div className={styles.topBarRight}>
-                            <button className={styles.modalCloseBtn} onClick={onClose}>
-                                <X size={22} />
-                            </button>
-                        </div>
-                    )}
-                </header>
+                <div className={styles.topBar}>
+                    <button className={styles.backBtn} onClick={isModal ? onClose : backToProfiles}>
+                        <ArrowLeft size={20} />
+                    </button>
+                </div>
 
-                {/* Header Section */}
                 <div className={styles.header}>
                     <img
                         src={imageUrl}
@@ -203,192 +202,204 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                         <h1 className={styles.profileName}>
                             {displayName}
                             {!profile.isMasked && profile.age ? `, ${profile.age}` : ''}
+                            <span className={styles.verifiedCheck}><CheckCircle size={14} color="#000" strokeWidth={3} /></span>
                         </h1>
-                        <p className={styles.profileId}>
-                            ID - <span className={styles.verifiedId}>{displayId}</span>
-                        </p>
-                        {!profile.isMasked && <p className={styles.managedBy}>Professional Experience</p>}
+                        <p className={styles.profileId}>ID - {displayId}</p>
+                        <p className={styles.managedBy}>Profile managed by Professional Advocate</p>
                     </div>
                 </div>
 
-                <div className={styles.content} style={{ position: 'relative', minHeight: '400px' }}>
+                <div className={styles.tabs}>
+                    {['About Me', 'Professional', 'Gallery'].map(tab => (
+                        <div
+                            key={tab}
+                            className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab(tab)}
+                        >
+                            {tab}
+                        </div>
+                    ))}
+                </div>
+
+                <div className={styles.content}>
                     {isRestricted && (
                         <div className={styles.premiumOverlay} style={{
                             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10,
-                            background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            background: 'rgba(2, 6, 23, 0.9)', backdropFilter: 'blur(12px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px'
                         }}>
                             <div className={styles.premiumLockCard}>
-                                <div className={styles.lockIconWrap}>
-                                    <Star size={40} fill="#facc15" color="#facc15" className={styles.pulseIcon} />
+                                <Star size={48} fill="#facc15" color="#facc15" className={styles.pulseIcon} style={{ marginBottom: '20px' }} />
+                                <h1 className={styles.sectionHeading}>Featured Expert Locked</h1>
+                                <p className={styles.popupMsg}>This is a top-tier Professional profile. Unlock full details to view experience, education, and contact options.</p>
+                                <div className={styles.popupActions}>
+                                    <button className={styles.confirmBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>
+                                        Upgrade to Premium
+                                    </button>
+                                    <button className={styles.cancelBtn} onClick={backToProfiles}>
+                                        Cancel & Go Back
+                                    </button>
                                 </div>
-                                <h2>Featured Profile Locked</h2>
-                                <p>This is a Featured Expert. Full details are available exclusively for Premium members.</p>
-                                <p className={styles.benefitText}>✓ Reveal full identity & photo</p>
-                                <p className={styles.benefitText}>✓ Access contact options</p>
-                                <p className={styles.benefitText}>✓ View case history</p>
-                                <button className={styles.premiumUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>
-                                    Upgrade to Unlock
-                                </button>
-                                <button className={styles.goBackBtn} onClick={backToProfiles}>
-                                    Go Back
-                                </button>
                             </div>
                         </div>
                     )}
 
-                    {!isRestricted && (
-                        <>
-                            <div className={styles.tabs}>
-                                {['About Me', 'Family', 'Looking For'].map(tab => {
-                                    if (tab === 'Family' && !visibilitySettings['Family Information']) return null;
-                                    if (tab === 'Looking For' && !visibilitySettings['Partner Expectation']) return null;
-                                    return (
-                                        <div key={tab} className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`} onClick={() => setActiveTab(tab)}>
-                                            {tab}
+                    <div className={styles.tabContent}>
+                        {activeTab === 'About Me' && (
+                            <>
+                                <div className={styles.quickInfoGrid}>
+                                    <div className={styles.quickInfoItem}>
+                                        <div className={styles.quickInfoIcon}><Briefcase size={20} /></div>
+                                        <div className={styles.quickInfoText}>
+                                            <span className={styles.quickInfoValue}>{profile.experience || '6-10'} Years</span>
+                                            <span className={styles.quickInfoLabel}>Years of Practice</span>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                    <div className={styles.quickInfoItem}>
+                                        <div className={styles.quickInfoIcon}><MapPin size={20} /></div>
+                                        <div className={styles.quickInfoText}>
+                                            <span className={styles.quickInfoValue}>{profile.location?.split(',')[0] || 'Telangana'}</span>
+                                            <span className={styles.quickInfoLabel}>City, India</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.quickInfoItem}>
+                                        <div className={styles.quickInfoIcon}><Heart size={20} /></div>
+                                        <div className={styles.quickInfoText}>
+                                            <span className={styles.quickInfoValue}>{profile.specialties?.[0] || 'Legal Expert'}</span>
+                                            <span className={styles.quickInfoLabel}>Major Specialty</span>
+                                        </div>
+                                    </div>
+                                    <div
+                                        className={`${styles.quickInfoItem} ${!contactInfo ? styles.clickableInfo : ''}`}
+                                        onClick={!contactInfo ? handleViewContact : undefined}
+                                    >
+                                        <div className={styles.quickInfoIcon}><Phone size={20} /></div>
+                                        <div className={styles.quickInfoText}>
+                                            <span className={`${styles.quickInfoValue} ${!contactInfo && styles.blurredValue}`}>
+                                                {contactInfo?.mobile || '+91-9876543210'}
+                                            </span>
+                                            <span className={styles.quickInfoLabel}>Mobile Number</span>
+                                            {!contactInfo && <span className={styles.lockMessage}>Spent 1 coin to view</span>}
+                                        </div>
+                                    </div>
+                                    <div
+                                        className={`${styles.quickInfoItem} ${!contactInfo ? styles.clickableInfo : ''}`}
+                                        onClick={!contactInfo ? handleViewContact : undefined}
+                                    >
+                                        <div className={styles.quickInfoIcon}><Send size={20} /></div>
+                                        <div className={styles.quickInfoText}>
+                                            <span className={`${styles.quickInfoValue} ${!contactInfo && styles.blurredValue}`}>
+                                                {contactInfo?.email || 'expert@eadvocate.in'}
+                                            </span>
+                                            <span className={styles.quickInfoLabel}>Email Address</span>
+                                            {!contactInfo && <span className={styles.lockMessage}>Spent 1 coin to view</span>}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={styles.bioContainer}>
+                                    <h3 className={styles.bioHeading}>About Me</h3>
+                                    <p className={styles.bioText}>
+                                        {profile.bio || "Searching for excellence in legal matters? I am a dedicated professional with a track record of success. My approach is client-oriented and result-driven."}
+                                    </p>
+                                </div>
+
+                                <div className={styles.educationSection}>
+                                    <h3 className={styles.sectionHeading}>Education</h3>
+                                    <div className={styles.timeline}>
+                                        <div className={styles.timelineLine}></div>
+                                        <div className={`${styles.timelineItem} ${styles.timelineItemActive}`}>
+                                            <div className={styles.timelineDot}>
+                                                <div className={styles.timelineIcon}><UserCheck size={8} /></div>
+                                            </div>
+                                            <div className={styles.timelineContent}>
+                                                <h4>{profile.education?.degree || 'LLB Law Degree'}</h4>
+                                                <p>{profile.education?.college || profile.education?.university || 'National Law University'}</p>
+                                            </div>
+                                        </div>
+                                        <div className={styles.timelineItem}>
+                                            <div className={styles.timelineDot}></div>
+                                            <div className={styles.timelineContent}>
+                                                <h4>High School Secondary</h4>
+                                                <p>Completed from Reputed Institution</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {activeTab === 'Professional' && (
+                            <div className={styles.professionalSection}>
+                                <h3 className={styles.sectionHeading}>Professional Experience</h3>
+                                <div className={styles.timeline}>
+                                    <div className={styles.timelineLine}></div>
+                                    <div className={`${styles.timelineItem} ${styles.timelineItemActive}`}>
+                                        <div className={styles.timelineDot}>
+                                            <div className={styles.timelineIcon}><Briefcase size={8} /></div>
+                                        </div>
+                                        <div className={styles.timelineContent}>
+                                            <h4>Senior Advocate & Legal Consultant</h4>
+                                            <p>{profile.experience || '10+'} Years of Active Practice</p>
+                                        </div>
+                                    </div>
+                                    <div className={styles.timelineItem}>
+                                        <div className={styles.timelineDot}></div>
+                                        <div className={styles.timelineContent}>
+                                            <h4>Specialization Area</h4>
+                                            <p>{profile.specialties?.join(', ') || 'Civil & Criminal Law'}</p>
+                                        </div>
+                                    </div>
+                                    <div className={styles.timelineItem}>
+                                        <div className={styles.timelineDot}></div>
+                                        <div className={styles.timelineContent}>
+                                            <h4>Case Success Rate</h4>
+                                            <p>Successfully handled {profile.cases_handled || '500+'} legal cases.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+                        )}
 
-                            <div className={styles.tabContent}>
-                                {activeTab === 'About Me' && (
-                                    <>
-                                        <div className={styles.statsRow}>
-                                            <div className={styles.statBox}>
-                                                <MapPin size={18} color="#facc15" />
-                                                <div className={styles.statContent}>
-                                                    <span className={styles.statVal}>{profile.location}</span>
-                                                    <span className={styles.statLab}>Location</span>
-                                                </div>
-                                            </div>
-                                            <div className={styles.statBox}>
-                                                <Heart size={18} color="#facc15" />
-                                                <div className={styles.statContent}>
-                                                    <span className={styles.statVal}>{profile.specialties?.[0] || 'General Law'}</span>
-                                                    <span className={styles.statLab}>Major Specialty</span>
-                                                </div>
-                                            </div>
-                                            <div className={styles.statBox}>
-                                                <Briefcase size={18} color="#facc15" />
-                                                <div className={styles.statContent}>
-                                                    <span className={styles.statVal}>{profile.experience}</span>
-                                                    <span className={styles.statLab}>Practice</span>
-                                                </div>
-                                            </div>
-                                            <div className={styles.statBox}>
-                                                <UserCheck size={18} color="#facc15" />
-                                                <div className={styles.statContent}>
-                                                    <span className={styles.statVal}>{profile.cases_handled || 0}+</span>
-                                                    <span className={styles.statLab}>Total Cases</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.compatibilityCard}>
-                                            <div className={styles.compatIcon}>
-                                                <Star size={24} color="#facc15" />
-                                            </div>
-                                            <div className={styles.compatText}>
-                                                <h4>Highly Rated Professional</h4>
-                                                <p>This {profile.role || 'advocate'} has an excellent track record in {profile.specialties?.[0] || 'Legal'} matters.</p>
-                                            </div>
-                                        </div>
-
-                                        <div className={styles.bioSection}>
-                                            <p>{profile.bio || `Professional advocate with ${profile.experience} experience specializing in ${profile.specialties?.join(', ') || 'legal'} matters. Committed to providing excellence in legal representation.`}</p>
-                                        </div>
-
-                                        {profile.education && visibilitySettings['Education'] && (profile.education.degree || profile.education.college) && (
-                                            <div className={styles.bioSection}>
-                                                <h3 className={styles.sectionTitle}>Education</h3>
-                                                <div className={styles.timeline}>
-                                                    <div className={styles.timelineItem}>
-                                                        <div className={styles.timelineDot}></div>
-                                                        <div className={styles.timelineContent}>
-                                                            {profile.education.degree && <h4>{profile.education.degree}</h4>}
-                                                            <p>
-                                                                {[profile.education.college, profile.education.university].filter(Boolean).join(', ')}
-                                                                {profile.education.gradYear && ` (${profile.education.gradYear})`}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
+                        {activeTab === 'Gallery' && (
+                            <div className={styles.galleryGrid} style={{
+                                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px'
+                            }}>
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className={styles.galleryItem} style={{
+                                        aspectRatio: '1/1', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', overflow: 'hidden'
+                                    }}>
+                                        <img
+                                            src={i === 1 ? imageUrl : `https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=200`}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+                                            alt={`Ref ${i}`}
+                                        />
+                                    </div>
+                                ))}
                             </div>
-                        </>
-                    )}
+                        )}
+                    </div>
                 </div>
 
-                {!isRestricted && (
-                    <div className={styles.interactionWrap}>
-                        <div className={`${styles.actionBar} ${interactionStage === 'chat_input' ? styles.actionBarChatActive : ''}`}>
-                            {interactionStage === 'chat_input' ? (
-                                <div className={styles.chatInputContainer}>
-                                    <button className={styles.chatCloseBtn} onClick={() => setInteractionStage('none')}>
-                                        <X size={22} />
-                                    </button>
-                                    <input
-                                        type="text"
-                                        placeholder="Type your message..."
-                                        className={styles.chatInput}
-                                        value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
-                                    />
-                                    <button className={styles.sendIconBtn} onClick={async () => {
-                                        if (user && profile?.id && message.trim()) {
-                                            await interactionService.sendMessage(String(user.id), String(profile.id), message);
-                                            setMessage('');
-                                            setInteractionStage('none');
-                                        }
-                                    }}>
-                                        <Send size={24} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className={`${styles.actionItems} ${interactionStage === 'interest_sent' ? styles.actionsSliding : ''}`}>
-                                    <div className={styles.actionItem} onClick={handleInterestClick}>
-                                        <div className={styles.actionIcon} style={{ background: '#1e293b' }}>
-                                            <Handshake size={24} />
-                                        </div>
-                                        <span className={styles.actionLabel}>Interest</span>
-                                    </div>
-                                    <div className={styles.actionItem} onClick={handleSuperInterestClick}>
-                                        <div className={styles.actionIcon} style={{ background: '#1e293b' }}>
-                                            <Star size={22} />
-                                        </div>
-                                        <span className={styles.actionLabel}>Super Interest</span>
-                                    </div>
-                                    <div className={styles.actionItem} onClick={handleShortlistClick}>
-                                        <div className={styles.actionIcon} style={{ background: '#1e293b' }}>
-                                            <Bookmark size={24} color="#fff" />
-                                        </div>
-                                        <span className={styles.actionLabel}>Shortlist</span>
-                                    </div>
-                                    {visibilitySettings['Connections'] !== false && (
-                                        <div className={styles.actionItem} onClick={handleChatClick}>
-                                            <div className={styles.actionIcon} style={{ background: '#1e293b' }}>
-                                                <MessageCircle size={24} color="#fff" />
-                                            </div>
-                                            <span className={styles.actionLabel}>Chat</span>
-                                        </div>
-                                    )}
-                                    {!profile.isMasked && (
-                                        <div className={styles.actionItem} onClick={handleViewContact}>
-                                            <div className={styles.actionIcon} style={{ background: '#1e293b' }}>
-                                                <Phone size={24} color="#fff" />
-                                            </div>
-                                            <span className={styles.actionLabel}>Contact</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                <div className={styles.interactionWrap}>
+                    <div className={styles.actionBar}>
+                        <div className={styles.actionItem} onClick={handleInterestClick}>
+                            <div className={styles.actionIcon}><Handshake size={24} /></div>
+                            <span className={styles.actionLabel}>Remind</span>
+                        </div>
+                        <div className={styles.actionItem} onClick={handleSuperInterestClick}>
+                            <div className={styles.actionIcon}><Star size={24} /></div>
+                            <span className={styles.actionLabel}>Super Interest</span>
+                        </div>
+                        <div className={styles.actionItem} onClick={isModal ? onClose : backToProfiles}>
+                            <div className={styles.actionIcon}><X size={24} /></div>
+                            <span className={styles.actionLabel}>Cancel</span>
+                        </div>
+                        <div className={`${styles.actionItem} ${contactInfo ? styles.actionActive : ''}`} onClick={handleViewContact}>
+                            <div className={styles.actionIcon}><Phone size={24} /></div>
+                            <span className={styles.actionLabel}>Contact</span>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Side Modals */}
                 {popupType !== 'none' && (
@@ -443,36 +454,7 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                     </div>
                 )}
 
-                {/* Contact Info Modal */}
-                {contactInfo && (
-                    <div className={styles.popupOverlay}>
-                        <div className={styles.popupCard}>
-                            <button className={styles.popupCloseBtn} onClick={() => setContactInfo(null)}>
-                                <X size={18} />
-                            </button>
-                            <div className={styles.popupContent}>
-                                <h4 className={styles.popupTitle}>Contact Information</h4>
-                                <div className={styles.infoGrid} style={{ marginTop: '20px' }}>
-                                    <div className={styles.infoItem}>
-                                        <div className={styles.infoIcon}><Phone size={20} /></div>
-                                        <div className={styles.infoText}>
-                                            <span className={styles.infoLabel}>Mobile</span>
-                                            <span className={styles.infoValue}>{contactInfo.mobile}</span>
-                                        </div>
-                                    </div>
-                                    <div className={styles.infoItem}>
-                                        <div className={styles.infoIcon}><Phone size={20} /></div>
-                                        <div className={styles.infoText}>
-                                            <span className={styles.infoLabel}>WhatsApp</span>
-                                            <span className={styles.infoValue}>{contactInfo.whatsapp || contactInfo.mobile}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button className={styles.confirmBtn} onClick={() => setContactInfo(null)} style={{ marginTop: '20px', width: '100%' }}>Close</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* Contact Info Modal Removed - Persistence is now in Grid */}
 
                 <TokenTopupModal
                     isOpen={showTopup}

@@ -117,11 +117,10 @@ const CallWindow: React.FC = () => {
                     autoPlay
                     playsInline
                     className={styles.remoteVideo}
-                    style={{ display: activeCall?.type === 'video' ? 'block' : 'none' }}
                 />
 
                 {activeCall?.type === 'audio' && (
-                    <div className={styles.audioCallPlaceholder}>
+                    <div className={styles.audioOnlyOverlay}>
                         <img
                             src={partner?.image_url || "/default-avatar.png"}
                             alt="User"

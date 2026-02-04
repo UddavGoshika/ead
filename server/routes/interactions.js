@@ -114,18 +114,8 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
                 }
             }
             if (action === 'view_contact') {
-                // Rule: Contact Visibility = Viewer's Premium Active + 1 Month Grace
-                const viewerPremiumExpiry = user.premiumExpiry ? new Date(user.premiumExpiry) : new Date(0);
-                const gracePeriodExpiry = new Date(viewerPremiumExpiry.getTime() + (30 * 24 * 60 * 60 * 1000));
-
-                if (Date.now() < gracePeriodExpiry.getTime()) {
-                    cost = 0; // Still in grace period or plan is active
-                } else {
-                    // Rule: After grace period, hidden again. "Requires plan renewal (no extra coin)"
-                    // This means if they renew, cost is 0 again.
-                    if (isPremium) cost = 0;
-                    else return res.status(403).json({ error: 'PLAN_EXPIRED', message: 'Please renew your plan to view contact info.' });
-                }
+                // Rule override: Once unlocked with 1 coin, it's always visible for this profile.
+                cost = 0;
             }
         }
 

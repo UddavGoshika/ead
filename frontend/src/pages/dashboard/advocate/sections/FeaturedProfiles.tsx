@@ -213,17 +213,6 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
                     <Loader2 className="animate-spin" size={40} color="#facc15" />
                 </div>
-            ) : !isPremium ? (
-                <div className={styles.premiumOverlay}>
-                    <div className={styles.premiumLockCard}>
-                        <Shield size={64} color="#facc15" strokeWidth={1} />
-                        <h2>Featured Profiles Locked</h2>
-                        <p>Upgrade to a Premium Plan to view and interact with our top-rated featured advocates.</p>
-                        <button className={styles.upgradeNowBtn} onClick={() => showsidePage('upgrade')}>
-                            Upgrade to Premium
-                        </button>
-                    </div>
-                </div>
             ) : (
                 <div className={styles.grid}>
                     {advocates.map(adv => (

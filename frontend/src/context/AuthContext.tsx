@@ -182,10 +182,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 // Redirect based on role
                 const role = impersonatedUser.role.toLowerCase();
-                if (role === 'advocate') window.location.href = '/dashboard/advocate';
-                else if (role === 'client') window.location.href = '/dashboard/client';
-                else if (role === 'legal_provider') window.location.href = '/dashboard/advisor';
-                else window.location.href = '/dashboard/user';
+                const uid = impersonatedUser.unique_id || impersonatedUser.id;
+                if (role === 'advocate') window.location.href = `/dashboard/advocate/${uid}`;
+                else if (role === 'client') window.location.href = `/dashboard/client/${uid}`;
+                else if (role === 'legal_provider') window.location.href = `/dashboard/advisor/${uid}`;
+                else window.location.href = `/dashboard/user/${uid}`;
             } else {
                 alert(res.data.error || 'Failed to impersonate member');
             }

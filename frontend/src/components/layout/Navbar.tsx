@@ -124,14 +124,17 @@ const Navbar: React.FC = () => {
     const goToDashboard = () => {
         if (user?.role) {
             const role = user.role.toLowerCase();
+            const uid = user.unique_id || user.id;
             if (role === 'admin' || role === 'verifier' || role === 'finance' || role === 'support') {
                 navigate(`/dashboard/${role}`);
             } else if (role === 'client') {
-                navigate("/dashboard/client");
+                navigate(`/dashboard/client/${uid}`);
             } else if (role === 'advocate') {
-                navigate("/dashboard/advocate");
+                navigate(`/dashboard/advocate/${uid}`);
             } else if (role === 'legal_provider') {
-                navigate("/dashboard/advisor");
+                navigate(`/dashboard/advisor/${uid}`);
+            } else if (role === 'user') {
+                navigate(`/dashboard/user/${uid}`);
             }
         }
     };
@@ -139,14 +142,16 @@ const Navbar: React.FC = () => {
     const goToSettings = () => {
         if (user?.role) {
             const role = user.role.toLowerCase();
+            const uid = user.unique_id || user.id;
             if (role === 'client') {
-                navigate("/dashboard/client", { state: { initialPage: 'account-settings' } });
+                navigate(`/dashboard/client/${uid}`, { state: { initialPage: 'account-settings' } });
             } else if (role === 'advocate') {
-                navigate("/dashboard/advocate", { state: { initialPage: 'account-settings' } });
+                navigate(`/dashboard/advocate/${uid}`, { state: { initialPage: 'account-settings' } });
             } else if (role === 'legal_provider') {
-                navigate("/dashboard/advisor", { state: { initialPage: 'account-settings' } });
+                navigate(`/dashboard/advisor/${uid}`, { state: { initialPage: 'account-settings' } });
+            } else if (role === 'user') {
+                navigate(`/dashboard/user/${uid}`, { state: { initialPage: 'account-settings' } });
             } else {
-                // For staff roles, maybe they have a different settings page or it's within their dashboard
                 navigate(`/dashboard/${role}`);
             }
         }

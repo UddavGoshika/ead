@@ -77,6 +77,9 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
         fetchAdvocates();
     };
 
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
     return (
         <div className={styles.page}>
             <div className={styles.headerSection}>
@@ -133,7 +136,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                             <AdvocateCard
                                 advocate={adv}
                                 variant="normal"
-                                isPremium={user?.isPremium}
+                                isPremium={isPremium}
                                 onAction={async (action: string, data?: string) => {
                                     if (user) {
                                         const targetId = String(adv.id);

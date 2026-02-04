@@ -16,10 +16,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        // Smart Redirect based on Role
-        if (user.role === 'client') return <Navigate to="/dashboard/client" replace />;
-        if (user.role === 'advocate') return <Navigate to="/dashboard/advocate" replace />;
-        if (user.role === 'legal_provider') return <Navigate to="/dashboard/advisor" replace />;
+        const uid = user.unique_id || user.id;
+        if (user.role === 'client') return <Navigate to={`/dashboard/client/${uid}`} replace />;
+        if (user.role === 'advocate') return <Navigate to={`/dashboard/advocate/${uid}`} replace />;
+        if (user.role === 'legal_provider') return <Navigate to={`/dashboard/advisor/${uid}`} replace />;
         if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
 
         return <Navigate to="/" replace />;

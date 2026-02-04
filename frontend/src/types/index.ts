@@ -92,6 +92,11 @@ export interface Advocate {
     maritalStatus?: string;
     bar_council_id?: string;
     isMasked?: boolean;
+    contactInfo?: {
+        email: string;
+        mobile: string;
+        whatsapp?: string;
+    };
 }
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 

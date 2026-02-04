@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import styles from './ClientDashboard.module.css';
 import ClientSidebar from '../../../components/dashboard/client/ClientSidebar';
 import ClientBottomNav from '../../../components/dashboard/client/ClientBottomNav';
@@ -47,6 +48,18 @@ const ClientDashboard: React.FC = () => {
     const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const statePage = location.state?.initialPage;
+        const queryPage = searchParams.get('page');
+        if (statePage) {
+            setCurrentPage(statePage);
+        } else if (queryPage) {
+            setCurrentPage(queryPage);
+        }
+    }, [location.state, searchParams]);
 
     // Notification State
     const [showNotifications, setShowNotifications] = useState(false);
@@ -240,14 +253,14 @@ const ClientDashboard: React.FC = () => {
 
                     <div className={styles.topBarCenter} style={{ position: 'relative' }}>
                         {/* News Ticker - Behind Profile */}
-                        <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: 10, zIndex: 0, opacity: 0.8 }}>
+                        <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: -10, zIndex: 0, opacity: 0.8 }}>
                             <span className={styles.tickerText}>
                                 🚀 LATEST UPDATES: WELCOME TO THE NEW DASHBOARD • FIND YOUR EXPERT ADVOCATE TODAY • 24/7 SUPPORT AVAILABLE • CHECK OUT OUR NEW BLOGS
                             </span>
                         </div>
 
                         {/* Profile Header - On Top */}
-                        <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
+                        {/* <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
                             <div className={styles.profileInfoQuick}>
                                 <img
                                     src={user?.image_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100'}
@@ -259,7 +272,7 @@ const ClientDashboard: React.FC = () => {
                                     <span className={styles.miniId}>{user?.unique_id}</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className={styles.topBarRight}>

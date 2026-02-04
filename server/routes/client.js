@@ -23,10 +23,11 @@ const cpUpload = upload.fields([
 async function generateClientId() {
     let id;
     let exists = true;
+    const prefix = 'EA-CLI-';
+
     while (exists) {
-        // 4 digits for Client
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        id = `TP-EAD-CLI${randomNum}`;
+        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        id = `${prefix}${randomStr}`;
         const existing = await Client.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
@@ -205,27 +206,47 @@ router.get('/:userId', async (req, res) => {
 
         if (!client) {
             console.log(`[CLIENT FETCH] No Client profile found for UserID: ${userId}. Attempting auto-creation...`);
-            // Check if User exists
             const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({ success: false, error: 'User not found' });
-            }
-            if (user.role !== 'client') {
-                return res.status(400).json({ success: false, error: 'User is not a client' });
-            }
+            if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
-            // Auto-create basic profile
             const clientId = await generateClientId();
             client = await Client.create({
                 userId: user._id,
                 unique_id: clientId,
                 email: user.email,
-                firstName: 'New',
-                lastName: 'Client',
+                firstName: user.name?.split(' ')[0] || 'New',
+                lastName: user.name?.split(' ')[1] || 'Client',
                 address: { country: 'India' },
                 legalHelp: {}
             });
-            console.log(`[CLIENT FETCH] Auto-created Client profile: ${client.unique_id}`);
+        }
+
+        // Detect Viewer Id
+        let viewerId = null;
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
+            if (token && token.startsWith('user-token-')) {
+                viewerId = token.replace('user-token-', '');
+            }
+        }
+
+        // CHECK IF CONTACT ALREADY UNLOCKED
+        let contactInfo = null;
+        if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
+            const Activity = require('../models/Activity');
+            const unlocked = await Activity.findOne({
+                sender: viewerId,
+                receiver: client.userId?._id || client.userId,
+                type: 'view_contact'
+            });
+            if (unlocked) {
+                contactInfo = {
+                    email: client.email || (client.userId && client.userId.email) || 'N/A',
+                    mobile: client.mobile || (client.userId && client.userId.phone) || 'N/A',
+                    whatsapp: client.whatsapp || client.mobile || 'N/A'
+                };
+            }
         }
 
         const formattedClient = {
@@ -240,7 +261,8 @@ router.get('/:userId', async (req, res) => {
             legalHelp: client.legalHelp,
             img: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
-            profilePicPath: client.profilePicPath
+            profilePicPath: client.profilePicPath,
+            contactInfo: contactInfo
         };
 
         res.json({ success: true, client: formattedClient });

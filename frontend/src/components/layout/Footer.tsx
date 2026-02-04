@@ -118,7 +118,8 @@ const Footer: React.FC = () => {
         e.preventDefault();
         if (isLoggedIn) {
             const role = user?.role || 'client';
-            navigate(`/dashboard/${role.toLowerCase()}?page=blogs`);
+            const uid = user?.unique_id || user?.id;
+            navigate(`/dashboard/${role.toLowerCase()}/${uid}?page=blogs`);
         } else {
             openAuthModal('login');
         }

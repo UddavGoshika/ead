@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import styles from './AdvocateDashboard.module.css';
 import AdvocateSidebar from '../../../components/dashboard/advocate/AdvocateSidebar';
 import AdvocateBottomNav from '../../../components/dashboard/advocate/AdvocateBottomNav';
@@ -47,6 +48,18 @@ const AdvocateDashboard: React.FC = () => {
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const statePage = location.state?.initialPage;
+        const queryPage = searchParams.get('page');
+        if (statePage) {
+            setCurrentPage(statePage);
+        } else if (queryPage) {
+            setCurrentPage(queryPage);
+        }
+    }, [location.state, searchParams]);
 
     // Notification State
     const [showNotifications, setShowNotifications] = useState(false);
@@ -220,14 +233,14 @@ const AdvocateDashboard: React.FC = () => {
 
                     <div className={styles.topBarCenter} style={{ position: 'relative' }}>
                         {/* News Ticker - Behind Profile (99% width, top:10) */}
-                        <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: 10, zIndex: 0, opacity: 0.8 }}>
+                        <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: -10, zIndex: 0, opacity: 0.8 }}>
                             <span className={styles.tickerText}>
                                 ✨ LATEST NEWS: SOMEONE JUST POSTED A NEW PROFESSIONAL BLOG! BOOST YOUR VISIBILITY TODAY • COMPLETE YOUR PROFILE TO GET MORE LEADS ✨
                             </span>
                         </div>
 
                         {/* Profile Header - On Top */}
-                        <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
+                        {/* <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
                             <div className={styles.profileInfoQuick}>
                                 <img
                                     src={user?.image_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400'}
@@ -239,7 +252,7 @@ const AdvocateDashboard: React.FC = () => {
                                     <span className={styles.miniId}>{user?.unique_id}</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className={styles.topBarRight}>

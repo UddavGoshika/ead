@@ -332,7 +332,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     const role = (m.role || "").toLowerCase();
                     return {
                         id: m.id,
-                        code: m.unique_id || (role === 'advocate' ? `TP-EAD-ADV${m.id.slice(-5)}` : `TP-EAD-CL${m.id.slice(-5)}`),
+                        code: m.unique_id || (role === 'advocate' ? `EA-ADV-${m.id.slice(-6).toUpperCase()}` : `EA-CLI-${m.id.slice(-6).toUpperCase()}`),
                         role: role === 'advocate' ? 'Advocate' : 'Client',
                         name: m.name || 'Anonymous',
                         email: m.email,

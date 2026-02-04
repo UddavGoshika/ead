@@ -26,13 +26,11 @@ const advUpload = upload.fields([
 async function generateAdvocateId(role = 'advocate') {
     let id;
     let exists = true;
-    // TP-EAD-LAS for Legal Advisor (legal_provider), TP-EAD-ADV for Advocate
-    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAS' : 'TP-EAD-ADV';
+    const prefix = (role === 'legal_provider') ? 'EA-LAS-' : 'EA-ADV-';
 
     while (exists) {
-        // 4 digits: 1000 to 9999
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        id = `${prefix}${randomNum}`;
+        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        id = `${prefix}${randomStr}`;
         const existing = await Advocate.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
@@ -384,13 +382,14 @@ router.get('/:uniqueId', async (req, res) => {
 
         // 1. Detect Viewer Plan
         let viewerIsPremium = false;
+        let viewerId = null; // Declare viewerId here
         const authHeader = req.headers.authorization;
         if (authHeader) {
             const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
             if (token && token.startsWith('user-token-')) {
-                const userId = token.replace('user-token-', '');
-                if (require('mongoose').Types.ObjectId.isValid(userId)) {
-                    const viewer = await User.findById(userId);
+                viewerId = token.replace('user-token-', ''); // Assign to viewerId
+                if (require('mongoose').Types.ObjectId.isValid(viewerId)) {
+                    const viewer = await User.findById(viewerId);
                     if (viewer) {
                         const planStr = (viewer.plan || '').toLowerCase();
                         if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
@@ -404,6 +403,24 @@ router.get('/:uniqueId', async (req, res) => {
 
         const plan = advocate.userId?.plan || 'Free';
         const isFeatured = advocate.userId?.isPremium || false;
+
+        // CHECK IF CONTACT ALREADY UNLOCKED
+        let contactInfo = null;
+        if (viewerId) {
+            const Activity = require('../models/Activity');
+            const unlocked = await Activity.findOne({
+                sender: viewerId,
+                receiver: advocate.userId?._id || advocate.userId,
+                type: 'view_contact'
+            });
+            if (unlocked) {
+                contactInfo = {
+                    email: advocate.email || (advocate.userId && advocate.userId.email) || 'N/A',
+                    mobile: advocate.mobile || advocate.phone || (advocate.userId && advocate.userId.phone) || 'N/A',
+                    whatsapp: advocate.whatsapp || advocate.mobile || 'N/A'
+                };
+            }
+        }
 
         // MASKING
         const shouldMask = !viewerIsPremium; // Strictly mask for ALL profiles if viewer is Free
@@ -438,7 +455,8 @@ router.get('/:uniqueId', async (req, res) => {
             availability: shouldMask ? null : advocate.availability, // Hide details
             image_url: displayImage,
             isFeatured: isFeatured,
-            isMasked: shouldMask
+            isMasked: shouldMask,
+            contactInfo: contactInfo
         };
 
         res.json({ success: true, advocate: formattedAdvocate });

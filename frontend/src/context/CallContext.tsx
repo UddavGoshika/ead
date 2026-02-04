@@ -21,7 +21,7 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-const SOCKET_URL = 'http://localhost:5000'; // Update with your server URL
+const SOCKET_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin;
 
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
@@ -40,25 +40,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         if (user?.id) {
             socket.current = io(SOCKET_URL);
-            socket.current.emit('register', user.id);
+            socket.current.emit('register', String(user.id));
 
             socket.current.on('incoming-call', async ({ from, offer, type }) => {
                 const response = await callService.getActiveCalls(String(user.id));
-                if (response.incomingCall && response.incomingCall.caller._id === from) {
+                if (response.incomingCall && String(response.incomingCall.caller._id) === String(from)) {
                     setIncomingCall({ ...response.incomingCall, offer });
                 }
             });
 
             socket.current.on('call-answered', async ({ answer }) => {
                 if (peerConnection.current) {
-                    await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
-                    processIceQueue();
+                    try {
+                        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+                        processIceQueue();
+                    } catch (e) {
+                        console.error('Error setting remote description', e);
+                    }
                 }
-            });
-
-            socket.current.on('call-rejected', () => {
-                alert('Call was rejected');
-                cleanupCall();
             });
 
             socket.current.on('ice-candidate', async ({ candidate }) => {
@@ -87,24 +86,46 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         while (iceCandidatesQueue.current.length > 0) {
             const candidate = iceCandidatesQueue.current.shift();
             if (candidate && peerConnection.current) {
-                peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+                peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {
+                    console.error("Delayed ICE candidate error", e);
+                });
             }
         }
     };
 
     const createPeerConnection = (targetUserId: string) => {
+        if (peerConnection.current) {
+            peerConnection.current.close();
+        }
+
         const pc = new RTCPeerConnection({
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
         });
 
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                socket.current?.emit('ice-candidate', { to: targetUserId, candidate: event.candidate });
+                socket.current?.emit('ice-candidate', { to: String(targetUserId), candidate: event.candidate });
             }
         };
 
         pc.ontrack = (event) => {
-            setRemoteStream(event.streams[0]);
+            if (event.streams && event.streams[0]) {
+                setRemoteStream(event.streams[0]);
+            } else {
+                // Fallback for some browsers
+                const inboundStream = new MediaStream();
+                inboundStream.addTrack(event.track);
+                setRemoteStream(inboundStream);
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                cleanupCall();
+            }
         };
 
         peerConnection.current = pc;
@@ -126,20 +147,22 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const pc = createPeerConnection(receiverId);
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-            const offer = await pc.createOffer();
+            const offer = await pc.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: type === 'video'
+            });
             await pc.setLocalDescription(offer);
 
             socket.current?.emit('call-user', {
                 to: receiverId,
                 offer,
-                from: user?.id,
+                from: String(user?.id),
                 type
             });
 
         } catch (err) {
             console.error('Failed to initiate call', err);
-            setIsCalling(false);
-            setLocalStream(null);
+            cleanupCall();
         }
     };
 
@@ -153,19 +176,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             setLocalStream(stream);
             setActiveCall(incomingCall);
+
+            const callerId = String(incomingCall.caller._id);
+            const callId = incomingCall._id;
+            const callType = incomingCall.type;
+
             setIncomingCall(null);
 
-            const pc = createPeerConnection(String(incomingCall.caller._id));
+            const pc = createPeerConnection(callerId);
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-            await pc.setRemoteDescription(new RTCSessionDescription((incomingCall as any).offer));
+            await pc.setRemoteDescription(new RTCSessionDescription(((activeCall || incomingCall) as any).offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
-            socket.current?.emit('answer-call', { to: String(incomingCall.caller._id), answer });
+            socket.current?.emit('answer-call', { to: callerId, answer });
             processIceQueue();
 
-            await callService.updateCallStatus(incomingCall._id, 'accepted');
+            await callService.updateCallStatus(callId, 'accepted');
 
         } catch (err) {
             console.error('Failed to accept call', err);
@@ -175,7 +203,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const rejectCall = async () => {
         if (!incomingCall) return;
-        socket.current?.emit('hangup', { to: String(incomingCall.caller._id) }); // Reuse hangup or specific reject
+        socket.current?.emit('hangup', { to: String(incomingCall.caller._id) });
         await callService.updateCallStatus(incomingCall._id, 'rejected');
         setIncomingCall(null);
     };
@@ -186,7 +214,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             socket.current?.emit('hangup', { to: String(targetId) });
         }
         if (activeCall) {
-            await callService.updateCallStatus(activeCall._id, 'ended');
+            await callService.updateCallStatus(activeCall._id, 'ended').catch(() => { });
         }
         cleanupCall();
     };
@@ -196,6 +224,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStream.getTracks().forEach(track => track.stop());
         }
         if (peerConnection.current) {
+            peerConnection.current.onicecandidate = null;
+            peerConnection.current.ontrack = null;
             peerConnection.current.close();
             peerConnection.current = null;
         }

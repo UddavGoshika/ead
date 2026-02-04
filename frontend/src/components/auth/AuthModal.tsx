@@ -57,9 +57,9 @@ const AuthModal: React.FC = () => {
                 login(mockUser, 'mock-token-' + mockUser.id);
                 closeAuthModal();
 
-                let target = '/dashboard/advocate';
-                if (mockUser.role === 'legal_provider') target = '/dashboard/advisor';
-                if (email === 'advisor@gmail.com') target = '/dashboard/advisor';
+                let target = `/dashboard/advocate/${mockUser.unique_id || mockUser.id}`;
+                if (mockUser.role === 'legal_provider') target = `/dashboard/advisor/${mockUser.unique_id || mockUser.id}`;
+                if (email === 'advisor@gmail.com') target = `/dashboard/advisor/${mockUser.unique_id || mockUser.id}`;
 
                 navigate(target, { replace: true });
                 setLoading(false);
@@ -83,23 +83,26 @@ const AuthModal: React.FC = () => {
                 }
 
                 // Redirect based on role
-                let target = '/dashboard/client';
-                if (response.data.user.role === 'admin') {
+                const u = response.data.user;
+                const uid = u.unique_id || u.id;
+                let target = `/dashboard/client/${uid}`;
+
+                if (u.role === 'admin') {
                     target = '/admin/dashboard';
-                } else if (response.data.user.role === 'advocate') {
-                    target = '/dashboard/advocate';
-                } else if (response.data.user.role === 'ADMIN') {
+                } else if (u.role === 'advocate') {
+                    target = `/dashboard/advocate/${uid}`;
+                } else if (u.role === 'ADMIN') {
                     target = '/dashboard/admin';
-                } else if (response.data.user.role === 'VERIFIER') {
+                } else if (u.role === 'VERIFIER') {
                     target = '/dashboard/verifier';
-                } else if (response.data.user.role === 'FINANCE') {
+                } else if (u.role === 'FINANCE') {
                     target = '/dashboard/finance';
-                } else if (response.data.user.role === 'SUPPORT') {
+                } else if (u.role === 'SUPPORT') {
                     target = '/dashboard/support';
-                } else if (response.data.user.role === 'USER') {
-                    target = '/dashboard/user';
-                } else if (response.data.user.role === 'legal_provider') {
-                    target = '/dashboard/advisor';
+                } else if (u.role === 'USER') {
+                    target = `/dashboard/user/${uid}`;
+                } else if (u.role === 'legal_provider') {
+                    target = `/dashboard/advisor/${uid}`;
                 }
 
                 console.log('Redirecting to:', target);
@@ -146,9 +149,10 @@ const AuthModal: React.FC = () => {
                 login(response.data.user);
                 closeAuthModal();
 
-                let target = '/dashboard/client';
-                if (response.data.user.role === 'advocate') target = '/dashboard/advocate';
-                else if (response.data.user.role === 'legal_provider') target = '/dashboard/advisor';
+                const uid = response.data.user.unique_id || response.data.user.id;
+                let target = `/dashboard/client/${uid}`;
+                if (response.data.user.role === 'advocate') target = `/dashboard/advocate/${uid}`;
+                else if (response.data.user.role === 'legal_provider') target = `/dashboard/advisor/${uid}`;
 
                 navigate(target, { replace: true });
                 console.log('Redirecting to:', target);
