@@ -9,9 +9,10 @@ interface Props {
     isOpen: boolean;
     showsidePage: (page: string) => void;
     currentPage: string;
+    onShowTryon?: () => void;
 }
 
-const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
+const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onShowTryon }) => {
     const { user, logout } = useAuth();
 
     const plan = user?.plan || 'Free';
@@ -48,7 +49,7 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
 
                 <div className={styles.userInfo}>
                     <h3 className={styles.userName}>{user?.name || 'Client Member'}</h3>
-                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <span className={styles.userUniqueId}>{user?.unique_id || user?.id || '...'}</span>
                     <div className={styles.roleLabel}>
                         {user?.role === 'legal_provider' ? 'Advisor' :
                             user?.role === 'advocate' ? 'Advocate' :
@@ -63,6 +64,32 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) =
                 <div className={styles.upgradeText}>
                     UPTO 53% OFF ALL MEMBERSHIP PLANS
                 </div>
+
+                {!user?.isPremium && !user?.demoUsed && onShowTryon && !localStorage.getItem('hasDismissedPremiumTrial') && (
+                    <button
+                        className={styles.tryonBtn}
+                        onClick={onShowTryon}
+                        style={{
+                            marginTop: '12px',
+                            background: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)',
+                            color: '#000',
+                            fontWeight: 800,
+                            padding: '10px',
+                            borderRadius: '12px',
+                            width: '100%',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 15px rgba(250, 204, 21, 0.3)'
+                        }}
+                    >
+                        <Star size={16} fill="black" />
+                        Try Premium Gold 12h
+                    </button>
+                )}
             </div>
 
             <nav className={styles.nav}>

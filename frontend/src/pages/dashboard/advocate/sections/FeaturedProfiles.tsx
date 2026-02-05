@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { advocateService } from '../../../../services/api';
-import type { Advocate } from '../../../../types';
+import { advocateService, clientService } from '../../../../services/api';
+import type { Advocate, Client } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
+import ClientCard from '../../../../components/dashboard/ClientCard';
 import { Loader2, ArrowLeft, ScrollText, Shield } from 'lucide-react';
 import { interactionService } from '../../../../services/interactionService';
 import { useAuth } from '../../../../context/AuthContext';
@@ -14,13 +15,14 @@ interface Props {
     showDetailedProfile: (id: string) => void;
     showToast: (msg: string) => void;
     showsidePage: (page: string) => void;
-    onSelectForChat: (advocate: Advocate) => void;
+    onSelectForChat: (partner: any) => void;
 }
 
 const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }) => {
     const { user, refreshUser } = useAuth();
+    const isAdvocate = user?.role.toLowerCase() === 'advocate';
     const [showTopup, setShowTopup] = useState(false);
-    const [advocates, setAdvocates] = useState<Advocate[]>([]);
+    const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
@@ -38,33 +40,40 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     const availableCities = filters.state && filters.district && LOCATION_DATA_RAW[filters.state][filters.district] ? LOCATION_DATA_RAW[filters.state][filters.district] : [];
     const availableSubDepartments = filters.specialization && LEGAL_DOMAINS[filters.specialization] ? LEGAL_DOMAINS[filters.specialization] : [];
 
-    const fetchAdvocates = async () => {
+    const fetchProfiles = async () => {
         setLoading(true);
         try {
             const params: any = {};
-            params.category = 'featured'; // Rule 3: STRICTLY FEATURED (Premium Plans)
+            params.category = 'featured';
 
             if (filters.search) params.search = filters.search;
             if (filters.specialization) params.specialization = filters.specialization;
-            if (filters.subDepartment) params.subSpecialization = filters.subDepartment;
+            if (filters.subDepartment) params.subDepartment = filters.subDepartment;
             if (filters.court) params.court = filters.court;
             if (filters.state) params.state = filters.state;
             if (filters.district) params.district = filters.district;
             if (filters.city) params.city = filters.city;
             if (filters.experience) params.experience = filters.experience;
 
-            const response = await advocateService.getAdvocates(params);
-            setAdvocates(response.data.advocates || []);
+            if (isAdvocate) {
+                const response = await clientService.getClients(params);
+                setProfiles(response.data.clients || []);
+            } else {
+                // Rule 3: STRICTLY FEATURED (Premium Plans)
+                params.subSpecialization = params.subDepartment;
+                const response = await advocateService.getAdvocates(params);
+                setProfiles(response.data.advocates || []);
+            }
         } catch (err) {
             console.error(err);
-            showToast('Failed to load featured advocates');
+            showToast(`Failed to load ${isAdvocate ? 'client' : 'advocate'} profiles`);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchAdvocates();
+        fetchProfiles();
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
@@ -87,18 +96,72 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        fetchAdvocates();
+        fetchProfiles();
     };
 
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
+    // Centralized Interaction Handler
+    const handleInteraction = async (profile: any, action: string, data?: any) => {
+        if (!user) return;
+
+        const targetId = String(profile.id);
+        const userId = String(user.id);
+        const targetRole = isAdvocate ? 'client' : 'advocate';
+        const profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
+
+        try {
+            let res;
+            if (action === 'interest') {
+                res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                showToast(`Interest sent to ${profileName}`);
+            } else if (action === 'superInterest') {
+                res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                showToast(`Super Interest sent to ${profileName}!`);
+            } else if (action === 'shortlist') {
+                res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                showToast(`${profileName} added to shortlist`);
+            } else if (action === 'openFullChatPage') {
+                res = await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                onSelectForChat(profile);
+            } else if (action === 'message_sent' && data) {
+                const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
+                await interactionService.sendMessage(userId, partnerUserId, data);
+                showToast(`Message sent to ${profileName}`);
+            }
+
+            // Update coins if spent
+            if (res && res.coins !== undefined) {
+                refreshUser({
+                    coins: res.coins,
+                    coinsUsed: res.coinsUsed
+                });
+            }
+        } catch (err: any) {
+            const errorData = err.response?.data;
+            const msg = errorData?.message || 'Action failed';
+            const errorCode = errorData?.error;
+
+            if (errorCode === 'INTERACTION_LIMIT') {
+                showToast("You’ve reached the interaction limit for this profile (Max 3)");
+            } else if (errorCode === 'ZERO_COINS' || errorCode === 'INSUFFICIENT_COINS') {
+                setShowTopup(true);
+            } else if (errorCode === 'UPGRADE_REQUIRED') {
+                showToast("Upgrade to premium to perform this action.");
+                showsidePage('upgrade');
+            } else {
+                showToast(msg);
+            }
+        }
+    };
 
     return (
         <div className={styles.page}>
             <div className={styles.headerSection}>
                 <button className={styles.backLink} onClick={() => showsidePage('normalfccards')}>
                     <ArrowLeft size={18} />
-                    <span>Switch to Profiles</span>
+                    <span>{isAdvocate ? 'Browse All Clients' : 'Switch to Profiles'}</span>
                 </button>
                 <button
                     className={styles.backLink}
@@ -138,7 +201,7 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                         name="search"
                         value={filters.search}
                         onChange={handleFilterChange}
-                        placeholder="Search by Advocate's ID or Name......"
+                        placeholder={`Search by ${isAdvocate ? "Client's" : "Advocate's"} ID or Name...`}
                         className={styles.dashboardSearchInput}
                     />
                     <button type="submit" className={styles.searchBtnInside}>Search</button>
@@ -205,7 +268,7 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 </div>
 
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ width: '200px' }}>Apply Filters</button>
+                    <button className={styles.submitBtnDashboard} onClick={fetchProfiles} style={{ width: '200px' }}>Apply Filters</button>
                 </div>
             </div>
 
@@ -215,66 +278,34 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {advocates.map(adv => (
-                        <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
-                            <AdvocateCard
-                                advocate={adv}
-                                variant="featured"
-                                isPremium={isPremium}
-                                onAction={async (action, data) => {
-                                    if (user) {
-                                        const targetId = String(adv.id);
-                                        const userId = String(user.id);
-                                        const targetRole = 'advocate';
-
-                                        try {
-                                            let res;
-                                            if (action === 'interest') {
-                                                res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                                showToast(`Interest sent to ${adv.name}`);
-                                            } else if (action === 'superInterest') {
-                                                res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                                showToast(`Super Interest sent to ${adv.name}!`);
-                                            } else if (action === 'shortlist') {
-                                                res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                                showToast(`${adv.name} added to shortlist`);
-                                            } else if (action === 'openFullChatPage') {
-                                                // Rule 12: Chat Unlock
-                                                res = await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                                                onSelectForChat(adv);
-                                            } else if (action === 'message_sent' && data) {
-                                                await interactionService.sendMessage(userId, targetId, data);
-                                                showToast(`Message sent to ${adv.name}`);
-                                            }
-
-                                            // Update local user state if tokens were spent
-                                            if (res && res.coins !== undefined) {
-                                                refreshUser({
-                                                    coins: res.coins,
-                                                    coinsUsed: res.coinsUsed
-                                                });
-                                            }
-                                        } catch (err: any) {
-                                            const errorData = err.response?.data;
-                                            const msg = errorData?.message || 'Action failed';
-                                            const errorCode = errorData?.error;
-
-                                            if (errorCode === 'INTERACTION_LIMIT') {
-                                                showToast("You’ve reached the interaction limit for this profile (Max 3)");
-                                            } else if (errorCode === 'ZERO_COINS' || errorCode === 'INSUFFICIENT_COINS') {
-                                                setShowTopup(true); // Rule 15
-                                            } else if (errorCode === 'UPGRADE_REQUIRED') {
-                                                showToast("Upgrade to premium to perform this action.");
-                                                showsidePage('upgrade');
-                                            } else {
-                                                showToast(msg);
-                                            }
-                                        }
-                                    }
-                                }}
-                            />
+                    {profiles.length > 0 ? (
+                        profiles.map(profile => (
+                            <div key={profile.id} onClick={() => showDetailedProfile(isAdvocate ? profile.id : profile.unique_id)} style={{ cursor: 'pointer' }}>
+                                {isAdvocate ? (
+                                    <ClientCard
+                                        client={profile}
+                                        variant="featured"
+                                        isPremium={isPremium}
+                                        onAction={async (action, data) => handleInteraction(profile, action, data)}
+                                    />
+                                ) : (
+                                    <AdvocateCard
+                                        advocate={profile}
+                                        variant="featured"
+                                        isPremium={isPremium}
+                                        onAction={async (action, data) => handleInteraction(profile, action, data)}
+                                    />
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className={styles.noProfiles}>
+                            <p>No featured {isAdvocate ? 'clients' : 'advocates'} found at the moment.</p>
+                            <button onClick={() => showsidePage('normalfccards')} className={styles.switchBtn}>
+                                Browse All {isAdvocate ? 'Clients' : 'Profiles'}
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
 

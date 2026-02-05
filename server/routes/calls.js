@@ -5,6 +5,37 @@ const User = require('../models/User');
 const Advocate = require('../models/Advocate');
 const Client = require('../models/Client');
 
+// Helper to get profile details for a user
+async function getProfileDetails(userId) {
+    const user = await User.findById(userId);
+    if (!user) return { name: 'Unknown', image_url: '/default-avatar.png' };
+
+    let profile = null;
+    if (user.role === 'advocate') {
+        profile = await Advocate.findOne({ userId });
+    } else if (user.role === 'client') {
+        profile = await Client.findOne({ userId });
+    } else if (user.role === 'legal_provider') {
+        // Fallback for legal_provider if needed
+        profile = await Advocate.findOne({ userId });
+    }
+
+    let imageUrl = '/default-avatar.png';
+    if (profile?.profilePicPath) {
+        imageUrl = `/${profile.profilePicPath.replace(/\\/g, '/')}`;
+    } else if (profile?.img) {
+        imageUrl = profile.img;
+    }
+
+    return {
+        _id: user._id,
+        unique_id: profile?.unique_id || 'UID',
+        name: profile?.name || (profile?.firstName ? `${profile.firstName} ${profile.lastName}` : user.email.split('@')[0]),
+        image_url: imageUrl,
+        role: user.role
+    };
+}
+
 // INITIATE CALL
 router.post('/', async (req, res) => {
     try {
@@ -23,7 +54,15 @@ router.post('/', async (req, res) => {
 
         await newCall.save();
 
-        res.json({ success: true, call: newCall });
+        // Populate details for frontend immediate display
+        const callerDetails = await getProfileDetails(callerId);
+        const receiverDetails = await getProfileDetails(receiverId);
+
+        const call = newCall.toObject();
+        call.caller = callerDetails;
+        call.receiver = receiverDetails;
+
+        res.json({ success: true, call });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -35,10 +74,17 @@ router.get('/active/:userId', async (req, res) => {
         const { userId } = req.params;
 
         // Find if someone is calling this user
-        const incomingCall = await Call.findOne({
+        const incomingCallRaw = await Call.findOne({
             receiver: userId,
             status: 'ringing'
-        }).populate('caller', 'name image_url unique_id');
+        }).sort({ timestamp: -1 });
+
+        let incomingCall = null;
+        if (incomingCallRaw) {
+            const callerDetails = await getProfileDetails(incomingCallRaw.caller);
+            incomingCall = incomingCallRaw.toObject();
+            incomingCall.caller = callerDetails;
+        }
 
         // Also check if our own calls have been accepted or rejected
         const outgoingCall = await Call.findOne({
@@ -82,11 +128,15 @@ router.patch('/:callId', async (req, res) => {
 // GET CALL DETAILS
 router.get('/:callId', async (req, res) => {
     try {
-        const call = await Call.findById(req.params.callId)
-            .populate('caller', 'name image_url unique_id')
-            .populate('receiver', 'name image_url unique_id');
+        const callRaw = await Call.findById(req.params.callId);
+        if (!callRaw) return res.status(404).json({ success: false, error: 'Call not found' });
 
-        if (!call) return res.status(404).json({ success: false, error: 'Call not found' });
+        const callerDetails = await getProfileDetails(callRaw.caller);
+        const receiverDetails = await getProfileDetails(callRaw.receiver);
+
+        const call = callRaw.toObject();
+        call.caller = callerDetails;
+        call.receiver = receiverDetails;
 
         res.json({ success: true, call });
     } catch (err) {

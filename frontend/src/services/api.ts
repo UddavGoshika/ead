@@ -88,8 +88,8 @@ export const adminService = {
 };
 
 export const caseService = {
-    getCases: () =>
-        api.get<{ success: boolean; cases: Case[] }>('/cases'),
+    getCases: (filters: any = {}) =>
+        api.get<{ success: boolean; cases: Case[] }>('/cases', { params: filters }),
     fileCase: (caseData: any) =>
         api.post<{ success: boolean; case: Case }>('/cases', caseData),
     getMetrics: (userId: number | string) =>

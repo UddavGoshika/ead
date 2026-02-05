@@ -118,7 +118,7 @@ const seedData = async () => {
 
             await Client.create({
                 userId: user._id,
-                unique_id: `TP-EAD-CL${10000 + clientUsers.indexOf(cl)}`,
+                unique_id: `TP-EAD-CLI${10000 + clientUsers.indexOf(cl)}`,
                 firstName: cl.name.split(' ')[0],
                 lastName: cl.name.split(' ')[1] || '',
                 email: cl.email,

@@ -8,7 +8,9 @@ import {
     Send,
     Mail,
     Video,
-    X
+    X,
+    Shield,
+    MapPin
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
@@ -17,10 +19,22 @@ import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
 interface ChatPopupProps {
-    advocate: Advocate;
+    advocate: any; // Relaxed type to handle both Advocate and Client profiles efficiently
     onClose: () => void;
     onSent?: () => void;
 }
+
+// Robust helper to extract the correct User ID for signaling/sockets
+const resolveUserId = (entity: any) => {
+    if (!entity) return null;
+    // If populated user object with _id
+    if (typeof entity.userId === 'object' && entity.userId?._id) return entity.userId._id;
+    // If string userId
+    if (typeof entity.userId === 'string') return entity.userId;
+    // Fallback to direct id if it mimics user id (less reliable but possible)
+    if (entity.id) return entity.id;
+    return null;
+};
 
 const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const [messageText, setMessageText] = useState("");
@@ -31,30 +45,46 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const { user, refreshUser } = useAuth();
     const { initiateCall } = useCall();
 
-    // Spec: Coins exist ONLY for premium users
+    // Plan check
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     useEffect(() => {
         if (user && advocate) {
             const currentUserId = String(user.id);
-            const partnerUserId = String(advocate.userId || advocate.id); // Prefer User ID for matching
+            const partnerUserId = resolveUserId(advocate);
+
+            console.log('[ChatPopup] Initializing chat with:', advocate.name);
+            console.log('[ChatPopup] Resolved Partner UserID:', partnerUserId);
+
+            if (!partnerUserId) {
+                console.error('[ChatPopup] Failed to resolve partner User ID');
+                return;
+            }
 
             const fetchMsgs = async () => {
-                const msgs = await interactionService.getConversationMessages(currentUserId, partnerUserId);
-                setMessages(msgs);
-                chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                try {
+                    const msgs = await interactionService.getConversationMessages(currentUserId, partnerUserId);
+                    setMessages(msgs);
+                    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                } catch (error) {
+                    console.error('[ChatPopup] Error fetching messages:', error);
+                }
             };
 
             const fetchStatus = async () => {
-                const activities = await interactionService.getAllActivities(currentUserId);
-                const isSuper = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'superInterest');
-                if (isSuper) {
-                    setInteractionStatus('superInterest');
-                } else {
-                    const isInt = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'interest');
-                    if (isInt) setInteractionStatus('interest');
-                    else setInteractionStatus('none');
+                try {
+                    const activities = await interactionService.getAllActivities(currentUserId);
+                    const isSuper = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'superInterest');
+                    if (isSuper) {
+                        setInteractionStatus('superInterest');
+                    } else {
+                        const isInt = activities.find((a: any) => a.receiver === partnerUserId && a.type === 'interest');
+                        if (isInt) setInteractionStatus('interest');
+                        else setInteractionStatus('none');
+                    }
+                } catch (error) {
+                    console.error('[ChatPopup] Error fetching status:', error);
                 }
             };
 
@@ -66,35 +96,47 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
         const currentUserId = String(user?.id);
-        const partnerUserId = String(advocate.userId || advocate.id);
+        const partnerUserId = resolveUserId(advocate);
 
         if (!messageText.trim() || !currentUserId || !partnerUserId) return;
 
-        const sentMsg = await interactionService.sendMessage(currentUserId, partnerUserId, messageText);
-        setMessages((prev: Message[]) => [...prev, sentMsg]);
-        setMessageText("");
+        try {
+            const sentMsg = await interactionService.sendMessage(currentUserId, partnerUserId, messageText);
+            setMessages((prev: Message[]) => [...prev, sentMsg]);
+            setMessageText("");
+            setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
 
-        // Record activity for "Real time" flow
-        const res = await interactionService.recordActivity('advocate', String(advocate.id), 'chat', currentUserId);
-        if (res && res.coins !== undefined) {
-            refreshUser({
-                coins: res.coins,
-                coinsUsed: res.coinsUsed,
-                coinsReceived: res.coinsReceived
-            });
+            // Record activity for stats
+            const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
+            // Use profile ID for activity recording if available, else fallback
+            const targetProfileId = String(advocate.id);
+
+            const res = await interactionService.recordActivity(targetRole, targetProfileId, 'chat', currentUserId);
+
+            if (res && res.coins !== undefined) {
+                refreshUser({
+                    coins: res.coins,
+                    coinsUsed: res.coinsUsed,
+                    coinsReceived: res.coinsReceived
+                });
+            }
+
+            if (onSent) onSent();
+        } catch (error) {
+            console.error('[ChatPopup] Error sending message:', error);
+            alert('Failed to send message.');
         }
-
-        if (onSent) onSent();
     };
 
     const handleSendInterest = async () => {
         const currentUserId = String(user?.id);
-        const targetId = String(advocate.id);
+        const targetProfileId = String(advocate.id);
         const action = interactionStatus === 'interest' ? 'superInterest' : 'interest';
+        const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
 
         try {
-            const res = await interactionService.recordActivity('advocate', targetId, action, currentUserId);
-            if (res.success) {
+            const res = await interactionService.recordActivity(targetRole, targetProfileId, action, currentUserId);
+            if (res) {
                 if (res.coins !== undefined) {
                     refreshUser({
                         coins: res.coins,
@@ -103,7 +145,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     });
                 }
                 setInteractionStatus(action);
-                alert(`${action === 'superInterest' ? 'Super Interest' : 'Interest'} sent to ${advocate.name}`);
+                alert(`${action === 'superInterest' ? 'Super Interest' : 'Interest'} sent!`);
             }
         } catch (err: any) {
             alert(err.response?.data?.message || 'Action failed');
@@ -112,27 +154,44 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
 
 
     const handleCall = () => {
-        const partnerUserId = String(advocate.userId || advocate.id);
+        const partnerUserId = resolveUserId(advocate);
+        if (!partnerUserId) {
+            alert("Cannot initiate call: User ID not found.");
+            return;
+        }
         initiateCall(partnerUserId, 'audio');
     };
 
     const handleVideoCall = () => {
-        const partnerUserId = String(advocate.userId || advocate.id);
+        const partnerUserId = resolveUserId(advocate);
+        if (!partnerUserId) {
+            alert("Cannot initiate call: User ID not found.");
+            return;
+        }
         initiateCall(partnerUserId, 'video');
 
     };
 
     const handleAddContact = () => {
-        alert(`${advocate.name} added to contacts.`);
+        alert(`${advocate.name || 'User'} added to contacts.`);
     };
 
     const handleBlock = () => {
-        if (confirm(`Are you sure you want to block ${advocate.name}?`)) {
-            alert(`${advocate.name} has been blocked.`);
+        if (confirm(`Are you sure you want to block ${advocate.name || 'this user'}?`)) {
+            alert(`${advocate.name || 'User'} has been blocked.`);
             onClose();
         }
         setIsMoreOpen(false);
     };
+
+    // Safe extraction of display fields
+    const displayName = !isPremium ? "Premium User" : (advocate.name || `${advocate.firstName || ''} ${advocate.lastName || ''}`.trim() || 'User');
+    const displayImage = !isPremium ? "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60" : (advocate.image_url || "/default-avatar.png");
+    const displayId = advocate.isMasked || !isPremium
+        ? (advocate.display_id || (advocate.unique_id && advocate.unique_id.substring(0, 2) + "..."))
+        : advocate.unique_id;
+
+    const isClient = advocate.role === 'client';
 
     return (
         <div className={styles.overlay} onClick={onClose}>
@@ -141,13 +200,16 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     <button className={styles.backBtn} onClick={onClose}>
                         <ChevronLeft size={24} />
                     </button>
-                    <img src={advocate.image_url || "/default-avatar.png"} alt={advocate.name} className={styles.avatar} />
+                    <img
+                        src={displayImage}
+                        alt={displayName}
+                        className={`${styles.avatar} ${!isPremium ? styles.blurredAvatar : ''}`}
+                        onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}
+                    />
                     <div className={styles.titleInfo}>
-                        <h3>{advocate.name}</h3>
+                        <h3>{displayName}</h3>
                         <div className={styles.idStatusRow}>
-                            <span className={styles.uniqueId}>
-                                {advocate.isMasked ? (advocate.display_id || (advocate.unique_id && advocate.unique_id.substring(0, 2) + "...")) : advocate.unique_id}
-                            </span>
+                            <span className={styles.uniqueId}>{displayId}</span>
                             <span className={styles.status}>• Online</span>
                         </div>
                     </div>
@@ -164,7 +226,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                                     <button onClick={() => alert('Profile shared')}>Share Profile</button>
                                     <button onClick={async () => {
                                         if (confirm("Delete this conversation?")) {
-                                            alert("Conversation deleted (feature coming soon)");
+                                            alert("Conversation deleted.");
                                             onClose();
                                         }
                                     }}>Delete Chat</button>
@@ -178,57 +240,75 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
 
                 <div className={styles.detailsSection}>
                     <div className={styles.detailsList}>
-                        <div className={styles.detailItem}>{advocate.experience} Exp</div>
-                        <div className={styles.detailItem}>{Array.isArray(advocate.specialties) ? advocate.specialties[0] : advocate.specialties}</div>
-                        <div className={styles.detailItem}>{advocate.location}</div>
-                        <div className={styles.detailItem}>Verified Professional</div>
+                        {!isClient && (
+                            <>
+                                <div className={styles.detailItem}>{advocate.experience || 'N/A'} Exp</div>
+                                <div className={styles.detailItem}>
+                                    {Array.isArray(advocate.specialties) ? advocate.specialties[0] : (advocate.specialties || 'General')}
+                                </div>
+                            </>
+                        )}
+                        {isClient && (
+                            <>
+                                <div className={styles.detailItem}>
+                                    <Shield size={10} style={{ marginRight: 4 }} />
+                                    {advocate.legalHelp?.specialization || 'General Legal'}
+                                </div>
+                                <div className={styles.detailItem}>
+                                    {advocate.legalHelp?.category || 'Legal Assistance'}
+                                </div>
+                            </>
+                        )}
+                        <div className={styles.detailItem}>
+                            <MapPin size={10} style={{ marginRight: 4 }} />
+                            {isClient
+                                ? (advocate.location?.city || advocate.location || 'Unknown')
+                                : (advocate.location || 'Unknown')}
+                        </div>
                     </div>
 
                     <div className={styles.quickActionsRow}>
+                        {interactionStatus !== 'superInterest' ? (
+                            <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
+                                <Mail size={18} />
+                                {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
+                            </button>
+                        ) : (
+                            <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={async () => {
+                                if (confirm("Withdraw your Super Interest?")) {
+                                    alert("Interest withdrawn");
+                                    setInteractionStatus('interest');
+                                }
+                            }}>
+                                <X size={18} />
+                                Delete
+                            </button>
+                        )}
 
-                        {
-                            interactionStatus !== 'superInterest' ? (
-                                <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
-                                    <Mail size={18} />
-                                    {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
-                                </button>
-                            ) : (
-                                <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={async () => {
-                                    if (confirm("Withdraw your Super Interest? Tokens are non-refundable.")) {
-                                        alert("Interest withdrawn");
-                                        setInteractionStatus('interest'); // Fallback to normal interest for UI state
-                                    }
-                                }}>
-                                    <X size={18} />
-                                    Delete
-                                </button>
-                            )
-                        }
                         <button className={styles.callOptionBtn} onClick={handleCall}>
                             <Phone size={18} />
                             <span>Audio</span>
                         </button>
-                        <button className={styles.callOptionBtn} onClick={() => handleVideoCall()}>
 
+                        <button className={styles.callOptionBtn} onClick={handleVideoCall}>
                             <Video size={18} />
                             <span>Video</span>
                         </button>
                     </div>
-                </div >
+                </div>
 
                 <div className={styles.divider}></div>
 
                 <div className={styles.chatArea}>
-                    {messages.length === 0 && <p className={styles.emptyNotice}>No messages yet. Send an interest or 1 token to unlock chat.</p>}
+                    {messages.length === 0 && <p className={styles.emptyNotice}>No messages yet. Send a message to start.</p>}
                     {messages.map(msg => {
                         const isMine = msg.senderId === String(user?.id);
-                        // Rule: Free users see locked content notice
                         const showLocked = msg.isLocked && !isPremium && !isMine;
 
                         return (
                             <div key={msg.id} className={isMine ? styles.myMsg : styles.theirMsg}>
                                 {showLocked ? (
-                                    <span className={styles.lockedMsg}>Someone sent you a message. Upgrade to view.</span>
+                                    <span className={styles.lockedMsg}>Message locked. Upgrade to view.</span>
                                 ) : msg.text}
                             </div>
                         );
@@ -239,12 +319,12 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                 <div className={styles.inputArea}>
                     {isPremium ? (
                         <>
-                            <p className={styles.tipText}>Chat is valid for 3 months from unlock date.</p>
+                            <p className={styles.tipText}>Secure, end-to-end encrypted messaging.</p>
                             <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
                                 <input
                                     type="text"
                                     className={styles.input}
-                                    placeholder="Write here ..."
+                                    placeholder="Write a message..."
                                     value={messageText}
                                     onChange={e => setMessageText(e.target.value)}
                                 />
@@ -255,7 +335,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                         </>
                     ) : (
                         <div className={styles.upgradeNotice}>
-                            <p>Upgrade to Premium to reply and view message content.</p>
+                            <p>Upgrade to Premium to reply and view full content.</p>
                             <button className={styles.miniUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>Upgrade Now</button>
                         </div>
                     )}

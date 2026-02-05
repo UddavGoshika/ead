@@ -146,7 +146,8 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                     formData.mobile &&
                     formData.email &&
                     formData.idProofType &&
-                    formData.idProofDocument
+                    formData.idProofDocument &&
+                    formData.profilePhoto
                 );
             case 2:
                 return (

@@ -237,7 +237,7 @@ router.get('/', async (req, res) => {
 
         if (conditions.length > 0) query.$and = conditions;
 
-        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium');
+        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone');
 
         // Helper: Strict Plan Weight Hierarchy (Rule 4)
         const getPlanWeight = (user) => {
@@ -299,6 +299,7 @@ router.get('/', async (req, res) => {
 
             return {
                 id: adv._id,
+                role: 'advocate',
                 userId: user?._id || adv.userId, // RULE: Always expose User ID for interactions
                 unique_id: adv.unique_id, // RULE FIX: Never mask routing ID
                 name: displayName,
@@ -374,7 +375,7 @@ router.get('/:uniqueId', async (req, res) => {
             query = { unique_id: uniqueId };
         }
 
-        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium');
+        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium email phone');
 
         if (!advocate) {
             return res.status(404).json({ success: false, error: 'Advocate not found' });
@@ -439,6 +440,7 @@ router.get('/:uniqueId', async (req, res) => {
 
         const formattedAdvocate = {
             id: advocate._id,
+            role: 'advocate',
             userId: advocate.userId?._id || advocate.userId,
             unique_id: advocate.unique_id, // RULE FIX: Never mask routing ID
             name: displayName,

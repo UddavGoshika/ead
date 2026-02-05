@@ -10,13 +10,16 @@ const CaseSchema = new mongoose.Schema({
     customCategory: { type: String },
     status: {
         type: String,
-        enum: ['Open', 'In Progress', 'Action Required', 'Closed', 'Resolved'],
+        enum: ['Open', 'In Progress', 'Action Required', 'Closed', 'Resolved', 'Case Request Received', 'Client Approved'],
         default: 'Open'
     },
     location: { type: String }, // e.g., Mumbai, Delhi
     court: { type: String }, // Supreme Court, High Court, etc.
     department: { type: String },
     subDepartment: { type: String },
+    requestedDocuments: [String], // List of documents requested by advocate
+    advocateNotes: String, // Notes from advocate to client
+    clientNotes: String, // Notes from client to advocate
     documents: [{
         name: String,
         url: String,

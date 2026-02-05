@@ -66,17 +66,31 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             // Includes both Interests and those I've messaged but aren't accepted
             const sent = activities.filter((a: any) =>
                 a.isSender &&
-                a.status !== 'accepted' &&
+                a.status === 'pending' &&
                 ['interest', 'superInterest', 'chat'].includes(a.type)
             );
             setSentInterests(sent);
 
-            // Filter for Received Tab: Things I received that aren't accepted yet
-            setReceivedInterests(activities.filter((a: any) =>
+            // Filter for Received Tab: Things I received that aren't accepted/declined yet
+            const rawReceived = activities.filter((a: any) =>
                 !a.isSender &&
-                a.status !== 'accepted' &&
+                a.status === 'pending' &&
                 ['interest', 'superInterest'].includes(a.type)
-            ));
+            );
+
+            // Client-side cleanup: Deduplicate multiple pending requests from same person
+            // This handles "ghosts" where older duplicates might still exist in DB
+            const uniqueReceivedMap = new Map();
+            rawReceived.forEach((item: any) => {
+                // Key by sender ID + type to ensure unique card
+                const key = `${item.sender}-${item.type}`;
+                // We keep the LATEST one (assuming sorted by timestamp desc)
+                if (!uniqueReceivedMap.has(key)) {
+                    uniqueReceivedMap.set(key, item);
+                }
+            });
+            setReceivedInterests(Array.from(uniqueReceivedMap.values()));
+
 
             // 3. Accepted Conversations: Only those where status is 'accepted'
             const acceptedPartners = new Set(activities.filter((a: any) => a.status === 'accepted').map((a: any) => a.isSender ? String(a.receiver) : String(a.sender)));
@@ -116,7 +130,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 4000);
+        const interval = setInterval(fetchData, 10000); // 10s is safer for performance
         return () => clearInterval(interval);
     }, [user]);
 
@@ -133,12 +147,19 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
     const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // Optimistic Update: Immediately remove from list
+        setReceivedInterests(prev => prev.filter(item => item._id !== activityId));
+
         try {
+            console.log(`Responding to ${activityId} with ${status}`);
             await interactionService.respondToActivity(activityId, status);
             // If accepted, maybe send a greeting? (Optional)
-            fetchData(); // Refresh lists
-        } catch (error) {
+            fetchData(); // Refresh lists to move to accepted tab
+        } catch (error: any) {
             console.error("Failed to respond:", error);
+            alert(`Failed to update status: ${error.message || 'Server Error'}`);
+            fetchData(); // Revert/Refresh on error
         }
     };
 
@@ -341,37 +362,42 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     </div>
                 ) : (
                     <div className={styles.conversationList}>
-                        {receivedInterests.map(act => (
-                            <div key={act._id} className={styles.convItem} style={{ cursor: 'default' }}>
-                                <img
-                                    src={act.partnerImg}
-                                    className={styles.convAvatar}
-                                    alt={act.partnerName}
-                                    onClick={(e) => handleClientClick(act.clientId || act.sender, e)}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                                <div className={styles.convDetails} onClick={(e) => handleClientClick(act.clientId || act.sender, e)}>
-                                    <div className={styles.convTitleRow}>
-                                        <h4 style={{ cursor: 'pointer' }}>{act.partnerName}</h4>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
-                                            <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(act._id, e)}>
-                                                <Trash2 size={14} />
-                                            </button>
+                        {receivedInterests.map(act => {
+                            const actId = String(act._id || act.id);
+                            if (!actId || actId === 'undefined') return null;
+
+                            return (
+                                <div key={actId} className={styles.convItem} style={{ cursor: 'default' }}>
+                                    <img
+                                        src={act.partnerImg}
+                                        className={styles.convAvatar}
+                                        alt={act.partnerName}
+                                        onClick={(e) => handleClientClick(act.clientId || act.sender, e)}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                    <div className={styles.convDetails} onClick={(e) => handleClientClick(act.clientId || act.sender, e)}>
+                                        <div className={styles.convTitleRow}>
+                                            <h4 style={{ cursor: 'pointer' }}>{act.partnerName}</h4>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                                                <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(actId, e)}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className={styles.convSub}>
+                                            <span>{act.partnerUniqueId}</span>
+                                            <span>•</span>
+                                            <span style={{ color: '#38bdf8' }}>{act.type.toUpperCase()}</span>
+                                        </div>
+                                        <div className={styles.actButtons}>
+                                            <button className={styles.acceptBtn} onClick={(e) => handleResponse(actId, 'accepted', e)}>Accept</button>
+                                            <button className={styles.declineBtn} onClick={(e) => handleResponse(actId, 'declined', e)}>Ignore</button>
                                         </div>
                                     </div>
-                                    <div className={styles.convSub}>
-                                        <span>{act.partnerUniqueId}</span>
-                                        <span>•</span>
-                                        <span style={{ color: '#38bdf8' }}>{act.type.toUpperCase()}</span>
-                                    </div>
-                                    <div className={styles.actButtons}>
-                                        <button className={styles.acceptBtn} onClick={(e) => handleResponse(act._id, 'accepted', e)}>Accept</button>
-                                        <button className={styles.declineBtn} onClick={(e) => handleResponse(act._id, 'declined', e)}>Ignore</button>
-                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 );
         }

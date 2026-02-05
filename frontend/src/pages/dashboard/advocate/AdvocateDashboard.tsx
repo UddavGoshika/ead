@@ -5,6 +5,7 @@ import AdvocateSidebar from '../../../components/dashboard/advocate/AdvocateSide
 import AdvocateBottomNav from '../../../components/dashboard/advocate/AdvocateBottomNav';
 import FeaturedProfiles from './sections/FeaturedProfiles';
 import EditProfile from '../shared/EditProfile';
+import AccountSettings from '../shared/AccountSettings';
 import SearchPreferences from '../shared/SearchPreferences';
 import SafetyCenter from '../shared/SafetyCenter';
 import DetailedProfile from '../shared/DetailedProfile';
@@ -23,7 +24,8 @@ import FileCase from './sections/FileCase';
 import CreateBlog from './sections/CreateBlog';
 import CreditsPage from '../shared/CreditsPage';
 import LegalDocumentationPage from '../../LegalDocumentationPage';
-import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare } from 'lucide-react';
+import PremiumTryonModal from '../shared/PremiumTryonModal';
+import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare, FileText, PlusSquare, Briefcase, Zap } from 'lucide-react';
 import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
@@ -49,8 +51,20 @@ const AdvocateDashboard: React.FC = () => {
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
+    const [showTryonModal, setShowTryonModal] = useState(false);
     const location = useLocation();
     const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        // Show try-on modal if user is free and hasn't used demo
+        if (user && !user.isPremium && !user.demoUsed) {
+            const hasSeen = sessionStorage.getItem('hasSeenTryon');
+            if (!hasSeen) {
+                setShowTryonModal(true);
+                sessionStorage.setItem('hasSeenTryon', 'true');
+            }
+        }
+    }, [user]);
 
     useEffect(() => {
         const statePage = location.state?.initialPage;
@@ -60,6 +74,29 @@ const AdvocateDashboard: React.FC = () => {
         } else if (queryPage) {
             setCurrentPage(queryPage);
         }
+
+        // Real-time Notification Listener
+        const handleSocketNotification = (e: any) => {
+            const data = e.detail;
+            showToast(data.message);
+            // Optionally add to notification list
+            addNotification(data.message, data.status === 'accepted' ? 'success' : 'alert');
+        };
+
+        window.addEventListener('socket-notification', handleSocketNotification);
+
+        // Listen for internal tab changes (e.g. from DetailedProfile)
+        const handleChangeTab = (e: any) => {
+            if (e.detail) {
+                setCurrentPage(e.detail);
+            }
+        };
+        window.addEventListener('change-tab', handleChangeTab);
+
+        return () => {
+            window.removeEventListener('socket-notification', handleSocketNotification);
+            window.removeEventListener('change-tab', handleChangeTab);
+        };
     }, [location.state, searchParams]);
 
     // Notification State
@@ -141,13 +178,15 @@ const AdvocateDashboard: React.FC = () => {
                     onSelectForChat={handleSelectForChat}
                 />;
             case 'detailed-profile-view':
-                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} />;
+                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} onSelectForChat={handleSelectForChat} />;
             case 'edit-profile':
                 return <EditProfile backToHome={backtohome} />;
             case 'search-preferences':
                 return <SearchPreferences backToHome={backtohome} showToast={showToast} />;
             case 'upgrade':
                 return <Preservices />;
+            case 'account-settings':
+                return <AccountSettings backToHome={backtohome} />;
             case 'wallet-history':
                 return <WalletHistory backToHome={backtohome} />;
             case 'credits':
@@ -168,7 +207,17 @@ const AdvocateDashboard: React.FC = () => {
                     onSelectForChat={handleSelectForChat}
                 />;
             case 'my-cases':
-                return <MyCases />;
+                return <MyCases onSelectForChat={handleSelectForChat} />;
+            case 'initiate-case':
+                return (
+                    <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '20px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                        <Briefcase size={64} color="#facc15" style={{ marginBottom: '20px' }} />
+                        <h2 style={{ color: '#f8fafc', marginBottom: '10px' }}>Initiate a New Case</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
+                            To initiate a case, please visit a client profile and click on "Appoint as Advocate" or "Start Case".
+                        </p>
+                    </div>
+                );
             case 'fileacase':
                 return <FileCase backToHome={backtohome} showToast={showToast} />;
             case 'legal-documentation':
@@ -187,9 +236,9 @@ const AdvocateDashboard: React.FC = () => {
 
     const getPageTitle = () => {
         switch (currentPage) {
-            case 'featured-profiles': return 'Featured Profiles';
-            case 'normalfccards': return 'Browse All Advocates';
-            case 'detailed-profile-view': return 'Advocate Detail';
+            case 'featured-profiles': return 'Featured Clients';
+            case 'normalfccards': return 'Browse Clients';
+            case 'detailed-profile-view': return 'Client View';
             case 'edit-profile': return 'Edit Profile';
             case 'search-preferences': return 'Search Preferences';
             case 'upgrade': return 'Membership Upgrade';
@@ -202,6 +251,7 @@ const AdvocateDashboard: React.FC = () => {
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
             case 'my-cases': return 'My Cases';
+            case 'initiate-case': return 'Initiate New Case';
             case 'fileacase': return 'File a New Case';
             case 'legal-documentation': return 'Legal Documentation';
             default: return 'Advocate Dashboard';
@@ -214,6 +264,7 @@ const AdvocateDashboard: React.FC = () => {
                 isOpen={sidebarOpen}
                 showsidePage={showsidePage}
                 currentPage={currentPage}
+                onShowTryon={() => setShowTryonModal(true)}
             />
 
             <main className={styles.mainContentadvocatedash}>
@@ -343,6 +394,18 @@ const AdvocateDashboard: React.FC = () => {
                 </header>
 
                 <div className={styles.contentBody}>
+                    {currentPage === 'my-cases' && (
+                        <div className={styles.caseActions}>
+                            <button className={styles.topBtn} onClick={() => setCurrentPage('my-cases')}>
+                                <FileText size={18} />
+                                Case Status
+                            </button>
+                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('initiate-case')}>
+                                <PlusSquare size={18} />
+                                New Case
+                            </button>
+                        </div>
+                    )}
                     {renderPage()}
                 </div>
             </main>
@@ -367,6 +430,9 @@ const AdvocateDashboard: React.FC = () => {
                     advocate={activeChatAdvocate}
                     onClose={() => setActiveChatAdvocate(null)}
                 />
+            )}
+            {showTryonModal && (
+                <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
             )}
             <SupportHub />
         </div>

@@ -100,7 +100,6 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                     />
                 </div>
 
-                {/* Missing Field 1: ID Proof Type */}
                 <div className={styles.formGroup}>
                     <label>ID PROOF TYPE <span className={styles.required}>*</span></label>
                     <select
@@ -117,8 +116,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                     </select>
                 </div>
 
-                {/* Missing Field 2: ID Proof Document Upload */}
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                <div className={styles.formGroup}>
                     <label>UPLOAD ID PROOF <span className={styles.required}>*</span></label>
                     <div className={styles.fileUploadContainer}>
                         <input
@@ -149,9 +147,8 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                     </div>
                 </div>
 
-                {/* Profile Photo Upload - Optional */}
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                    <label>PROFILE PHOTO (Optional)</label>
+                <div className={styles.formGroup}>
+                    <label>PROFILE PHOTO <span className={styles.required}>*</span></label>
                     <div className={styles.fileUploadContainer}>
                         <input
                             type="file"

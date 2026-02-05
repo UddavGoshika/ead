@@ -49,337 +49,114 @@ const advocateDefaults: Package[] = [
         category: "Free",
         memberType: "advocate",
         description: "Basic access with essential features",
-        icon: "zap",
-        gradient: "from-blue-50 to-gray-50",
+        icon: "star",
+        gradient: "from-gray-500 to-gray-700",
         tiers: [
             {
-                name: "Silver",
-                price: 1,
+                name: "Standard",
+                price: 0,
                 coins: 10,
                 active: true,
                 features: ["Basic Profile", "Limited Visibility", "Email Support"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.2)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 0,
-                coins: 20,
-                active: true,
-                features: ["Enhanced Profile", "Standard Visibility", "Priority Listing", "Chat Support"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.2)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 0,
-                coins: 30,
-                active: true,
-                features: ["Premium Profile", "Featured Listing", "Advanced Analytics", "24/7 Support"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.2)",
-                popular: false
-            },
+                badgeColor: "#94a3b8",
+                glowColor: "rgba(148, 163, 184, 0.2)"
+            }
         ],
         featured: false,
-        sortOrder: 1,
+        sortOrder: 1
     },
     {
         category: "Pro Lite",
         memberType: "advocate",
         description: "Enhanced features for growing practices",
-        icon: "shield-check",
-        gradient: "from-blue-100 to-indigo-50",
+        icon: "zap",
+        gradient: "from-blue-500 to-indigo-600",
         tiers: [
-            {
-                name: "Silver",
-                price: 1,
-                coins: 50,
-                active: true,
-                features: ["Basic Analytics", "Email Support", "5 Case Templates", "Client Portal"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.2)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 1000,
-                coins: 100,
-                active: true,
-                features: ["Advanced Analytics", "Priority Support", "15 Case Templates", "Custom Branding"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.2)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 1500,
-                coins: 150,
-                active: true,
-                features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "API Access"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.2)",
-                popular: false
-            },
+            { name: "Silver", price: 1, coins: 50, active: true, features: ["Basic Analytics", "Email Support", "5 Case Templates", "Client Portal"], badgeColor: "#C0C0C0", glowColor: "rgba(192, 192, 192, 0.2)" },
+            { name: "Gold", price: 1000, coins: 100, active: true, features: ["Advanced Analytics", "Priority Support", "15 Case Templates", "Custom Branding"], badgeColor: "#FFD700", glowColor: "rgba(255, 215, 0, 0.2)", popular: true },
+            { name: "Platinum", price: 1500, coins: 150, active: true, features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "API Access"], badgeColor: "#E5E4E2", glowColor: "rgba(229, 228, 226, 0.2)" }
         ],
-        featured: true,
-        sortOrder: 2,
+        featured: false,
+        sortOrder: 2
     },
     {
         category: "Pro",
         memberType: "advocate",
         description: "Advanced tools for established professionals",
         icon: "crown",
-        gradient: "from-blue-200 to-purple-50",
-        tiers: [
-            {
-                name: "Silver",
-                price: 5000,
-                coins: 500,
-                active: true,
-                features: ["AI Case Analysis", "Team Collaboration", "Custom Reports", "White Label"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.3)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 10000,
-                coins: 1000,
-                active: true,
-                features: ["AI + Human Review", "API Access", "Advanced Security", "Dedicated Manager"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.3)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 15000,
-                coins: 1500,
-                active: true,
-                features: ["Enterprise Solutions", "Custom Development", "SLA Guarantee", "Priority Support"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.3)",
-                popular: false
-            },
-        ],
+        gradient: "from-purple-500 to-pink-600",
         featured: true,
-        sortOrder: 3,
+        tiers: [
+            { name: "Silver", price: 5000, coins: 500, active: true, features: ["AI Case Analysis", "Team Collaboration", "Custom Reports", "White Label"], badgeColor: "#C0C0C0", glowColor: "rgba(192, 192, 192, 0.3)" },
+            { name: "Gold", price: 10000, coins: 1000, active: true, features: ["AI + Human Review", "API Access", "Advanced Security", "Dedicated Manager"], badgeColor: "#FFD700", glowColor: "rgba(255, 215, 0, 0.3)", popular: true },
+            { name: "Platinum", price: 15000, coins: 1500, active: true, features: ["Enterprise Solutions", "Custom Development", "SLA Guarantee", "Priority Support"], badgeColor: "#E5E4E2", glowColor: "rgba(229, 228, 226, 0.3)" }
+        ],
+        sortOrder: 3
     },
     {
         category: "Ultra Pro",
         memberType: "advocate",
-        description: "Elite suite for top-tier law firms",
+        description: "Elite law firm suite",
         icon: "gem",
-        gradient: "from-blue-900 via-blue-800 to-indigo-900",
+        gradient: "from-amber-400 to-orange-600",
         tiers: [
-            {
-                name: "Silver",
-                price: 25000,
-                coins: "unlimited",
-                support: "VIP Concierge",
-                active: true,
-                features: ["Unlimited Everything", "Personal Account Manager", "Custom AI Training", "Executive Dashboard"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.3)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 35000,
-                coins: "unlimited",
-                support: "24/7 Executive Support",
-                active: true,
-                features: ["All Silver Features", "Quarterly Strategy Sessions", "Market Analysis", "Dedicated Support Team"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.3)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 50000,
-                coins: "unlimited",
-                support: "Personal Agent",
-                active: true,
-                features: ["All Gold Features", "Custom Integrations", "Executive Training", "Guaranteed ROI", "Personal Butler Service"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.3)",
-                popular: false
-            },
+            { name: "Silver", price: 25000, coins: "unlimited", active: true, features: ["Unlimited Everything", "Personal Account Manager", "Custom AI Training", "Executive Dashboard"], badgeColor: "#C0C0C0", glowColor: "rgba(192, 192, 192, 0.3)" },
+            { name: "Gold", price: 35000, coins: "unlimited", active: true, features: ["All Silver Features", "Quarterly Strategy Sessions", "Market Analysis", "Dedicated Support Team"], badgeColor: "#FFD700", glowColor: "rgba(255, 215, 0, 0.3)", popular: true },
+            { name: "Platinum", price: 50000, coins: "unlimited", active: true, features: ["All Gold Features", "Custom Integrations", "Executive Training", "Guaranteed ROI", "Personal Butler Service"], badgeColor: "#E5E4E2", glowColor: "rgba(229, 228, 226, 0.3)" }
         ],
-        featured: true,
-        sortOrder: 4,
-    },
-    {
-        category: "Test Package",
-        memberType: "advocate",
-        description: "Package for system testing and verification",
-        icon: "zap",
-        gradient: "from-green-50 to-emerald-50",
-        tiers: [
-            {
-                name: "Test Tier",
-                price: 1,
-                coins: 100,
-                active: true,
-                features: ["System Verification", "Payment Testing", "Feature Access"],
-                badgeColor: "#22c55e",
-                glowColor: "rgba(34, 197, 94, 0.2)",
-                popular: false
-            }
-        ],
-        featured: false,
-        sortOrder: 5,
-    },
+        sortOrder: 4
+    }
 ];
 
 const clientDefaults: Package[] = [
     {
         category: "Free",
         memberType: "client",
-        description: "Basic access with essential features",
-        icon: "zap",
-        gradient: "from-blue-50 to-gray-50",
+        description: "Standard access with essential features",
+        icon: "star",
+        gradient: "from-gray-500 to-gray-700",
         tiers: [
             {
-                name: "Silver",
-                price: 1,
+                name: "Standard",
+                price: 0,
                 coins: 10,
                 active: true,
                 features: ["Basic Profile", "Limited Visibility", "Email Support"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.2)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 0,
-                coins: 20,
-                active: true,
-                features: ["Enhanced Profile", "Standard Visibility", "Priority Listing", "Chat Support"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.2)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 0,
-                coins: 30,
-                active: true,
-                features: ["Premium Profile", "Featured Listing", "Advanced Analytics", "24/7 Support"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.2)",
-                popular: false
-            },
+                badgeColor: "#94a3b8",
+                glowColor: "rgba(148, 163, 184, 0.2)"
+            }
         ],
         featured: false,
-        sortOrder: 1,
+        sortOrder: 1
     },
     {
         category: "Pro Lite",
         memberType: "client",
         description: "Enhanced features for growing needs",
-        icon: "shield-check",
-        gradient: "from-blue-100 to-indigo-50",
+        icon: "zap",
+        gradient: "from-blue-500 to-indigo-600",
         tiers: [
-            {
-                name: "Silver",
-                price: 1,
-                coins: 50,
-                active: true,
-                features: ["Basic Analytics", "Email Support", "5 Legal Templates", "Advocate Portal"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.2)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 1000,
-                coins: 100,
-                active: true,
-                features: ["Advanced Analytics", "Priority Support", "15 Legal Templates", "Custom Dashboard"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.2)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 1500,
-                coins: 150,
-                active: true,
-                features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "Priority Matching"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.2)",
-                popular: false
-            },
+            { name: "Silver", price: 1, coins: 50, active: true, features: ["Basic Analytics", "Email Support", "5 Legal Templates", "Advocate Portal"], badgeColor: "#C0C0C0", glowColor: "rgba(192, 192, 192, 0.2)" },
+            { name: "Gold", price: 1000, coins: 100, active: true, features: ["Advanced Analytics", "Priority Support", "15 Legal Templates", "Custom Dashboard"], badgeColor: "#FFD700", glowColor: "rgba(255, 215, 0, 0.2)", popular: true },
+            { name: "Platinum", price: 1500, coins: 150, active: true, features: ["Full Analytics Suite", "24/7 Support", "Unlimited Templates", "Priority Matching"], badgeColor: "#E5E4E2", glowColor: "rgba(229, 228, 226, 0.2)" }
         ],
-        featured: true,
-        sortOrder: 2,
+        featured: false,
+        sortOrder: 2
     },
     {
         category: "Pro",
         memberType: "client",
         description: "Advanced tools for established clients",
         icon: "crown",
-        gradient: "from-blue-200 to-purple-50",
-        tiers: [
-            {
-                name: "Silver",
-                price: 5000,
-                coins: 500,
-                active: true,
-                features: ["AI Legal Assistant", "Case Management", "Custom Reports", "Priority Access"],
-                badgeColor: "#C0C0C0",
-                glowColor: "rgba(192, 192, 192, 0.3)",
-                popular: false
-            },
-            {
-                name: "Gold",
-                price: 10000,
-                coins: 1000,
-                active: true,
-                features: ["AI + Expert Review", "Multi-Case Management", "Advanced Security", "Dedicated Support"],
-                badgeColor: "#FFD700",
-                glowColor: "rgba(255, 215, 0, 0.3)",
-                popular: true
-            },
-            {
-                name: "Platinum",
-                price: 15000,
-                coins: 1500,
-                active: true,
-                features: ["Enterprise Solutions", "Custom Integration", "SLA Guarantee", "VIP Support"],
-                badgeColor: "#E5E4E2",
-                glowColor: "rgba(229, 228, 226, 0.3)",
-                popular: false
-            },
-        ],
+        gradient: "from-purple-500 to-pink-600",
         featured: true,
-        sortOrder: 3,
-    },
-    {
-        category: "Test Package",
-        memberType: "client",
-        description: "Package for system testing and verification",
-        icon: "zap",
-        gradient: "from-green-50 to-emerald-50",
         tiers: [
-            {
-                name: "Test Tier",
-                price: 1,
-                coins: 100,
-                active: true,
-                features: ["System Verification", "Payment Testing", "Feature Access"],
-                badgeColor: "#22c55e",
-                glowColor: "rgba(34, 197, 94, 0.2)",
-                popular: false
-            }
+            { name: "Silver", price: 5000, coins: 500, active: true, features: ["AI Legal Assistant", "Case Management", "Custom Reports", "Priority Access"], badgeColor: "#C0C0C0", glowColor: "rgba(192, 192, 192, 0.3)" },
+            { name: "Gold", price: 10000, coins: 1000, active: true, features: ["AI + Expert Review", "Multi-Case Management", "Advanced Security", "Dedicated Support"], badgeColor: "#FFD700", glowColor: "rgba(255, 215, 0, 0.3)", popular: true },
+            { name: "Platinum", price: 15000, coins: 1500, active: true, features: ["Enterprise Solutions", "Custom Integration", "SLA Guarantee", "VIP Support"], badgeColor: "#E5E4E2", glowColor: "rgba(229, 228, 226, 0.3)" }
         ],
-        featured: false,
-        sortOrder: 4,
-    },
+        sortOrder: 3
+    }
 ];
 
 /* ================= ENHANCED COMPONENT ================= */

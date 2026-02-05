@@ -8,6 +8,7 @@ export interface Call {
     status: 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed';
     roomName: string;
     timestamp: string;
+    offer?: any;
 }
 
 export const callService = {

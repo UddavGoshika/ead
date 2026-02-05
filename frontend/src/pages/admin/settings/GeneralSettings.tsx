@@ -12,8 +12,10 @@ const GeneralSettings: React.FC = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('/api/settings');
-            setSettings(res.data);
+            const res = await axios.get('/api/settings/site');
+            if (res.data.success) {
+                setSettings(res.data.settings);
+            }
         } catch (err) {
             console.error("Error fetching settings:", err);
         } finally {
@@ -28,12 +30,16 @@ const GeneralSettings: React.FC = () => {
     const handleUpdate = async () => {
         try {
             setSaving(true);
-            const res = await axios.post('/api/settings', settings);
+            const token = localStorage.getItem('token');
+            const res = await axios.post('/api/settings/site', settings, {
+                headers: { 'x-auth-token': token }
+            });
             if (res.data.success) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 3000);
             }
         } catch (err) {
+            console.error("Save error:", err);
             alert("Error saving settings");
         } finally {
             setSaving(false);
@@ -64,6 +70,10 @@ const GeneralSettings: React.FC = () => {
                 <span>Loading settings...</span>
             </div>
         );
+    }
+
+    if (!settings) {
+        return <div className={styles.error}>Failed to load settings. Please try again later.</div>;
     }
 
     return (

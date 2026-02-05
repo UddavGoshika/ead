@@ -23,6 +23,7 @@ import MyCases from './sections/MyCases';
 import FileCase from './sections/FileCase';
 import PromoCodes from './sections/PromoCodes';
 import LegalDocumentationPage from '../../LegalDocumentationPage';
+import PremiumTryonModal from '../shared/PremiumTryonModal';
 
 import type { Advocate } from '../../../types';
 
@@ -48,8 +49,20 @@ const ClientDashboard: React.FC = () => {
     const [detailedProfileId, setDetailedProfileId] = useState<string | null>(null);
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [showTryonModal, setShowTryonModal] = useState(false);
     const location = useLocation();
     const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        // Show try-on modal if user is free and hasn't used demo
+        if (user && !user.isPremium && !user.demoUsed) {
+            const hasSeen = sessionStorage.getItem('hasSeenTryon');
+            if (!hasSeen) {
+                setShowTryonModal(true);
+                sessionStorage.setItem('hasSeenTryon', 'true');
+            }
+        }
+    }, [user]);
 
     useEffect(() => {
         const statePage = location.state?.initialPage;
@@ -59,6 +72,17 @@ const ClientDashboard: React.FC = () => {
         } else if (queryPage) {
             setCurrentPage(queryPage);
         }
+
+        // Real-time Notification Listener
+        const handleSocketNotification = (e: any) => {
+            const data = e.detail;
+            showToast(data.message);
+            // Optionally add to notification list
+            addNotification(data.message, data.status === 'accepted' ? 'success' : 'alert');
+        };
+
+        window.addEventListener('socket-notification', handleSocketNotification);
+        return () => window.removeEventListener('socket-notification', handleSocketNotification);
     }, [location.state, searchParams]);
 
     // Notification State
@@ -180,9 +204,18 @@ const ClientDashboard: React.FC = () => {
                     onSelectForChat={handleSelectForChat}
                 />;
             case 'my-cases':
-                return <MyCases />;
-            case 'fileacase':
-                return <FileCase backToHome={backtohome} showToast={showToast} />;
+                return <MyCases onSelectForChat={handleSelectForChat} />;
+            case 'new-case-info':
+                return (
+                    <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '20px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                        <Info size={64} color="#facc15" style={{ marginBottom: '20px' }} />
+                        <h2 style={{ color: '#f8fafc', marginBottom: '10px' }}>No Case Initiated</h2>
+                        <p style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
+                            Advocate not assigned yet OR No documents requested by advocate.
+                            Cases are always initiated by advocates on this platform.
+                        </p>
+                    </div>
+                );
             case 'Promocodes':
                 return <PromoCodes />;
             case 'legal-documentation':
@@ -220,7 +253,7 @@ const ClientDashboard: React.FC = () => {
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
-            case 'fileacase': return 'File a New Case';
+            case 'new-case-info': return 'New Case Information';
             case 'Promocodes': return 'Special Promocodes';
             case 'legal-documentation': return 'Legal Documentation';
             default: return 'Client Dashboard';
@@ -233,6 +266,7 @@ const ClientDashboard: React.FC = () => {
                 isOpen={sidebarOpen}
                 showsidePage={showsidePage}
                 currentPage={currentPage}
+                onShowTryon={() => setShowTryonModal(true)}
             />
 
             <main className={styles.mainContentclientdash}>
@@ -353,13 +387,13 @@ const ClientDashboard: React.FC = () => {
                 <div className={styles.contentBody}>
                     {currentPage === 'my-cases' && (
                         <div className={styles.caseActions}>
-                            <button className={styles.topBtn} onClick={() => showsidePage('my-cases')}>
-                                <FileText size={18} />
-                                Case Status
+                            <button className={styles.topBtn} onClick={() => setCurrentPage('my-cases')}>
+                                <Briefcase size={18} />
+                                My Cases
                             </button>
-                            <button className={styles.topBtnPrimary} onClick={() => showsidePage('fileacase')}>
+                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('new-case-info')}>
                                 <PlusSquare size={18} />
-                                File a Case
+                                New Case
                             </button>
                         </div>
                     )}
@@ -376,6 +410,9 @@ const ClientDashboard: React.FC = () => {
                     advocate={activeChatAdvocate}
                     onClose={() => setActiveChatAdvocate(null)}
                 />
+            )}
+            {showTryonModal && (
+                <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
             )}
             <SupportHub />
         </div>

@@ -8,4 +8,8 @@ const MessageSchema = new mongoose.Schema({
     read: { type: Boolean, default: false }
 });
 
+MessageSchema.index({ sender: 1 });
+MessageSchema.index({ receiver: 1 });
+MessageSchema.index({ timestamp: -1 });
+
 module.exports = mongoose.model('Message', MessageSchema);

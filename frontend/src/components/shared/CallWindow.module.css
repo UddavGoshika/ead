@@ -5,11 +5,43 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 12000;
+}
+
+.previewContainer {
+    position: absolute;
+    left: 10%;
+    width: 280px;
+    height: 400px;
+    background: #000;
+    border-radius: 2rem;
+    overflow: hidden;
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+}
+
+.previewVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: rotateY(180deg);
+}
+
+.previewLabel {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.2rem 1rem;
+    border-radius: 1rem;
+    color: white;
+    font-size: 0.8rem;
+    white-space: nowrap;
 }
 
 .incomingPopup {
@@ -18,7 +50,7 @@
     border-radius: 2.5rem;
     text-align: center;
     color: white;
-    width: 380px;
+    width: 400px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -37,7 +69,7 @@
     right: -10px;
     bottom: -10px;
     border-radius: 50%;
-    border: 2px solid #22c55e;
+    border: 3px solid #3b82f6;
     animation: pulse 2s infinite;
 }
 
@@ -48,22 +80,23 @@
     }
 
     100% {
-        transform: scale(1.5);
+        transform: scale(1.6);
         opacity: 0;
     }
 }
 
 .callerAvatar {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     object-fit: cover;
     border: 4px solid #3b82f6;
+    background: #334155;
 }
 
 .callingIcon {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     background: #3b82f6;
     display: flex;
@@ -72,30 +105,50 @@
     color: white;
 }
 
-.callerName {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-top: 1rem;
+.callTypeTitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.statusText {
+    font-size: 1.8rem;
+    font-weight: 800;
     color: #fff;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(to right, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.callerName {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
 }
 
 .callerId {
-    color: #3b82f6;
+    color: #60a5fa;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     margin-bottom: 2rem;
+    opacity: 0.8;
 }
 
 .actionButtons {
     display: flex;
-    gap: 2.5rem;
+    gap: 3rem;
     justify-content: center;
 }
 
 .acceptBtn,
 .rejectBtn {
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -108,23 +161,20 @@
 
 .acceptBtn {
     background: #22c55e;
-    box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
 }
 
 .rejectBtn {
     background: #ef4444;
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
 }
 
-.acceptBtn:hover {
-    transform: scale(1.15);
-}
-
+.acceptBtn:hover,
 .rejectBtn:hover {
-    transform: scale(1.15);
+    transform: scale(1.1) translateY(-5px);
 }
 
-/* P2P Full Screen UI */
+/* ACTIVE CALL CONTAINER */
 .callContainer {
     position: fixed;
     top: 0;
@@ -144,7 +194,6 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
 }
 
 .remoteVideo {
@@ -153,18 +202,118 @@
     object-fit: cover;
 }
 
+.partnerOverlay {
+    position: absolute;
+    top: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 12005;
+    color: white;
+    width: 100%;
+}
+
+.partnerTopInfo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    padding: 0 20px;
+}
+
+.partnerMiniInfo {
+    text-align: left;
+}
+
+.partnerName {
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.partnerId {
+    color: #60a5fa;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin: 0;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+.callTimer {
+    background: rgba(15, 23, 42, 0.8);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Partner info handled in MiniInfo wrapper */
+
+/* MEDIA OVERLAYS */
+.audioOnlyOverlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+}
+
+.audioAvatarWrapper {
+    position: relative;
+    padding: 20px;
+}
+
+.audioAvatarWrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px dashed #3b82f6;
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.audioAvatarLarge {
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    border: 8px solid #1e293b;
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+    object-fit: cover;
+}
+
 .localVideoWrapper {
     position: absolute;
-    top: 2rem;
+    bottom: 12rem;
     right: 2rem;
-    width: 150px;
-    height: 220px;
+    width: 180px;
+    height: 260px;
     border-radius: 1.5rem;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     z-index: 12003;
-    background: #1e293b;
+    background: #0f172a;
 }
 
 .localVideo {
@@ -174,6 +323,7 @@
     transform: rotateY(180deg);
 }
 
+/* P2P CONTROLS */
 .p2pControls {
     position: absolute;
     bottom: 3rem;
@@ -183,40 +333,39 @@
     align-items: center;
     gap: 2rem;
     z-index: 12004;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(20px);
-    padding: 1.5rem 2.5rem;
-    border-radius: 4rem;
+    padding: 1.5rem 3rem;
+    border-radius: 5rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .controlBtn {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s;
+    border: none;
 }
 
 .controlBtn:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+    transform: scale(1.1);
 }
 
 .controlBtn.muted {
     background: #ef4444;
-    border-color: #ef4444;
 }
 
 .hangupBtn {
-    width: 75px;
-    height: 75px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: #ef4444;
     color: white;
@@ -224,164 +373,14 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-    transform: rotate(135deg);
+    transition: all 0.3s;
     border: none;
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
 }
 
 .hangupBtn:hover {
-    transform: rotate(135deg) scale(1.1);
     background: #dc2626;
-}
-
-/* Partner Info Overlay */
-.partnerOverlay {
-    position: absolute;
-    top: 5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    z-index: 12005;
-    color: white;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-}
-
-.partnerName {
-    font-size: 2rem;
-    font-weight: 800;
-    margin: 0;
-}
-
-.partnerId {
-    color: #3b82f6;
-    font-weight: 700;
-    font-size: 1rem;
-}
-
-/* Audio Call Specifics */
-.audioOnlyOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 12002;
-    background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
-    color: white;
-}
-
-.audioAvatarLarge {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    border: 6px solid #3b82f6;
-    margin-bottom: 2rem;
-    object-fit: cover;
-    animation: floating 3s ease-in-out infinite;
-}
-
-.audioStatusLine {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 1rem;
-    font-weight: 600;
-    color: #94a3b8;
-}
-
-.pulseDot {
-    width: 10px;
-    height: 10px;
-    background: #22c55e;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #22c55e;
-    animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-    0% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.3;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
-@keyframes floating {
-    0% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-20px);
-    }
-
-    100% {
-        transform: translateY(0px);
-    }
-}
-
-/* Minimized Mode */
-.callContainer.minimized {
-    width: 280px;
-    height: 160px;
-    top: auto;
-    left: auto;
-    bottom: 2rem;
-    right: 2rem;
-    border-radius: 1.5rem;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-}
-
-.callContainer.minimized .localVideoWrapper {
-    display: none;
-}
-
-.callContainer.minimized .partnerOverlay {
-    top: 0.5rem;
-}
-
-.callContainer.minimized .partnerName {
-    font-size: 1rem;
-}
-
-.callContainer.minimized .partnerId {
-    font-size: 0.7rem;
-}
-
-.callContainer.minimized .p2pControls {
-    bottom: 1rem;
-    padding: 0.8rem 1.2rem;
-    gap: 1rem;
-    border-radius: 2rem;
-}
-
-.callContainer.minimized .controlBtn {
-    width: 40px;
-    height: 40px;
-}
-
-.callContainer.minimized .controlBtn svg {
-    width: 18px;
-}
-
-.callContainer.minimized .hangupBtn {
-    width: 45px;
-    height: 45px;
-}
-
-.callContainer.minimized .hangupBtn svg {
-    width: 20px;
+    transform: scale(1.15) rotate(5deg);
 }
 
 .minimizeBtn {
@@ -389,9 +388,45 @@
     border: none;
     color: #94a3b8;
     cursor: pointer;
-    transition: color 0.2s;
+    padding: 10px;
 }
 
-.minimizeBtn:hover {
-    color: white;
+/* MINIMIZED STATE */
+.callContainer.minimized {
+    width: 300px;
+    height: 180px;
+    top: auto;
+    left: auto;
+    bottom: 2rem;
+    right: 2rem;
+    border-radius: 2rem;
+}
+
+.callContainer.minimized .partnerOverlay {
+    top: 1rem;
+}
+
+.callContainer.minimized .partnerName {
+    font-size: 1.2rem;
+}
+
+.callContainer.minimized .callTimer {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.6rem;
+}
+
+.callContainer.minimized .p2pControls {
+    bottom: 1rem;
+    padding: 0.5rem 1rem;
+    gap: 0.8rem;
+}
+
+.callContainer.minimized .controlBtn {
+    width: 40px;
+    height: 40px;
+}
+
+.callContainer.minimized .hangupBtn {
+    width: 50px;
+    height: 50px;
 }

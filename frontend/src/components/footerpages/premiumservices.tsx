@@ -60,6 +60,8 @@ type MembershipPlan = {
         name: string;
         price: number;
         active: boolean;
+        badgeColor?: string;
+        glowColor?: string;
     }[];
 };
 
@@ -117,7 +119,9 @@ const Preservices: React.FC = () => {
                                 .map(tier => ({
                                     name: tier.name,
                                     price: tier.price,
-                                    active: tier.active
+                                    active: tier.active,
+                                    badgeColor: tier.badgeColor,
+                                    glowColor: tier.glowColor
                                 }));
 
                             mappedPackages[key] = {
@@ -381,9 +385,13 @@ const Preservices: React.FC = () => {
                                 key={tier.name}
                                 className={`${styles.tierCard} ${selectedTier === tier.name ? styles.selectedTier : ''}`}
                                 onClick={() => handleTierSelect(tier.name)}
+                                style={{
+                                    '--tier-color': tier.badgeColor || '#3b82f6',
+                                    '--tier-glow': tier.glowColor || 'rgba(59, 130, 246, 0.2)'
+                                } as React.CSSProperties}
                             >
                                 <div className={styles.tierHeader}>
-                                    <span className={styles.tierName}>{tier.name}</span>
+                                    <span className={styles.tierName} style={{ color: tier.badgeColor }}>{tier.name}</span>
                                     <div className={styles.tierPriceContainer}>
                                         <span className={styles.currency}>₹</span>
                                         <span className={styles.tierPrice}>

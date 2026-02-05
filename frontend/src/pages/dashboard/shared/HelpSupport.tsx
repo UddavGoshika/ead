@@ -119,7 +119,9 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
                                 <div className={styles.iconBox}><Phone size={24} /></div>
                                 <div>
                                     <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>Call Us</h4>
-                                    <p style={{ fontSize: '12px', color: '#facc15' }}>+91 1800-456-7890</p>
+                                    <p style={{ fontSize: '12px', color: '#facc15' }}>+91 70937 04706
+
+                                    </p>
                                 </div>
                             </div>
                         </a>
@@ -128,7 +130,8 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
                                 <div className={styles.iconBox}><Mail size={24} /></div>
                                 <div>
                                     <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>Email Us</h4>
-                                    <p style={{ fontSize: '12px', color: '#facc15' }}>help@eadvocate.in</p>
+                                    <p style={{ fontSize: '12px', color: '#facc15' }}>info.eadvocateservices@gmail.com
+                                    </p>
                                 </div>
                             </div>
                         </a>

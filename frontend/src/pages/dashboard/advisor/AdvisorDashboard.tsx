@@ -96,7 +96,7 @@ const AdvisorDashboard: React.FC = () => {
                     onSelectForChat={handleSelectForChat}
                 />;
             case 'my-cases':
-                return <MyCases />;
+                return <MyCases onSelectForChat={handleSelectForChat} />;
             case 'fileacase':
                 return <FileCase backToHome={backtohome} showToast={showToast} />;
             case 'legal-documentation':

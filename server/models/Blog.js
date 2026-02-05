@@ -12,6 +12,7 @@ const BlogSchema = new mongoose.Schema({
     // Metrics
     views: { type: Number, default: 0 },
     shares: { type: Number, default: 0 },
+    reported: { type: Number, default: 0 },
 
     // Interactions
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

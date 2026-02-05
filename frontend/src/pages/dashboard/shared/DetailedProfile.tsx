@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, MapPin, Heart, Briefcase, UserCheck, Star,
     X, Phone, CheckCircle, Handshake, Bookmark, MessageCircle, Send,
-    AlertCircle, Loader2
+    AlertCircle, Loader2, Video, PlusCircle
 } from 'lucide-react';
 import { advocateService, clientService } from '../../../services/api';
 import { interactionService } from '../../../services/interactionService';
 import { useAuth } from '../../../context/AuthContext';
+import { useCall } from '../../../context/CallContext';
 import type { Advocate } from '../../../types';
 import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
 import styles from './DetailedProfile.module.css';
@@ -16,9 +17,10 @@ interface Props {
     backToProfiles: () => void;
     isModal?: boolean;
     onClose?: () => void;
+    onSelectForChat?: (partner: any) => void;
 }
 
-const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, onClose }) => {
+const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, onClose, onSelectForChat }) => {
     const [activeTab, setActiveTab] = useState('About Me');
     const [interactionStage, setInteractionStage] = useState<'none' | 'interest_sent' | 'chat_input' | 'chat_active'>('none');
     const [popupType, setPopupType] = useState<'none' | 'interest_upgrade' | 'super_interest_confirm' | 'chat_confirm' | 'contact_confirm'>('none');
@@ -37,6 +39,7 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
     });
 
     const { user, refreshUser } = useAuth();
+    const { initiateCall } = useCall();
     const plan = user?.plan || 'Free';
     const isPremium = user?.role === 'advocate' || user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
     const isPro = user?.role === 'advocate' || plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
@@ -72,7 +75,8 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                         const formattedClient = {
                             ...client,
                             role: 'client',
-                            id: client.userId || client.id,
+                            id: client.id,
+                            userId: client.userId,
                             name: client.name || `${client.firstName} ${client.lastName}`,
                             image_url: client.image_url || client.img,
                             location: typeof client.location === 'object' ? `${client.location.city}, ${client.location.state}` : client.location,
@@ -150,9 +154,66 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
     const confirmSuperInterest = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('superInterest'); setPopupType('none'); setInteractionStage('chat_input'); } catch (err) { } };
     const handleShortlistClick = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('shortlist'); } catch (err) { } };
     const handleChatClick = (e: React.MouseEvent) => { e.stopPropagation(); setPopupType('chat_confirm'); };
-    const confirmChat = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('chat'); setPopupType('none'); setInteractionStage('chat_input'); } catch (err) { } };
+    const confirmChat = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await handleAction('chat');
+            setPopupType('none');
+            // Trigger global chat popup instead of local input
+            if (onSelectForChat && profile) {
+                onSelectForChat(profile);
+            }
+        } catch (err) { }
+    };
     const handleViewContact = (e: React.MouseEvent) => { e.stopPropagation(); setPopupType('contact_confirm'); };
     const confirmViewContact = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('view_contact'); setPopupType('none'); } catch (err) { } };
+
+    const handleCall = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!profile) return;
+        const targetId = typeof profile.userId === 'object' ? profile.userId._id : (profile.userId || profile.id);
+        initiateCall(String(targetId), 'audio');
+    };
+
+    const handleVideoCall = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!profile) return;
+        const targetId = typeof profile.userId === 'object' ? profile.userId._id : (profile.userId || profile.id);
+        initiateCall(String(targetId), 'video');
+    };
+
+    const handleStartCase = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!profile) return;
+
+        // Premium Check: Only advocates with premium plan can initiate cases
+        const isUserPremium = user?.isPremium || (user?.plan && user.plan.toLowerCase() !== 'free');
+        if (!isUserPremium && user?.role === 'advocate') {
+            alert("To initiate a new case, please upgrade to a Premium Plan.");
+            window.location.href = '/dashboard?page=upgrade';
+            return;
+        }
+
+        // Navigate to my-cases and open initiate modal
+        if (isModal && onClose) onClose();
+
+        const initiationData = {
+            clientId: profile.unique_id,
+            title: `Legal Assistance - ${profile.legalHelp?.specialization || profile.name}`,
+            category: profile.legalHelp?.category || 'Civil',
+            description: profile.legalHelp?.issueDescription || ''
+        };
+
+        // Dispatch events to change page and open modal in MyCases
+        window.dispatchEvent(new CustomEvent('change-tab', { detail: 'my-cases' }));
+        window.dispatchEvent(new CustomEvent('open-initiate-case', { detail: initiationData }));
+
+        // Brief delay if navigation takes time
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('change-tab', { detail: 'my-cases' }));
+            window.dispatchEvent(new CustomEvent('open-initiate-case', { detail: initiationData }));
+        }, 300);
+    };
 
     const renderInternals = () => {
         if (loading) {
@@ -205,15 +266,17 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                             <span className={styles.verifiedCheck}><CheckCircle size={14} color="#000" strokeWidth={3} /></span>
                         </h1>
                         <p className={styles.profileId}>ID - {displayId}</p>
-                        <p className={styles.managedBy}>Profile managed by Professional Advocate</p>
+                        <p className={styles.managedBy}>
+                            {profile.role === 'client' ? 'Client Profile - Seeking Legal Assistance' : 'Profile managed by Professional Advocate'}
+                        </p>
                     </div>
                 </div>
 
                 <div className={styles.tabs}>
-                    {['About Me', 'Professional', 'Gallery'].map(tab => (
+                    {['About Me', profile.role === 'client' ? 'Legal Help' : 'Professional', 'Gallery'].map(tab => (
                         <div
                             key={tab}
-                            className={`${styles.tab} ${activeTab === tab ? styles.activeTab : ''}`}
+                            className={`${styles.tab} ${activeTab === tab ? (activeTab === 'About Me' ? styles.activeTab : (activeTab === 'Gallery' ? styles.activeTab : styles.activeTab)) : ''}`}
                             onClick={() => setActiveTab(tab)}
                         >
                             {tab}
@@ -265,8 +328,8 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                                     <div className={styles.quickInfoItem}>
                                         <div className={styles.quickInfoIcon}><Heart size={20} /></div>
                                         <div className={styles.quickInfoText}>
-                                            <span className={styles.quickInfoValue}>{profile.specialties?.[0] || 'Legal Expert'}</span>
-                                            <span className={styles.quickInfoLabel}>Major Specialty</span>
+                                            <span className={styles.quickInfoValue}>{(profile.specialties && profile.specialties[0]) || (profile.role === 'client' ? 'Legal Assistance' : 'Legal Expert')}</span>
+                                            <span className={styles.quickInfoLabel}>{profile.role === 'client' ? 'Required Specialty' : 'Major Specialty'}</span>
                                         </div>
                                     </div>
                                     <div
@@ -328,9 +391,9 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                                 </div>
                             </>
                         )}
-                        {activeTab === 'Professional' && (
+                        {(activeTab === 'Professional' || activeTab === 'Legal Help') && (
                             <div className={styles.professionalSection}>
-                                <h3 className={styles.sectionHeading}>Professional Experience</h3>
+                                <h3 className={styles.sectionHeading}>{profile.role === 'client' ? 'Legal Help Requirements' : 'Professional Experience'}</h3>
                                 <div className={styles.timeline}>
                                     <div className={styles.timelineLine}></div>
                                     <div className={`${styles.timelineItem} ${styles.timelineItemActive}`}>
@@ -338,24 +401,35 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                                             <div className={styles.timelineIcon}><Briefcase size={8} /></div>
                                         </div>
                                         <div className={styles.timelineContent}>
-                                            <h4>Senior Advocate & Legal Consultant</h4>
-                                            <p>{profile.experience || '10+'} Years of Active Practice</p>
+                                            <h4>{profile.role === 'client' ? 'Case Category' : 'Senior Advocate & Legal Consultant'}</h4>
+                                            <p>{profile.role === 'client' ? (profile.legalHelp?.category || 'General Legal Help') : (profile.experience || '10+') + ' Years of Active Practice'}</p>
                                         </div>
                                     </div>
                                     <div className={styles.timelineItem}>
                                         <div className={styles.timelineDot}></div>
                                         <div className={styles.timelineContent}>
-                                            <h4>Specialization Area</h4>
-                                            <p>{profile.specialties?.join(', ') || 'Civil & Criminal Law'}</p>
+                                            <h4>{profile.role === 'client' ? 'Specific Issue' : 'Specialization Area'}</h4>
+                                            <p>{profile.role === 'client' ? (profile.legalHelp?.specialization || 'Consultation') : (profile.specialties?.join(', ') || 'Civil & Criminal Law')}</p>
                                         </div>
                                     </div>
-                                    <div className={styles.timelineItem}>
-                                        <div className={styles.timelineDot}></div>
-                                        <div className={styles.timelineContent}>
-                                            <h4>Case Success Rate</h4>
-                                            <p>Successfully handled {profile.cases_handled || '500+'} legal cases.</p>
+                                    {profile.role !== 'client' && (
+                                        <div className={styles.timelineItem}>
+                                            <div className={styles.timelineDot}></div>
+                                            <div className={styles.timelineContent}>
+                                                <h4>Case Success Rate</h4>
+                                                <p>Successfully handled {profile.cases_handled || '500+'} legal cases.</p>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+                                    {profile.role === 'client' && profile.legalHelp?.issueDescription && (
+                                        <div className={styles.timelineItem}>
+                                            <div className={styles.timelineDot}></div>
+                                            <div className={styles.timelineContent}>
+                                                <h4>Description</h4>
+                                                <p>{profile.legalHelp.issueDescription}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -382,21 +456,42 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
 
                 <div className={styles.interactionWrap}>
                     <div className={styles.actionBar}>
-                        <div className={styles.actionItem} onClick={handleInterestClick}>
-                            <div className={styles.actionIcon}><Handshake size={24} /></div>
-                            <span className={styles.actionLabel}>Remind</span>
+                        <div className={styles.group}>
+                            <div className={styles.actionItem} onClick={handleInterestClick}>
+                                <div className={styles.actionIcon}><Handshake size={20} /></div>
+                                <span className={styles.actionLabel}>Remind</span>
+                            </div>
+                            <div className={styles.actionItem} onClick={handleSuperInterestClick}>
+                                <div className={styles.actionIcon}><Star size={20} /></div>
+                                <span className={styles.actionLabel}>Super</span>
+                            </div>
+                            <div className={styles.actionItem} onClick={handleChatClick}>
+                                <div className={styles.actionIcon}><MessageCircle size={20} /></div>
+                                <span className={styles.actionLabel}>Chat</span>
+                            </div>
+                            {user?.role === 'advocate' && profile.role === 'client' && (
+                                <div className={styles.actionItem} onClick={handleStartCase}>
+                                    <div className={styles.actionIcon} style={{ background: '#facc15', color: '#000' }}><PlusCircle size={20} /></div>
+                                    <span className={styles.actionLabel} style={{ color: '#facc15' }}>Start Case</span>
+                                </div>
+                            )}
                         </div>
-                        <div className={styles.actionItem} onClick={handleSuperInterestClick}>
-                            <div className={styles.actionIcon}><Star size={24} /></div>
-                            <span className={styles.actionLabel}>Super Interest</span>
-                        </div>
-                        <div className={styles.actionItem} onClick={isModal ? onClose : backToProfiles}>
-                            <div className={styles.actionIcon}><X size={24} /></div>
-                            <span className={styles.actionLabel}>Cancel</span>
-                        </div>
-                        <div className={`${styles.actionItem} ${contactInfo ? styles.actionActive : ''}`} onClick={handleViewContact}>
-                            <div className={styles.actionIcon}><Phone size={24} /></div>
-                            <span className={styles.actionLabel}>Contact</span>
+
+                        <div className={styles.divider}></div>
+
+                        <div className={styles.group}>
+                            <div className={`${styles.actionItem} ${contactInfo ? styles.actionActive : ''}`} onClick={handleViewContact}>
+                                <div className={styles.actionIcon}><Phone size={20} /></div>
+                                <span className={styles.actionLabel}>Contact</span>
+                            </div>
+                            <div className={styles.actionItem} onClick={handleCall}>
+                                <div className={styles.actionIcon} style={{ color: '#22c55e' }}><Phone size={20} /></div>
+                                <span className={styles.actionLabel}>Voice</span>
+                            </div>
+                            <div className={styles.actionItem} onClick={handleVideoCall}>
+                                <div className={styles.actionIcon} style={{ color: '#3b82f6' }}><Video size={20} /></div>
+                                <span className={styles.actionLabel}>Video</span>
+                            </div>
                         </div>
                     </div>
                 </div>

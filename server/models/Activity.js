@@ -17,4 +17,10 @@ const ActivitySchema = new mongoose.Schema({
     metadata: { type: Object }
 });
 
+ActivitySchema.index({ sender: 1 });
+ActivitySchema.index({ receiver: 1 });
+ActivitySchema.index({ type: 1 });
+ActivitySchema.index({ status: 1 });
+ActivitySchema.index({ timestamp: -1 });
+
 module.exports = mongoose.model('Activity', ActivitySchema);

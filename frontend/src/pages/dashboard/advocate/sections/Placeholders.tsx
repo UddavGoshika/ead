@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Construction, Loader2, Send } from 'lucide-react';
 import { useAuth } from '../../../../context/AuthContext';
-import { advocateService } from '../../../../services/api';
-import type { Advocate } from '../../../../types';
+import { advocateService, clientService } from '../../../../services/api';
+import type { Advocate, Client } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
+import ClientCard from '../../../../components/dashboard/ClientCard';
 import { interactionService } from '../../../../services/interactionService';
 import styles from '../AdvocateList.module.css';
 
@@ -34,7 +35,8 @@ export default PlaceholderPage;
 // Export specialized placeholders
 export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }: any) => {
     const { user } = useAuth();
-    const [advocates, setAdvocates] = useState<Advocate[]>([]);
+    const isAdvocate = user?.role.toLowerCase() === 'advocate';
+    const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
@@ -44,28 +46,34 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
         experience: 'Experience'
     });
 
-    const fetchAdvocates = async () => {
+    const fetchProfiles = async () => {
         setLoading(true);
         try {
             const params: any = {};
+            params.category = 'normal';
             if (filters.search) params.search = filters.search;
             if (filters.specialization !== 'Department') params.specialization = filters.specialization;
             if (filters.court !== 'Select Court') params.court = filters.court;
             if (filters.location !== 'Location') params.city = filters.location;
             if (filters.experience !== 'Experience') params.experience = filters.experience;
 
-            const response = await advocateService.getAdvocates(params);
-            setAdvocates(response.data.advocates || []);
+            if (isAdvocate) {
+                const response = await clientService.getClients(params);
+                setProfiles(response.data.clients || []);
+            } else {
+                const response = await advocateService.getAdvocates(params);
+                setProfiles(response.data.advocates || []);
+            }
         } catch (err) {
             console.error(err);
-            showToast('Failed to load advocates');
+            showToast(`Failed to load ${isAdvocate ? 'client' : 'advocate'} profiles`);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchAdvocates();
+        fetchProfiles();
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
@@ -74,7 +82,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        fetchAdvocates();
+        fetchProfiles();
     };
 
     const plan = user?.plan || 'Free';
@@ -85,7 +93,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
             <div className={styles.headerSection}>
                 <button className={styles.backLink} onClick={() => showsidePage('featured-profiles')}>
                     <ArrowLeft size={18} />
-                    <span>Switch to Featured Profiles</span>
+                    <span>{isAdvocate ? 'Switch to Featured Clients' : 'Switch to Featured Profiles'}</span>
                 </button>
             </div>
 
@@ -96,7 +104,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                         name="search"
                         value={filters.search}
                         onChange={handleFilterChange}
-                        placeholder="Search by ID or Name..."
+                        placeholder={`Search by ${isAdvocate ? "Client's" : "Advocate's"} ID or Name...`}
                         className={styles.dashboardSearchInput}
                     />
                     <button type="submit" className={styles.searchBtnInside}>Search</button>
@@ -122,7 +130,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                     <option>Bangalore</option>
                 </select>
 
-                <button className={styles.submitBtnDashboard} onClick={fetchAdvocates}>Submit</button>
+                <button className={styles.submitBtnDashboard} onClick={fetchProfiles}>Submit</button>
             </div>
 
             {loading ? (
@@ -131,41 +139,102 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {advocates.map((adv: Advocate) => (
-                        <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
-                            <AdvocateCard
-                                advocate={adv}
-                                variant="normal"
-                                isPremium={isPremium}
-                                onAction={async (action: string, data?: string) => {
-                                    if (user) {
-                                        const targetId = String(adv.id);
-                                        const userId = String(user.id);
-                                        const targetRole = 'advocate';
+                    {profiles.length > 0 ? (
+                        profiles.map((profile: any) => (
+                            <div key={profile.id} onClick={() => showDetailedProfile(isAdvocate ? profile.id : profile.unique_id)} style={{ cursor: 'pointer' }}>
+                                {isAdvocate ? (
+                                    <ClientCard
+                                        client={profile}
+                                        variant="normal"
+                                        isPremium={isPremium}
+                                        onAction={async (action: string, data?: string) => {
+                                            if (user) {
+                                                const targetId = String(profile.id);
+                                                const userId = String(user.id);
+                                                const targetRole = 'client';
+                                                const name = profile.name || `${profile.firstName} ${profile.lastName}`;
 
-                                        if (action === 'interest_initiated' || action === 'interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                            showToast(`Interest sent to ${adv.name}`);
-                                        } else if (action === 'super_interest_sent' || action === 'super-interest') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                            showToast(`Super Interest sent to ${adv.name}!`);
-                                        } else if (action === 'shortlisted') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                            showToast(`${adv.name} added to shortlist`);
-                                        } else if (action === 'openFullChatPage') {
-                                            await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                                            onSelectForChat(adv);
-                                        } else if (action === 'message_sent' && data) {
-                                            await interactionService.sendMessage(userId, targetId, data);
-                                            showToast(`Message sent to ${adv.name}`);
-                                        } else {
-                                            showToast(`Advocate ${adv.name}: ${action}`);
-                                        }
-                                    }
-                                }}
-                            />
+                                                if (action === 'interest') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                    showToast(`Interest sent to ${name}`);
+                                                } else if (action === 'superInterest') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                    showToast(`Super Interest sent to ${name}!`);
+                                                } else if (action === 'shortlist') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                    showToast(`${name} added to shortlist`);
+                                                } else if (action === 'openFullChatPage') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                    onSelectForChat(profile);
+                                                } else if (action === 'message_sent' && data) {
+                                                    const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
+                                                    await interactionService.sendMessage(userId, partnerUserId, data);
+                                                    showToast(`Message sent to ${name}`);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <AdvocateCard
+                                        advocate={profile}
+                                        variant="normal"
+                                        isPremium={isPremium}
+                                        onAction={async (action: string, data?: string) => {
+                                            if (user) {
+                                                const targetId = String(profile.id);
+                                                const userId = String(user.id);
+                                                const targetRole = 'advocate';
+
+                                                if (action === 'interest_initiated' || action === 'interest') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
+                                                    showToast(`Interest sent to ${profile.name}`);
+                                                } else if (action === 'super_interest_sent' || action === 'super-interest') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
+                                                    showToast(`Super Interest sent to ${profile.name}!`);
+                                                } else if (action === 'shortlisted') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
+                                                    showToast(`${profile.name} added to shortlist`);
+                                                } else if (action === 'openFullChatPage') {
+                                                    await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                    onSelectForChat(profile);
+                                                } else if (action === 'message_sent' && data) {
+                                                    const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
+                                                    await interactionService.sendMessage(userId, partnerUserId, data);
+                                                    showToast(`Message sent to ${profile.name}`);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
+                            padding: '60px 20px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            borderRadius: '16px',
+                            border: '1px dashed rgba(255, 255, 255, 0.1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '15px'
+                        }}>
+                            <p style={{ color: '#94a3b8', fontSize: '16px' }}>No {isAdvocate ? 'clients' : 'advocates'} found matching your criteria.</p>
+                            <button onClick={() => showsidePage('featured-profiles')} style={{
+                                background: 'transparent',
+                                border: '1px solid #facc15',
+                                color: '#facc15',
+                                padding: '8px 20px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                View Featured {isAdvocate ? 'Clients' : 'Profiles'}
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
         </div>

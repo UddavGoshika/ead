@@ -44,7 +44,7 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
                 </div>
                 <div className={styles.userInfo}>
                     <h3 className={styles.userName}>{user?.name || 'Legal Advisor'}</h3>
-                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <span className={styles.userUniqueId}>{user?.unique_id || user?.id || '...'}</span>
                     <div className={styles.roleLabel}>Legal Advisor</div>
                 </div>
 

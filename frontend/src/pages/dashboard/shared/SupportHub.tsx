@@ -12,7 +12,7 @@ import { useAuth } from '../../../context/AuthContext';
 import styles from './SupportHub.module.css';
 
 const SupportHub: React.FC = () => {
-    const { user } = useAuth();
+    const { user, isFirebaseReady } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'chat' | 'call'>('chat');
 
@@ -47,7 +47,7 @@ const SupportHub: React.FC = () => {
 
     // LISTEN FOR CALLS FROM STAFF
     useEffect(() => {
-        if (!user?.id) return;
+        if (!user?.id || !isFirebaseReady) return;
         const unsubscribe = useCallSignals(String(user.id), (callId, caller) => {
             if (!isInCall && !isIncomingCall) {
                 setIncomingCallId(callId);

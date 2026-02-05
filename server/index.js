@@ -57,8 +57,13 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/staff', staffRoutes);
 const caseRoutes = require('./routes/cases');
 const callRoutes = require('./routes/calls');
+const pageRoutes = require('./routes/pages');
 app.use('/api/cases', caseRoutes);
 app.use('/api/calls', callRoutes);
+app.use('/api/pages', pageRoutes);
+
+const manualPaymentRoutes = require('./routes/manualPayments');
+app.use('/api/manual-payments', manualPaymentRoutes);
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.
@@ -89,9 +94,13 @@ const io = new Server(server, {
     }
 });
 
-// Socket.IO Connection Handling
 const userSockets = new Map(); // userId -> socketId
 
+// Expose io and sockets to app
+app.set('io', io);
+app.set('userSockets', userSockets);
+
+// Socket.IO Connection Handling
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
@@ -100,10 +109,15 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} registered with socket ${socket.id}`);
     });
 
-    socket.on('call-user', ({ to, offer, from, type }) => {
+    socket.on('call-user', ({ to, offer, from, type, callerInfo }) => {
         const targetSocketId = userSockets.get(to);
         if (targetSocketId) {
-            io.to(targetSocketId).emit('incoming-call', { from, offer, type });
+            io.to(targetSocketId).emit('incoming-call', { from, offer, type, callerInfo });
+            // Let the caller know it's ringing
+            socket.emit('ringing');
+        } else {
+            // Let the caller know the user is offline
+            socket.emit('user-offline');
         }
     });
 

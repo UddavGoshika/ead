@@ -21,7 +21,7 @@ const Sidebar: React.FC = () => {
                 </div>
                 <div className={styles.userInfo}>
                     <h3 className={styles.userName}>{user?.name || 'User'}</h3>
-                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <span className={styles.userUniqueId}>{user?.unique_id || user?.id || '...'}</span>
                     <div className={styles.roleLabel}>
                         {user?.role === 'legal_provider' ? 'Advisor' :
                             user?.role === 'advocate' ? 'Advocate' :

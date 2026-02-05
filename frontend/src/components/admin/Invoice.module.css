@@ -20,6 +20,27 @@
     text-transform: uppercase;
 }
 
+.watermarkImageContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.05;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.watermarkImg {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
 .invoiceWrapper {
     position: relative;
     z-index: 1;

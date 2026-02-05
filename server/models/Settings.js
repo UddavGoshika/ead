@@ -53,7 +53,8 @@ const SettingsSchema = new mongoose.Schema({
     appearance: {
         primary_color: { type: String, default: '#3b82f6' },
         dark_mode: { type: Boolean, default: true }
-    }
+    },
+    invoice_header_url: { type: String, default: '/assets/left-logo.jpeg' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', SettingsSchema);

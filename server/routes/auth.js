@@ -56,10 +56,12 @@ router.post('/login', async (req, res) => {
                     userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
                 }
             } else if (user.role === 'client') {
-                // Future: Fetch client details
-                // const Client = require('../models/Client');
-                // const client = await Client.findOne({ userId: user._id });
-                // if (client) uniqueId = client.unique_id; 
+                const Client = require('../models/Client');
+                const client = await Client.findOne({ userId: user._id });
+                if (client) {
+                    uniqueId = client.unique_id;
+                    displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
+                }
             }
 
             return res.json({
@@ -69,7 +71,7 @@ router.post('/login', async (req, res) => {
                     email: user.email,
                     role: user.role,
                     name: displayName,
-                    unique_id: uniqueId,
+                    unique_id: uniqueId || `EA-${user._id.toString().slice(-6).toUpperCase()}`,
                     image_url: userImage,
                     status: user.status,
                     plan: user.plan || 'Free',
@@ -170,7 +172,7 @@ router.get('/me', async (req, res) => {
                 email: user.email,
                 role: user.role,
                 name: displayName,
-                unique_id: uniqueId,
+                unique_id: uniqueId || `EA-${user._id.toString().slice(-6).toUpperCase()}`,
                 image_url: userImage,
                 status: user.status,
                 plan: user.plan || 'Free',

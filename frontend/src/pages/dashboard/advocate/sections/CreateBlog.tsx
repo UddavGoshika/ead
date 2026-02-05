@@ -14,8 +14,18 @@ const CreateBlog: React.FC<CreateBlogProps> = ({ onClose, onSuccess }) => {
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('General');
     const [content, setContent] = useState('');
+    const [image, setImage] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImage(file);
+            setPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,12 +33,18 @@ const CreateBlog: React.FC<CreateBlogProps> = ({ onClose, onSuccess }) => {
 
         try {
             setLoading(true);
-            const res = await axios.post('/api/blogs', {
-                title,
-                content,
-                author: user?.id,
-                authorName: user?.name,
-                category
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+            formData.append('author', String(user?.id || ''));
+            formData.append('authorName', user?.name || '');
+            formData.append('category', category);
+            if (image) {
+                formData.append('image', image);
+            }
+
+            const res = await axios.post('/api/blogs', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             if (res.data.success) {
@@ -80,6 +96,21 @@ const CreateBlog: React.FC<CreateBlogProps> = ({ onClose, onSuccess }) => {
                         <option value="Corporate Law">Corporate Law</option>
                         <option value="Technology">Technology</option>
                     </select>
+                </div>
+                <div className={styles.formGroup}>
+                    <label>Blog Image</label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className={styles.fileInput}
+                    />
+                    {preview && (
+                        <div className={styles.previewContainer}>
+                            <img src={preview} alt="Preview" className={styles.imagePreview} />
+                            <button type="button" onClick={() => { setImage(null); setPreview(null); }} className={styles.removeImg}>Remove</button>
+                        </div>
+                    )}
                 </div>
                 <div className={styles.formGroup}>
                     <label>Content</label>

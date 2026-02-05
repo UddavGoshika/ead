@@ -620,10 +620,34 @@ router.patch('/members/:id/restore', async (req, res) => {
 
 // ================= BLOG MANAGEMENT =================
 
-// GET ALL BLOGS
+// GET ALL BLOGS WITH FILTERS
 router.get('/blogs', async (req, res) => {
     try {
-        const blogs = await Blog.find();
+        const { status, search, sort } = req.query;
+        let query = {};
+
+        if (status && status !== 'All') {
+            query.status = status;
+        }
+
+        if (req.query.onlyAdmin === 'true') {
+            query.authorName = 'e-Advocate Services'; // This is the name used in seed script
+        }
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { authorName: { $regex: search, $options: 'i' } },
+                { content: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        let sortOption = { createdAt: -1 };
+        if (sort === 'Newest') sortOption = { createdAt: -1 };
+        else if (sort === 'Oldest') sortOption = { createdAt: 1 };
+        else if (sort === 'Views') sortOption = { views: -1 };
+
+        const blogs = await Blog.find(query).sort(sortOption);
         res.json({ success: true, blogs });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -663,6 +687,51 @@ router.post('/blogs/:id/approve', async (req, res) => {
         }
 
         res.json({ success: true, blog });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// REJECT BLOG
+router.post('/blogs/:id/reject', async (req, res) => {
+    try {
+        const { remarks } = req.body;
+        const blog = await Blog.findByIdAndUpdate(req.params.id, { status: 'Rejected' }, { new: true });
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+
+        if (blog.author) {
+            createNotification('blog', `Your blog post "${blog.title}" was rejected. Reason: ${remarks || 'Review requirements not met.'}`, 'Admin', blog.author, { blogId: blog._id });
+        }
+
+        res.json({ success: true, blog });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// UPDATE BLOG
+router.patch('/blogs/:id', upload.single('image'), async (req, res) => {
+    try {
+        const updateData = { ...req.body };
+        if (req.file) {
+            updateData.image = `/uploads/blogs/${req.file.filename}`;
+        }
+
+        const blog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+
+        res.json({ success: true, blog });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE BLOG
+router.delete('/blogs/:id', async (req, res) => {
+    try {
+        const blog = await Blog.findByIdAndDelete(req.params.id);
+        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        res.json({ success: true, message: 'Blog deleted successfully' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

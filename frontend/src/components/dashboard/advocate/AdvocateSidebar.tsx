@@ -10,9 +10,10 @@ interface Props {
     isOpen: boolean;
     showsidePage: (page: string) => void;
     currentPage: string;
+    onShowTryon?: () => void;
 }
 
-const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
+const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onShowTryon }) => {
     const { user, logout } = useAuth();
 
     const menuItems = [
@@ -20,7 +21,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
         { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
         { id: 'my-subscription', label: 'My Subscription', icon: Shield },
-        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star, premium: true },
+        { id: 'featured-profiles', label: 'Featured Clients', icon: Star, premium: true },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
         { id: 'my-cases', label: 'My Cases', icon: Briefcase },
         { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
@@ -47,7 +48,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
                 </div>
                 <div className={styles.userInfo}>
                     <h3 className={styles.userName}>{user?.name || 'Advocate Member'}</h3>
-                    <span className={styles.userUniqueId}>{user?.unique_id || 'ID-00000'}</span>
+                    <span className={styles.userUniqueId}>{user?.unique_id || user?.id || '...'}</span>
                     <div className={styles.roleLabel}>
                         {user?.role === 'legal_provider' ? 'Advisor' :
                             user?.role === 'client' ? 'Client' :
@@ -61,6 +62,32 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
                 <div className={styles.upgradeText}>
                     UPTO 53% OFF ALL MEMBERSHIP PLANS
                 </div>
+
+                {!user?.isPremium && !user?.demoUsed && onShowTryon && !localStorage.getItem('hasDismissedPremiumTrial') && (
+                    <button
+                        className={styles.tryonBtn}
+                        onClick={onShowTryon}
+                        style={{
+                            marginTop: '12px',
+                            background: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)',
+                            color: '#000',
+                            fontWeight: 800,
+                            padding: '10px',
+                            borderRadius: '12px',
+                            width: '100%',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 4px 15px rgba(250, 204, 21, 0.3)'
+                        }}
+                    >
+                        <Star size={16} fill="black" />
+                        Try Premium Gold 12h
+                    </button>
+                )}
             </div>
 
             <nav className={styles.nav}>

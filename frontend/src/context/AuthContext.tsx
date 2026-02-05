@@ -2,11 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { authService } from '../services/api';
 import type { User } from '../types';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../firebase';
 
 interface AuthContextType {
     user: User | null;
     isLoggedIn: boolean;
-    isAuthLoading: boolean; // Added this
+    isAuthLoading: boolean;
+    isFirebaseReady: boolean;
     login: (user: User, token?: string) => void;
     logout: () => void;
     refreshUser: (updates: Partial<User>) => void;
@@ -58,7 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const hasFlag = localStorage.getItem('isLoggedIn') === 'true';
         return hasToken && hasFlag;
     });
-    const [isAuthLoading, setIsAuthLoading] = useState(true); // Added isAuthLoading state
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+    const [isFirebaseReady, setIsFirebaseReady] = useState(false); // Added
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -102,6 +106,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         checkAuth();
     }, []);
+
+    // FIREBASE AUTH SYNC
+    useEffect(() => {
+        if (isLoggedIn && user) {
+            console.log('[AuthContext] Syncing Firebase Auth...');
+            signInAnonymously(auth)
+                .then((cred) => {
+                    console.log('[AuthContext] Firebase Anonymous Auth Successful', cred.user.uid);
+                    setIsFirebaseReady(true);
+                })
+                .catch((error) => {
+                    console.error('[AuthContext] Firebase Auth Failed', error);
+                });
+        }
+    }, [isLoggedIn, user]);
 
     const login = (userData: User, token?: string) => {
         // SET STORAGE FIRST
@@ -246,7 +265,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <AuthContext.Provider value={{
             user,
             isLoggedIn,
-            isAuthLoading, // Added this
+            isAuthLoading,
+            isFirebaseReady,
             login,
             logout,
             refreshUser, // Added

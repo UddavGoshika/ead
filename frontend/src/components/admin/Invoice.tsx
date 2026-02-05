@@ -105,6 +105,11 @@ const Invoice: React.FC<InvoiceProps> = ({ payment }) => {
 
     return (
         <div className={styles.invoiceOuterContainer}>
+            {/* Watermark Image Container */}
+            <div className={styles.watermarkImageContainer}>
+                <img src="/assets/Tatito New.png" alt="Watermark" className={styles.watermarkImg} />
+            </div>
+
             {/* Watermark Text */}
             <div className={styles.watermarkText}>
                 e-Advocate Services
@@ -114,7 +119,7 @@ const Invoice: React.FC<InvoiceProps> = ({ payment }) => {
                 <div className={styles.topLogoRow}>
                     <div className={styles.brandLogo}>
                         <img
-                            src="/assets/left-logo.jpeg"
+                            src={settings?.invoice_header_url || "/assets/left-logo.jpeg"}
                             alt="e-Advocate Logo"
                             className={styles.invoiceLogoImg}
                         />

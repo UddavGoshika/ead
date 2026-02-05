@@ -5,8 +5,46 @@ import { FaInstagram, FaFacebookF, FaLinkedinIn, FaPinterestP, FaYoutube, FaXTwi
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 
+const FOOTER_DEFAULTS: any[] = [
+    // Explore
+    { title: "Home Page", route: "/", status: "Published", category: "Explore", content: "" },
+    { title: "Browse Profiles", route: "/dashboard?page=all-advocates", status: "Published", category: "Explore", content: "" },
+    { title: "File a Case", route: "https://filing.ecourts.gov.in/pdedev/", status: "Published", category: "Explore", content: "" },
+    { title: "Case Status", route: "https://services.ecourts.gov.in/ecourtindia_v6/", status: "Published", category: "Explore", content: "" },
+    { title: "Create Blog", route: "/blogs", status: "Published", category: "Explore", content: "" },
+    // More
+    { title: "Premium Services", route: "/premium-services", status: "Published", category: "More", content: "" },
+    { title: "Careers", route: "/careers", status: "Published", category: "More", content: "" },
+    { title: "How it Works", route: "/how-it-works", status: "Published", category: "More", content: "" },
+    { title: "Documentation - How It Works", route: "/documentation-how-it-works", status: "Published", category: "More", content: "" },
+    { title: "Credits", route: "#credits", status: "Published", category: "More", content: "" },
+    { title: "Site Map", route: "/site-map", status: "Published", category: "More", content: "" },
+    { title: "About Us", route: "/about", status: "Published", category: "More", content: "" },
+    // For Advocates
+    { title: "Find Clients", route: "#search-clients", status: "Published", category: "For Advocates", content: "" },
+    { title: "Advocate How it Works", route: "/advocate-how-it-works", status: "Published", category: "For Advocates", content: "" },
+    // For Clients
+    { title: "Find Advocates", route: "#search-advocates", status: "Published", category: "For Clients", content: "" },
+    { title: "Client How it Works", route: "/client-how-it-works", status: "Published", category: "For Clients", content: "" },
+    // Help
+    { title: "Help", route: "#help", status: "Published", category: "Help", content: "" },
+    { title: "E-Advocate Centers", route: "/centers", status: "Published", category: "Help", content: "" },
+    // Legal
+    { title: "Fraud Alert", route: "/fraud-alert", status: "Published", category: "Legal", content: "" },
+    { title: "Terms of Use", route: "/terms", status: "Published", category: "Legal", content: "" },
+    { title: "Third Party Terms of Use", route: "/third-party-terms", status: "Published", category: "Legal", content: "" },
+    { title: "Privacy Policy", route: "/privacy", status: "Published", category: "Legal", content: "" },
+    { title: "Cookie Policy", route: "/cookie-policy", status: "Published", category: "Legal", content: "" },
+    // Privacy Features
+    { title: "Summons / Notices", route: "/summons-and-notices", status: "Published", category: "Privacy Features", content: "" },
+    { title: "Grievances", route: "/grievance-redressal", status: "Published", category: "Privacy Features", content: "" },
+    { title: "Refund Policy", route: "/refund", status: "Published", category: "Privacy Features", content: "" },
+];
+
 const Footer: React.FC = () => {
-    const { settings } = useSettings();
+    const { settings, pages } = useSettings();
+    // Use dynamic pages if they exist in DB, otherwise fallback to defaults for UI visibility
+    const activePages = pages.length > 0 ? pages : FOOTER_DEFAULTS;
     const { isLoggedIn, user, openAuthModal, setSearchRole, openHelpModal } = useAuth();
     const [modalData, setModalData] = React.useState<{ title: string; content: string; details: string[]; icons?: string[]; sections?: { subtitle: string; points: string[] }[] } | null>(null);
     const navigate = useNavigate();
@@ -105,7 +143,7 @@ const Footer: React.FC = () => {
                     ]
                 }
             ],
-            details: [], // Keeping for backward compatibility if needed by other components, but we'll use sections
+            details: [],
             icons: []
         }
     };
@@ -129,15 +167,13 @@ const Footer: React.FC = () => {
         e.preventDefault();
         if (role) setSearchRole(role);
 
-        // If on home page, scroll. Otherwise navigate home.
-        if (window.location.pathname === '/' || window.location.pathname === '/home' || window.location.pathname === '/index.html') {
+        if (window.location.pathname === '/' || window.location.pathname === '/home') {
             const element = document.getElementById('search');
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth' });
             }
         } else {
             navigate('/');
-            // Longer timeout to ensure page load and ScrollToTop finish
             setTimeout(() => {
                 const element = document.getElementById('search');
                 if (element) {
@@ -158,101 +194,103 @@ const Footer: React.FC = () => {
         if (name.includes('threads')) return <FaThreads />;
         if (name.includes('telegram')) return <FaTelegram />;
         if (name.includes('whatsapp')) return <FaWhatsapp />;
-        return <FaInstagram />; // Default
+        return <FaInstagram />;
+    };
+
+    const renderLink = (page: { title: string; route: string }) => {
+        const title = page.title.toLowerCase();
+        const route = page.route;
+
+        if (title.includes("browse profiles") || route === "#search-advocates") {
+            return <Link to="#search" onClick={(e) => handleSearchClick(e, 'advocates')}>{page.title}</Link>;
+        }
+        if (route === "#search-clients") {
+            return <Link to="#search" onClick={(e) => handleSearchClick(e, 'clients')}>{page.title}</Link>;
+        }
+        if (route === "#search" || title === "browse profiles") {
+            return <Link to="#search" onClick={(e) => handleSearchClick(e)}>{page.title}</Link>;
+        }
+        if (title === "create blog" || route === "/blogs") {
+            return <Link to="/blogs" onClick={handleCreateBlog}>{page.title}</Link>;
+        }
+        if (route === "#help" || title === "help") {
+            return <Link to="#" onClick={(e) => { e.preventDefault(); openHelpModal(); }}>{page.title}</Link>;
+        }
+        if (route === "#credits" || title === "credits") {
+            return <Link to="#" onClick={(e) => { e.preventDefault(); openModal('credits'); }}>{page.title}</Link>;
+        }
+        if (route.startsWith("http")) {
+            return <Link to="" onClick={() => window.open(route, "_blank", "noopener,noreferrer")}>{page.title}</Link>;
+        }
+        if (route === "/") {
+            return <Link to="/" onClick={() => { if (window.location.pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' }); }}>{page.title}</Link>;
+        }
+
+        return <Link to={route}>{page.title}</Link>;
+    };
+
+    const getPagesByCategory = (category: string) => {
+        return activePages.filter((p: any) => p.category === category && p.status === "Published");
     };
 
     return (
         <footer className={styles.footer}>
             <div className={styles.container}>
-                {/* Top Row Links */}
                 <div className={styles.linksGrid}>
                     <div className={styles.column}>
                         <h3>{settings?.site_name || "E-Advocate Services"}</h3>
                         <p>{settings?.site_title || "India's premier legal platform connecting advocates and clients with trust and transparency."}</p>
                     </div>
+
                     <div className={styles.column}>
                         <h3>Explore</h3>
                         <ul>
-                            <li><Link to="/" onClick={(e) => {
-                                if (window.location.pathname === '/') {
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }
-                            }}>Home</Link></li>
-                            <li><Link to="#search" onClick={(e) => handleSearchClick(e)}>Browse Profiles</Link></li>
-                            <li><Link to="" onClick={() =>
-                                window.open("https://filing.ecourts.gov.in/pdedev/", "_blank", "noopener,noreferrer")
-                            }>File a Case</Link></li>
-                            <li><Link to="" onClick={() =>
-                                window.open("https://services.ecourts.gov.in/ecourtindia_v6/", "_blank", "noopener,noreferrer")
-                            }>Case Status</Link></li>
-                            <li><Link to="/blogs" onClick={handleCreateBlog}>Create Blog</Link></li>
+                            {getPagesByCategory("Explore").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
+
                     <div className={styles.column}>
                         <h3>More</h3>
                         <ul>
-                            <li><Link to="/premium-services">Premium Services</Link></li>
-                            <li><Link to="/careers">Careers</Link></li>
-                            <li><Link to="/how-it-works">How it Works</Link></li>
-                            <li><Link to="/documentation-how-it-works">Documentation - How It Works</Link></li>
-                            {settings?.footer_pages?.filter(p => p.active).map((page, idx) => (
-                                <li key={idx}>
-                                    <Link to={page.link}>{page.title}</Link>
-                                </li>
-                            ))}
-                            <li><Link to="#" onClick={(e) => { e.preventDefault(); openModal('credits'); }}>Credits</Link></li>
-                            <li><Link to="/site-map">Site Map</Link></li>
-                            <li><Link to="/about">About Us</Link></li>
+                            {getPagesByCategory("More").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
+
                     <div className={styles.column}>
                         <h3>For Advocates</h3>
                         <ul>
-                            <li><Link to="#search" onClick={(e) => handleSearchClick(e, 'clients')}>Find Clients</Link></li>
-                            <li><Link to="/advocate-how-it-works">Advocate How it Works</Link></li>
-
+                            {getPagesByCategory("For Advocates").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
                 </div>
 
-                {/* Middle Row Links */}
                 <div className={styles.linksGrid}>
                     <div className={styles.column}>
                         <h3>For Clients</h3>
                         <ul>
-                            <li><Link to="#search" onClick={(e) => handleSearchClick(e, 'advocates')}>Find Advocates</Link></li>
-                            <li><Link to="/client-how-it-works">How it Works</Link></li>
-
+                            {getPagesByCategory("For Clients").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
                     <div className={styles.column}>
                         <h3>Help</h3>
                         <ul>
-                            <li><Link to="" onClick={(e) => { e.preventDefault(); openHelpModal(); }}>Help</Link></li>
-                            <li><Link to="/centers">E-Advocate Centers</Link></li>
+                            {getPagesByCategory("Help").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
                     <div className={styles.column}>
                         <h3>Legal</h3>
                         <ul>
-                            <li><Link to="/fraud-alert">Fraud Alert</Link></li>
-                            <li><Link to="/terms">Terms of Use</Link></li>
-                            <li><Link to="/third-party-terms">Third Party Terms of Use</Link></li>
-                            <li><Link to="/privacy">Privacy Policy</Link></li>
-                            <li><Link to="/cookie-policy">Cookie Policy</Link></li>
+                            {getPagesByCategory("Legal").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
                     <div className={styles.column}>
                         <h3>Privacy Features</h3>
                         <ul>
-                            <li><Link to="/summons-and-notices">Summons / Notices</Link></li>
-                            <li><Link to="/grievance-redressal">Grievances</Link></li>
-                            <li><Link to="/refund">Refund Policy</Link></li>
+                            {getPagesByCategory("Privacy Features").map((p: any, idx: number) => <li key={p._id || idx}>{renderLink(p)}</li>)}
                         </ul>
                     </div>
                 </div>
 
-                {/* Branding Grid */}
                 <div className={styles.brandingGrid}>
                     <div className={styles.brandBox} onClick={() => openModal('approved')}>
                         <span>APPROVED BY</span>
@@ -284,12 +322,9 @@ const Footer: React.FC = () => {
                     </div>
                 </div>
 
-
                 <div className={styles.topSection}>
-                    {/* LEFT */}
                     <div className={styles.left}>
                         <h3 className={styles.heading}>Download Our App</h3>
-
                         <div className={styles.storeButtons}>
                             <div className={styles.storeBtn}>
                                 <img src="/assets/apple-store.jpg" alt="App Store" />
@@ -300,70 +335,37 @@ const Footer: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* RIGHT */}
                     <div className={styles.right}>
                         <h3 className={styles.heading}>Connect With Us</h3>
-
                         <div className={styles.socials}>
-
-
                             {(settings?.social_links && Array.isArray(settings.social_links) ? settings.social_links : (settings?.social_links ? Object.entries(settings.social_links as any).map(([k, v]) => ({ platform: k, url: v as string, icon: k, active: true })) : [])).filter((l: any) => l.active && l.url && l.url !== '#').map((link: any, idx: number) => (
-                                <a
-                                    key={idx}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={link.platform}
-                                    className={styles.social}
-                                >
+                                <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" aria-label={link.platform} className={styles.social}>
                                     {getIconComponent(link.icon || link.platform)}
                                 </a>
                             ))}
                         </div>
-
                         <div className={styles.contact}>
                             <p>📧 {settings?.contact_email || "info.eadvocateservices@gmail.com"}</p>
-                            <p>
-                                📧 support@tatitoprojects.com |
-                                support@eadvocateservices.com
-                            </p>
+                            <p>📧 support@tatitoprojects.com | support@eadvocateservices.com</p>
                         </div>
                     </div>
                 </div>
 
-                {/* DIVIDER */}
                 <div className={styles.divider} />
 
-                {/* BOTTOM */}
                 <div className={styles.bottom}>
                     <p>{settings?.footer_text || "© 2025 E-Advocate Services. All Rights Reserved."}</p>
-                    <p>
-                        Developed by <span className={styles.heart}>❤</span> ILN Technology Team | © ILN INDIA – Group of Companies
-                        <br></br>
-
-                    </p>
+                    <p>Developed by <span className={styles.heart}>❤</span> ILN Technology Team | © ILN INDIA – Group of Companies</p>
                 </div>
-
-
-
-
-
-
-
-
             </div>
 
-            {/* Detailed Info Modal */}
             {modalData && (
                 <div className={styles.modalOverlay} onClick={() => setModalData(null)}>
                     <div className={styles.modalBody} onClick={e => e.stopPropagation()}>
                         <button className={styles.closeBtn} onClick={() => setModalData(null)}>&times;</button>
-
                         <div className={styles.modalContent}>
                             <h2 className={styles.modalTitle}>{modalData.title}</h2>
                             <p className={styles.modalText}>{modalData.content}</p>
-
-                            {/* Rendering dynamic sections if they exist (for Credits) */}
                             {modalData.sections ? (
                                 <div className={styles.modalSectionsGrid}>
                                     {modalData.sections.map((section: any, sIdx: number) => (
@@ -387,7 +389,6 @@ const Footer: React.FC = () => {
                                     </ul>
                                 </div>
                             )}
-
                             {modalData.icons && modalData.icons.length > 0 && (
                                 <div className={styles.modalLogos}>
                                     {modalData.icons.map((icon, idx) => (

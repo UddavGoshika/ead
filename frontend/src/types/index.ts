@@ -55,7 +55,7 @@ export interface Case {
 
 export interface Advocate {
     id: number | string;
-    userId?: string;
+    userId?: any;
     unique_id: string;
     display_id?: string;
     name: string;
@@ -67,6 +67,7 @@ export interface Advocate {
     specialties: string[];
     rating: number;
     image_url: string;
+    profilePicPath?: string;
     cases_handled: number;
     age?: number;
     isFeatured?: boolean;
@@ -92,6 +93,25 @@ export interface Advocate {
     maritalStatus?: string;
     bar_council_id?: string;
     isMasked?: boolean;
+    contactInfo?: {
+        email: string;
+        mobile: string;
+        whatsapp?: string;
+    };
+}
+
+export interface Client {
+    id: number | string;
+    userId?: any;
+    unique_id: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
+    location?: any;
+    image_url?: string;
+    profilePicPath?: string;
+    legalHelp?: any;
     contactInfo?: {
         email: string;
         mobile: string;

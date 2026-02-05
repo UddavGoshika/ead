@@ -6,7 +6,135 @@ const Client = require('../models/Client');
 const Message = require('../models/Message');
 const Activity = require('../models/Activity');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
 const { createNotification } = require('../utils/notif');
+
+// Storage config
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage: storage });
+
+// GET ACTIVITY STATS
+router.get('/stats/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const [visits, sent, received, accepted] = await Promise.all([
+            Activity.countDocuments({ sender: userId, type: 'visit' }),
+            Activity.countDocuments({ sender: userId, type: { $in: ['interest', 'superInterest'] } }),
+            Activity.countDocuments({ receiver: userId, type: { $in: ['interest', 'superInterest'] } }),
+            Activity.countDocuments({
+                $or: [
+                    { sender: userId, status: 'accepted' },
+                    { receiver: userId, status: 'accepted' }
+                ]
+            })
+        ]);
+        res.json({
+            success: true,
+            stats: { visits, sent, received, accepted }
+        });
+    } catch (err) {
+        console.error('Stats Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ACCEPT/DECLINE INTEREST
+router.post('/respond/:activityId/:status', async (req, res) => {
+    try {
+        const { activityId, status } = req.params; // status: 'accepted' or 'declined'
+        console.log(`Response Request: ID=${activityId}, Status=${status}`);
+
+        if (!['accepted', 'declined'].includes(status)) {
+            console.warn(`Invalid status received: ${status}`);
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(activityId)) {
+            console.warn(`Invalid Activity ID received: ${activityId}`);
+            return res.status(400).json({ error: 'Invalid Activity ID format' });
+        }
+
+        const activity = await Activity.findById(activityId);
+        if (!activity) {
+            console.warn(`Activity not found: ${activityId}`);
+            return res.status(404).json({ error: 'Activity not found' });
+        }
+
+        console.log(`Found activity: ${activity.type} from ${activity.sender} to ${activity.receiver}`);
+
+        // Update specific activity
+        activity.status = status;
+        await activity.save();
+
+        // Fetch responder details for notification
+        let responderName = 'User';
+        const receiverId = activity.receiver.toString();
+        const adv = await Advocate.findOne({ userId: receiverId });
+        if (adv) {
+            responderName = adv.name || `${adv.firstName} ${adv.lastName}`;
+        } else {
+            const cl = await Client.findOne({ userId: receiverId });
+            if (cl) responderName = `${cl.firstName} ${cl.lastName}`;
+        }
+
+        // Send notification to the SENDER of the interest
+        const notifType = activity.type === 'superInterest' ? 'superInterest' : 'interest';
+        const actionMsg = status === 'accepted' ? 'accepted' : 'declined';
+        await createNotification(
+            notifType,
+            `${responderName} has ${actionMsg} your request.`,
+            responderName,
+            receiverId,
+            { activityId: activity._id, status: status }
+        );
+
+        // Real-time Notification via Socket.IO
+        const io = req.app.get('io');
+        const userSockets = req.app.get('userSockets');
+
+        // 1. Notify the SENDER (the one who gets the decision)
+        const senderSocketId = userSockets.get(activity.sender.toString());
+        if (senderSocketId) {
+            io.to(senderSocketId).emit('new-notification', {
+                type: notifType,
+                message: `${responderName} has ${actionMsg} your request.`,
+                senderName: responderName,
+                status: status
+            });
+        }
+
+        // 2. Notify the RESPONDER (the one who made the decision)
+        const responderSocketId = userSockets.get(receiverId);
+        if (responderSocketId) {
+            io.to(responderSocketId).emit('new-notification', {
+                type: 'system',
+                message: `You have ${actionMsg} the request from ${activity.senderName || 'User'}.`,
+                status: status
+            });
+        }
+
+        // Self-Healing: Update duplicates if they exist
+        await Activity.updateMany(
+            {
+                sender: activity.sender,
+                receiver: activity.receiver,
+                type: activity.type,
+                status: 'pending'
+            },
+            { status: status }
+        );
+
+        console.log(`Successfully updated activity ${activityId} to ${status}`);
+        res.json({ success: true, message: `Request ${status}` });
+    } catch (err) {
+        console.error('Respond To Activity Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Action can be: shortlist, interest, superInterest, chat_unlock, view_contact
 router.post('/:targetRole/:targetId/:action', async (req, res) => {
@@ -186,8 +314,49 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
             });
         }
 
-        // NOTIFICATION
-        createNotification(action, `New interaction: ${action} from User`, '', userId, { targetId, targetRole });
+        // NOTIFICATION DETAILS
+        let senderName = 'A user';
+        const adv = await Advocate.findOne({ userId: userId.toString() });
+        if (adv) senderName = adv.name || `${adv.firstName} ${adv.lastName}`;
+        else {
+            const cl = await Client.findOne({ userId: userId.toString() });
+            if (cl) senderName = `${cl.firstName} ${cl.lastName}`;
+        }
+
+        const actionText = action === 'interest' ? 'sent you an interest' :
+            action === 'superInterest' ? 'sent you a super interest' :
+                action === 'shortlist' ? 'shortlisted your profile' :
+                    action === 'view_contact' ? 'viewed your contact' :
+                        action === 'chat' ? 'unlocked chat with you' : `performed ${action}`;
+
+        const notifMsg = `${senderName} has ${actionText}.`;
+
+        await createNotification(action, notifMsg, senderName, userId, { targetId, targetRole });
+
+        // Real-time Notification via Socket.IO
+        const io = req.app.get('io');
+        const userSockets = req.app.get('userSockets');
+
+        // 1. Notify the RECEIVER (target)
+        const targetSocketId = userSockets.get(targetUserId.toString());
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('new-notification', {
+                type: action,
+                message: notifMsg,
+                senderName: senderName,
+                action: action
+            });
+        }
+
+        // 2. Notify the SENDER (confirmation)
+        const senderSocketId = userSockets.get(userId.toString());
+        if (senderSocketId) {
+            io.to(senderSocketId).emit('new-notification', {
+                type: 'system',
+                message: `You successfully ${action === 'shortlist' ? 'shortlisted' : 'sent an interest to'} ${target.name || 'this profile'}.`,
+                action: action
+            });
+        }
 
         res.json({
             success: true,
@@ -199,47 +368,6 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         });
     } catch (err) {
         console.error('Interaction Error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// GET ACTIVITY STATS
-router.get('/stats/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const stats = {
-            visits: await Activity.countDocuments({ sender: userId, type: 'visit' }),
-            sent: await Activity.countDocuments({ sender: userId, type: { $in: ['interest', 'superInterest'] } }),
-            received: await Activity.countDocuments({ receiver: userId, type: { $in: ['interest', 'superInterest'] } }),
-            accepted: await Activity.countDocuments({
-                $or: [
-                    { sender: userId, status: 'accepted' },
-                    { receiver: userId, status: 'accepted' }
-                ]
-            })
-        };
-        res.json({ success: true, stats });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// ACCEPT/DECLINE INTEREST
-router.post('/respond/:activityId/:status', async (req, res) => {
-    try {
-        const { activityId, status } = req.params; // status: 'accepted' or 'declined'
-        if (!['accepted', 'declined'].includes(status)) {
-            return res.status(400).json({ error: 'Invalid status' });
-        }
-
-        const activity = await Activity.findById(activityId);
-        if (!activity) return res.status(404).json({ error: 'Activity not found' });
-
-        activity.status = status;
-        await activity.save();
-
-        res.json({ success: true, message: `Request ${status}` });
-    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
@@ -414,48 +542,56 @@ router.get('/conversations/:userId', async (req, res) => {
             $or: [{ sender: userId }, { receiver: userId }]
         }).sort({ timestamp: -1 });
 
-        const conversationPartners = new Set();
-        const conversations = [];
+        const partnersMap = new Map();
+        const partnerIds = new Set();
 
         for (const msg of messages) {
             const partnerId = msg.sender.toString() === userId ? msg.receiver.toString() : msg.sender.toString();
-            if (!conversationPartners.has(partnerId)) {
-                conversationPartners.add(partnerId);
-
-                // Fetch partner profile (Advocate or Client)
-                let partnerProfile = null;
-                if (mongoose.Types.ObjectId.isValid(partnerId)) {
-                    partnerProfile = await Advocate.findOne({ userId: partnerId });
-                    if (!partnerProfile) {
-                        partnerProfile = await Client.findOne({ userId: partnerId });
-                    }
-                }
-
-                const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
-
-                let partnerLocation = 'N/A';
-                if (partnerProfile) {
-                    if (partnerProfile.address) {
-                        partnerLocation = `${partnerProfile.address.city || ''} ${partnerProfile.address.state || ''}`.trim() || 'India';
-                    } else if (partnerProfile.location) {
-                        partnerLocation = `${partnerProfile.location.city || ''} ${partnerProfile.location.state || ''}`.trim() || 'India';
-                    }
-                }
-
-                conversations.push({
-                    partnerId,
-                    partnerName: partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User',
-                    partnerUniqueId: partnerProfile ? partnerProfile.unique_id : null,
-                    partnerImg,
-                    partnerLocation,
-                    lastMessage: msg.text,
-                    timestamp: msg.timestamp
-                });
+            if (!partnersMap.has(partnerId)) {
+                partnersMap.set(partnerId, { lastMessage: msg.text, timestamp: msg.timestamp });
+                partnerIds.add(partnerId);
             }
         }
 
+        const ids = Array.from(partnerIds).filter(id => mongoose.Types.ObjectId.isValid(id));
+        const [advocates, clients] = await Promise.all([
+            Advocate.find({ userId: { $in: ids } }).lean(),
+            Client.find({ userId: { $in: ids } }).lean()
+        ]);
+
+        const profileMap = {};
+        advocates.forEach(p => profileMap[p.userId.toString()] = p);
+        clients.forEach(p => profileMap[p.userId.toString()] = p);
+
+        const conversations = ids.map(partnerId => {
+            const partnerProfile = profileMap[partnerId];
+            const msgData = partnersMap.get(partnerId);
+
+            const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.profilePicPath || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
+
+            let partnerLocation = 'N/A';
+            if (partnerProfile) {
+                if (partnerProfile.address) {
+                    partnerLocation = `${partnerProfile.address.city || ''} ${partnerProfile.address.state || ''}`.trim() || 'India';
+                } else if (partnerProfile.location) {
+                    partnerLocation = `${partnerProfile.location.city || ''} ${partnerProfile.location.state || ''}`.trim() || 'India';
+                }
+            }
+
+            return {
+                partnerId,
+                partnerName: partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User',
+                partnerUniqueId: partnerProfile ? partnerProfile.unique_id : null,
+                partnerImg,
+                partnerLocation,
+                lastMessage: msgData.lastMessage,
+                timestamp: msgData.timestamp
+            };
+        }).filter(c => c !== null);
+
         res.json({ success: true, conversations });
     } catch (err) {
+        console.error('Conversations Error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -468,22 +604,25 @@ router.get('/all/:userId', async (req, res) => {
             $or: [{ sender: userId }, { receiver: userId }]
         }).sort({ timestamp: -1 }).lean();
 
-        const detailedActivities = [];
+        const partnerIds = Array.from(new Set(activities.map(a =>
+            a.sender.toString() === userId ? a.receiver.toString() : a.sender.toString()
+        ))).filter(id => mongoose.Types.ObjectId.isValid(id));
 
-        for (const act of activities) {
+        const [advocates, clients] = await Promise.all([
+            Advocate.find({ userId: { $in: partnerIds } }).lean(),
+            Client.find({ userId: { $in: partnerIds } }).lean()
+        ]);
+
+        const profileMap = {};
+        advocates.forEach(p => profileMap[p.userId.toString()] = p);
+        clients.forEach(p => profileMap[p.userId.toString()] = p);
+
+        const detailedActivities = activities.map(act => {
             const isSender = act.sender.toString() === userId;
-            const partnerId = isSender ? act.receiver : act.sender;
+            const partnerId = isSender ? act.receiver.toString() : act.sender.toString();
+            const partnerProfile = profileMap[partnerId];
 
-            // Fetch partner profile
-            let partnerProfile = null;
-            if (mongoose.Types.ObjectId.isValid(partnerId)) {
-                partnerProfile = await Advocate.findOne({ userId: partnerId });
-                if (!partnerProfile) {
-                    partnerProfile = await Client.findOne({ userId: partnerId });
-                }
-            }
-
-            const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
+            const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.profilePicPath || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
 
             let partnerLocation = 'N/A';
             if (partnerProfile) {
@@ -494,18 +633,19 @@ router.get('/all/:userId', async (req, res) => {
                 }
             }
 
-            detailedActivities.push({
+            return {
                 ...act,
                 partnerName: partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User',
                 partnerUniqueId: partnerProfile ? partnerProfile.unique_id : null,
                 partnerImg,
                 partnerLocation,
                 isSender
-            });
-        }
+            };
+        });
 
         res.json({ success: true, activities: detailedActivities });
     } catch (err) {
+        console.error('All Activities Error:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -519,6 +659,20 @@ router.delete('/:activityId', async (req, res) => {
         res.json({ success: true, message: 'Activity deleted' });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// UPLOAD DOCUMENT FOR CASES
+router.post('/upload-document', upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded' });
+        }
+        const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        res.json({ success: true, fileUrl });
+    } catch (err) {
+        console.error('Upload Error:', err);
+        res.status(500).json({ success: false, message: 'Server error during upload' });
     }
 });
 

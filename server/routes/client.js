@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
@@ -23,11 +24,12 @@ const cpUpload = upload.fields([
 async function generateClientId() {
     let id;
     let exists = true;
-    const prefix = 'EA-CLI-';
+    const prefix = 'TP-EAD-CLI';
 
     while (exists) {
-        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-        id = `${prefix}${randomStr}`;
+        // Generate exactly 4 random digits (0000-9999)
+        const digits = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        id = `${prefix}${digits}`;
         const existing = await Client.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
@@ -154,7 +156,7 @@ router.get('/', async (req, res) => {
             });
         }
 
-        const catCond = buildCondition('legalHelp.category', category);
+        const catCond = (category !== 'featured' && category !== 'normal') ? buildCondition('legalHelp.category', category) : null;
         if (catCond) conditions.push(catCond);
 
         const specCond = buildCondition('legalHelp.specialization', specialization);
@@ -179,16 +181,89 @@ router.get('/', async (req, res) => {
             query.$and = conditions;
         }
 
-        const dbClients = await Client.find(query);
+        console.log('[BACKEND DEBUG] Client Query:', JSON.stringify(query));
+        let dbClients = await Client.find(query).populate('userId', 'plan isPremium email phone');
+        console.log(`[BACKEND DEBUG] Total DB Clients Found: ${dbClients.length}`);
+
+        // Helper: Plan Weight Hierarchy
+        const getPlanWeight = (userIdObj) => {
+            if (!userIdObj) return 0;
+
+            const plan = (userIdObj.plan || '').toLowerCase();
+            const type = (userIdObj.planType || '').toLowerCase();
+            const tier = (userIdObj.planTier || '').toLowerCase();
+            const isPremium = userIdObj.isPremium;
+
+            if (!isPremium && plan !== 'free') {
+                // Double check if plan name implies premium
+                if (plan.includes('pro') || plan.includes('platinum') || plan.includes('gold') || plan.includes('silver')) {
+                    // Treat as premium for weighting if it has these keywords
+                } else if (plan !== 'free' && plan !== '') {
+                    // Other plans might be premium too
+                } else {
+                    return 0; // Truly Free
+                }
+            }
+
+            if (plan === 'free') return 0;
+
+            let score = 0;
+            // Hierarchy: Pro > Pro Lite > Free
+            // Tiers: Platinum > Gold > Silver
+
+            if (plan.includes('pro') && !plan.includes('lite')) score += 2000;
+            else if (plan.includes('pro lite')) score += 1000;
+
+            if (plan.includes('platinum')) score += 300;
+            else if (plan.includes('gold')) score += 200;
+            else if (plan.includes('silver')) score += 100;
+
+            // Fallback to searching in type/tier fields if plan string doesn't have it
+            if (score === 0) {
+                if (type.includes('pro') && !type.includes('lite')) score += 2000;
+                else if (type.includes('pro lite')) score += 1000;
+
+                if (tier.includes('platinum')) score += 300;
+                else if (tier.includes('gold')) score += 200;
+                else if (tier.includes('silver')) score += 100;
+            }
+
+            return score;
+        };
+
+        // Handle category logic (Plan based filtering and sorting)
+        if (category === 'featured') {
+            // "Higher-paid premium plans must always appear at the top. Profile visibility should decrease as the plan level goes down."
+            // We include everyone but sort them.
+            dbClients.sort((a, b) => getPlanWeight(b.userId) - getPlanWeight(a.userId));
+        } else if (category === 'normal') {
+            // "In the Normal Profiles section, show only Free registered clients. never show premium client in normal profiles"
+            dbClients = dbClients.filter(c => {
+                const weight = getPlanWeight(c.userId);
+                const isPremium = c.userId?.isPremium;
+                const plan = (c.userId?.plan || '').toLowerCase();
+                return !isPremium && weight === 0 && (plan === 'free' || plan === '');
+            });
+        }
 
         const formattedClients = dbClients.map(client => ({
             id: client._id,
+            role: 'client',
+            userId: client.userId?._id || client.userId,
             unique_id: client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`,
             name: `${client.firstName} ${client.lastName}`,
-            location: client.address?.city ? `${client.address.city}, ${client.address.state}` : (client.address?.state || 'N/A'),
-            experience: 'Client',
-            specialization: 'Legal Help',
-            img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'
+            firstName: client.firstName,
+            lastName: client.lastName,
+            role: 'client',
+            address: client.address,
+            location: {
+                city: client.address?.city,
+                state: client.address?.state
+            },
+            legalHelp: client.legalHelp,
+            experience: 'Client Profile',
+            specialization: client.legalHelp?.specialization || 'General Legal Help',
+            image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'
         }));
 
         res.json({ success: true, clients: formattedClients });
@@ -202,10 +277,22 @@ router.get('/', async (req, res) => {
 router.get('/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        let client = await Client.findOne({ userId });
+        let client = await Client.findOne({
+            $or: [
+                { userId: mongoose.isValidObjectId(userId) ? userId : null },
+                { _id: mongoose.isValidObjectId(userId) ? userId : null },
+                { unique_id: userId }
+            ]
+        }).populate('userId');
 
         if (!client) {
             console.log(`[CLIENT FETCH] No Client profile found for UserID: ${userId}. Attempting auto-creation...`);
+
+            // Only search for user if it's a valid ObjectId
+            if (!mongoose.isValidObjectId(userId)) {
+                return res.status(404).json({ success: false, error: 'Client profile not found and User ID is invalid' });
+            }
+
             const user = await User.findById(userId);
             if (!user) return res.status(404).json({ success: false, error: 'User not found' });
 
@@ -251,6 +338,8 @@ router.get('/:userId', async (req, res) => {
 
         const formattedClient = {
             id: client._id,
+            role: 'client',
+            userId: client.userId?._id || client.userId,
             unique_id: client.unique_id,
             name: `${client.firstName} ${client.lastName}`.trim(),
             firstName: client.firstName,

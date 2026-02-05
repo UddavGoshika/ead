@@ -4,6 +4,24 @@ const Blog = require('../models/Blog');
 const Advocate = require('../models/Advocate');
 const User = require('../models/User');
 const { createNotification } = require('../utils/notif');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// MULTER CONFIG FOR BLOG IMAGES (Sync with Admin)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/blogs';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `blog-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+const upload = multer({ storage });
 
 // GET ALL APPROVED BLOGS
 router.get('/', async (req, res) => {
@@ -101,9 +119,9 @@ router.post('/:id/comment', async (req, res) => {
 });
 
 // CREATE A BLOG (Advocate only)
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
     try {
-        const { title, content, author, authorName, category, image } = req.body;
+        const { title, content, author, authorName, category } = req.body;
 
         const newBlog = new Blog({
             title,
@@ -111,7 +129,7 @@ router.post('/', async (req, res) => {
             author,
             authorName,
             category,
-            image,
+            image: req.file ? `/uploads/blogs/${req.file.filename}` : req.body.image,
             status: 'Pending' // Requires admin approval
         });
 
