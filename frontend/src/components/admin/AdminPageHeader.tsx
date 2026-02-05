@@ -4,11 +4,11 @@ import styles from './AdminPageHeader.module.css';
 
 interface AdminPageHeaderProps {
     title: string;
-    onSearch?: (query: string, role: 'advocate' | 'client' | 'all') => void;
+    onSearch?: (query: string, role: 'advocate' | 'client' | 'legal_provider' | 'all') => void;
     placeholder?: string;
-    onAddClick?: (role: 'advocate' | 'client' | 'all') => void;
+    onAddClick?: (role: 'advocate' | 'client' | 'legal_provider' | 'all') => void;
     showRoleFilter?: boolean;
-    onRoleChange?: (role: 'advocate' | 'client' | 'all') => void;
+    onRoleChange?: (role: 'advocate' | 'client' | 'legal_provider' | 'all') => void;
 }
 
 const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
@@ -20,7 +20,7 @@ const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
     onRoleChange
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeRole, setActiveRole] = useState<'advocate' | 'client' | 'all'>('all');
+    const [activeRole, setActiveRole] = useState<'advocate' | 'client' | 'legal_provider' | 'all'>('all');
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,6 +57,16 @@ const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
                             }}
                         >
                             Advocates
+                        </button>
+                        <button
+                            className={`${styles.toggleBtn} ${activeRole === 'legal_provider' ? styles.active : ''}`}
+                            onClick={() => {
+                                setActiveRole('legal_provider');
+                                if (onSearch) onSearch(searchQuery, 'legal_provider');
+                                if (onRoleChange) onRoleChange('legal_provider');
+                            }}
+                        >
+                            Legal Providers
                         </button>
                         <button
                             className={`${styles.toggleBtn} ${activeRole === 'client' ? styles.active : ''}`}

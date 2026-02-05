@@ -18,7 +18,7 @@ export type MemberContext = 'all' | 'free' | 'premium' | 'approved' | 'pending' 
 export interface Member {
     id: string; // Updated to string for MongoDB ID
     code: string;
-    role: "Advocate" | "Client";
+    role: "Advocate" | "Client" | "Legal Provider";
     name: string;
     email?: string;
     phone: string;
@@ -65,7 +65,7 @@ interface MemberTableProps {
     initialMembers?: Member[];
     defaultStatus?: string;
     context?: MemberContext;
-    initialRole?: "All" | "Advocate" | "Client";
+    initialRole?: "All" | "Advocate" | "Client" | "Legal Provider";
     initialVerifiedFilter?: "All" | "Verified" | "Unverified" | "Rejected" | "Resubmitted";
 }
 
@@ -218,7 +218,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
     const [filterStatus, setFilterStatus] = useState<string>(defaultStatus || "All");
     const [filterCategory, setFilterCategory] = useState<string>("All"); // Use as Package Filter
     const [filterLevel, setFilterLevel] = useState<string>("All");
-    const [activeRole, setActiveRole] = useState<"Advocate" | "Client" | "All">(initialRole || "All");
+    const [activeRole, setActiveRole] = useState<"Advocate" | "Client" | "Legal Provider" | "All">(initialRole || "All");
     const [filterVerified, setFilterVerified] = useState<"All" | "Verified" | "Unverified" | "Rejected" | "Resubmitted">(initialVerifiedFilter || "All");
     const [filterRegDate, setFilterRegDate] = useState<string>("All"); // Today, Last 7 Days, Last 30 Days, Custom
     const [filterLocation, setFilterLocation] = useState({ country: "All", state: "All", city: "All", pincode: "" });
@@ -330,10 +330,20 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
             if (res.data.success) {
                 const mapped: Member[] = res.data.members.map((m: any) => {
                     const role = (m.role || "").toLowerCase();
+                    let displayRole: "Advocate" | "Client" | "Legal Provider" = "Client";
+                    if (role === 'advocate') displayRole = "Advocate";
+                    else if (role.includes('legal')) displayRole = "Legal Provider";
+
+                    // Generate consistent ID format
+                    const suffix = (m.id || "").toString().slice(-4).toUpperCase();
+                    let formattedCode = `TP-EAD-CL${suffix}`;
+                    if (displayRole === 'Advocate') formattedCode = `TP-EAD-ADV${suffix}`;
+                    else if (displayRole === 'Legal Provider') formattedCode = `TP-EAD-LSP${suffix}`;
+
                     return {
                         id: m.id,
-                        code: m.unique_id || (role === 'advocate' ? `EA-ADV-${m.id.slice(-6).toUpperCase()}` : `EA-CLI-${m.id.slice(-6).toUpperCase()}`),
-                        role: role === 'advocate' ? 'Advocate' : 'Client',
+                        code: formattedCode,
+                        role: displayRole,
                         name: m.name || 'Anonymous',
                         email: m.email,
                         phone: m.phone || 'N/A',
@@ -556,7 +566,10 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                 title={title}
                 onSearch={(query, role) => {
                     setSearchTerm(query);
-                    const mappedRole = role === 'advocate' ? 'Advocate' : role === 'client' ? 'Client' : 'All';
+                    let mappedRole = 'All';
+                    if (role === 'advocate') mappedRole = 'Advocate';
+                    else if (role === 'client') mappedRole = 'Client';
+                    else if (role === 'legal_provider') mappedRole = 'Legal Provider';
                     setActiveRole(mappedRole as any);
                 }}
                 onAddClick={(role) => {

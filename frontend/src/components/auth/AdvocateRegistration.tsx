@@ -31,10 +31,31 @@ const steps = [
     { id: 9, label: 'REVIEW' },
 ];
 
+import { useAdminConfig } from '../../hooks/useAdminConfig';
+
+const stepMapping: Record<number, string> = {
+    1: "Personal Information",
+    2: "Verification Status",
+    3: "Password",
+    4: "Education",
+    5: "Professional Practice",
+    6: "Location",
+    7: "Professional Career",
+    8: "Availability",
+    9: "Review & Submit"
+};
+
 const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) => {
-    const [currentStep, setCurrentStep] = useState<number>(1);
+    const { isSectionEnabled } = useAdminConfig();
+
+    // Filter steps based on enabled sections
+    const visibleSteps = steps.filter(step => isSectionEnabled(stepMapping[step.id]));
+
+    // Initialize currentStep to the first visible step
+    const [currentStep, setCurrentStep] = useState<number>(visibleSteps.length > 0 ? visibleSteps[0].id : 1);
+
     const [formData, setFormData] = useState<any>({
-        // Step 1 - Personal
+        // ... (rest of form data state remains same)
         firstName: '',
         lastName: '',
         gender: '',
@@ -152,6 +173,9 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     formData.profilePhoto
                 );
             case 2:
+                // Only require email/phone verification if they are not already verified
+                // But for registration flow, we usually force it.
+                // Assuming OTP verification sets these flags.
                 return (
                     formData.emailVerified &&
                     formData.mobileVerified
@@ -235,9 +259,11 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
             return;
         }
 
-        if (currentStep < steps.length) {
-            setCurrentStep(prev => prev + 1);
+        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+        if (currentIndex < visibleSteps.length - 1) {
+            setCurrentStep(visibleSteps[currentIndex + 1].id);
         } else {
+            // Submit logic...
             try {
                 // Actual Backend Submission using FormData for files
                 const submissionData = new FormData();
@@ -300,6 +326,13 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         }
     };
 
+    const handlePrevious = () => {
+        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+        if (currentIndex > 0) {
+            setCurrentStep(visibleSteps[currentIndex - 1].id);
+        }
+    };
+
     return (
         <div className={styles.overlay} onClick={onClose}>
             <motion.div
@@ -325,22 +358,32 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                     <div className={styles.progressBar}>
                         <div
                             className={styles.progressFill}
-                            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+                            style={{
+                                width: `${visibleSteps.length > 1 ? ((visibleSteps.findIndex(s => s.id === currentStep)) / (visibleSteps.length - 1)) * 100 : 0}%`
+                            }}
                         />
                     </div>
                     <div className={styles.steps}>
-                        {steps.map(step => (
-                            <div
-                                key={step.id}
-                                className={`${styles.stepItem} ${currentStep === step.id ? styles.activeStep : ''} ${currentStep > step.id ? styles.completedStep : ''}`}
-                                onClick={() => setCurrentStep(step.id)}
-                            >
-                                <div className={styles.stepCircle}>
-                                    {step.id}
+                        {visibleSteps.map((step, index) => {
+                            const isCompleted = visibleSteps.findIndex(s => s.id === currentStep) > index;
+                            const isActive = step.id === currentStep;
+
+                            return (
+                                <div
+                                    key={step.id}
+                                    className={`${styles.stepItem} ${isActive ? styles.activeStep : ''} ${isCompleted ? styles.completedStep : ''}`}
+                                    onClick={() => {
+                                        // Optional: Only allow clicking on visited steps or next step
+                                        setCurrentStep(step.id);
+                                    }}
+                                >
+                                    <div className={styles.stepCircle}>
+                                        {step.id}
+                                    </div>
+                                    <span className={styles.stepLabel}>{step.label}</span>
                                 </div>
-                                <span className={styles.stepLabel}>{step.label}</span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -363,8 +406,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 <div className={styles.footer}>
                     <button
                         className={styles.backBtn}
-                        disabled={currentStep === 1}
-                        onClick={() => setCurrentStep(prev => prev - 1)}
+                        disabled={visibleSteps.length > 0 && currentStep === visibleSteps[0].id}
+                        onClick={handlePrevious}
                     >
                         Previous
                     </button>
@@ -372,7 +415,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                         className={styles.nextBtn}
                         onClick={handleNext}
                     >
-                        {currentStep === steps.length ? 'Submit Application' : 'Continue'}
+                        {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
                     </button>
                 </div>
             </motion.div>

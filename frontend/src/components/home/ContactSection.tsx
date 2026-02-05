@@ -115,7 +115,7 @@ const ContactSection: React.FC = () => {
 
                     <div className={styles.regCard}>
                         <h3>Join e-Advocate — Free Registration</h3>
-                        <p>Create your free e-Advocate profile and start connecting with clients through a secure, technology-enabled legal services platform.</p>
+                        <p>Create your free e-Advocate profile and start connecting with clients through a secure, technology-enabled  services platform.</p>
                         <div className={styles.bulletList}>
                             <div className={styles.bulletItem}>
                                 <Check className={styles.checkIcon} size={16} />

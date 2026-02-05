@@ -350,6 +350,14 @@ const PremiumPackages: React.FC = () => {
     }, [memberType]);
 
     const handleSave = async () => {
+        // Validate that all tiers have a name
+        for (let i = 0; i < formData.tiers.length; i++) {
+            if (!formData.tiers[i].name || formData.tiers[i].name.trim() === '') {
+                alert(`Please enter a name for Tier ${i + 1}`);
+                return;
+            }
+        }
+
         try {
             const payload = {
                 ...formData,
@@ -365,8 +373,10 @@ const PremiumPackages: React.FC = () => {
                 fetchPackages();
                 setIsModalOpen(false);
             }
-        } catch {
-            alert("Error saving package. Please check your network connection.");
+        } catch (err: any) {
+            console.error(err);
+            const errorMessage = err.response?.data?.error || err.message || "Error saving package.";
+            alert(`Failed to save: ${errorMessage}`);
         }
     };
 
@@ -380,10 +390,13 @@ const PremiumPackages: React.FC = () => {
                 setPackages((prev) => prev.filter((p) => p._id !== id));
                 setSelectedTiers(prev => prev.filter(t => t.packageId !== id));
             }
-        } catch {
-            alert("Error deleting package");
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.error || err.message || "Error deleting package.";
+            alert(`Failed to delete: ${errorMessage}`);
         }
     };
+
+
 
     const toggleExpand = (id: string) => {
         setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -973,11 +986,16 @@ const PremiumPackages: React.FC = () => {
                                                         value={tier.discount || 0}
                                                         onChange={(e) => {
                                                             const discount = Number(e.target.value);
-                                                            updateTier(idx, "discount", discount);
-                                                            if (discount > 0 && tier.price > 0) {
-                                                                const originalPrice = Math.round(tier.price / (1 - discount / 100));
-                                                                updateTier(idx, "originalPrice", originalPrice);
+                                                            const updatedTiers = [...formData.tiers];
+                                                            const currentTier = { ...updatedTiers[idx], discount: discount };
+
+                                                            // Auto-calculate original price if discount is present
+                                                            if (discount > 0 && currentTier.price > 0) {
+                                                                currentTier.originalPrice = Math.round(currentTier.price / (1 - discount / 100));
                                                             }
+
+                                                            updatedTiers[idx] = currentTier;
+                                                            setFormData({ ...formData, tiers: updatedTiers });
                                                         }}
                                                         className={styles.formInput}
                                                     />

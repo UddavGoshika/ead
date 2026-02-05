@@ -15,11 +15,7 @@ const faqs = [
         question: "How can I track my case status?",
         answer: "Once you hire an advocate through our platform, your dashboard will provide real-time updates on case filings, hearing schedules, and any communications from the opposite party or the court."
     },
-    {
-        question: "What are the payment options for legal fees?",
-        answer:
-            "Payments can be made via cards, UPI, net banking, or escrow-based milestone payments.",
-    },
+
     {
         question: "How are advocates verified?",
         answer:
@@ -30,11 +26,7 @@ const faqs = [
         answer:
             "Yes, chat, call, and video consultation options are supported.",
     },
-    {
-        question: "Do you offer refunds?",
-        answer:
-            "Refunds are processed as per our cancellation and milestone policy.",
-    }
+
 ];
 
 const FAQSection: React.FC = () => {

@@ -3,24 +3,10 @@ import styles from "./ProfileSections.module.css";
 import AdminPageHeader from "../../../components/admin/AdminPageHeader";
 import { Save, CheckCircle2 } from "lucide-react";
 
-const LEGAL_PROFILE_SECTIONS = [
-    "Personal Information",
-    "Practice Areas",
-    "Courts & Jurisdictions",
-    "Bar Council Details",
-    "Education",
-    "Professional Experience",
-    "Case History",
-    "Office Address",
-    "Documents",
-    "Languages",
-    "Verification Status"
-];
+import { useAdminConfig } from "../../../hooks/useAdminConfig";
 
 const ProfileSections: React.FC = () => {
-    const [sections, setSections] = useState(
-        LEGAL_PROFILE_SECTIONS.map(name => ({ name, enabled: true }))
-    );
+    const { sections, saveSections: setSections } = useAdminConfig();
 
     const toggleSection = (index: number) => {
         const newSections = [...sections];
@@ -31,7 +17,7 @@ const ProfileSections: React.FC = () => {
     const handleUpdate = async () => {
         try {
             console.log("Saving legal section configurations:", sections);
-            // In a real scenario, call settingsService.updateProfileSections(sections);
+            // The hook already saved to localStorage on every change, but we can show a success message here
             alert("Legal profile sections updated successfully!");
         } catch (err) {
             alert("Failed to update profile sections.");

@@ -2,65 +2,14 @@ import React, { useState } from "react";
 import styles from "./ProfileAttributes.module.css";
 import AdminPageHeader from "../../../components/admin/AdminPageHeader";
 import { Trash2, Plus } from "lucide-react";
-
-interface AttributeOption {
-    id: string;
-    label: string;
-    enabled: boolean;
-}
-
-interface AttributeCategory {
-    id: string;
-    title: string;
-    options: AttributeOption[];
-}
-
-const INITIAL_DATA: AttributeCategory[] = [
-    {
-        id: "practice_area",
-        title: "Practice Area",
-        options: [
-            { id: "1", label: "Supreme Court", enabled: true },
-            { id: "2", label: "High Court", enabled: true },
-            { id: "3", label: "District Court", enabled: true },
-        ]
-    },
-    {
-        id: "specialization",
-        title: "Specialization",
-        options: [
-            { id: "1", label: "Criminal Law", enabled: true },
-            { id: "2", label: "Civil Law", enabled: true },
-            { id: "3", label: "Corporate Law", enabled: true },
-            { id: "4", label: "Family Law", enabled: true },
-        ]
-    },
-    {
-        id: "experience",
-        title: "Experience Level",
-        options: [
-            { id: "1", label: "Junior (0-3 yrs)", enabled: true },
-            { id: "2", label: "Senior (5-10 yrs)", enabled: true },
-            { id: "3", label: "Expert (15+ yrs)", enabled: true },
-        ]
-    },
-    {
-        id: "language",
-        title: "Languages Spoken",
-        options: [
-            { id: "1", label: "English", enabled: true },
-            { id: "2", label: "Hindi", enabled: true },
-            { id: "3", label: "Regional", enabled: true },
-        ]
-    }
-];
+import { useAdminConfig } from "../../../hooks/useAdminConfig";
 
 const ProfileAttributes: React.FC = () => {
-    const [categories, setCategories] = useState<AttributeCategory[]>(INITIAL_DATA);
+    const { attributes: categories, saveAttributes: setCategories } = useAdminConfig();
     const [newOptionTexts, setNewOptionTexts] = useState<Record<string, string>>({});
 
     const toggleOption = (catId: string, optId: string) => {
-        setCategories(prev => prev.map(cat => {
+        const newCategories = categories.map(cat => {
             if (cat.id !== catId) return cat;
             return {
                 ...cat,
@@ -69,25 +18,27 @@ const ProfileAttributes: React.FC = () => {
                     return { ...opt, enabled: !opt.enabled };
                 })
             };
-        }));
+        });
+        setCategories(newCategories);
     };
 
     const deleteOption = (catId: string, optId: string) => {
         if (!window.confirm("Are you sure you want to delete this option?")) return;
-        setCategories(prev => prev.map(cat => {
+        const newCategories = categories.map(cat => {
             if (cat.id !== catId) return cat;
             return {
                 ...cat,
                 options: cat.options.filter(opt => opt.id !== optId)
             };
-        }));
+        });
+        setCategories(newCategories);
     };
 
     const addOption = (catId: string) => {
         const text = newOptionTexts[catId];
         if (!text || !text.trim()) return;
 
-        setCategories(prev => prev.map(cat => {
+        const newCategories = categories.map(cat => {
             if (cat.id !== catId) return cat;
             return {
                 ...cat,
@@ -96,8 +47,8 @@ const ProfileAttributes: React.FC = () => {
                     { id: Date.now().toString(), label: text.trim(), enabled: true }
                 ]
             };
-        }));
-
+        });
+        setCategories(newCategories);
         setNewOptionTexts(prev => ({ ...prev, [catId]: "" }));
     };
 

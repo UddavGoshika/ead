@@ -8,19 +8,17 @@ interface StepProps {
     isOptional?: boolean;
 }
 
-const languagesList = [
-    'english',
-    'hindi',
-    'marathi',
-    'tamil',
-    'telugu',
-    'kannada',
-    'bengali',
-    'gujarati',
-    'punjabi'
-];
+import { useAdminConfig } from '../../../hooks/useAdminConfig';
+
+interface StepProps {
+    formData: any;
+    updateFormData: (data: any) => void;
+    isOptional?: boolean;
+}
 
 const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
+    const { getOptions } = useAdminConfig();
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
@@ -87,21 +85,21 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional
                     </select>
                 </div>
 
-                {/* Languages */}
+                {/* Languages - Dynamic */}
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label>
                         LANGUAGES KNOWN {!isOptional && <span className={styles.required}>*</span>}
                     </label>
 
                     <div className={styles.languageGrid}>
-                        {languagesList.map((lang) => (
-                            <label key={lang} className={styles.checkboxItem}>
+                        {getOptions('language').map((lang) => (
+                            <label key={lang.id} className={styles.checkboxItem}>
                                 <input
                                     type="checkbox"
-                                    checked={formData.languages?.includes(lang)}
-                                    onChange={() => handleLanguageChange(lang)}
+                                    checked={formData.languages?.includes(lang.id)}
+                                    onChange={() => handleLanguageChange(lang.id)}
                                 />
-                                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                                {lang.label}
                             </label>
                         ))}
                     </div>

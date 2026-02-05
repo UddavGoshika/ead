@@ -16,7 +16,7 @@ const DraftingServicesGrid = () => {
 
     const services = [
         {
-            id: 'rent-agreement',
+            id: 'agreements',
             title: 'Agreement Drafting Services',
             description:
                 'Legally sound and customized agreements drafted in compliance with the Indian Contract Act and BCI standards.',
@@ -29,7 +29,7 @@ const DraftingServicesGrid = () => {
             link: '/legal-documentation',
         },
         {
-            id: 'affidavit',
+            id: 'affidavits',
             title: 'Affidavit Drafting Services',
             description:
                 'Professionally drafted affidavits suitable for courts, government offices, and legal proceedings.',
@@ -42,7 +42,7 @@ const DraftingServicesGrid = () => {
             link: '/legal-documentation',
         },
         {
-            id: 'legal-notice',
+            id: 'notices',
             title: 'Legal Notice Drafting Services',
             description:
                 'Strategic legal notices designed to protect rights and initiate lawful action.',
@@ -55,7 +55,7 @@ const DraftingServicesGrid = () => {
             link: '/legal-documentation',
         },
         {
-            id: 'will-drafting',
+            id: 'legal-docs',
             title: 'Legal Document Preparation Services',
             description:
                 'Preparation of critical legal documents such as Wills, POA, Trust Deeds, and declarations.',

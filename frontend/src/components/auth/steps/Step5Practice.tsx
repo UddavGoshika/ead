@@ -2,6 +2,8 @@ import React from 'react';
 import { Briefcase, Upload } from 'lucide-react';
 import styles from '../AdvocateRegistration.module.css';
 
+import { useAdminConfig } from '../../../hooks/useAdminConfig';
+
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
@@ -9,6 +11,8 @@ interface StepProps {
 }
 
 const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
+    const { getOptions } = useAdminConfig();
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
@@ -51,7 +55,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                     />
                 </div>
 
-                {/* Court of Practice */}
+                {/* Court of Practice - Dynamic */}
                 <div className={styles.formGroup}>
                     <label>
                         COURT OF PRACTICE {!isOptional && <span className={styles.required}>*</span>}
@@ -62,16 +66,13 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         onChange={handleChange}
                     >
                         <option value="">Select Court</option>
-                        <option value="supreme">Supreme Court</option>
-                        <option value="high">High Court</option>
-                        <option value="district">District Court</option>
-                        <option value="sessions">Sessions Court</option>
-                        <option value="consumer">Consumer Court</option>
-                        <option value="other">Other</option>
+                        {getOptions('practice_area').map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.label}</option>
+                        ))}
                     </select>
                 </div>
 
-                {/* Experience */}
+                {/* Experience - Dynamic */}
                 <div className={styles.formGroup}>
                     <label>
                         YEARS OF EXPERIENCE {!isOptional && <span className={styles.required}>*</span>}
@@ -82,14 +83,13 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         onChange={handleChange}
                     >
                         <option value="">Select Experience</option>
-                        <option value="0-2">0–2 Years</option>
-                        <option value="3-5">3–5 Years</option>
-                        <option value="6-10">6–10 Years</option>
-                        <option value="10+">10+ Years</option>
+                        {getOptions('experience').map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.label}</option>
+                        ))}
                     </select>
                 </div>
 
-                {/* Primary Specialization */}
+                {/* Primary Specialization - Dynamic */}
                 <div className={styles.formGroup}>
                     <label>
                         PRIMARY SPECIALIZATION {!isOptional && <span className={styles.required}>*</span>}
@@ -100,12 +100,9 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         onChange={handleChange}
                     >
                         <option value="">Select Specialization</option>
-                        <option value="criminal">Criminal Law</option>
-                        <option value="civil">Civil Law</option>
-                        <option value="corporate">Corporate Law</option>
-                        <option value="family">Family Law</option>
-                        <option value="ip">Intellectual Property</option>
-                        <option value="tax">Taxation Law</option>
+                        {getOptions('specialization').map(opt => (
+                            <option key={opt.id} value={opt.id}>{opt.label}</option>
+                        ))}
                     </select>
                 </div>
 
