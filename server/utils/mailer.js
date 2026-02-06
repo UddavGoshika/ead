@@ -8,7 +8,7 @@ const https = require('https');
 
 console.log("📧 Initializing Brevo API Mailer System...");
 
-const API_KEY = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
+const API_KEY = process.env.BREVO_API_KEY;
 const SENDER_EMAIL = process.env.SMTP_FROM || 'info.eadvocateservices@gmail.com';
 
 // DEBUG: Log if key is found (only log first 5 chars for safety)
