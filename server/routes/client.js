@@ -48,9 +48,15 @@ router.post('/register', cpUpload, async (req, res) => {
             return res.status(400).json({ error: 'Please verify your email with OTP first' });
         }
 
-        // 1. Create User first
+        // 1. Create or Update User
         let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ error: 'User already exists' });
+        if (user) {
+            const clientExists = await Client.findOne({ userId: user._id });
+            if (clientExists) {
+                return res.status(400).json({ error: 'User already exists' });
+            }
+            // User exists but no client profile - likely a failed previous attempt
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -64,14 +70,22 @@ router.post('/register', cpUpload, async (req, res) => {
         }
         const myReferralCode = 'EA' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        user = await User.create({
-            email,
-            password: hashedPassword,
-            role: 'client',
-            status: 'Pending', // Needs admin verification
-            myReferralCode,
-            referredBy
-        });
+        if (user) {
+            user.password = hashedPassword;
+            user.role = 'client';
+            user.status = 'Pending';
+            user.referredBy = referredBy;
+            await user.save();
+        } else {
+            user = await User.create({
+                email,
+                password: hashedPassword,
+                role: 'client',
+                status: 'Pending',
+                myReferralCode,
+                referredBy
+            });
+        }
 
         // 2. Generate Unique Client ID
         const clientId = await generateClientId();

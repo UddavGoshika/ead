@@ -324,7 +324,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 }
             } catch (err: any) {
                 console.error('Registration Error:', err);
-                alert('Connection error: ' + (err.response?.data?.error || err.message));
+                const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
+                alert(errorMessage);
             }
         }
     };

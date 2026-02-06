@@ -67,7 +67,13 @@ router.post('/register', (req, res, next) => {
 
         // Check if user exists
         let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ error: 'User already exists' });
+        if (user) {
+            const advocateExists = await Advocate.findOne({ userId: user._id });
+            if (advocateExists) {
+                return res.status(400).json({ error: 'User already exists' });
+            }
+            // If user exists but no advocate profile exists, we continue and update this user.
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -81,15 +87,23 @@ router.post('/register', (req, res, next) => {
         }
         const myReferralCode = 'EA' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        // 1. Create User first
-        user = await User.create({
-            email,
-            password: hashedPassword,
-            role: req.body.role || 'advocate',
-            status: 'Pending', // Needs admin verification
-            myReferralCode,
-            referredBy
-        });
+        // 1. Create or Update User
+        if (user) {
+            user.password = hashedPassword;
+            user.role = req.body.role || 'advocate';
+            user.status = 'Pending';
+            user.referredBy = referredBy;
+            await user.save();
+        } else {
+            user = await User.create({
+                email,
+                password: hashedPassword,
+                role: req.body.role || 'advocate',
+                status: 'Pending',
+                myReferralCode,
+                referredBy
+            });
+        }
 
         // 2. Generate Unique Advocate ID
         const advId = await generateAdvocateId(req.body.role);

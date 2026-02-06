@@ -294,7 +294,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             }
         } catch (err: any) {
             console.error('Client Registration Error:', err);
-            alert('Error: ' + (err.response?.data?.error || err.message));
+            const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
+            alert(errorMessage);
         }
     };
 
