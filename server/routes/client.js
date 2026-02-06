@@ -17,6 +17,7 @@ const upload = multer({ storage: storage });
 
 const cpUpload = upload.fields([
     { name: 'uploaddocument', maxCount: 1 },
+    { name: 'profilePic', maxCount: 1 },
     { name: 'signature', maxCount: 1 }
 ]);
 
@@ -87,6 +88,7 @@ router.post('/register', cpUpload, async (req, res) => {
             email,
             documentType: req.body.documentType,
             documentPath: req.files && req.files['uploaddocument'] ? req.files['uploaddocument'][0].path : null,
+            profilePicPath: req.files && req.files['profilePic'] ? req.files['profilePic'][0].path : null,
             signaturePath: req.body.signatureData || (req.files && req.files['signature'] ? req.files['signature'][0].path : null),
             address: {
                 country: req.body.country || 'India',

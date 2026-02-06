@@ -45,6 +45,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         password: '',
         documentType: '',
         document: null,
+        profilePic: null,
         legalCategory: 'Criminal',
         specialization: '',
         subDepartment: '',
@@ -72,6 +73,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     const [mobileCountdown, setMobileCountdown] = useState(0);
     const [mobileMessage, setMobileMessage] = useState({ text: '', type: '' });
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
+    const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
 
     React.useEffect(() => {
         let timer: any;
@@ -277,14 +279,16 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             if (formData.document) {
                 submissionData.append('uploaddocument', formData.document);
             }
+            if (formData.profilePic) {
+                submissionData.append('profilePic', formData.profilePic);
+            }
             if (formData.signature) {
                 submissionData.append('signature', formData.signature);
             }
 
             const response = await authService.registerClient(submissionData);
             if (response.data.success) {
-                alert('Client Registration Successful!');
-                onClose();
+                setRegistrationSuccess({ id: response.data.clientId || '' });
             } else {
                 alert('Registration failed: ' + (response.data.error || 'Unknown error'));
             }
@@ -352,9 +356,21 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>Upload ID Proof *</label>
                                 <input
                                     type="file"
+                                    accept="image/*,.pdf"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) updateFormData('document', file);
+                                    }}
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Upload Profile Photo *</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) updateFormData('profilePic', file);
                                     }}
                                 />
                             </div>
@@ -1321,6 +1337,49 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         {visibleSteps.findIndex(s => s.id === currentStep) === visibleSteps.length - 1 ? 'Submit Application' : 'Next Step'}
                     </button>
                 </div>
+
+                {/* SUCCESS NOTIFICATION OVERLAY */}
+                <AnimatePresence>
+                    {registrationSuccess && (
+                        <motion.div
+                            className={styles.successOverlay}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <motion.div
+                                className={styles.successCard}
+                                initial={{ scale: 0.8, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                            >
+                                <div className={styles.successIconBox}>
+                                    <CheckCircle size={60} color="#10b981" />
+                                </div>
+                                <h2 className={styles.successTitle}>Registration Complete!</h2>
+                                <p className={styles.successText}>
+                                    Thank you for registering with e-Advocate.
+                                </p>
+
+                                <div className={styles.idDisplayBox}>
+                                    <span className={styles.idLabel}>YOUR CLIENT ID:</span>
+                                    <h3 className={styles.generatedId}>{registrationSuccess.id}</h3>
+                                </div>
+
+                                <div className={styles.verificationNote}>
+                                    <ShieldCheck size={20} className={styles.noteIcon} />
+                                    <p>Your application is under verification. Please wait for <strong>12-24 hours</strong>. You will receive an email with your account details shortly.</p>
+                                </div>
+
+                                <button
+                                    className={styles.finishBtn}
+                                    onClick={onClose}
+                                >
+                                    Go to Homepage
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     );

@@ -136,6 +136,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         captchaVerified: false,
     });
 
+    const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
+
 
 
     const updateFormData = (newData: any) => {
@@ -316,8 +318,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 const response = await authService.registerAdvocate(submissionData);
                 if (response.data.success) {
                     const advId = response.data.advocateId || response.data.uniqueId || 'Assigned shortly';
-                    alert(`Registration submitted successfully!\n\nYour Unique Advocate ID is: ${advId}\n\nPlease keep this ID for future reference.`);
-                    onClose();
+                    setRegistrationSuccess({ id: advId });
                 } else {
                     alert('Registration failed: ' + (response.data.error || 'Unknown error'));
                 }
@@ -420,6 +421,52 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                         {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
                     </button>
                 </div>
+
+                {/* SUCCESS NOTIFICATION OVERLAY */}
+                <AnimatePresence>
+                    {registrationSuccess && (
+                        <motion.div
+                            className={styles.successOverlay}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <motion.div
+                                className={styles.successCard}
+                                initial={{ scale: 0.8, y: 20 }}
+                                animate={{ scale: 1, y: 0 }}
+                            >
+                                <div className={styles.successIconBox}>
+                                    <div className={styles.checkCircle}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <h2 className={styles.successTitle}>Registration Submitted!</h2>
+                                <p className={styles.successText}>
+                                    Your application as an Advocate has been received.
+                                </p>
+
+                                <div className={styles.idDisplayBox}>
+                                    <span className={styles.idLabel}>YOUR ADVOCATE ID:</span>
+                                    <h3 className={styles.generatedId}>{registrationSuccess.id}</h3>
+                                </div>
+
+                                <div className={styles.verificationNote}>
+                                    <p>Your profile is currently <strong>Under Verification</strong>. Please wait for <strong>12-24 hours</strong>. You will receive an email confirmation once approved.</p>
+                                </div>
+
+                                <button
+                                    className={styles.finishBtn}
+                                    onClick={onClose}
+                                >
+                                    Finish & Go to Home
+                                </button>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     );

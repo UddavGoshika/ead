@@ -257,6 +257,7 @@ router.get('/members', async (req, res) => {
                 reported: profile ? (profile.reported || 0) : 0,
                 location: location,
                 avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
+                image: profile ? (profile.profilePicPath || profile.avatar) : null,
                 unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`,
                 specialization: profile ? (profile.practice?.specialization || 'N/A') : 'N/A',
                 legalDocumentation: profile ? (profile.legalDocumentation || []) : [],
@@ -502,6 +503,7 @@ router.get('/members/:id', async (req, res) => {
                 if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: profile.idProof.docPath });
                 if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             } else {
+                if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
                 if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: profile.documentPath });
                 if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             }

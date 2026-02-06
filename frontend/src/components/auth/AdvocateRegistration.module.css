@@ -959,3 +959,126 @@ refreal code  */
     margin-top: 6px;
     font-weight: 600;
 }
+
+/* Success Notification Styles */
+.successOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(15px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    padding: 30px;
+}
+
+.successCard {
+    background: linear-gradient(135deg, #1f1f3a, #0f0f1d);
+    border: 1px solid rgba(0, 210, 255, 0.3);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+}
+
+.successIconBox {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.checkCircle {
+    width: 80px;
+    height: 80px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #10b981;
+}
+
+.checkCircle svg {
+    width: 40px;
+    height: 40px;
+}
+
+.successTitle {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.successText {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.idDisplayBox {
+    background: rgba(0, 210, 255, 0.05);
+    border: 1px dashed rgba(0, 210, 255, 0.4);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+}
+
+.idLabel {
+    color: #00d2ff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.generatedId {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.verificationNote {
+    background: rgba(251, 191, 36, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 3px solid #fbbf24;
+    margin-bottom: 32px;
+    text-align: left;
+}
+
+.verificationNote p {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.verificationNote strong {
+    color: #fff;
+}
+
+.finishBtn {
+    background: linear-gradient(to right, #00d2ff, #2a5a9e);
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.finishBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4);
+}

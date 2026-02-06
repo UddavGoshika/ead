@@ -191,8 +191,7 @@
     background: #1a1a2e;
     border: none;
     color: white;
-    width: 40px;
-    height: 40px;
+
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -202,7 +201,7 @@
 }
 
 .closeBtn:hover {
-    background: #2d2d4d;
+    background: #c92816;
 }
 
 /* Tabs Styles */
@@ -707,4 +706,122 @@
     .addressBlock {
         grid-column: span 1;
     }
+}
+
+/* Success Notification Styles */
+.successOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2200;
+    padding: 30px;
+    border-radius: 16px;
+}
+
+.successCard {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(251, 191, 36, 0.1);
+}
+
+.successIconBox {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.successTitle {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.successText {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.idDisplayBox {
+    background: rgba(251, 191, 36, 0.05);
+    border: 1px dashed rgba(251, 191, 36, 0.4);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+}
+
+.idLabel {
+    color: #fbbf24;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.generatedId {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 1px;
+    text-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+}
+
+.verificationNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    background: rgba(59, 130, 246, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 3px solid #3b82f6;
+    margin-bottom: 32px;
+}
+
+.noteIcon {
+    flex-shrink: 0;
+    color: #3b82f6;
+    margin-top: 2px;
+}
+
+.verificationNote p {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.verificationNote strong {
+    color: #fff;
+}
+
+.finishBtn {
+    background: linear-gradient(to right, #fbbf24, #d97706);
+    color: #000;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.finishBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(217, 119, 6, 0.4);
 }

@@ -195,7 +195,8 @@ const MemberVerification: React.FC = () => {
                     documents: apiData.documents || [],
                     id: apiData.user?._id || id,
                     regDate: apiData.user?.createdAt || new Date().toISOString(),
-                    role: apiData.user?.role || "Advocate" // Default or actual role
+                    role: apiData.user?.role || "Advocate",
+                    image: apiData.profile?.profilePicPath || apiData.user?.avatar
                 } as PendingMember;
                 setSelectedMember(fullMember);
             }
@@ -365,7 +366,11 @@ const MemberVerification: React.FC = () => {
                                     setIsRejecting(false);
                                 }}
                             >
-                                <img src={m.image || "https://via.placeholder.com/50"} className={styles.avatar} alt={m.name} />
+                                <img
+                                    src={m.image ? (m.image.startsWith('http') ? m.image : `${API_BASE_URL}/${m.image}`) : "https://via.placeholder.com/50"}
+                                    className={styles.avatar}
+                                    alt={m.name}
+                                />
                                 <div className={styles.mInfo}>
                                     <span className={styles.mName}>{m.name}</span>
                                     <span className={styles.mMeta}>{m.role} • {new Date(m.regDate || Date.now()).toLocaleDateString()}</span>
@@ -383,7 +388,11 @@ const MemberVerification: React.FC = () => {
                     <div className={styles.reviewContent}>
                         <div className={styles.reviewHeader}>
                             <div className={styles.profileSummary}>
-                                <img src={selectedMember.image || "https://via.placeholder.com/100"} className={styles.largeAvatar} alt={selectedMember.name} />
+                                <img
+                                    src={selectedMember.image ? (selectedMember.image.startsWith('http') ? selectedMember.image : `${API_BASE_URL}/${selectedMember.image}`) : "https://via.placeholder.com/100"}
+                                    className={styles.largeAvatar}
+                                    alt={selectedMember.name}
+                                />
                                 <div className={styles.profileTitle}>
                                     <h1>{selectedMember.name}</h1>
                                     <div className={styles.badgeRow}>

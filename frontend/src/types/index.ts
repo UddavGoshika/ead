@@ -33,6 +33,7 @@ export interface AuthResponse {
     userId?: number | string;
     uniqueId?: string;
     advocateId?: string;
+    clientId?: string;
 }
 
 export interface Case {
