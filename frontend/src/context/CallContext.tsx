@@ -188,12 +188,18 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user?.id, cleanupCall]); // cleanupCall is stable now, no more loops!
 
     const createPeerConnection = (targetUserId: string) => {
+        // Robust ICE Servers for Production
         const pc = new RTCPeerConnection({
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
-            ]
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+                // Note: For 100% reliability in production (especially on mobile/corporate networks), 
+                // you MUST include a TURN server here. Public STUN servers only handle basic NAT traversal.
+            ],
+            iceCandidatePoolSize: 10,
         });
 
         pc.onicecandidate = (event) => {
