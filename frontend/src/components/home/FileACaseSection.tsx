@@ -53,7 +53,7 @@ const FileACaseSection: React.FC = () => {
                                     {slider1Image.subtitle}
                                 </p>
                                 <button
-                                    onClick={() => window.open(slider1Image.btnLink, '_blank')}
+                                    onClick={() => window.open("https://filing.ecourts.gov.in/pdedev/", '_blank')}
                                     className={styles.exploreBtn}
                                 >
                                     Click Here <ArrowRight size={18} />
