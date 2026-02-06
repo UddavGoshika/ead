@@ -100,6 +100,8 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
     };
 
     const handleSendMobileOtp = async () => {
+        console.log('Original phone number:', formData.mobile);
+
         if (!formData.mobile) {
             setMobileMessage({ text: 'Please enter mobile in Step 1 first.', type: 'error' });
             return;
@@ -111,20 +113,31 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
             setupRecaptcha();
             const appVerifier = (window as any).recaptchaVerifier;
 
-            // Sanitization and E.164 Formatting
-            let rawMobile = formData.mobile || "";
-            // Remove any non-digit chars except maybe a leading +
-            let cleaned = rawMobile.replace(/[^\d+]/g, "");
+            // Robust Sanitization for E.164
+            let rawMobile = String(formData.mobile).trim();
 
-            // If it's a 10-digit number without a leading +, assume +91 (India)
-            if (cleaned.length === 10 && !cleaned.startsWith('+')) {
+            // 1. Remove all non-digit and non-plus characters (e.g., spaces, hyphens, brackets)
+            let cleaned = rawMobile.replace(/[^0-9+]/g, "");
+
+            // 2. Handle missing country code for India (10 digits)
+            // If it's exactly 10 digits, assume +91
+            if (/^\d{10}$/.test(cleaned)) {
                 cleaned = '+91' + cleaned;
             }
 
-            // Ensure it starts with +
-            if (!cleaned.startsWith('+')) {
+            // 3. If it starts with '91' and is 12 digits, prepend '+'
+            if (/^91\d{10}$/.test(cleaned)) {
                 cleaned = '+' + cleaned;
             }
+
+            // 4. Final check: Must start with '+' and have sufficient length
+            if (!cleaned.startsWith('+')) {
+                // If arguably it's a number without country code but not 10 digits (e.g. 11), prompt user
+                // But for now, let's try assuming it's a valid number that needs a + if missing
+                cleaned = '+' + cleaned;
+            }
+
+            console.log('Formatted phone number for Firebase:', cleaned);
 
             const confirmation = await signInWithPhoneNumber(auth, cleaned, appVerifier);
             setConfirmationResult(confirmation);
@@ -133,9 +146,16 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
         } catch (err: any) {
             console.error('Firebase Auth Error:', err);
             setMobileMessage({ text: 'Error sending SMS: ' + (err.message || 'Check configuration'), type: 'error' });
+
+            // Reset Recaptcha on error so user can try again
             if ((window as any).recaptchaVerifier) {
-                (window as any).recaptchaVerifier.clear();
+                try {
+                    (window as any).recaptchaVerifier.clear();
+                } catch (e) { console.error(e); }
                 (window as any).recaptchaVerifier = null;
+                // Re-remove the recaptcha container if needed, or it might duplicate
+                const container = document.getElementById('recaptcha-container');
+                if (container) container.innerHTML = '';
             }
         } finally {
             setMobileSending(false);

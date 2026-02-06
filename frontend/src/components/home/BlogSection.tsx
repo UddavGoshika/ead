@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from './BlogSection.module.css';
 import HomeBlogCard from '../blog/HomeBlogCard';
+import { blogService } from '../../services/api';
 
 const BlogSection: React.FC = () => {
     const [blogs, setBlogs] = useState<any[]>([]);
@@ -10,12 +11,8 @@ const BlogSection: React.FC = () => {
         const fetchBlogs = async () => {
             console.log('Fetching blogs...');
             try {
-                // Use production URL as fallback if local env is not set
-                const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
-                console.log('API URL:', apiUrl);
-
-                const response = await fetch(`${apiUrl}/api/blogs`);
-                const data = await response.json();
+                const response = await blogService.getBlogs();
+                const data = response.data;
                 console.log('Blog data received:', data);
 
                 if (data.success && Array.isArray(data.blogs)) {

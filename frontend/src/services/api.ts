@@ -115,4 +115,10 @@ export const settingsService = {
     deleteAccount: () => api.post<{ success: boolean }>('/settings/delete'),
     syncPresets: (presets: any[]) => api.post<{ success: boolean; presets: any[] }>('/settings/presets', { presets }),
 };
+
+export const blogService = {
+    getBlogs: () => api.get<{ success: boolean; blogs: any[] }>('/blogs'),
+    getBlogById: (id: string) => api.get<{ success: boolean; blog: any }>(`/blogs/${id}`),
+};
+
 export default api;

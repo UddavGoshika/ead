@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '../../BlogPage.module.css';
 import BlogCard from '../../../components/blog/BlogCard';
 import { Loader2 } from 'lucide-react';
+import { blogService } from '../../../services/api';
 
 const BlogFeed: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
@@ -27,10 +28,8 @@ const BlogFeed: React.FC = () => {
         const fetchBlogs = async () => {
             setLoading(true);
             try {
-                // Use a standard URL or env variable
-                const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
-                const response = await fetch(`${apiUrl}/api/blogs`);
-                const data = await response.json();
+                const response = await blogService.getBlogs();
+                const data = response.data;
 
                 if (data.success && Array.isArray(data.blogs)) {
                     setPosts(data.blogs);
