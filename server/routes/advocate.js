@@ -26,7 +26,7 @@ const advUpload = upload.fields([
 async function generateAdvocateId(role = 'advocate') {
     let id;
     let exists = true;
-    const prefix = (role === 'legal_provider') ? 'EA-LAS-' : 'EA-ADV-';
+    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAS-' : 'TP-EAD-ADV-';
 
     while (exists) {
         const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();

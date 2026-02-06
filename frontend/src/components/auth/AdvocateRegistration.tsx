@@ -207,12 +207,14 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 return (
                     formData.currAddress &&
                     formData.currState &&
+                    formData.currDistrict &&
                     formData.currCity &&
                     formData.currPincode &&
                     (
                         formData.sameAsCurrent ||
                         (formData.permAddress &&
                             formData.permState &&
+                            formData.permDistrict &&
                             formData.permCity &&
                             formData.permPincode)
                     )

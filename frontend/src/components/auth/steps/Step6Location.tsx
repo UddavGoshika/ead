@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
 import styles from '../AdvocateRegistration.module.css';
+import { LOCATION_DATA_RAW } from '../../layout/statesdis';
 
 interface StepProps {
     formData: any;
@@ -10,9 +11,42 @@ interface StepProps {
 const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        updateFormData({ [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        const updates: any = { [name]: value };
+
+        // Reset child fields when parent changes
+        if (name === 'currState') {
+            updates.currDistrict = '';
+            updates.currCity = '';
+            if (formData.sameAsCurrent) {
+                updates.permState = value;
+                updates.permDistrict = '';
+                updates.permCity = '';
+            }
+        } else if (name === 'currDistrict') {
+            updates.currCity = '';
+            if (formData.sameAsCurrent) {
+                updates.permDistrict = value;
+                updates.permCity = '';
+            }
+        } else if (name === 'permState') {
+            updates.permDistrict = '';
+            updates.permCity = '';
+        } else if (name === 'permDistrict') {
+            updates.permCity = '';
+        }
+
+        // Sync other fields if sameAsCurrent is on
+        if (formData.sameAsCurrent) {
+            if (name === 'currAddress') updates.permAddress = value;
+            if (name === 'currCity') updates.permCity = value;
+            if (name === 'currPincode') updates.permPincode = value;
+            if (name === 'currDistrict') updates.permDistrict = value;
+        }
+
+        updateFormData(updates);
     };
 
     const handleSameAddress = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,10 +54,11 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
 
         updateFormData({
             sameAsCurrent: checked,
-            permAddress: checked ? formData.currAddress : '',
-            permState: checked ? formData.currState : '',
-            permCity: checked ? formData.currCity : '',
-            permPincode: checked ? formData.currPincode : ''
+            permAddress: checked ? formData.currAddress : formData.permAddress,
+            permState: checked ? formData.currState : formData.permState,
+            permDistrict: checked ? formData.currDistrict : formData.permDistrict,
+            permCity: checked ? formData.currCity : formData.permCity,
+            permPincode: checked ? formData.currPincode : formData.permPincode
         });
     };
 
@@ -52,35 +87,47 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
 
                 <div className={styles.formGroup}>
                     <label>STATE <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="currState"
-                        placeholder="State"
                         value={formData.currState || ''}
                         onChange={handleChange}
-                    />
+                    >
+                        <option value="">Select State</option>
+                        {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
+                            <option key={state} value={state}>{state}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>
                     <label>District <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="currDistrict"
-                        placeholder="District"
                         value={formData.currDistrict || ''}
+                        disabled={!formData.currState}
                         onChange={handleChange}
-                    />
+                    >
+                        <option value="">Select District</option>
+                        {formData.currState && Object.keys(LOCATION_DATA_RAW[formData.currState] || {}).sort().map(dist => (
+                            <option key={dist} value={dist}>{dist}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>
                     <label>CITY <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="currCity"
-                        placeholder="City"
                         value={formData.currCity || ''}
+                        disabled={!formData.currDistrict}
                         onChange={handleChange}
-                    />
+                    >
+                        <option value="">Select City</option>
+                        {formData.currState && formData.currDistrict &&
+                            (LOCATION_DATA_RAW[formData.currState][formData.currDistrict] || []).sort().map(city => (
+                                <option key={city} value={city}>{city}</option>
+                            ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -129,38 +176,48 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
 
                 <div className={styles.formGroup}>
                     <label>STATE <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="permState"
-                        placeholder="State"
                         value={formData.permState || ''}
                         onChange={handleChange}
                         disabled={formData.sameAsCurrent}
-                    />
+                    >
+                        <option value="">Select State</option>
+                        {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
+                            <option key={state} value={state}>{state}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>
                     <label>District <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="permDistrict"
-                        placeholder="District"
                         value={formData.permDistrict || ''}
+                        disabled={formData.sameAsCurrent || !formData.permState}
                         onChange={handleChange}
-                        disabled={formData.sameAsCurrent}
-                    />
+                    >
+                        <option value="">Select District</option>
+                        {formData.permState && Object.keys(LOCATION_DATA_RAW[formData.permState] || {}).sort().map(dist => (
+                            <option key={dist} value={dist}>{dist}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>
                     <label>CITY <span className={styles.required}>*</span></label>
-                    <input
-                        type="text"
+                    <select
                         name="permCity"
-                        placeholder="City"
                         value={formData.permCity || ''}
+                        disabled={formData.sameAsCurrent || !formData.permDistrict}
                         onChange={handleChange}
-                        disabled={formData.sameAsCurrent}
-                    />
+                    >
+                        <option value="">Select City</option>
+                        {formData.permState && formData.permDistrict &&
+                            (LOCATION_DATA_RAW[formData.permState][formData.permDistrict] || []).sort().map(city => (
+                                <option key={city} value={city}>{city}</option>
+                            ))}
+                    </select>
                 </div>
 
                 <div className={styles.formGroup}>

@@ -64,8 +64,8 @@ router.post('/', auth, async (req, res) => {
         let { clientId, advocateId, title, description, category, location, court, department, subDepartment, requestedDocuments, advocateNotes } = req.body;
 
         // --- UID Resolution Logic ---
-        // Resolve clientId (Client EA-CLI-...)
-        if (clientId && typeof clientId === 'string' && clientId.startsWith('EA-CLI-')) {
+        // Resolve clientId (Client TP-EAD-CLI...)
+        if (clientId && typeof clientId === 'string' && (clientId.startsWith('EA-CLI-') || clientId.startsWith('TP-EAD-CLI'))) {
             const clientDoc = await Client.findOne({ unique_id: clientId });
             if (clientDoc && clientDoc.userId) {
                 clientId = clientDoc.userId;
@@ -74,8 +74,8 @@ router.post('/', auth, async (req, res) => {
             }
         }
 
-        // Resolve advocateId (Advocate EA-ADV- or EA-LAS-...)
-        if (advocateId && typeof advocateId === 'string' && (advocateId.startsWith('EA-ADV-') || advocateId.startsWith('EA-LAS-'))) {
+        // Resolve advocateId (Advocate TP-EAD-ADV- or TP-EAD-LAS-...)
+        if (advocateId && typeof advocateId === 'string' && (advocateId.startsWith('EA-ADV-') || advocateId.startsWith('EA-LAS-') || advocateId.startsWith('TP-EAD-ADV-') || advocateId.startsWith('TP-EAD-LAS-'))) {
             const advDoc = await Advocate.findOne({ unique_id: advocateId });
             if (advDoc && advDoc.userId) {
                 advocateId = advDoc.userId;

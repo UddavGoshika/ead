@@ -6,12 +6,12 @@ import styles from './ClientRegistration.module.css';
 import { authService } from '../../services/api';
 import { auth } from '../../firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { useAdminConfig } from '../../hooks/useAdminConfig';
+import { LOCATION_DATA_RAW } from '../layout/statesdis';
 
 interface ClientRegistrationProps {
     onClose: () => void;
 }
-
-import { useAdminConfig } from '../../hooks/useAdminConfig';
 
 const steps = [
     { id: 1, label: 'PERSONAL DETAILS' },
@@ -211,17 +211,19 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
 
 
     const [currentAddress, setCurrentAddress] = useState({
-        country: '',
+        country: 'India',
         state: '',
         city: '',
+        district: '',
         address: '',
         pincode: '',
     });
 
     const [permanentAddress, setPermanentAddress] = useState({
-        country: '',
+        country: 'India',
         state: '',
         city: '',
+        district: '',
         address: '',
         pincode: '',
     });
@@ -259,10 +261,17 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             // Address fields
             submissionData.append('country', currentAddress.country);
             submissionData.append('state', currentAddress.state);
+            submissionData.append('district', currentAddress.district);
             submissionData.append('city', currentAddress.city);
             submissionData.append('officeAddress', currentAddress.address);
             submissionData.append('pincode', currentAddress.pincode);
+
+            // Permanent Address Details
+            submissionData.append('permState', sameAsCurrent ? currentAddress.state : permanentAddress.state);
+            submissionData.append('permDistrict', sameAsCurrent ? currentAddress.district : permanentAddress.district);
+            submissionData.append('permCity', sameAsCurrent ? currentAddress.city : permanentAddress.city);
             submissionData.append('permanentAddress', sameAsCurrent ? currentAddress.address : permanentAddress.address);
+            submissionData.append('permPincode', sameAsCurrent ? currentAddress.pincode : permanentAddress.pincode);
 
             // Files
             if (formData.document) {
@@ -498,7 +507,6 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             case 3:
                 return (
                     <div className={styles.stepContent}>
-
                         {/* CURRENT ADDRESS */}
                         <h4 className={styles.sectionTitle}>Current Address</h4>
                         <div className={styles.formGrid}>
@@ -506,49 +514,95 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>Country *</label>
                                 <input
                                     value={currentAddress.country}
-                                    onChange={(e) =>
-                                        setCurrentAddress({ ...currentAddress, country: e.target.value })
-                                    }
+                                    readOnly
                                 />
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>State *</label>
-                                <input
+                                <select
                                     value={currentAddress.state}
-                                    onChange={(e) =>
-                                        setCurrentAddress({ ...currentAddress, state: e.target.value })
-                                    }
-                                />
+                                    onChange={(e) => {
+                                        const newState = e.target.value;
+                                        setCurrentAddress({ ...currentAddress, state: newState, district: '', city: '' });
+                                        if (sameAsCurrent) {
+                                            setPermanentAddress(prev => ({ ...prev, state: newState, district: '', city: '' }));
+                                        }
+                                    }}
+                                >
+                                    <option value="">Select State</option>
+                                    {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
+                                        <option key={state} value={state}>{state}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>City *</label>
-                                <input
+                                <label>District *</label>
+                                <select
+                                    value={currentAddress.district}
+                                    disabled={!currentAddress.state}
+                                    onChange={(e) => {
+                                        const newDist = e.target.value;
+                                        setCurrentAddress({ ...currentAddress, district: newDist, city: '' });
+                                        if (sameAsCurrent) {
+                                            setPermanentAddress(prev => ({ ...prev, district: newDist, city: '' }));
+                                        }
+                                    }}
+                                >
+                                    <option value="">Select District</option>
+                                    {currentAddress.state && Object.keys(LOCATION_DATA_RAW[currentAddress.state] || {}).sort().map(dist => (
+                                        <option key={dist} value={dist}>{dist}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label>City / Town *</label>
+                                <select
                                     value={currentAddress.city}
-                                    onChange={(e) =>
-                                        setCurrentAddress({ ...currentAddress, city: e.target.value })
-                                    }
-                                />
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label>Office / Current Address *</label>
-                                <textarea
-                                    value={currentAddress.address}
-                                    onChange={(e) =>
-                                        setCurrentAddress({ ...currentAddress, address: e.target.value })
-                                    }
-                                />
+                                    disabled={!currentAddress.district}
+                                    onChange={(e) => {
+                                        const newCity = e.target.value;
+                                        setCurrentAddress({ ...currentAddress, city: newCity });
+                                        if (sameAsCurrent) {
+                                            setPermanentAddress(prev => ({ ...prev, city: newCity }));
+                                        }
+                                    }}
+                                >
+                                    <option value="">Select City</option>
+                                    {currentAddress.state && currentAddress.district &&
+                                        (LOCATION_DATA_RAW[currentAddress.state][currentAddress.district] || []).sort().map(city => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
+                                </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Pin Code *</label>
                                 <input
                                     value={currentAddress.pincode}
-                                    onChange={(e) =>
-                                        setCurrentAddress({ ...currentAddress, pincode: e.target.value })
-                                    }
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setCurrentAddress({ ...currentAddress, pincode: val });
+                                        if (sameAsCurrent) {
+                                            setPermanentAddress(prev => ({ ...prev, pincode: val }));
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                                <label>Current Address *</label>
+                                <textarea
+                                    value={currentAddress.address}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setCurrentAddress({ ...currentAddress, address: val });
+                                        if (sameAsCurrent) {
+                                            setPermanentAddress(prev => ({ ...prev, address: val }));
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
@@ -563,7 +617,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         const checked = e.target.checked;
                                         setSameAsCurrent(checked);
                                         if (checked) {
-                                            setPermanentAddress(currentAddress);
+                                            setPermanentAddress({ ...currentAddress });
                                         }
                                     }}
                                 />
@@ -572,63 +626,87 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         </div>
 
                         {/* PERMANENT ADDRESS */}
-                        <h4 className={styles.sectionTitle}>Permanent Address</h4>
-                        <div className={styles.formGrid}>
-                            <div className={styles.formGroup}>
-                                <label>Country *</label>
-                                <input
-                                    value={permanentAddress.country}
-                                    readOnly={sameAsCurrent}
-                                    onChange={(e) =>
-                                        setPermanentAddress({ ...permanentAddress, country: e.target.value })
-                                    }
-                                />
-                            </div>
+                        {!sameAsCurrent && (
+                            <>
+                                <h4 className={styles.sectionTitle}>Permanent Address</h4>
+                                <div className={styles.formGrid}>
+                                    <div className={styles.formGroup}>
+                                        <label>Country *</label>
+                                        <input
+                                            value={permanentAddress.country}
+                                            readOnly
+                                        />
+                                    </div>
 
-                            <div className={styles.formGroup}>
-                                <label>State *</label>
-                                <input
-                                    value={permanentAddress.state}
-                                    readOnly={sameAsCurrent}
-                                    onChange={(e) =>
-                                        setPermanentAddress({ ...permanentAddress, state: e.target.value })
-                                    }
-                                />
-                            </div>
+                                    <div className={styles.formGroup}>
+                                        <label>State *</label>
+                                        <select
+                                            value={permanentAddress.state}
+                                            onChange={(e) => {
+                                                const newState = e.target.value;
+                                                setPermanentAddress({ ...permanentAddress, state: newState, district: '', city: '' });
+                                            }}
+                                        >
+                                            <option value="">Select State</option>
+                                            {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
+                                                <option key={state} value={state}>{state}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                            <div className={styles.formGroup}>
-                                <label>City *</label>
-                                <input
-                                    value={permanentAddress.city}
-                                    readOnly={sameAsCurrent}
-                                    onChange={(e) =>
-                                        setPermanentAddress({ ...permanentAddress, city: e.target.value })
-                                    }
-                                />
-                            </div>
+                                    <div className={styles.formGroup}>
+                                        <label>District *</label>
+                                        <select
+                                            value={permanentAddress.district}
+                                            disabled={!permanentAddress.state}
+                                            onChange={(e) => {
+                                                const newDist = e.target.value;
+                                                setPermanentAddress({ ...permanentAddress, district: newDist, city: '' });
+                                            }}
+                                        >
+                                            <option value="">Select District</option>
+                                            {permanentAddress.state && Object.keys(LOCATION_DATA_RAW[permanentAddress.state] || {}).sort().map(dist => (
+                                                <option key={dist} value={dist}>{dist}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                                <label>Permanent Address *</label>
-                                <textarea
-                                    value={permanentAddress.address}
-                                    readOnly={sameAsCurrent}
-                                    onChange={(e) =>
-                                        setPermanentAddress({ ...permanentAddress, address: e.target.value })
-                                    }
-                                />
-                            </div>
+                                    <div className={styles.formGroup}>
+                                        <label>City / Town *</label>
+                                        <select
+                                            value={permanentAddress.city}
+                                            disabled={!permanentAddress.district}
+                                            onChange={(e) => {
+                                                const newCity = e.target.value;
+                                                setPermanentAddress({ ...permanentAddress, city: newCity });
+                                            }}
+                                        >
+                                            <option value="">Select City</option>
+                                            {permanentAddress.state && permanentAddress.district &&
+                                                (LOCATION_DATA_RAW[permanentAddress.state][permanentAddress.district] || []).sort().map(city => (
+                                                    <option key={city} value={city}>{city}</option>
+                                                ))}
+                                        </select>
+                                    </div>
 
-                            <div className={styles.formGroup}>
-                                <label>Pin Code *</label>
-                                <input
-                                    value={permanentAddress.pincode}
-                                    readOnly={sameAsCurrent}
-                                    onChange={(e) =>
-                                        setPermanentAddress({ ...permanentAddress, pincode: e.target.value })
-                                    }
-                                />
-                            </div>
-                        </div>
+                                    <div className={styles.formGroup}>
+                                        <label>Pin Code *</label>
+                                        <input
+                                            value={permanentAddress.pincode}
+                                            onChange={(e) => setPermanentAddress({ ...permanentAddress, pincode: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                                        <label>Permanent Address *</label>
+                                        <textarea
+                                            value={permanentAddress.address}
+                                            onChange={(e) => setPermanentAddress({ ...permanentAddress, address: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                     </div>
                 );
@@ -1169,7 +1247,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                 <div className={styles.header}>
                     <h2 className={styles.title}>Client Registration</h2>
                     <button className={styles.closeBtn} onClick={onClose}>
-                        <X size={24} />X
+                        <X size={24} />
                     </button>
                 </div>
 
