@@ -8,18 +8,30 @@ console.log('SMTP Config:', {
     pass: process.env.SMTP_PASS ? 'Present' : 'MISSING'
 });
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for 587
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    tls: {
-        rejectUnauthorized: false // Often required for some SMTP servers on Railway
-    }
-});
+const isGmail = (process.env.SMTP_HOST || '').includes('gmail');
+
+const transporter = nodemailer.createTransport(
+    isGmail
+        ? {
+            service: 'gmail',
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        }
+        : {
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: Number(process.env.SMTP_PORT) === 465,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        }
+);
 
 const sendEmail = async (to, subject, text, html) => {
     try {

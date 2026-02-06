@@ -51,7 +51,7 @@ router.post('/:id/like', async (req, res) => {
         if (!userId) return res.status(400).json({ error: 'User ID required' });
 
         const blog = await Blog.findById(req.params.id);
-        if (!blog) return res.status(404).json({ error: 'Blog not found' });
+        if (!blog) return res.status(404).json({ success: false, error: 'Blog not found' });
 
         const likeIndex = blog.likes.indexOf(userId);
         if (likeIndex === -1) {
@@ -63,6 +63,7 @@ router.post('/:id/like', async (req, res) => {
         await blog.save();
         res.json({ success: true, likes: blog.likes.length, isLiked: blog.likes.includes(userId) });
     } catch (err) {
+        console.error('Like Blog Error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -94,8 +95,10 @@ router.post('/:id/save', async (req, res) => {
 router.post('/:id/share', async (req, res) => {
     try {
         const blog = await Blog.findByIdAndUpdate(req.params.id, { $inc: { shares: 1 } }, { new: true });
+        if (!blog) return res.status(404).json({ success: false, error: 'Blog not found' });
         res.json({ success: true, shares: blog.shares });
     } catch (err) {
+        console.error('Share Blog Error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
