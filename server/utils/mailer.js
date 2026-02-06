@@ -11,14 +11,21 @@ console.log("📧 Initializing Brevo API Mailer System...");
 const API_KEY = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
 const SENDER_EMAIL = process.env.SMTP_FROM || 'info.eadvocateservices@gmail.com';
 
+// DEBUG: Log if key is found (only log first 5 chars for safety)
+if (!API_KEY) {
+    console.error("❌ ERROR: No API Key found in environment variables!");
+} else {
+    console.log(`✅ API Key detected (Starts with: ${API_KEY.substring(0, 10)}...)`);
+}
+
 const sendEmail = async (to, subject, text, html) => {
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({
             sender: { name: "E-Advocate Services", email: SENDER_EMAIL },
             to: [{ email: to }],
             subject: subject,
-            textContent: text,
-            htmlContent: html
+            textContent: text || subject, // Fallback if text is missing
+            htmlContent: html || text || subject
         });
 
         const options = {
