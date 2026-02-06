@@ -100,10 +100,10 @@ export const MENU_SCHEMA: MenuItem[] = [
         icon: MdFolder,
         path: "/admin/legal-docs",
         children: [
+            { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers", badge: "Active" },
             { id: "agreements", name: "Agreements", path: "/admin/legal-docs/agreements", badge: "1240" },
             { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits", badge: "3892" },
             { id: "notices", name: "Notices", path: "/admin/legal-docs/notices", badge: "5120" },
-            { id: "providers", name: "Service Providers", path: "/admin/legal-docs/providers", badge: "Active" },
             { id: "legal-doc-services", name: "Legal Document Services", path: "/admin/legal-docs/services", badge: "New" },
         ],
     },

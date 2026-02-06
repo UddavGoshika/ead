@@ -340,6 +340,7 @@ interface DocumentationProvider {
     rating: number;
     baseRate: string;
     joinDate: string; // added for sorting & display
+    legalDocumentation: string[]; // added for service filtering
 }
 
 const mockAdminProviders: DocumentationProvider[] = [
@@ -360,6 +361,7 @@ const mockAdminProviders: DocumentationProvider[] = [
         rating: 4.8,
         baseRate: "₹2,500",
         joinDate: "2024-01-20",
+        legalDocumentation: ["agreements", "notices"]
     },
     {
         id: "2",
@@ -377,6 +379,7 @@ const mockAdminProviders: DocumentationProvider[] = [
         rating: 4.9,
         baseRate: "₹3,500",
         joinDate: "2024-01-15",
+        legalDocumentation: ["affidavits", "legal-docs"]
     },
     // Add 5–10 more entries for realistic pagination testing
 ];
@@ -399,7 +402,16 @@ const DocumentationProviders = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | null>(null);
+    const [selectedService, setSelectedService] = useState("All");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    const serviceTypes = [
+        { id: "All", label: "All" },
+        { id: "agreements", label: "Agreements" },
+        { id: "affidavits", label: "Affidavits" },
+        { id: "notices", label: "Notices" },
+        { id: "legal-docs", label: "Legal Doc Services" }
+    ];
 
     const specs = ["All", "Civil & Documentation", "Corporate Contracts", "Property Laws", "Family Docs", "Criminal Law", "Intellectual Property"];
 
@@ -433,7 +445,8 @@ const DocumentationProviders = () => {
                         rating: 4.0 + Math.random(), // Mock rating
                         baseRate: "₹2,500", // Default base rate
                         estimatedEarnings: Math.floor(Math.random() * 100000),
-                        joinDate: m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                        joinDate: m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        legalDocumentation: m.legalDocumentation || []
                     };
                 });
                 setProviders(mapped);
@@ -478,6 +491,11 @@ const DocumentationProviders = () => {
             result = result.filter((p) => p.specialization === selectedSpec);
         }
 
+        // Service Type filter
+        if (selectedService !== "All") {
+            result = result.filter((p) => p.legalDocumentation?.includes(selectedService));
+        }
+
         // Sorting
         if (sortKey) {
             result.sort((a, b) => {
@@ -520,7 +538,17 @@ const DocumentationProviders = () => {
         const active = providers.filter((p) => p.status === "Active").length;
         const pending = providers.filter((p) => p.status === "Pending").length;
         const blocked = providers.filter((p) => p.status === "Blocked").length;
-        return { total, active, pending, blocked };
+
+        // Service Counts
+        const serviceCounts = {
+            All: total,
+            agreements: providers.filter(p => p.legalDocumentation?.includes('agreements')).length,
+            affidavits: providers.filter(p => p.legalDocumentation?.includes('affidavits')).length,
+            notices: providers.filter(p => p.legalDocumentation?.includes('notices')).length,
+            'legal-docs': providers.filter(p => p.legalDocumentation?.includes('legal-docs')).length
+        };
+
+        return { total, active, pending, blocked, serviceCounts };
     }, [providers]);
 
     const modalData = useMemo(() => {
@@ -693,6 +721,24 @@ const DocumentationProviders = () => {
                                     }}
                                 >
                                     {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className={styles.pillGroup}>
+                        <label><ClipboardCheck size={14} /> Documentation Service</label>
+                        <div className={styles.pillList}>
+                            {serviceTypes.map((s) => (
+                                <button
+                                    key={s.id}
+                                    className={`${styles.pill} ${selectedService === s.id ? styles.activePill : ""}`}
+                                    onClick={() => {
+                                        setSelectedService(s.id);
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    {s.label} ({summary.serviceCounts[s.id as keyof typeof summary.serviceCounts] || 0})
                                 </button>
                             ))}
                         </div>

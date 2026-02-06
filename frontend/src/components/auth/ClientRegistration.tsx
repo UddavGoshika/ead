@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, RefreshCcw } from 'lucide-react';
+import { X, CheckCircle, RefreshCcw, User, MapPin, Briefcase, ShieldCheck, Mail, Phone, Calendar, Globe, Clock, Layout } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ClientRegistration.module.css';
@@ -11,16 +11,30 @@ interface ClientRegistrationProps {
     onClose: () => void;
 }
 
+import { useAdminConfig } from '../../hooks/useAdminConfig';
+
 const steps = [
     { id: 1, label: 'PERSONAL DETAILS' },
     { id: 2, label: 'VERIFICATION' },
     { id: 3, label: 'ADDRESS & LOCATION' },
     { id: 4, label: 'LEGAL HELP REQUIRED' },
     { id: 5, label: 'DECLARATIONS' },
+    { id: 6, label: 'REVIEW' },
 ];
 
+const stepMapping: Record<number, string> = {
+    1: "Personal Information",
+    2: "Verification Status",
+    3: "Location",
+    4: "Professional Practice",
+    5: "Review & Submit",
+    6: "Review & Submit"
+};
+
 const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
-    const [currentStep, setCurrentStep] = useState(1);
+    const { isSectionEnabled, getOptions } = useAdminConfig('client');
+    const visibleSteps = steps.filter(step => isSectionEnabled(stepMapping[step.id]));
+    const [currentStep, setCurrentStep] = useState(visibleSteps.length > 0 ? visibleSteps[0].id : 1);
     const [formData, setFormData] = useState<any>({
         firstName: '',
         lastName: '',
@@ -631,28 +645,41 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     onChange={(e) => updateFormData('category', e.target.value)}
                                 >
                                     <option value="">Select Category</option>
-                                    <option>Criminal</option>
-                                    <option>Civil</option>
-                                    <option>Family</option>
-                                    <option>Corporate</option>
+                                    {getOptions('specialization').map(opt => (
+                                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                                    ))}
                                 </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Specialization *</label>
-                                <input
+                                <select
                                     value={formData.specialization || ''}
-                                    onChange={(e) => updateFormData('specialization', e.target.value)}
-                                    placeholder="e.g. Divorce, Property"
-                                />
+                                    onChange={(e) => {
+                                        updateFormData('specialization', e.target.value);
+                                        updateFormData('subDepartment', ''); // Reset sub-dept on change
+                                    }}
+                                >
+                                    <option value="">Select Specialization</option>
+                                    {getOptions('specialization').map(opt => (
+                                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className={styles.formGroup}>
                                 <label>Sub Department *</label>
-                                <input
+                                <select
                                     value={formData.subDepartment || ''}
                                     onChange={(e) => updateFormData('subDepartment', e.target.value)}
-                                />
+                                >
+                                    <option value="">Select Sub Department</option>
+                                    {(getOptions('sub_department') as any[])
+                                        .filter(opt => !formData.specialization || opt.parent === formData.specialization)
+                                        .map(opt => (
+                                            <option key={opt.id} value={opt.id}>{opt.label}</option>
+                                        ))}
+                                </select>
                             </div>
 
                             <div className={styles.formGroup}>
@@ -683,11 +710,52 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
 
                             <div className={styles.formGroup}>
                                 <label>Languages *</label>
-                                <input
-                                    value={formData.languages || ''}
-                                    onChange={(e) => updateFormData('languages', e.target.value)}
-                                    placeholder="e.g. English, Hindi"
-                                />
+                                <div className={styles.languageSelectWrapper}>
+                                    <select
+                                        className={styles.selectInput}
+                                        onChange={(e) => {
+                                            const selectedLang = e.target.value;
+                                            if (!selectedLang) return;
+
+                                            const currentLangs = (formData.languages || '').split(',').filter((l: string) => l.trim());
+                                            if (!currentLangs.includes(selectedLang)) {
+                                                const newLangs = [...currentLangs, selectedLang];
+                                                updateFormData('languages', newLangs.join(','));
+                                            }
+                                            e.target.value = ''; // Reset select
+                                        }}
+                                    >
+                                        <option value="">Select Language</option>
+                                        {getOptions('language').map((lang) => (
+                                            <option key={lang.id} value={lang.label}>
+                                                {lang.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Selected Languages Chips */}
+                                <div className={styles.languageChips} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                                    {(formData.languages || '').split(',').filter((l: string) => l.trim()).map((lang: string, index: number) => (
+                                        <span key={index} style={{
+                                            backgroundColor: '#3b82f6',
+                                            color: 'white',
+                                            padding: '4px 10px',
+                                            borderRadius: '16px',
+                                            fontSize: '14px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}>
+                                            {lang}
+                                            <X size={14} style={{ cursor: 'pointer' }} onClick={() => {
+                                                const currentLangs = (formData.languages || '').split(',').filter((l: string) => l.trim());
+                                                const newLangs = currentLangs.filter((l: string) => l !== lang);
+                                                updateFormData('languages', newLangs.join(','));
+                                            }} />
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
@@ -967,6 +1035,117 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
 
 
 
+            case 6:
+                return (
+                    <div className={styles.reviewContainer}>
+                        <div className={styles.reviewSection}>
+                            <div className={styles.reviewSectionHeader}>
+                                <User size={20} color="#fbbf24" />
+                                <h4>Personal Details</h4>
+                            </div>
+                            <div className={styles.reviewGrid}>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Full Name</span>
+                                    <span className={styles.reviewValue}>{formData.firstName} {formData.lastName || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Email Address</span>
+                                    <span className={styles.reviewValue}><Mail size={14} style={{ marginRight: 6 }} />{formData.email || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Phone Number</span>
+                                    <span className={styles.reviewValue}><Phone size={14} style={{ marginRight: 6 }} />{formData.mobile || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Date of Birth</span>
+                                    <span className={styles.reviewValue}><Calendar size={14} style={{ marginRight: 6 }} />{formData.dob || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.reviewSection}>
+                            <div className={styles.reviewSectionHeader}>
+                                <MapPin size={20} color="#fbbf24" />
+                                <h4>Address Information</h4>
+                            </div>
+                            <div className={styles.reviewGrid}>
+                                <div className={styles.addressBlock}>
+                                    <span className={styles.reviewLabel}>Current Address</span>
+                                    <span className={styles.reviewValue}>
+                                        {currentAddress.address}, {currentAddress.city}, {currentAddress.state} - {currentAddress.pincode}
+                                    </span>
+                                </div>
+                                <div className={styles.addressBlock}>
+                                    <span className={styles.reviewLabel}>Permanent Address</span>
+                                    <span className={styles.reviewValue}>
+                                        {sameAsCurrent ? 'Same as Current Address' : `${permanentAddress.address}, ${permanentAddress.city}, ${permanentAddress.state} - ${permanentAddress.pincode}`}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.reviewSection}>
+                            <div className={styles.reviewSectionHeader}>
+                                <Briefcase size={20} color="#fbbf24" />
+                                <h4>Legal Assistance Required</h4>
+                            </div>
+                            <div className={styles.reviewGrid}>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Category</span>
+                                    <span className={styles.reviewValue}>{formData.category || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Specialization</span>
+                                    <span className={styles.reviewValue}>{formData.specialization || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Sub-Department</span>
+                                    <span className={styles.reviewValue}>{formData.subDepartment || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Consultation Mode</span>
+                                    <span className={styles.reviewValue}><Clock size={14} style={{ marginRight: 6 }} />{formData.mode || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Advocate Type</span>
+                                    <span className={styles.reviewValue}><ShieldCheck size={14} style={{ marginRight: 6 }} />{formData.advocateType || 'N/A'}</span>
+                                </div>
+                                <div className={styles.reviewItem}>
+                                    <span className={styles.reviewLabel}>Languages</span>
+                                    <span className={styles.reviewValue}><Globe size={14} style={{ marginRight: 6 }} />{formData.languages || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.reviewSection}>
+                            <div className={styles.reviewSectionHeader}>
+                                <ShieldCheck size={20} color="#fbbf24" />
+                                <h4>Verification Status</h4>
+                            </div>
+                            <div className={styles.reviewGrid}>
+                                <div className={styles.statusCard}>
+                                    <span className={styles.reviewLabel}>Email Verification</span>
+                                    <span className={`${styles.badge} ${formData.emailVerified ? styles.badgeSuccess : styles.badgeError}`}>
+                                        {formData.emailVerified ? 'Verified' : 'Pending'}
+                                    </span>
+                                </div>
+                                <div className={styles.statusCard}>
+                                    <span className={styles.reviewLabel}>Mobile Verification</span>
+                                    <span className={`${styles.badge} ${formData.mobileVerified ? styles.badgeSuccess : styles.badgeError}`}>
+                                        {formData.mobileVerified ? 'Verified' : 'Pending'}
+                                    </span>
+                                </div>
+                                <div className={styles.statusCard}>
+                                    <span className={styles.reviewLabel}>Captcha Status</span>
+                                    <span className={`${styles.badge} ${formData.captchaVerified ? styles.badgeSuccess : styles.badgeError}`}>
+                                        {formData.captchaVerified ? 'Completed' : 'Not Done'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
             default:
                 return (
                     <div className={styles.placeholderContent}>
@@ -996,7 +1175,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
 
                 {/* Progress Tabs */}
                 <div className={styles.tabsContainer}>
-                    {steps.map(step => (
+                    {visibleSteps.map(step => (
                         <div
                             key={step.id}
                             className={`${styles.tabItem} ${currentStep === step.id ? styles.activeTab : ''}`}
@@ -1022,15 +1201,15 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                     </AnimatePresence>
                 </div>
 
-                {/* Footer Action */}
                 <div className={styles.footer}>
-
-
-
-
                     <button
                         className={styles.nextBtn}
                         onClick={() => {
+                            // Find current index in visible steps
+                            const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+                            const isLastStep = currentIndex === visibleSteps.length - 1;
+
+                            // Validation Specific to Steps (by ID)
                             if (currentStep === 2) {
                                 if (!formData.emailVerified && !formData.mobileVerified) {
                                     alert('Please verify both email and mobile before proceeding.');
@@ -1045,7 +1224,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     return;
                                 }
                             }
-                            if (currentStep === steps.length) {
+
+                            if (isLastStep) {
                                 if (!formData.captchaVerified) {
                                     alert('Please complete the Captcha verification before submitting.');
                                     return;
@@ -1054,13 +1234,14 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     alert('Please agree to all declarations and provide signature.');
                                     return;
                                 }
+                                handleSubmit();
+                            } else {
+                                setCurrentStep(visibleSteps[currentIndex + 1].id);
                             }
-                            currentStep < steps.length ? setCurrentStep((prev: number) => prev + 1) : handleSubmit()
                         }}
                     >
-                        {currentStep === steps.length ? 'Submit Application' : 'Next Step'}
+                        {visibleSteps.findIndex(s => s.id === currentStep) === visibleSteps.length - 1 ? 'Submit Application' : 'Next Step'}
                     </button>
-
                 </div>
             </motion.div>
         </div>

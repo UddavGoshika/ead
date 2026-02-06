@@ -8,10 +8,11 @@ interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
     isOptional?: boolean;
+    role?: string;
 }
 
-const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
-    const { getOptions } = useAdminConfig();
+const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role }) => {
+    const { getOptions } = useAdminConfig(role);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -97,7 +98,10 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                     <select
                         name="specialization"
                         value={formData.specialization || ''}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            handleChange(e);
+                            updateFormData({ subSpecialization: '' }); // Reset sub-dept
+                        }}
                     >
                         <option value="">Select Specialization</option>
                         {getOptions('specialization').map(opt => (
@@ -109,13 +113,18 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                 {/* Sub Specialization */}
                 <div className={styles.formGroup}>
                     <label>SUB-SPECIALIZATION</label>
-                    <input
-                        type="text"
+                    <select
                         name="subSpecialization"
-                        placeholder="Optional sub-specialization"
                         value={formData.subSpecialization || ''}
                         onChange={handleChange}
-                    />
+                    >
+                        <option value="">Select Sub Specialization</option>
+                        {(getOptions('sub_department') as any[])
+                            .filter(opt => !formData.specialization || opt.parent === formData.specialization)
+                            .map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                    </select>
                 </div>
 
                 {/* Bar Association */}

@@ -46,7 +46,7 @@ const stepMapping: Record<number, string> = {
 };
 
 const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ onClose }) => {
-    const { isSectionEnabled } = useAdminConfig();
+    const { isSectionEnabled } = useAdminConfig('legal_provider');
 
     // Filter steps based on enabled sections
     const visibleSteps = steps.filter(step => isSectionEnabled(stepMapping[step.id]));
@@ -147,9 +147,9 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
             case 2: return <Step2Verification {...props} />;
             case 3: return <Step3Password {...props} />;
             case 4: return <Step4Education {...props} isOptional={true} />;
-            case 5: return <Step5Practice {...props} isOptional={true} />;
+            case 5: return <Step5Practice {...props} isOptional={true} role="legal_provider" />;
             case 6: return <Step6Location {...props} />;
-            case 7: return <Step7Career {...props} isOptional={true} />;
+            case 7: return <Step7Career {...props} isOptional={true} role="legal_provider" />;
             case 8: return <Step8Availability {...props} />;
             case 9: return <Step9Review {...props} />;
             default: return null;

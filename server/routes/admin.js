@@ -13,6 +13,7 @@ const LegalRequest = require('../models/LegalRequest');
 const StaffProfile = require('../models/StaffProfile');
 const StaffReport = require('../models/StaffReport');
 const Lead = require('../models/Lead');
+const AdminConfig = require('../models/AdminConfig');
 
 const Contact = require('../models/Contact');
 
@@ -254,7 +255,9 @@ router.get('/members', async (req, res) => {
                 reported: profile ? (profile.reported || 0) : 0,
                 location: location,
                 avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
-                unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`
+                unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`,
+                specialization: profile ? (profile.practice?.specialization || 'N/A') : 'N/A',
+                legalDocumentation: profile ? (profile.legalDocumentation || []) : []
             };
         }));
 
@@ -1067,6 +1070,67 @@ router.delete('/legal-requests/:id', async (req, res) => {
     try {
         await LegalRequest.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Legal request deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+
+// ================= PROFILE CONFIGURATION MANAGEMENT =================
+
+// GET SECTIONS CONFIG
+router.get('/config/sections/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        const config = await AdminConfig.findOne({ type: 'SECTION_CONFIG', role });
+        res.json({ success: true, sections: config ? config.value : [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// SAVE SECTIONS CONFIG
+router.post('/config/sections/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        const { sections } = req.body;
+
+        const config = await AdminConfig.findOneAndUpdate(
+            { type: 'SECTION_CONFIG', role },
+            { value: sections, lastUpdated: Date.now() },
+            { new: true, upsert: true }
+        );
+
+        res.json({ success: true, sections: config.value });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET ATTRIBUTES CONFIG
+router.get('/config/attributes/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        const config = await AdminConfig.findOne({ type: 'ATTRIBUTE_CONFIG', role });
+        res.json({ success: true, attributes: config ? config.value : [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// SAVE ATTRIBUTES CONFIG
+router.post('/config/attributes/:role', async (req, res) => {
+    try {
+        const { role } = req.params;
+        const { attributes } = req.body;
+
+        const config = await AdminConfig.findOneAndUpdate(
+            { type: 'ATTRIBUTE_CONFIG', role },
+            { value: attributes, lastUpdated: Date.now() },
+            { new: true, upsert: true }
+        );
+
+        res.json({ success: true, attributes: config.value });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

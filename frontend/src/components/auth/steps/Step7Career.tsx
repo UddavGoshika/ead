@@ -14,10 +14,11 @@ interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
     isOptional?: boolean;
+    role?: string;
 }
 
-const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
-    const { getOptions } = useAdminConfig();
+const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role }) => {
+    const { getOptions } = useAdminConfig(role);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

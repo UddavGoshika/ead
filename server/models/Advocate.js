@@ -58,6 +58,7 @@ const AdvocateSchema = new mongoose.Schema({
     },
     verified: { type: Boolean, default: false },
     signaturePath: String, // File upload
+    legalDocumentation: [String], // Added to track doc services
     interests: [{ type: String }],
     superInterests: [{ type: String }],
     shortlists: [{ type: String }],

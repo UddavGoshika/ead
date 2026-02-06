@@ -153,7 +153,8 @@ router.post('/register', (req, res, next) => {
                 docType: req.body.idProofType,
                 docPath: files['adr-idProof'] ? files['adr-idProof'][0].path : null
             },
-            signaturePath: files['signature'] ? files['signature'][0].path : null
+            signaturePath: files['signature'] ? files['signature'][0].path : null,
+            legalDocumentation: Array.isArray(parseValue(req.body.legalDocumentation)) ? parseValue(req.body.legalDocumentation) : []
         };
 
         const newAdvocate = await Advocate.create(advocateData);

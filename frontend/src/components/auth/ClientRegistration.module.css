@@ -208,11 +208,19 @@
 /* Tabs Styles */
 .tabsContainer {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
     padding-bottom: 0px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Hide scrollbar for Firefox */
+}
+
+.tabsContainer::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar for Chrome/Safari */
 }
 
 .tabItem {
@@ -585,4 +593,118 @@
     border-radius: 12px;
     padding: 10px;
     margin-top: 10px;
+}
+
+/* Review Step Professional Styles */
+.reviewContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding: 10px 0;
+}
+
+.reviewSection {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.2s ease;
+}
+
+.reviewSection:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(109, 93, 252, 0.3);
+}
+
+.reviewSectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reviewSectionHeader h4 {
+    color: #fbbf24;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.reviewGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 30px;
+}
+
+.reviewItem {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.reviewLabel {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.reviewValue {
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.statusCard {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statusIcon {
+    font-size: 1.2rem;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badgeSuccess {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badgeError {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.addressBlock {
+    grid-column: span 2;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid #6d5dfc;
+}
+
+@media (max-width: 640px) {
+    .reviewGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .addressBlock {
+        grid-column: span 1;
+    }
 }

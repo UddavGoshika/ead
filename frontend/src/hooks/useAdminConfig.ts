@@ -1,42 +1,76 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DEFAULT_ATTRIBUTES, DEFAULT_SECTIONS } from '../config/adminConfig';
+import api from '../services/api';
 
-const ATTRIBUTES_KEY = 'eadvocate_admin_attributes';
-const SECTIONS_KEY = 'eadvocate_admin_sections';
-
-export const useAdminConfig = () => {
+export const useAdminConfig = (role?: string) => {
     const [attributes, setAttributes] = useState(DEFAULT_ATTRIBUTES);
     const [sections, setSections] = useState(DEFAULT_SECTIONS);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const storedAttrs = localStorage.getItem(ATTRIBUTES_KEY);
-        const storedSections = localStorage.getItem(SECTIONS_KEY);
+    const loadConfig = useCallback(async (targetRole: string) => {
+        setLoading(true);
+        try {
+            const [secRes, attrRes] = await Promise.all([
+                api.get(`/admin/config/sections/${targetRole}`),
+                api.get(`/admin/config/attributes/${targetRole}`)
+            ]);
 
-        if (storedAttrs) {
-            try {
-                setAttributes(JSON.parse(storedAttrs));
-            } catch (e) {
-                console.error("Failed to parse stored attributes", e);
+            if (secRes.data.success && secRes.data.sections && secRes.data.sections.length > 0) {
+                setSections(secRes.data.sections);
+            } else {
+                setSections(DEFAULT_SECTIONS);
             }
-        }
 
-        if (storedSections) {
-            try {
-                setSections(JSON.parse(storedSections));
-            } catch (e) {
-                console.error("Failed to parse stored sections", e);
+            if (attrRes.data.success && attrRes.data.attributes && attrRes.data.attributes.length > 0) {
+                setAttributes(attrRes.data.attributes);
+            } else {
+                setAttributes(DEFAULT_ATTRIBUTES);
             }
+        } catch (e) {
+            console.error("Failed to load admin config", e);
+            // Fallback to defaults on error
+            setSections(DEFAULT_SECTIONS);
+            setAttributes(DEFAULT_ATTRIBUTES);
+        } finally {
+            setLoading(false);
         }
     }, []);
 
-    const saveAttributes = (newAttributes: typeof DEFAULT_ATTRIBUTES) => {
-        setAttributes(newAttributes);
-        localStorage.setItem(ATTRIBUTES_KEY, JSON.stringify(newAttributes));
+    useEffect(() => {
+        if (role) {
+            loadConfig(role);
+        }
+    }, [role, loadConfig]);
+
+    const saveAttributes = async (newAttributes: typeof DEFAULT_ATTRIBUTES, targetRole?: string) => {
+        const r = targetRole || role;
+        if (!r) {
+            console.error("No role specified for saving attributes");
+            return;
+        }
+
+        setAttributes(newAttributes); // Optimistic update
+        try {
+            await api.post(`/admin/config/attributes/${r}`, { attributes: newAttributes });
+        } catch (e) {
+            console.error("Failed to save attributes", e);
+            // Ideally revert state here, but for now we log
+        }
     };
 
-    const saveSections = (newSections: typeof DEFAULT_SECTIONS) => {
+    const saveSections = async (newSections: typeof DEFAULT_SECTIONS, targetRole?: string) => {
+        const r = targetRole || role;
+        if (!r) {
+            console.error("No role specified for saving sections");
+            return;
+        }
+
         setSections(newSections);
-        localStorage.setItem(SECTIONS_KEY, JSON.stringify(newSections));
+        try {
+            await api.post(`/admin/config/sections/${r}`, { sections: newSections });
+        } catch (e) {
+            console.error("Failed to save sections", e);
+        }
     };
 
     const getOptions = (categoryId: string) => {
@@ -45,7 +79,6 @@ export const useAdminConfig = () => {
     };
 
     const isSectionEnabled = (sectionName: string) => {
-        // Simple fuzzy match or exact match
         const section = sections.find(s => s.name.toLowerCase().includes(sectionName.toLowerCase()) || sectionName.toLowerCase().includes(s.name.toLowerCase()));
         return section ? section.enabled : true;
     };
@@ -53,6 +86,8 @@ export const useAdminConfig = () => {
     return {
         attributes,
         sections,
+        loading,
+        loadConfig,
         saveAttributes,
         saveSections,
         getOptions,
