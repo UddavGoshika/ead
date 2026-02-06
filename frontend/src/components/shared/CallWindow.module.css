@@ -391,6 +391,106 @@
     padding: 10px;
 }
 
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .incomingPopup {
+        width: 90%;
+        max-width: 320px;
+        padding: 2rem 1.5rem;
+        border-radius: 1.5rem;
+    }
+
+    .callerAvatar,
+    .callingIcon {
+        width: 100px;
+        height: 100px;
+    }
+
+    .statusText {
+        font-size: 1.4rem;
+    }
+
+    .callerName {
+        font-size: 1.3rem;
+    }
+
+    .actionButtons {
+        gap: 1.5rem;
+    }
+
+    .acceptBtn,
+    .rejectBtn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .previewContainer {
+        display: none;
+        /* Hide preview on small mobile to save space */
+    }
+
+    .partnerOverlay {
+        top: 1.5rem;
+    }
+
+    .partnerName {
+        font-size: 1.6rem;
+    }
+
+    .partnerTopInfo {
+        gap: 1rem;
+    }
+
+    .audioAvatarLarge {
+        width: 180px;
+        height: 180px;
+    }
+
+    .localVideoWrapper {
+        width: 120px;
+        height: 180px;
+        bottom: 9rem;
+        right: 1rem;
+    }
+
+    .p2pControls {
+        padding: 1rem 1.5rem;
+        gap: 1rem;
+        width: 95%;
+        max-width: 380px;
+        bottom: 2rem;
+    }
+
+    .controlBtn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .hangupBtn {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .partnerName {
+        font-size: 1.4rem;
+    }
+
+    .callTimer {
+        font-size: 1rem;
+    }
+
+    .p2pControls {
+        gap: 0.5rem;
+    }
+
+    .controlBtn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 /* MINIMIZED STATE */
 .callContainer.minimized {
     width: 300px;

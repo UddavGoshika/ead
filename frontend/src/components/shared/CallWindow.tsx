@@ -82,7 +82,7 @@ const CallWindow: React.FC = () => {
                     <div className={styles.pulseWrapper}>
                         <img
                             src={incomingPartner?.image_url && incomingPartner.image_url !== '/default-avatar.png'
-                                ? (incomingPartner.image_url.startsWith('http') ? incomingPartner.image_url : `${window.location.protocol}//${window.location.host}${incomingPartner.image_url}`)
+                                ? (incomingPartner.image_url.startsWith('http') ? incomingPartner.image_url : `${window.location.origin}${incomingPartner.image_url}`)
                                 : "/default-avatar.png"}
                             alt="Caller"
                             className={styles.callerAvatar}
@@ -122,17 +122,13 @@ const CallWindow: React.FC = () => {
 
                 <div className={styles.incomingPopup}>
                     <div className={styles.pulseWrapper}>
-                        {outgoingPartner?.image_url ? (
-                            <img
-                                src={outgoingPartner.image_url.startsWith('http') ? outgoingPartner.image_url : `${window.location.origin}${outgoingPartner.image_url}`}
-                                alt="Recipient"
-                                className={styles.callerAvatar}
-                            />
-                        ) : (
-                            <div className={styles.callingIcon}>
-                                <Phone size={48} />
-                            </div>
-                        )}
+                        <img
+                            src={outgoingPartner?.image_url && outgoingPartner.image_url !== '/default-avatar.png'
+                                ? (outgoingPartner.image_url.startsWith('http') ? outgoingPartner.image_url : `${window.location.origin}${outgoingPartner.image_url}`)
+                                : (outgoingPartner?.image_url || "/default-avatar.png")}
+                            alt="Recipient"
+                            className={styles.callerAvatar}
+                        />
                     </div>
                     <h2 className={styles.statusText}>
                         {callStatus === 'ringing' ? 'Ringing...' : 'Calling...'}
@@ -189,7 +185,7 @@ const CallWindow: React.FC = () => {
                         <div className={styles.audioAvatarWrapper}>
                             <img
                                 src={partner?.image_url && partner.image_url !== '/default-avatar.png'
-                                    ? (partner.image_url.startsWith('http') ? partner.image_url : `${window.location.protocol}//${window.location.host}${partner.image_url}`)
+                                    ? (partner.image_url.startsWith('http') ? partner.image_url : `${window.location.origin}${partner.image_url}`)
                                     : "/default-avatar.png"}
                                 alt="User"
                                 className={styles.audioAvatarLarge}
