@@ -232,23 +232,23 @@ const MemberVerification: React.FC = () => {
         try {
             setActionLoading(true);
 
-            // Special handling for demo member rejection testing
-            if (selectedMember.id === 'demo-1' && status === "Rejected") {
+            if (selectedMember.id === 'demo-1') {
                 const targetEmail = testEmail.trim() || selectedMember.email;
-                await axios.post(`${API_BASE_URL}/api/admin/test-reject-email`, {
-                    email: targetEmail,
-                    remarks: remarks
-                });
-                alert(`SUCCESS: Rejection email sent to ${targetEmail}`);
+                if (status === "Approved") {
+                    await axios.post(`${API_BASE_URL}/api/admin/test-approve-email`, {
+                        email: targetEmail
+                    });
+                    alert(`SUCCESS: Welcome email (with unique ID) sent to ${targetEmail}`);
+                } else {
+                    await axios.post(`${API_BASE_URL}/api/admin/test-reject-email`, {
+                        email: targetEmail,
+                        remarks: remarks
+                    });
+                    alert(`SUCCESS: Rejection email (with solution) sent to ${targetEmail}`);
+                }
                 setIsRejecting(false);
                 setRemarks("");
                 setTestEmail("");
-                return;
-            }
-
-            if (selectedMember.id === 'demo-1') {
-                alert(`DEMO: Member ${selectedMember.name} would have been ${status}.`);
-                setIsRejecting(false);
                 return;
             }
 
@@ -659,16 +659,31 @@ const MemberVerification: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className={styles.actionBar}>
-                                        <button className={styles.rejectBtn} onClick={() => setIsRejecting(true)}>
-                                            <AlertTriangle size={18} /> Reject Profile
-                                        </button>
-                                        <button
-                                            className={styles.approveBtn}
-                                            disabled={!isChecklistComplete() || actionLoading}
-                                            onClick={() => handleAction("Approved")}
-                                        >
-                                            <CheckCircle size={18} /> {actionLoading ? "Processing..." : "Approve & Verify"}
-                                        </button>
+                                        {selectedMember.id === 'demo-1' && (
+                                            <div className={styles.demoTestInput}>
+                                                <label className={styles.fieldLabel}>Demo Email Testing:</label>
+                                                <input
+                                                    type="email"
+                                                    className={styles.remarksArea}
+                                                    style={{ minHeight: '40px', marginBottom: '10px' }}
+                                                    placeholder="Enter your email to receive demo notifications..."
+                                                    value={testEmail}
+                                                    onChange={(e) => setTestEmail(e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+                                        <div className={styles.actionButtons}>
+                                            <button className={styles.rejectBtn} onClick={() => setIsRejecting(true)}>
+                                                <AlertTriangle size={18} /> Reject Profile
+                                            </button>
+                                            <button
+                                                className={styles.approveBtn}
+                                                disabled={!isChecklistComplete() || actionLoading}
+                                                onClick={() => handleAction("Approved")}
+                                            >
+                                                <CheckCircle size={18} /> {actionLoading ? "Processing..." : "Approve & Verify"}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -77,8 +77,8 @@ const FileACaseSection: React.FC = () => {
                         </AnimatePresence>
                         <div className={styles.sliderControls}>
                             <div className={styles.arrows}>
-                                <button onClick={prevSlide} className={styles.arrowBtn}><ChevronLeft size={18} /></button>
-                                <button onClick={nextSlide} className={styles.arrowBtn}><ChevronRight size={18} /></button>
+                                <button onClick={prevSlide} className={styles.arrowBtn}><ChevronLeft size={18} />≪</button>
+                                <button onClick={nextSlide} className={styles.arrowBtn}><ChevronRight size={18} />≫</button>
                             </div>
                         </div>
                     </div>

@@ -339,7 +339,8 @@ router.patch('/members/:id/verify', async (req, res) => {
             return res.json({ success: true, message: 'Member rejected and informed via email' });
         }
 
-        if (user.role.toLowerCase() === 'advocate') {
+        const roleLower = user.role.toLowerCase();
+        if (roleLower === 'advocate' || roleLower === 'legal_provider') {
             const advocate = await Advocate.findOneAndUpdate(
                 { userId: user._id },
                 { verified, verifiedAt: verified ? new Date() : null },
@@ -351,8 +352,8 @@ router.patch('/members/:id/verify', async (req, res) => {
             await user.save();
 
             if (verified) {
-                const emailSubject = 'Congratulations! Your Advocate Profile is Verified';
-                const emailText = `Hello ${advocate.name || advocate.firstName},\n\nWe are pleased to inform you that your advocate profile has been successfully verified. You now have full access to the E-Advocate platform.\n\nYou can login using your registered email and password at:\n${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+                const emailSubject = 'Welcome to E-Advocate - Your Profile is Verified!';
+                const emailText = `Hello ${advocate.firstName || advocate.name},\n\nCongratulations! Your advocate profile has been successfully verified. You now have full access to the E-Advocate platform.\n\n**Your Unique ID: ${advocate.unique_id || 'N/A'}**\n\nYou can login using your registered email and password at:\n${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
                 await sendEmail(user.email, emailSubject, emailText);
             }
 
@@ -370,8 +371,8 @@ router.patch('/members/:id/verify', async (req, res) => {
             await user.save();
 
             if (verified) {
-                const emailSubject = 'Important: Your Client Account is Now Active';
-                const emailText = `Hello ${profile.firstName} ${profile.lastName},\n\nYour account has been verified and activated by our team. You can now post legal requirements and connect with advocates.\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+                const emailSubject = 'Welcome to E-Advocate - Your Profile is Verified!';
+                const emailText = `Hello ${profile.firstName || 'User'},\n\nCongratulations! Your account has been verified and activated by our team. You can now post legal requirements and connect with advocates.\n\n**Your Unique ID: ${profile.unique_id || 'N/A'}**\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
                 await sendEmail(user.email, emailSubject, emailText);
             }
 
@@ -398,7 +399,8 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
         await user.save();
 
         let profileName = 'User';
-        if (user.role.toLowerCase() === 'advocate') {
+        const roleLower = user.role.toLowerCase();
+        if (roleLower === 'advocate' || roleLower === 'legal_provider') {
             const profile = await Advocate.findOneAndUpdate(
                 { userId: user._id },
                 { verified: false, rejectionReason: remarks },
@@ -419,8 +421,8 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
         }
 
         // Send Email
-        const emailSubject = 'Action Required: Your Verification Request';
-        const emailText = `Hello ${profileName},\n\nYour profile verification was not successful for the following reason:\n\n${remarks}\n\nPlease click the link below to verify/update your details:\n${req.protocol}://${req.get('host')}/dashboard\n\nThank you,\nE-Advocate Team`;
+        const emailSubject = 'Action Required: Your Verification Request Status';
+        const emailText = `Hello ${profileName},\n\nThank you for your interest in E-Advocate.\n\nWe've reviewed your registration documents, and unfortunately, we couldn't verify your profile at this time for the following reason:\n\n**Reason for Rejection:**\n${remarks}\n\n**Solution & Next Steps:**\nTo get your profile approved, please:\n1. Log in to your dashboard here: ${req.protocol}://${req.get('host')}/login\n2. Navigate to the profile or document section.\n3. Correct the issues mentioned above (e.g., upload a clearer ID proof, correct your name, etc.).\n4. Resubmit your profile for verification.\n\nOur team will review your updated information within 12-24 hours.\n\nThank you,\nE-Advocate Team`;
 
         await sendEmail(user.email, emailSubject, emailText);
 
@@ -1213,6 +1215,38 @@ router.delete('/referral/rules/:id', async (req, res) => {
     try {
         await CommissionRule.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Rule deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// TEST EMAIL ENDPOINTS FOR ADMIN DEMO
+router.post('/test-reject-email', async (req, res) => {
+    try {
+        const { email, remarks } = req.body;
+        const profileName = 'Demo Member';
+
+        const emailSubject = 'Action Required: Your Verification Request Status';
+        const emailText = `Hello ${profileName},\n\nThank you for your interest in E-Advocate.\n\nWe've reviewed your registration documents, and unfortunately, we couldn't verify your profile at this time for the following reason:\n\n**Reason for Rejection:**\n${remarks || 'Sample rejection reason.'}\n\n**Solution & Next Steps:**\nTo get your profile approved, please:\n1. Log in to your dashboard here: ${req.protocol}://${req.get('host')}/login\n2. Navigate to the profile or document section.\n3. Correct the issues mentioned above (e.g., upload a clearer ID proof, correct your name, etc.).\n4. Resubmit your profile for verification.\n\nOur team will review your updated information within 12-24 hours.\n\nThank you,\nE-Advocate Team`;
+
+        await sendEmail(email, emailSubject, emailText);
+        res.json({ success: true, message: 'Test rejection email sent' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.post('/test-approve-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const profileName = 'Demo Member';
+        const uniqueId = 'TP-EAD-DEMO-123456';
+
+        const emailSubject = 'Welcome to E-Advocate - Your Profile is Verified!';
+        const emailText = `Hello ${profileName},\n\nCongratulations! Your account has been successfully verified. You now have full access to the E-Advocate platform.\n\n**Your Unique ID: ${uniqueId}**\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+
+        await sendEmail(email, emailSubject, emailText);
+        res.json({ success: true, message: 'Test approval email sent' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
