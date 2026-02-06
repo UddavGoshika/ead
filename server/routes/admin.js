@@ -259,7 +259,9 @@ router.get('/members', async (req, res) => {
                 avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
                 unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`,
                 specialization: profile ? (profile.practice?.specialization || 'N/A') : 'N/A',
-                legalDocumentation: profile ? (profile.legalDocumentation || []) : []
+                legalDocumentation: profile ? (profile.legalDocumentation || []) : [],
+                rejectionReason: profile ? (profile.rejectionReason || '') : '',
+                verificationStatus: profile?.verified ? 'Verified' : (profile?.rejectionReason ? 'Rejected' : 'Pending')
             };
         }));
 
@@ -281,6 +283,9 @@ router.get('/members', async (req, res) => {
         } else if (context === 'unapproved') {
             // Alias for pending or slightly different? Usually unverified.
             filteredMembers = members.filter(m => !m.verified && m.status !== 'Deleted');
+        } else if (context === 'rejected') {
+            // Specifically members who have been rejected
+            filteredMembers = members.filter(m => !m.verified && m.verificationStatus === 'Rejected' && m.status !== 'Deleted');
         }
 
         res.json({ success: true, members: filteredMembers });
@@ -393,12 +398,20 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
 
         let profileName = 'User';
         if (user.role.toLowerCase() === 'advocate') {
-            const profile = await Advocate.findOneAndUpdate({ userId: user._id }, { verified: false }, { new: true });
+            const profile = await Advocate.findOneAndUpdate(
+                { userId: user._id },
+                { verified: false, rejectionReason: remarks },
+                { new: true }
+            );
             if (profile) {
                 profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
             }
         } else if (user.role.toLowerCase() === 'client') {
-            const profile = await Client.findOne({ userId: user._id });
+            const profile = await Client.findOneAndUpdate(
+                { userId: user._id },
+                { verified: false, rejectionReason: remarks },
+                { new: true }
+            );
             if (profile) {
                 profileName = `${profile.firstName} ${profile.lastName}`;
             }

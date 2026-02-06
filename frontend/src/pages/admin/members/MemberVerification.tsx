@@ -679,7 +679,7 @@ const MemberVerification: React.FC = () => {
                     <div className={styles.previewModal} onClick={e => e.stopPropagation()}>
                         <div className={styles.previewHeader}>
                             <h3>{previewFile.name}</h3>
-                            <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} /></button>
+                            <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} />X</button>
                         </div>
                         <div className={styles.previewBody}>
                             {previewFile.path.toLowerCase().endsWith('.pdf') ? (

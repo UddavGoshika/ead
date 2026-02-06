@@ -26,6 +26,7 @@ interface Member {
     legalHelp?: any;
     career?: any;
     signaturePath?: string;
+    rejectionReason?: string;
 }
 
 interface Props {
@@ -145,6 +146,14 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
                                 <div className={styles.infoRow}><label>Department</label><span>{member.legalHelp?.subDepartment || 'N/A'}</span></div>
                                 <div className={styles.infoRow}><label>Mode</label><span>{member.legalHelp?.mode || 'N/A'}</span></div>
                                 <div className={styles.infoRow}><label>Description</label><p className={styles.descText}>{member.legalHelp?.issueDescription || 'N/A'}</p></div>
+                            </div>
+                        )}
+
+                        {/* SECTION: REJECTION (IF ANY) */}
+                        {member.rejectionReason && (
+                            <div className={styles.sectionCard} style={{ backgroundColor: '#fff1f2', border: '1px solid #fda4af', padding: '15px' }}>
+                                <h3 style={{ color: '#be123c', marginBottom: '10px' }}>Verification Rejection Reason</h3>
+                                <p style={{ color: '#9f1239', fontSize: '0.95rem', lineHeight: '1.6' }}>{member.rejectionReason}</p>
                             </div>
                         )}
 

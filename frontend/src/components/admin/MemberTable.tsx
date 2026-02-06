@@ -13,7 +13,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getFeaturesFromPlan } from "../../config/completePackageConfig";
 
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
-export type MemberContext = 'all' | 'free' | 'premium' | 'approved' | 'pending' | 'blocked' | 'deactivated' | 'deleted' | 'reported';
+export type MemberContext = 'all' | 'free' | 'premium' | 'approved' | 'pending' | 'rejected' | 'blocked' | 'deactivated' | 'deleted' | 'reported';
 
 export interface Member {
     id: string; // Updated to string for MongoDB ID
@@ -59,6 +59,7 @@ export interface Member {
     // Ultra Pro Fields
     supportType?: string;
     idProofType?: string;
+    rejectionReason?: string;
 }
 
 interface MemberTableProps {
@@ -359,7 +360,9 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                         createdAt: m.createdAt,
                         status: m.status || 'Active',
                         image: m.avatar || '/avatar_placeholder.png',
-                        idProofType: m.idProofType // Map this if available
+                        idProofType: m.idProofType,
+                        verificationStatus: m.verificationStatus,
+                        rejectionReason: m.rejectionReason
                     };
                 });
                 setMembers(mapped);
