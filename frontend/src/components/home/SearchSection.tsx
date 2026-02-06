@@ -380,11 +380,11 @@ const SearchSection: React.FC = () => {
                             />
                         </div>
 
-                        <button className={styles.applyBtn} onClick={fetchData} disabled={loading} style={{ height: '48px' }}>
+                        <button className={styles.applyBtn} onClick={fetchData} disabled={loading}>
                             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Apply'}
                         </button>
 
-                        <button className={styles.resetBtn} onClick={handleReset} style={{ height: '48px' }}>Reset</button>
+                        <button className={styles.resetBtn} onClick={handleReset}>Reset</button>
 
                     </div>
                 </div>

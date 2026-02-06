@@ -54,7 +54,13 @@ const SettingsSchema = new mongoose.Schema({
         primary_color: { type: String, default: '#3b82f6' },
         dark_mode: { type: Boolean, default: true }
     },
-    invoice_header_url: { type: String, default: '/assets/left-logo.jpeg' }
+    invoice_header_url: { type: String, default: '/assets/left-logo.jpeg' },
+    referral_settings: {
+        min_payout: { type: Number, default: 2000 },
+        payout_method: { type: String, default: 'Bank Transfer / UPI' },
+        link_expiry_days: { type: Number, default: 30 },
+        enable_multilevel: { type: Boolean, default: true }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', SettingsSchema);

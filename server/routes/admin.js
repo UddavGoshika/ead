@@ -14,6 +14,7 @@ const StaffProfile = require('../models/StaffProfile');
 const StaffReport = require('../models/StaffReport');
 const Lead = require('../models/Lead');
 const AdminConfig = require('../models/AdminConfig');
+const CommissionRule = require('../models/CommissionRule');
 
 const Contact = require('../models/Contact');
 
@@ -252,6 +253,7 @@ router.get('/members', async (req, res) => {
                 phone: profile ? (profile.mobile || 'N/A') : 'N/A',
                 gender: profile ? profile.gender : 'N/A',
                 verified: profile ? profile.verified : false,
+                verifiedAt: profile ? profile.verifiedAt : null,
                 reported: profile ? (profile.reported || 0) : 0,
                 location: location,
                 avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
@@ -263,7 +265,13 @@ router.get('/members', async (req, res) => {
 
         // 3. Strict Context Filtering (Profile Level)
         let filteredMembers = members;
-        if (context === 'approved') {
+        if (context === 'free') {
+            // Only verified free members
+            filteredMembers = members.filter(m => m.verified === true && (m.plan === 'Free' || !m.plan) && m.status !== 'Deleted');
+        } else if (context === 'premium') {
+            // Only verified premium members
+            filteredMembers = members.filter(m => m.verified === true && m.plan !== 'Free' && m.plan && m.status !== 'Deleted');
+        } else if (context === 'approved') {
             filteredMembers = members.filter(m => m.verified === true && m.status === 'Active');
         } else if (context === 'pending') {
             // Strictly unverified non-blocked
@@ -272,7 +280,7 @@ router.get('/members', async (req, res) => {
             filteredMembers = members.filter(m => m.reported > 0);
         } else if (context === 'unapproved') {
             // Alias for pending or slightly different? Usually unverified.
-            filteredMembers = members.filter(m => !m.verified);
+            filteredMembers = members.filter(m => !m.verified && m.status !== 'Deleted');
         }
 
         res.json({ success: true, members: filteredMembers });
@@ -326,7 +334,11 @@ router.patch('/members/:id/verify', async (req, res) => {
         }
 
         if (user.role.toLowerCase() === 'advocate') {
-            const advocate = await Advocate.findOneAndUpdate({ userId: user._id }, { verified }, { new: true });
+            const advocate = await Advocate.findOneAndUpdate(
+                { userId: user._id },
+                { verified, verifiedAt: verified ? new Date() : null },
+                { new: true }
+            );
             if (!advocate) return res.status(404).json({ error: 'Advocate profile not found' });
 
             user.status = verified ? 'Active' : 'Pending';
@@ -341,11 +353,17 @@ router.patch('/members/:id/verify', async (req, res) => {
             createNotification('profileUpdate', `Your advocate profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
             res.json({ success: true, message: `Advocate ${verified ? 'verified' : 'unverified'} successfully` });
         } else if (user.role.toLowerCase() === 'client') {
+            const profile = await Client.findOneAndUpdate(
+                { userId: user._id },
+                { verified, verifiedAt: verified ? new Date() : null },
+                { new: true }
+            );
+            if (!profile) return res.status(404).json({ error: 'Client profile not found' });
+
             user.status = verified ? 'Active' : 'Pending';
             await user.save();
 
-            const profile = await Client.findOne({ userId: user._id });
-            if (verified && profile) {
+            if (verified) {
                 const emailSubject = 'Important: Your Client Account is Now Active';
                 const emailText = `Hello ${profile.firstName} ${profile.lastName},\n\nYour account has been verified and activated by our team. You can now post legal requirements and connect with advocates.\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
                 await sendEmail(user.email, emailSubject, emailText);
@@ -425,14 +443,26 @@ router.get('/tickets', async (req, res) => {
 // UPDATE TICKET (Assign/Status)
 router.patch('/tickets/:id', async (req, res) => {
     try {
+        const { id } = req.params;
         const update = req.body;
-        const ticket = await Ticket.findByIdAndUpdate(req.params.id, update, { new: true });
+
+        let ticket;
+        if (id.match(/^[0-9a-fA-F]{24}$/)) {
+            ticket = await Ticket.findByIdAndUpdate(id, update, { new: true });
+        }
+
+        if (!ticket) {
+            ticket = await Ticket.findOneAndUpdate({ id: id }, update, { new: true });
+        }
+
+        if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
 
         // NOTIFICATION: TICKET UPDATE
-        createNotification('ticket', `Ticket ${req.params.id} updated: ${update.status || 'modified'}`, 'Admin', null, { ticketId: req.params.id });
+        createNotification('ticket', `Ticket ${ticket.id} updated: ${update.status || 'modified'}`, 'Admin', null, { ticketId: ticket.id });
 
         res.json({ success: true, ticket });
     } catch (err) {
+        console.error('Ticket update error:', err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -1131,6 +1161,43 @@ router.post('/config/attributes/:role', async (req, res) => {
         );
 
         res.json({ success: true, attributes: config.value });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= REFERRAL COMMISSION MANAGEMENT =================
+// GET ALL RULES
+router.get('/referral/rules', async (req, res) => {
+    try {
+        const rules = await CommissionRule.find().sort({ createdAt: 1 });
+        res.json({ success: true, rules });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// CREATE/UPDATE RULE
+router.post('/referral/rules', async (req, res) => {
+    try {
+        const data = req.body;
+        let rule;
+        if (data._id) {
+            rule = await CommissionRule.findByIdAndUpdate(data._id, data, { new: true });
+        } else {
+            rule = await CommissionRule.create(data);
+        }
+        res.json({ success: true, rule });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE RULE
+router.delete('/referral/rules/:id', async (req, res) => {
+    try {
+        await CommissionRule.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Rule deleted successfully' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

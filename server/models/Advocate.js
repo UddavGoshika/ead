@@ -57,6 +57,7 @@ const AdvocateSchema = new mongoose.Schema({
         consultationFee: Number
     },
     verified: { type: Boolean, default: false },
+    verifiedAt: { type: Date },
     signaturePath: String, // File upload
     legalDocumentation: [String], // Added to track doc services
     interests: [{ type: String }],

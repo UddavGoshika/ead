@@ -25,6 +25,7 @@ export interface Member {
     location?: string;
     gender: string;
     verified: boolean;
+    verifiedAt?: string;
     verificationStatus?: "Pending" | "Verified" | "Rejected" | "Resubmitted"; // New
     reported: number;
     view?: number;
@@ -917,12 +918,26 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                 <td>{m.gender}</td>
                                 <td>
                                     {m.verified ? (
-                                        <button
-                                            className={styles.viewActionBtn}
-                                            onClick={() => handleAction(m, 'verify')}
-                                        >
-                                            View Details
-                                        </button>
+                                        <div className={styles.verifiedWrapper}>
+                                            <button
+                                                className={styles.viewActionBtn}
+                                                style={{ cursor: 'default' }}
+                                            >
+                                                Verified Member
+                                            </button>
+                                            <div className={styles.tooltip}>
+                                                <span className={styles.tooltipTitle}>Verification Success</span>
+                                                <span className={styles.tooltipDate}>
+                                                    {m.verifiedAt
+                                                        ? new Date(m.verifiedAt).toLocaleDateString('en-GB', {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric'
+                                                        })
+                                                        : 'Date not recorded'}
+                                                </span>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <button
                                             className={styles.verifyActionBtn}

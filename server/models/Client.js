@@ -29,6 +29,8 @@ const ClientSchema = new mongoose.Schema({
         languages: String,
         issueDescription: String
     },
+    verified: { type: Boolean, default: false },
+    verifiedAt: { type: Date },
     signaturePath: String, // File upload
     interests: [{ type: String }],
     superInterests: [{ type: String }],

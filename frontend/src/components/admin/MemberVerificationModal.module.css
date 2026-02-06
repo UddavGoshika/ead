@@ -81,6 +81,15 @@
     margin-bottom: 32px;
 }
 
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
 .sectionTitle {
     display: flex;
     align-items: center;
@@ -90,9 +99,30 @@
     color: #3b82f6;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.downloadAllBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    color: #60a5fa;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.downloadAllBtn:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
 }
 
 .dataGrid {
@@ -159,6 +189,16 @@
     background: rgba(59, 130, 246, 0.1);
     padding: 10px;
     border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.docThumbnail {
+    width: 24px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
 .docInfo {
@@ -178,25 +218,37 @@
     color: #64748b;
 }
 
-.viewFileBtn {
+.docActions {
+    display: flex;
+    gap: 8px;
+}
+
+.viewFileBtn,
+.downloadFileBtn {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
     font-weight: 600;
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.2s;
 }
 
 .viewFileBtn:hover {
-    background: #3b82f6;
-    color: white;
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
     border-color: #3b82f6;
+}
+
+.downloadFileBtn:hover {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: #10b981;
 }
 
 .footer {
@@ -342,6 +394,26 @@
 .rejectBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(244, 63, 94, 0.3);
+}
+
+.reverifyBtn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reverifyBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
 }
 
 /* VERIFICATION FORM / CHECKLIST */

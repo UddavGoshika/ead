@@ -153,6 +153,7 @@ const MemberVerification: React.FC = () => {
     const [isRejecting, setIsRejecting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+    const [filterRole, setFilterRole] = useState<"All" | "Advocate" | "Client" | "Legal Provider">("All");
 
     useEffect(() => {
         fetchPendingMembers();
@@ -161,7 +162,7 @@ const MemberVerification: React.FC = () => {
     const fetchPendingMembers = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_BASE_URL}/api/admin/members?status=Pending`);
+            const res = await axios.get(`${API_BASE_URL}/api/admin/members?context=pending`);
             if (res.data.success) {
                 let memberList = res.data.members;
                 if (memberList.length === 0) {
@@ -275,6 +276,22 @@ const MemberVerification: React.FC = () => {
         }
     };
 
+    const handleDownloadAll = () => {
+        if (!selectedMember || !selectedMember.documents) return;
+        selectedMember.documents.forEach((doc, index) => {
+            if (doc.path) {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = `${API_BASE_URL}/${doc.path}`;
+                    link.download = doc.name || `document_${index}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 250);
+            }
+        });
+    };
+
     const renderDataField = (label: string, value: any, icon?: React.ReactNode) => {
         if (!value || (Array.isArray(value) && value.length === 0)) return null;
 
@@ -318,32 +335,45 @@ const MemberVerification: React.FC = () => {
                 <div className={styles.sidebarHeader}>
                     <h2>
                         <Users size={20} />
-                        Pending Queue
+                        Unapproved Queue
                         <span className={styles.pendingCount}>{members.length}</span>
                     </h2>
                 </div>
-                <div className={styles.memberList}>
-                    {members.map(m => (
-                        <div
-                            key={m.id}
-                            className={`${styles.memberItem} ${selectedMember?.id === m.id ? styles.active : ''}`}
-                            onClick={() => {
-                                if (m.id === 'demo-1') setSelectedMember(MOCK_DEMO_MEMBER);
-                                else fetchMemberDetail(m.id);
-                                setChecklist({});
-                                setRemarks("");
-                                setIsRejecting(false);
-                            }}
+                <div className={styles.filterBar}>
+                    {(["All", "Advocate", "Client", "Legal Provider"] as const).map((role) => (
+                        <button
+                            key={role}
+                            className={`${styles.filterTab} ${filterRole === role ? styles.activeTab : ''}`}
+                            onClick={() => setFilterRole(role)}
                         >
-                            <img src={m.image || "https://via.placeholder.com/50"} className={styles.avatar} alt={m.name} />
-                            <div className={styles.mInfo}>
-                                <span className={styles.mName}>{m.name}</span>
-                                <span className={styles.mMeta}>{m.role} • {new Date(m.regDate || Date.now()).toLocaleDateString()}</span>
-                            </div>
-                            <ArrowRight size={16} />
-                        </div>
+                            {role === "Legal Provider" ? "Legal Advisors" : role === "All" ? "All Queue" : `${role}s`}
+                        </button>
                     ))}
-                    {members.length === 0 && <p className={styles.mMeta} style={{ padding: '20px' }}>No pending members</p>}
+                </div>
+                <div className={styles.memberList}>
+                    {members
+                        .filter(m => filterRole === "All" || m.role === filterRole)
+                        .map(m => (
+                            <div
+                                key={m.id}
+                                className={`${styles.memberItem} ${selectedMember?.id === m.id ? styles.active : ''}`}
+                                onClick={() => {
+                                    if (m.id === 'demo-1') setSelectedMember(MOCK_DEMO_MEMBER);
+                                    else fetchMemberDetail(m.id);
+                                    setChecklist({});
+                                    setRemarks("");
+                                    setIsRejecting(false);
+                                }}
+                            >
+                                <img src={m.image || "https://via.placeholder.com/50"} className={styles.avatar} alt={m.name} />
+                                <div className={styles.mInfo}>
+                                    <span className={styles.mName}>{m.name}</span>
+                                    <span className={styles.mMeta}>{m.role} • {new Date(m.regDate || Date.now()).toLocaleDateString()}</span>
+                                </div>
+                                <ArrowRight size={16} />
+                            </div>
+                        ))}
+                    {members.length === 0 && <p className={styles.mMeta} style={{ padding: '20px' }}>No unapproved members</p>}
                 </div>
             </div>
 
@@ -478,33 +508,55 @@ const MemberVerification: React.FC = () => {
 
                             {/* 5. Documents Verification */}
                             <div className={styles.contentSection}>
-                                <h3 className={styles.sectionTitle}><FileSearch size={18} /> Document Evidence</h3>
+                                <div className={styles.sectionHeader}>
+                                    <h3 className={styles.sectionTitle}><FileSearch size={18} /> Document Evidence</h3>
+                                    {selectedMember.documents && selectedMember.documents.length > 0 && (
+                                        <button className={styles.downloadAllBtn} onClick={handleDownloadAll}>
+                                            <Download size={14} /> Download All (Images)
+                                        </button>
+                                    )}
+                                </div>
                                 <div className={styles.fileGrid}>
-                                    {selectedMember.documents?.map((doc, idx) => (
-                                        <div key={idx} className={styles.docCard}>
-                                            <div className={styles.docIcon}><FileText size={20} /></div>
-                                            <div className={styles.docInfo}>
-                                                <span className={styles.docName}>{doc.name}</span>
-                                                <div className={styles.docActions}>
-                                                    <button
-                                                        className={styles.docBtn}
-                                                        onClick={() => setPreviewFile(doc)}
-                                                    >
-                                                        <Eye size={14} /> Preview
-                                                    </button>
-                                                    <a
-                                                        href={`${API_BASE_URL}/${doc.path}`}
-                                                        download
-                                                        className={styles.docBtn}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        <Download size={14} />
-                                                    </a>
+                                    {selectedMember.documents?.map((doc, idx) => {
+                                        const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.path);
+                                        return (
+                                            <div key={idx} className={styles.docCard}>
+                                                <div className={styles.docIcon}>
+                                                    {isImage ? (
+                                                        <img
+                                                            src={`${API_BASE_URL}/${doc.path}`}
+                                                            alt=""
+                                                            className={styles.docThumbnail}
+                                                            onClick={() => setPreviewFile(doc)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    ) : (
+                                                        <FileText size={20} />
+                                                    )}
+                                                </div>
+                                                <div className={styles.docInfo}>
+                                                    <span className={styles.docName}>{doc.name}</span>
+                                                    <div className={styles.docActions}>
+                                                        <button
+                                                            className={styles.docBtn}
+                                                            onClick={() => setPreviewFile(doc)}
+                                                        >
+                                                            <Eye size={14} /> View
+                                                        </button>
+                                                        <a
+                                                            href={`${API_BASE_URL}/${doc.path}`}
+                                                            download
+                                                            className={styles.docBtn}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            <Download size={14} />
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     {(!selectedMember.documents || selectedMember.documents.length === 0) && (
                                         <p className={styles.mMeta}>No documents uploaded</p>
                                     )}

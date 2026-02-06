@@ -52,7 +52,7 @@ export const MENU_SCHEMA: MenuItem[] = [
             { id: "approved-members", name: "Approved Members", path: "/admin/members/approved" },
             { id: "unapproved-profile-pictures", name: "Unapproved Profile", path: "/admin/members/unapproved-pictures" },
 
-            { id: "pending-members", name: "Pending Members", path: "/admin/members/pending" },
+            { id: "pending-members", name: "Unapproved Members", path: "/admin/members/pending" },
             { id: "deactivated-members", name: "Deactivated Members", path: "/admin/members/deactivated" },
             { id: "blocked-members", name: "Blocked Members", path: "/admin/members/blocked" },
             { id: "reported-members", name: "Reported Members", path: "/admin/members/reported" },
@@ -269,7 +269,6 @@ interface SidebarProps {
 }
 
 const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; collapsed: boolean }> = ({ item, depth = 0, search, collapsed }) => {
-    const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
 
     // Check if this item or any of its children match the search
@@ -279,10 +278,29 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
         return false;
     };
 
-    if (search && !matchesSearch(item)) return null;
+    // Recursive check for active state
+    const isRecursiveActive = (menuItem: MenuItem): boolean => {
+        if (location.pathname === menuItem.path) return true;
+        if (menuItem.children) {
+            return menuItem.children.some(child => isRecursiveActive(child));
+        }
+        return false;
+    };
 
+    const isActive = isRecursiveActive(item);
     const hasChildren = item.children && item.children.length > 0;
-    const isActive = location.pathname === item.path || (hasChildren && location.pathname.startsWith(item.path));
+
+    // Initialize isOpen based on active state or search, but allow manual override
+    const [isOpen, setIsOpen] = useState(isActive || !!search);
+
+    // Sync isOpen with search or active status changes
+    React.useEffect(() => {
+        if (isActive || !!search) {
+            setIsOpen(true);
+        }
+    }, [isActive, search]);
+
+    if (search && !matchesSearch(item)) return null;
 
     const toggle = (e: React.MouseEvent) => {
         if (hasChildren) {
@@ -311,11 +329,11 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
                     {!collapsed && item.badge && <span className={styles.badge}>{item.badge}</span>}
                 </div>
                 {!collapsed && hasChildren && (
-                    <span className={`${styles.chevron} ${isOpen || isActive ? styles.chevronOpen : ''}`}>▶</span>
+                    <span className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}>▶</span>
                 )}
             </NavLink>
 
-            {hasChildren && !collapsed && (isOpen || isActive || search) && (
+            {hasChildren && !collapsed && (isOpen || search) && (
                 <div className={styles.childrenContainer}>
                     {item.children?.map(child => (
                         <MenuItem key={child.id} item={child} depth={depth + 1} search={search} collapsed={collapsed} />

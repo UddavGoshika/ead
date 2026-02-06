@@ -49,6 +49,7 @@ interface Props {
 const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, isActionLoading = false }) => {
     const [remarks, setRemarks] = React.useState("");
     const [showRemarks, setShowRemarks] = React.useState(false);
+    const [actionType, setActionType] = React.useState<'reject' | 'reverify' | null>(null);
     const [checklist, setChecklist] = React.useState({
         identityProof: false,
         addressProof: false,
@@ -100,25 +101,69 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
         );
     };
 
+    const handleDownloadAll = () => {
+        if (!member) return;
+        const docs = isAdvocate ? [
+            { name: 'ID_Proof', path: member.idProof?.docPath },
+            { name: 'Education', path: member.education?.certificatePath },
+            { name: 'License', path: member.practice?.licensePath },
+            { name: 'Signature', path: member.signaturePath }
+        ] : [
+            { name: 'Verification_Doc', path: member.documentPath },
+            { name: 'Signature', path: member.signaturePath }
+        ];
+
+        docs.forEach((doc, index) => {
+            if (doc.path) {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = `/${doc.path.replace(/\\/g, '/')}`;
+                    link.download = doc.name || `document_${index}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, index * 200);
+            }
+        });
+    };
+
     const renderFileItem = (title: string, path: string | undefined) => {
         if (!path) return null;
+        const fullPath = `/${path.replace(/\\/g, '/')}`;
         const fileName = path.split('/').pop() || 'document.pdf';
+        const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
         return (
             <div className={styles.docItem}>
-                <div className={styles.docIcon}><FileText size={20} /></div>
+                <div className={styles.docIcon}>
+                    {isImage ? (
+                        <img src={fullPath} alt="" className={styles.docThumbnail} />
+                    ) : (
+                        <FileText size={20} />
+                    )}
+                </div>
                 <div className={styles.docInfo}>
                     <h4>{title}</h4>
                     <p>{fileName}</p>
                 </div>
-                <a
-                    href={`/${path.replace(/\\/g, '/')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.viewFileBtn}
-                    title="View File"
-                >
-                    <Download size={16} /> View
-                </a>
+                <div className={styles.docActions}>
+                    <a
+                        href={fullPath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.viewFileBtn}
+                        title="View File"
+                    >
+                        View
+                    </a>
+                    <a
+                        href={fullPath}
+                        download={fileName}
+                        className={styles.downloadFileBtn}
+                        title="Download File"
+                    >
+                        <Download size={14} />
+                    </a>
+                </div>
             </div>
         );
     };
@@ -239,7 +284,12 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
 
                     {/* 5. DOCUMENTS */}
                     <div className={styles.section}>
-                        <h3 className={styles.sectionTitle}><FileText size={16} /> Uploaded Registration Documents</h3>
+                        <div className={styles.sectionHeader}>
+                            <h3 className={styles.sectionTitle}><FileText size={16} /> Registration Documents</h3>
+                            <button className={styles.downloadAllBtn} onClick={handleDownloadAll}>
+                                <Download size={14} /> Download All (Images)
+                            </button>
+                        </div>
                         <div className={styles.fileGrid}>
                             {isAdvocate ? (
                                 <>
@@ -312,12 +362,15 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                 <div className={styles.footer}>
                     {showRemarks && (
                         <div className={styles.remarksSection}>
-                            <label>Reason for Rejection (Required):</label>
+                            <label style={{ color: actionType === 'reverify' ? '#f59e0b' : '#fca5a5' }}>
+                                Reason for {actionType === 'reverify' ? 'Re-verification' : 'Rejection'}:
+                            </label>
                             <textarea
                                 value={remarks}
                                 onChange={(e) => setRemarks(e.target.value)}
-                                placeholder="Enter reason for rejection/unverification..."
+                                placeholder={`Enter reason for ${actionType}...`}
                                 className={styles.remarksInput}
+                                style={{ borderColor: actionType === 'reverify' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(244, 63, 94, 0.3)' }}
                                 disabled={isActionLoading}
                             />
                         </div>
@@ -327,10 +380,17 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                             <>
                                 <button
                                     className={styles.rejectBtn}
-                                    onClick={() => setShowRemarks(true)}
+                                    onClick={() => { setActionType('reject'); setShowRemarks(true); }}
                                     disabled={isActionLoading}
                                 >
-                                    <AlertTriangle size={18} /> Reject / Unverify
+                                    <AlertTriangle size={18} /> Reject
+                                </button>
+                                <button
+                                    className={styles.reverifyBtn}
+                                    onClick={() => { setActionType('reverify'); setShowRemarks(true); }}
+                                    disabled={isActionLoading}
+                                >
+                                    <ShieldCheck size={18} /> Reverify
                                 </button>
                                 <button
                                     className={`${styles.approveBtn} ${!isChecklistComplete() ? styles.disabled : ''}`}
@@ -350,23 +410,23 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                             <>
                                 <button
                                     className={styles.cancelBtn}
-                                    onClick={() => setShowRemarks(false)}
+                                    onClick={() => { setShowRemarks(false); setActionType(null); }}
                                     disabled={isActionLoading}
                                 >
                                     Back
                                 </button>
                                 <button
-                                    className={styles.confirmRejectBtn}
+                                    className={actionType === 'reverify' ? styles.reverifyBtn : styles.confirmRejectBtn}
                                     onClick={() => {
                                         if (!remarks.trim()) {
-                                            alert("Please enter rejection remarks");
+                                            alert(`Please enter reason for ${actionType}`);
                                             return;
                                         }
                                         onVerify(member.id, false, remarks);
                                     }}
                                     disabled={isActionLoading || !remarks.trim()}
                                 >
-                                    Confirm Rejection
+                                    {actionType === 'reverify' ? 'Confirm Re-verification' : 'Confirm Rejection'}
                                 </button>
                             </>
                         )}
