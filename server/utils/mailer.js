@@ -60,10 +60,7 @@ const sendEmail = async (to, subject, text, html) => {
             textContent: text || subject,
             htmlContent: html || `<p>${text || subject}</p>`
         });
-        console.log("✅ Payload prepared:", data); // Log full payload for debugging
 
-        // Step 4: Set up HTTPS options with guards
-        console.log("🔌 Setting up HTTPS request options...");
         const options = {
             hostname: 'api.brevo.com',
             port: 443,
@@ -73,7 +70,7 @@ const sendEmail = async (to, subject, text, html) => {
                 'accept': 'application/json',
                 'api-key': API_KEY,
                 'content-type': 'application/json',
-                'Content-Length': data.length
+                'Content-Length': Buffer.byteLength(data)   // ← THIS FIXES IT
             }
         };
         console.log("✅ Options set:", JSON.stringify(options, null, 2)); // Log options (hide full API key if needed)
