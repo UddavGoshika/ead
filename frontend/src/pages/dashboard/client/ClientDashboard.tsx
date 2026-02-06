@@ -54,8 +54,9 @@ const ClientDashboard: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        // Show try-on modal if user is free and hasn't used demo
-        if (user && !user.isPremium && !user.demoUsed) {
+        // Show try-on modal ONLY if user is on Free plan and hasn't used demo
+        const currentPlan = (user?.plan || 'Free').toLowerCase();
+        if (user && currentPlan === 'free' && !user.demoUsed) {
             const hasSeen = sessionStorage.getItem('hasSeenTryon');
             if (!hasSeen) {
                 setShowTryonModal(true);
@@ -391,9 +392,9 @@ const ClientDashboard: React.FC = () => {
                                 <Briefcase size={18} />
                                 My Cases
                             </button>
-                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('new-case-info')}>
-                                <PlusSquare size={18} />
-                                New Case
+                            <button className={styles.topBtnPrimary} onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank')}>
+                                <FileText size={18} />
+                                Case Status
                             </button>
                         </div>
                     )}

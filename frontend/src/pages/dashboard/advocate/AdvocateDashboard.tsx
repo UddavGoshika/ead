@@ -56,8 +56,9 @@ const AdvocateDashboard: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        // Show try-on modal if user is free and hasn't used demo
-        if (user && !user.isPremium && !user.demoUsed) {
+        // Show try-on modal ONLY if user is on Free plan and hasn't used demo
+        const currentPlan = (user?.plan || 'Free').toLowerCase();
+        if (user && currentPlan === 'free' && !user.demoUsed) {
             const hasSeen = sessionStorage.getItem('hasSeenTryon');
             if (!hasSeen) {
                 setShowTryonModal(true);
