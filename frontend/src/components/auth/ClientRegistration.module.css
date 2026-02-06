@@ -710,16 +710,15 @@
 
 /* Success Notification Styles */
 .successOverlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(12px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2200;
+    z-index: 9999;
     padding: 30px;
-    border-radius: 16px;
 }
 
 .successCard {
