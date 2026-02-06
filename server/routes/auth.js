@@ -291,11 +291,13 @@ router.post('/send-otp', async (req, res) => {
         if (mailResult.success) {
             res.json({ success: true, message: 'OTP sent successfully' });
         } else {
-            res.status(500).json({ error: 'Failed to send email' });
+            console.error('Mail Send Failed:', mailResult.error);
+            // Return the specific error from mailer (e.g. invalid login, timeout)
+            res.status(500).json({ error: 'Failed to send email: ' + mailResult.error });
         }
     } catch (err) {
         console.error('Send OTP Error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
 
