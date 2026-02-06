@@ -21,10 +21,10 @@ const FOOTER_DEFAULTS: any[] = [
     { title: "Site Map", route: "/site-map", status: "Published", category: "More", content: "" },
     { title: "About Us", route: "/about", status: "Published", category: "More", content: "" },
     // For Advocates
-    { title: "Find Clients", route: "#search-clients", status: "Published", category: "For Advocates", content: "" },
+    { title: "Find Advocates", route: "#search-advocates", status: "Published", category: "For Advocates", content: "" },
     { title: "Advocate How it Works", route: "/advocate-how-it-works", status: "Published", category: "For Advocates", content: "" },
     // For Clients
-    { title: "Find Advocates", route: "#search-advocates", status: "Published", category: "For Clients", content: "" },
+    { title: "Find Clients", route: "#search-clients", status: "Published", category: "For Clients", content: "" },
     { title: "Client How it Works", route: "/client-how-it-works", status: "Published", category: "For Clients", content: "" },
     // Help
     { title: "Help", route: "#help", status: "Published", category: "Help", content: "" },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./HeaderSetup.module.css";
-import axios from "axios";
+import api from "../../../services/api";
 import { Loader2, Plus, Edit, Trash2, X } from "lucide-react";
 import { useSettings } from "../../../context/SettingsContext";
 
@@ -32,10 +32,10 @@ const FOOTER_DEFAULTS: PageItem[] = [
     { title: "Site Map", route: "/site-map", status: "Published", category: "More", content: "" },
     { title: "About Us", route: "/about", status: "Published", category: "More", content: "" },
     // For Advocates
-    { title: "Find Clients", route: "#search-clients", status: "Published", category: "For Advocates", content: "" },
+    { title: "Find Advocates", route: "#search-advocates", status: "Published", category: "For Advocates", content: "" },
     { title: "Advocate How it Works", route: "/advocate-how-it-works", status: "Published", category: "For Advocates", content: "" },
     // For Clients
-    { title: "Find Advocates", route: "#search-advocates", status: "Published", category: "For Clients", content: "" },
+    { title: "Find Clients", route: "#search-clients", status: "Published", category: "For Clients", content: "" },
     { title: "Client How it Works", route: "/client-how-it-works", status: "Published", category: "For Clients", content: "" },
     // Help
     { title: "Help", route: "#help", status: "Published", category: "Help", content: "" },
@@ -70,7 +70,7 @@ const PagesSetup: React.FC = () => {
     const fetchPages = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("/api/pages");
+            const res = await api.get("/pages");
             if (res.data.success && res.data.pages.length > 0) {
                 setPages(res.data.pages);
             } else if (res.data.pages.length === 0) {
@@ -108,7 +108,7 @@ const PagesSetup: React.FC = () => {
                 setPages(pages.filter(p => (p._id || p.id?.toString()) !== id));
                 return;
             }
-            const res = await axios.delete(`/api/pages/${id}`);
+            const res = await api.delete(`/pages/${id}`);
             if (res.data.success) {
                 fetchPages();
                 refreshPages();
@@ -123,9 +123,9 @@ const PagesSetup: React.FC = () => {
         e.preventDefault();
         try {
             if (editingPage?._id) {
-                await axios.put(`/api/pages/${editingPage._id}`, formData);
+                await api.put(`/pages/${editingPage._id}`, formData);
             } else {
-                await axios.post("/api/pages", formData);
+                await api.post("/pages", formData);
             }
             setShowModal(false);
             fetchPages();
@@ -142,7 +142,7 @@ const PagesSetup: React.FC = () => {
             setLoading(true);
             for (const p of FOOTER_DEFAULTS) {
                 try {
-                    await axios.post("/api/pages", p);
+                    await api.post("/pages", p);
                 } catch (e) { } // Ignore duplicates (if route exists)
             }
             fetchPages();

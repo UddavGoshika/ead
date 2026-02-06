@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './ContactSection.module.css';
-import axios from 'axios';
+import api from '../../services/api';
 import {
     Phone,
     Mail,
@@ -34,7 +34,7 @@ const ContactSection: React.FC = () => {
         e.preventDefault();
         setSending(true);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/contact`, formData);
+            const res = await api.post('/contact', formData);
             if (res.data.success) {
                 showNotification(res.data.message || 'Message sent successfully!', 'success');
                 setFormData({ name: '', email: '', phone: '', message: '' });

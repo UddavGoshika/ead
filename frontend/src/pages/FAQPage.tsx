@@ -14,11 +14,11 @@ const faqs: FAQ[] = [
     },
     {
         question: "Is my data and case information secure?",
-        answer: "Yes, we use industry-standard end-to-end encryption for all communications and document storage. Your legal matters are handled with the highest level of confidentiality."
+        answer: "Yes, we use industry-standard end-to-end encryption for all communications and document storage. Your case matters are handled with the highest level of confidentiality."
     },
     {
         question: "What are the costs involved in using the platform?",
-        answer: "E-Advocate is free for basic searching and profile browsing. Detailed consultations and case management may involve fees decided independently between you and your advocate."
+        answer: "E-Advocate is free for basic searching and profile browsing. Detailed case management may involve fees decided independently between you and your advocate."
     },
     {
         question: "Can I file a case online through E-Advocate?",

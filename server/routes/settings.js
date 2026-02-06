@@ -21,7 +21,8 @@ router.get('/site', async (req, res) => {
 // UPDATE SITE SETTINGS (Admin Only)
 router.post('/site', auth, async (req, res) => {
     try {
-        if (req.user.role.toLowerCase() !== 'admin' && req.user.role.toLowerCase() !== 'superadmin') {
+        const role = (req.user.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
             return res.status(403).json({ error: 'Access denied. Admins only.' });
         }
         const update = req.body;

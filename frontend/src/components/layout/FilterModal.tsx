@@ -13,6 +13,8 @@ interface MultiSelectProps {
     onChange: (value: string) => void;
     placeholder: string;
     disabled?: boolean;
+    isOpen: boolean;
+    onToggle: () => void;
 }
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -20,9 +22,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     selected,
     onChange,
     placeholder,
-    disabled
+    disabled,
+    isOpen,
+    onToggle
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
 
     const filteredOptions = options.filter(opt =>
@@ -30,15 +33,15 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     );
 
     const closeDropdown = () => {
-        setIsOpen(false);
+        onToggle();
         setSearch('');
     };
 
     return (
-        <div className={`${styles.multiSelectContainer} ${disabled ? styles.disabled : ''}`}>
+        <div className={`${styles.multiSelectContainer} ${disabled ? styles.disabled : ''} ${isOpen ? styles.active : ''}`}>
             <div
                 className={styles.multiSelectTrigger}
-                onClick={() => !disabled && setIsOpen(!isOpen)}
+                onClick={() => !disabled && onToggle()}
             >
                 <div className={styles.selectedValues}>
                     {selected.length === 0 ? (
@@ -307,6 +310,7 @@ const FilterModal: React.FC = () => {
     }, [isFilterModalOpen]);
     const [role, setRole] = useState<'advocate' | 'client'>('advocate');
     const [searchId, setSearchId] = useState('');
+    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
     const [filters, setFilters] = useState<Record<string, string[]>>({
         language: [],
@@ -318,6 +322,10 @@ const FilterModal: React.FC = () => {
         city: [],
         consultationMode: []
     });
+
+    const handleToggle = (id: string) => {
+        setOpenDropdownId(prev => prev === id ? null : id);
+    };
 
     // Linked Logic: Get available options based on parent selections
     const availableDistricts = filters.state.flatMap(s =>
@@ -502,18 +510,35 @@ const FilterModal: React.FC = () => {
                             <MultiSelect
                                 placeholder="Select Languages"
                                 options={[
+                                    { value: 'assamese', label: 'Assamese' },
+                                    { value: 'bengali', label: 'Bengali' },
+                                    { value: 'bodo', label: 'Bodo' },
+                                    { value: 'dogri', label: 'Dogri' },
                                     { value: 'english', label: 'English' },
-                                    { value: 'hindi', label: 'Hindi' },
-                                    { value: 'telugu', label: 'Telugu' },
-                                    { value: 'marathi', label: 'Marathi' },
-                                    { value: 'tamil', label: 'Tamil' },
-                                    { value: 'kannada', label: 'Kannada' },
-                                    { value: 'malayalam', label: 'Malayalam' },
                                     { value: 'gujarati', label: 'Gujarati' },
-                                    { value: 'punjabi', label: 'Punjabi' }
+                                    { value: 'hindi', label: 'Hindi' },
+                                    { value: 'kannada', label: 'Kannada' },
+                                    { value: 'kashmiri', label: 'Kashmiri' },
+                                    { value: 'konkani', label: 'Konkani' },
+                                    { value: 'maithili', label: 'Maithili' },
+                                    { value: 'malayalam', label: 'Malayalam' },
+                                    { value: 'manipuri', label: 'Manipuri' },
+                                    { value: 'marathi', label: 'Marathi' },
+                                    { value: 'nepali', label: 'Nepali' },
+                                    { value: 'odia', label: 'Odia' },
+                                    { value: 'punjabi', label: 'Punjabi' },
+                                    { value: 'sanskrit', label: 'Sanskrit' },
+                                    { value: 'santali', label: 'Santali' },
+                                    { value: 'sindhi', label: 'Sindhi' },
+                                    { value: 'tamil', label: 'Tamil' },
+                                    { value: 'telugu', label: 'Telugu' },
+                                    { value: 'urdu', label: 'Urdu' }
+
                                 ]}
                                 selected={filters.language}
                                 onChange={(val) => toggleFilter('language', val)}
+                                isOpen={openDropdownId === 'language'}
+                                onToggle={() => handleToggle('language')}
                             />
                         </div>
 
@@ -523,6 +548,8 @@ const FilterModal: React.FC = () => {
                                 options={Object.entries(DEPARTMENT_DATA).map(([value, d]) => ({ value, label: d.label }))}
                                 selected={filters.department}
                                 onChange={(val) => toggleFilter('department', val)}
+                                isOpen={openDropdownId === 'department'}
+                                onToggle={() => handleToggle('department')}
                             />
                         </div>
 
@@ -533,6 +560,8 @@ const FilterModal: React.FC = () => {
                                 selected={filters.subDepartment}
                                 onChange={(val) => toggleFilter('subDepartment', val)}
                                 disabled={filters.department.length === 0}
+                                isOpen={openDropdownId === 'subDepartment'}
+                                onToggle={() => handleToggle('subDepartment')}
                             />
                         </div>
 
@@ -548,6 +577,8 @@ const FilterModal: React.FC = () => {
                                 selected={filters.experience}
                                 onChange={(val) => toggleFilter('experience', val)}
                                 disabled={role === 'client'}
+                                isOpen={openDropdownId === 'experience'}
+                                onToggle={() => handleToggle('experience')}
                             />
                         </div>
 
@@ -558,6 +589,8 @@ const FilterModal: React.FC = () => {
                                 options={Object.keys(LOCATION_DATA_RAW).map(s => ({ value: s, label: s }))}
                                 selected={filters.state}
                                 onChange={(val) => toggleFilter('state', val)}
+                                isOpen={openDropdownId === 'state'}
+                                onToggle={() => handleToggle('state')}
                             />
                         </div>
 
@@ -568,6 +601,8 @@ const FilterModal: React.FC = () => {
                                 selected={filters.district}
                                 onChange={(val) => toggleFilter('district', val)}
                                 disabled={filters.state.length === 0}
+                                isOpen={openDropdownId === 'district'}
+                                onToggle={() => handleToggle('district')}
                             />
                         </div>
 
@@ -578,6 +613,8 @@ const FilterModal: React.FC = () => {
                                 selected={filters.city}
                                 onChange={(val) => toggleFilter('city', val)}
                                 disabled={filters.district.length === 0}
+                                isOpen={openDropdownId === 'city'}
+                                onToggle={() => handleToggle('city')}
                             />
                         </div>
 
@@ -590,6 +627,8 @@ const FilterModal: React.FC = () => {
                                 ]}
                                 selected={filters.consultationMode}
                                 onChange={(val) => toggleFilter('consultationMode', val)}
+                                isOpen={openDropdownId === 'consultationMode'}
+                                onToggle={() => handleToggle('consultationMode')}
                             />
                         </div>
                     </div>

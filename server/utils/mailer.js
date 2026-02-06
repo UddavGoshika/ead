@@ -10,11 +10,11 @@ const https = require('https');
 console.log("📧 Initializing Brevo API Mailer System...");
 
 // Step 1: Load environment variables with guards
-const API_KEY = process.env.BREVO_API_KEY;
+const API_KEY = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
 const SENDER_EMAIL = process.env.SMTP_FROM || 'info.eadvocateservices@gmail.com';
 
 if (!API_KEY) {
-    console.error("❌ ERROR: No API Key found in environment variables! Cannot proceed.");
+    console.error("❌ ERROR: No API Key found in environment variables (BREVO_API_KEY or SMTP_PASS)! Cannot proceed.");
     // We can't send emails without key, but we'll allow the module to export for other uses if needed.
 } else {
     console.log(`✅ API Key detected (Starts with: ${API_KEY.substring(0, 10)}...)`);

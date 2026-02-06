@@ -246,25 +246,57 @@ router.get('/', async (req, res) => {
             });
         }
 
-        const formattedClients = dbClients.map(client => ({
-            id: client._id,
-            role: 'client',
-            userId: client.userId?._id || client.userId,
-            unique_id: client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`,
-            name: `${client.firstName} ${client.lastName}`,
-            firstName: client.firstName,
-            lastName: client.lastName,
-            role: 'client',
-            address: client.address,
-            location: {
-                city: client.address?.city,
-                state: client.address?.state
-            },
-            legalHelp: client.legalHelp,
-            experience: 'Client Profile',
-            specialization: client.legalHelp?.specialization || 'General Legal Help',
-            image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'
-        }));
+        // 1. Detect Viewer Plan (Auth Optional)
+        let viewerIsPremium = false;
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
+            if (token && token.startsWith('user-token-')) {
+                const userId = token.replace('user-token-', '');
+                if (require('mongoose').Types.ObjectId.isValid(userId)) {
+                    const viewer = await User.findById(userId);
+                    if (viewer) {
+                        const planStr = (viewer.plan || '').toLowerCase();
+                        if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
+                            viewerIsPremium = true;
+                        }
+                    }
+                }
+            }
+        }
+        // Admin Override
+        if (authHeader && (authHeader.includes('admin') || authHeader.includes('mock'))) viewerIsPremium = true;
+
+        const formattedClients = dbClients.map(client => {
+            const shouldMask = !viewerIsPremium;
+            let displayName = `${client.firstName} ${client.lastName}`;
+            let displayId = client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`;
+
+            if (shouldMask) {
+                displayName = displayName.substring(0, 2) + '...';
+                displayId = displayId.substring(0, 2) + '...';
+            }
+
+            return {
+                id: client._id,
+                role: 'client',
+                userId: client.userId?._id || client.userId,
+                unique_id: client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`,
+                name: displayName,
+                display_name: displayName,
+                display_id: displayId,
+                firstName: client.firstName,
+                lastName: client.lastName,
+                location: client.address?.city ? `${client.address.city}, ${client.address.state}` : (client.address?.state || 'Unknown Location'),
+                address: client.address,
+                legalHelp: client.legalHelp,
+                category: client.legalHelp?.category || 'General',
+                experience: 'Client Profile',
+                specialization: client.legalHelp?.specialization || 'General Legal Help',
+                image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
+                isMasked: shouldMask
+            };
+        });
 
         res.json({ success: true, clients: formattedClients });
     } catch (err) {

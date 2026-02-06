@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: [
-            'client', 'advocate', 'admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider',
+            'client', 'advocate', 'admin', 'superadmin', 'super_admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider',
             'hr', 'influencer', 'marketer', 'marketing_agency', 'call_support', 'chat_support', 'personal_agent',
             'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant'
         ],

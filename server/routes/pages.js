@@ -17,8 +17,9 @@ router.get('/', async (req, res) => {
 // CREATE NEW PAGE
 router.post('/', auth, async (req, res) => {
     try {
-        if (req.user.role.toLowerCase() !== 'admin' && req.user.role.toLowerCase() !== 'superadmin') {
-            return res.status(403).json({ error: 'Access denied.' });
+        const role = (req.user.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied. Only Admins can perform this action.' });
         }
         const { title, route, content, status, category, isCustom } = req.body;
         const newPage = await Page.create({ title, route, content, status, category, isCustom });
@@ -32,8 +33,9 @@ router.post('/', auth, async (req, res) => {
 // UPDATE PAGE
 router.put('/:id', auth, async (req, res) => {
     try {
-        if (req.user.role.toLowerCase() !== 'admin' && req.user.role.toLowerCase() !== 'superadmin') {
-            return res.status(403).json({ error: 'Access denied.' });
+        const role = (req.user.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied. Only Admins can perform this action.' });
         }
         const updatedPage = await Page.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.json({ success: true, page: updatedPage });
@@ -46,8 +48,9 @@ router.put('/:id', auth, async (req, res) => {
 // DELETE PAGE
 router.delete('/:id', auth, async (req, res) => {
     try {
-        if (req.user.role.toLowerCase() !== 'admin' && req.user.role.toLowerCase() !== 'superadmin') {
-            return res.status(403).json({ error: 'Access denied.' });
+        const role = (req.user.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied. Only Admins can perform this action.' });
         }
         await Page.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: 'Page deleted successfully' });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./GeneralSettings.module.css";
-import axios from "axios";
+import api from "../../../services/api";
 import { Loader2, Check } from "lucide-react";
 
 const GeneralSettings: React.FC = () => {
@@ -12,7 +12,7 @@ const GeneralSettings: React.FC = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('/api/settings/site');
+            const res = await api.get('/settings/site');
             if (res.data.success) {
                 setSettings(res.data.settings);
             }
@@ -30,10 +30,7 @@ const GeneralSettings: React.FC = () => {
     const handleUpdate = async () => {
         try {
             setSaving(true);
-            const token = localStorage.getItem('token');
-            const res = await axios.post('/api/settings/site', settings, {
-                headers: { 'x-auth-token': token }
-            });
+            const res = await api.post('/settings/site', settings);
             if (res.data.success) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 3000);

@@ -19,7 +19,21 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
-        config.headers.Authorization = token.startsWith('user-token-') ? token : `Bearer ${token}`;
+        const authValue = token.startsWith('user-token-') ? token : `Bearer ${token}`;
+
+        // Ensure headers object exists
+        if (!config.headers) {
+            config.headers = {} as any;
+        }
+
+        // Set both for compatibility - using multiple methods for robustness
+        if (typeof (config.headers as any).set === 'function') {
+            (config.headers as any).set('Authorization', authValue);
+            (config.headers as any).set('x-auth-token', token);
+        } else {
+            config.headers['Authorization'] = authValue;
+            config.headers['x-auth-token'] = token;
+        }
     }
     return config;
 }, (error) => {

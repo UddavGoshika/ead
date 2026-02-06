@@ -431,7 +431,7 @@ const SearchSection: React.FC = () => {
                                                     <h3 className={styles.profileName}>{maskName(name)}</h3>
                                                     <div className={styles.locationInfo}>
                                                         <MapPin size={14} />
-                                                        <span>{profile.location || 'Unknown Location'}</span>
+                                                        <span>{typeof profile.location === 'string' ? profile.location : (profile.location?.city ? `${profile.location.city}, ${profile.location.state}` : 'Unknown Location')}</span>
                                                     </div>
                                                 </div>
                                                 <div className={styles.bottomRight}>

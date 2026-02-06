@@ -311,7 +311,9 @@ router.get('/', async (req, res) => {
                 bio: shouldMask ? '' : (adv.career?.bio || ''), // Hide bio if masked
                 image_url: displayImage,
                 isFeatured: isPremium,
-                isMasked: shouldMask // Frontend uses this to apply blur/lock UI
+                isMasked: shouldMask, // Frontend uses this to apply blur/lock UI
+                specialization: adv.practice?.specialization || 'Legal Services',
+                category: adv.practice?.specialization || 'General'
             };
         });
 
