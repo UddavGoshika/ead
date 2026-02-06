@@ -119,6 +119,10 @@ export const settingsService = {
 export const blogService = {
     getBlogs: () => api.get<{ success: boolean; blogs: any[] }>('/blogs'),
     getBlogById: (id: string) => api.get<{ success: boolean; blog: any }>(`/blogs/${id}`),
+    likeBlog: (id: string, userId: string) => api.post(`/blogs/${id}/like`, { userId }),
+    saveBlog: (id: string, userId: string) => api.post(`/blogs/${id}/save`, { userId }),
+    shareBlog: (id: string) => api.post(`/blogs/${id}/share`),
+    commentBlog: (id: string, data: { userId: string, userName: string, text: string }) => api.post(`/blogs/${id}/comment`, data),
 };
 
 export default api;

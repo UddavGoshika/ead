@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import styles from './BlogCard.module.css';
+import { blogService } from '../../services/api';
 
 interface BlogCardProps {
     post: {
@@ -25,7 +26,6 @@ interface BlogCardProps {
 
 const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
     const { user, openAuthModal, isLoggedIn } = useAuth();
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://eadvocate.onrender.com';
 
     // Correction Logic
     const displayAuthor = post.author.includes('Health Plus') ? 'e-Advocate Services' : post.author;
@@ -46,15 +46,10 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             return;
         }
         try {
-            const res = await fetch(`${apiUrl}/api/blogs/${post.id}/like`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user?.id })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setIsLiked(data.isLiked);
-                setLikeCount(data.likes);
+            const res = await blogService.likeBlog(post.id, user?.id as string);
+            if (res.data.success) {
+                setIsLiked(res.data.isLiked);
+                setLikeCount(res.data.likes);
             }
         } catch (err) {
             console.error('Like failed:', err);
@@ -67,14 +62,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             return;
         }
         try {
-            const res = await fetch(`${apiUrl}/api/blogs/${post.id}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user?.id })
-            });
-            const data = await res.json();
-            if (data.success) {
-                setIsSaved(data.isSaved);
+            const res = await blogService.saveBlog(post.id, user?.id as string);
+            if (res.data.success) {
+                setIsSaved(res.data.isSaved);
             }
         } catch (err) {
             console.error('Save failed:', err);
@@ -83,18 +73,17 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
 
     const handleShare = async () => {
         try {
-            const res = await fetch(`${apiUrl}/api/blogs/${post.id}/share`, {
-                method: 'POST'
-            });
-            const data = await res.json();
-            if (data.success) {
-                setShareCount(data.shares);
+            const res = await blogService.shareBlog(post.id);
+            if (res.data.success) {
+                setShareCount(res.data.shares);
                 const url = window.location.origin + `/blogs?id=${post.id}`;
                 navigator.clipboard.writeText(url);
                 alert('Link copied to clipboard and share counted!');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Share failed:', err);
+            const msg = err.response?.data?.error || err.message || "Unknown error";
+            alert(`Share failed: ${msg}`);
         }
     };
 
@@ -106,18 +95,13 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
         if (!commentText.trim()) return;
 
         try {
-            const res = await fetch(`${apiUrl}/api/blogs/${post.id}/comment`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user?.id,
-                    userName: user?.name,
-                    text: commentText
-                })
+            const res = await blogService.commentBlog(post.id, {
+                userId: user?.id as string,
+                userName: user?.name as string,
+                text: commentText
             });
-            const data = await res.json();
-            if (data.success) {
-                setLocalComments(data.comments);
+            if (res.data.success) {
+                setLocalComments(res.data.comments);
                 setCommentText('');
             }
         } catch (err) {
