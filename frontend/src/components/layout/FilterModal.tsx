@@ -15,6 +15,7 @@ interface MultiSelectProps {
     disabled?: boolean;
     isOpen: boolean;
     onToggle: () => void;
+    expandLayout?: boolean;
 }
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -24,7 +25,8 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     placeholder,
     disabled,
     isOpen,
-    onToggle
+    onToggle,
+    expandLayout
 }) => {
     const [search, setSearch] = useState('');
 
@@ -72,7 +74,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                         />
 
                         <motion.div
-                            className={styles.dropdownMenu}
+                            className={`${styles.dropdownMenu} ${expandLayout ? styles.expandable : ''}`}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
@@ -565,22 +567,7 @@ const FilterModal: React.FC = () => {
                             />
                         </div>
 
-                        <div className={styles.filterBox}>
-                            <MultiSelect
-                                placeholder="Select Experience"
-                                options={[
-                                    { value: '1-3', label: '1-3 Years' },
-                                    { value: '3-5', label: '3-5 Years' },
-                                    { value: '5-10', label: '5-10 Years' },
-                                    { value: '10+', label: '10+ Years' }
-                                ]}
-                                selected={filters.experience}
-                                onChange={(val) => toggleFilter('experience', val)}
-                                disabled={role === 'client'}
-                                isOpen={openDropdownId === 'experience'}
-                                onToggle={() => handleToggle('experience')}
-                            />
-                        </div>
+
 
                         {/* Row 2: States, Districts, Cities, Mode */}
                         <div className={styles.filterBox}>
@@ -620,6 +607,24 @@ const FilterModal: React.FC = () => {
 
                         <div className={styles.filterBox}>
                             <MultiSelect
+                                placeholder="Select Experience"
+                                options={[
+                                    { value: '1-3', label: '1-3 Years' },
+                                    { value: '3-5', label: '3-5 Years' },
+                                    { value: '5-10', label: '5-10 Years' },
+                                    { value: '10+', label: '10+ Years' }
+                                ]}
+                                selected={filters.experience}
+                                onChange={(val) => toggleFilter('experience', val)}
+                                disabled={role === 'client'}
+                                isOpen={openDropdownId === 'experience'}
+                                onToggle={() => handleToggle('experience')}
+                                expandLayout={true}
+                            />
+                        </div>
+
+                        <div className={styles.filterBox}>
+                            <MultiSelect
                                 placeholder="Consultation Mode"
                                 options={[
                                     { value: 'online', label: 'Online' },
@@ -629,6 +634,7 @@ const FilterModal: React.FC = () => {
                                 onChange={(val) => toggleFilter('consultationMode', val)}
                                 isOpen={openDropdownId === 'consultationMode'}
                                 onToggle={() => handleToggle('consultationMode')}
+                                expandLayout={true}
                             />
                         </div>
                     </div>

@@ -237,6 +237,20 @@
     padding: 5px;
 }
 
+.dropdownMenu.expandable {
+    position: relative;
+    top: 5px;
+    left: 0;
+    box-shadow: none;
+}
+
+.dropdownOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: transparent;
+}
+
 .searchBox {
     display: flex;
     align-items: center;
