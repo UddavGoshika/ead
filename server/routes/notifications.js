@@ -38,4 +38,24 @@ router.post('/read-all', async (req, res) => {
     }
 });
 
+// DELETE SINGLE NOTIFICATION
+router.delete('/:id', async (req, res) => {
+    try {
+        await Notification.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Notification deleted' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE ALL NOTIFICATIONS
+router.delete('/all/clear', async (req, res) => {
+    try {
+        await Notification.deleteMany({});
+        res.json({ success: true, message: 'All notifications cleared' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;

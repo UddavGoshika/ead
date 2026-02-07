@@ -1,11 +1,29 @@
-import { useState, useEffect } from "react";
-import { Bell, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+    Bell,
+    X,
+    UserPlus,
+    FileText,
+    Ticket,
+    MessageCircle,
+    Star,
+    Heart,
+    Info
+} from "lucide-react";
 import axios from "axios";
 import styles from "./notification.module.css";
 
+interface NotificationItem {
+    _id: string;
+    type: string;
+    message: string;
+    read: boolean;
+    createdAt: string;
+}
+
 const NotificationBell = () => {
     const [open, setOpen] = useState(false);
-    const [notifications, setNotifications] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
     const formatRelativeTime = (dateString: string) => {
@@ -55,18 +73,53 @@ const NotificationBell = () => {
         }
     };
 
+    const deleteNotification = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        try {
+            await axios.delete(`/api/notifications/${id}`);
+            setNotifications(prev => prev.filter(n => n._id !== id));
+            setUnreadCount(prev => notifications.find(n => n._id === id)?.read ? prev : Math.max(0, prev - 1));
+        } catch (err) {
+            console.error("Delete notification failed");
+        }
+    };
+
+    const clearAll = async () => {
+        if (!window.confirm("Are you sure you want to clear all notifications?")) return;
+        try {
+            await axios.delete('/api/notifications/all/clear');
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Clear all failed");
+        }
+    };
+
+    const [isClosing, setIsClosing] = useState(false);
+
+    const closePanel = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setOpen(false);
+            setIsClosing(false);
+        }, 500); // Matches the 0.5s CSS animation
+    };
+
     const handleBellClick = () => {
         setOpen(true);
-        if (unreadCount > 0) markAllRead();
+        setIsClosing(false);
     };
 
     const getIcon = (type: string) => {
-        switch (type) {
-            case 'registration': return '👤';
-            case 'blog': return '📝';
-            case 'ticket': return '🎫';
-            case 'chat': return '💬';
-            default: return '🔔';
+        const size = 16;
+        switch (type?.toLowerCase()) {
+            case 'registration': return <UserPlus size={size} />;
+            case 'blog': return <FileText size={size} />;
+            case 'ticket': return < Ticket size={size} />;
+            case 'chat': return <MessageCircle size={size} />;
+            case 'superinterest': return <Star size={size} />;
+            case 'interest': return <Heart size={size} />;
+            default: return <Info size={size} />;
         }
     };
 
@@ -82,24 +135,54 @@ const NotificationBell = () => {
             </div>
 
             {/* Notification Panel Overlay */}
-            {open && <div className={styles.overlay} onClick={() => setOpen(false)} />}
+            {open && <div className={`${styles.overlay} ${isClosing ? styles.overlayClosing : ''}`} onClick={closePanel} />}
 
             {/* Sliding Panel */}
             {open && (
-                <div className={styles.panel}>
+                <div className={`${styles.panel} ${isClosing ? styles.closing : ''}`}>
                     <div className={styles.panelHeader}>
-                        <h4>System Notifications</h4>
-                        <button className={styles.closeBtn} onClick={() => setOpen(false)}><X size={20} /></button>
+                        <div className={styles.headerTitle}>
+                            <h4>System Notifications</h4>
+                            {notifications.length > 0 && (
+                                <button className={styles.clearAllBtn} onClick={clearAll}>Clear All</button>
+                            )}
+                        </div>
+                        <button className={styles.closePanelBtn} onClick={closePanel}><X size={20} />X</button>
                     </div>
 
                     <div className={styles.notifList}>
                         {notifications.length === 0 ? (
-                            <p className={styles.empty}>No activities to show</p>
+                            <div className={styles.emptyContainer}>
+                                <div className={styles.emptyIcon}><Bell size={40} /></div>
+                                <p className={styles.empty}>No activities to show</p>
+                            </div>
                         ) : (
                             notifications.map((note) => (
-                                <div key={note._id} className={`${styles.item} ${!note.read ? styles.itemUnread : ''}`}>
-                                    <div className={styles.notifTitle}>
-                                        {getIcon(note.type)} {note.type.toUpperCase()}
+                                <div
+                                    key={note._id}
+                                    className={`${styles.item} ${!note.read ? styles.itemUnread : ''}`}
+                                    onClick={async () => {
+                                        if (!note.read) {
+                                            try {
+                                                await axios.patch(`/api/notifications/${note._id}/read`);
+                                                setNotifications(prev => prev.map(n => n._id === note._id ? { ...n, read: true } : n));
+                                                setUnreadCount(prev => Math.max(0, prev - 1));
+                                            } catch (err) { }
+                                        }
+                                    }}
+                                >
+                                    <div className={styles.itemHeader}>
+                                        <div className={styles.notifTitle}>
+                                            <span className={styles.typeIcon}>{getIcon(note.type)}</span>
+                                            {note.type.replace(/([A-Z])/g, ' $1').toUpperCase()}
+                                        </div>
+                                        <button
+                                            className={styles.itemDeleteBtn}
+                                            onClick={(e) => deleteNotification(e, note._id)}
+                                            title="Dismiss"
+                                        >
+                                            <X size={14} />
+                                        </button>
                                     </div>
                                     <div className={styles.notifMsg}>{note.message}</div>
                                     <div className={styles.notifTime}>
@@ -109,6 +192,12 @@ const NotificationBell = () => {
                             ))
                         )}
                     </div>
+
+                    {unreadCount > 0 && (
+                        <div className={styles.panelFooter}>
+                            <button className={styles.markReadBtn} onClick={markAllRead}>Mark all as read</button>
+                        </div>
+                    )}
                 </div>
             )}
         </>
