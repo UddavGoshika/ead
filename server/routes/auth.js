@@ -39,13 +39,10 @@ router.post('/login', async (req, res) => {
                 console.error("Login Notification Error:", err.message);
             });
 
-            if (user.status === 'Pending' && user.role.toLowerCase() !== 'admin') {
-                return res.status(403).json({ error: 'Your account is pending verification. Please wait for admin approval.' });
-            }
-
             let uniqueId = null;
             let displayName = user.email;
             let userImage = null;
+            let rejectionReason = null;
 
             if (user.role === 'advocate') {
                 const Advocate = require('../models/Advocate');
@@ -54,6 +51,7 @@ router.post('/login', async (req, res) => {
                     uniqueId = advocate.unique_id;
                     displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
                     userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
+                    rejectionReason = advocate.rejectionReason;
                 }
             } else if (user.role === 'client') {
                 const Client = require('../models/Client');
@@ -61,7 +59,17 @@ router.post('/login', async (req, res) => {
                 if (client) {
                     uniqueId = client.unique_id;
                     displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
+                    rejectionReason = client.rejectionReason;
                 }
+            }
+
+            // CHECK STATUS AFTER PROFILE FETCH TO INCLUDE REASON
+            if (user.status === 'Pending' && user.role.toLowerCase() !== 'admin') {
+                return res.status(403).json({
+                    error: 'ACCOUNT_PENDING',
+                    message: 'Your account is currently pending verification.',
+                    rejectionReason: rejectionReason
+                });
             }
 
             return res.json({

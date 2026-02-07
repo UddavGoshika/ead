@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
-import { X, Mail, Lock, Scale, UserCheck, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Lock, Scale, UserCheck, AlertCircle, Eye, EyeOff, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AuthModal.module.css';
 
@@ -18,6 +18,8 @@ const AuthModal: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const [accountStatusWarning, setAccountStatusWarning] = useState<{ message: string; reason?: string } | null>(null);
+
     // Form states
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -31,6 +33,7 @@ const AuthModal: React.FC = () => {
         setSelectedRole(null);
         setError(null);
         setMessage(null);
+        setAccountStatusWarning(null);
     }, [authTab, isAuthModalOpen]);
 
     if (!isAuthModalOpen) return null;
@@ -39,6 +42,7 @@ const AuthModal: React.FC = () => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setAccountStatusWarning(null);
 
         // INTERCEPT TEST ACCOUNTS
         if (password === 'pwd123' || password === 'advisor123') {
@@ -114,7 +118,14 @@ const AuthModal: React.FC = () => {
             }
         } catch (err: any) {
             console.error('Auth Error:', err);
-            setError(err.response?.data?.error || err.message || 'Authentication error.');
+            if (err.response?.status === 403 && err.response.data.error === 'ACCOUNT_PENDING') {
+                setAccountStatusWarning({
+                    message: err.response.data.message || 'Your account is pending verification.',
+                    reason: err.response.data.rejectionReason
+                });
+            } else {
+                setError(err.response?.data?.error || err.message || 'Authentication error.');
+            }
         } finally {
             setLoading(false);
         }
@@ -210,167 +221,60 @@ const AuthModal: React.FC = () => {
                     </div>
 
                     <div className={styles.content}>
-                        <AnimatePresence mode="wait">
-                            {activeTab === 'login' ? (
-                                isForgotPassword ? (
-                                    <motion.div
-                                        key="forgot"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                    >
-                                        <h2>Reset Password</h2>
-                                        <p className={styles.subtitle}>Enter your email to receive a reset link</p>
+                        {accountStatusWarning ? (
+                            <motion.div
+                                key="warning"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                className={styles.zoomWarningContainer}
+                            >
+                                <div className={styles.zoomIconWrapper}>
+                                    <AlertCircle size={64} className={styles.pulseIcon} />
+                                </div>
+                                <h2 className={styles.zoomTitle}>Verification In Process</h2>
+                                <p className={styles.zoomMessage}>{accountStatusWarning.message}</p>
 
-                                        {error && (
-                                            <div className={styles.errorBox}>
-                                                <AlertCircle size={18} />
-                                                <span>{error}</span>
-                                            </div>
-                                        )}
+                                {accountStatusWarning.reason && (
+                                    <div className={styles.zoomReasonBox}>
+                                        <strong>Reason for Delay/Rejection:</strong>
+                                        <p>{accountStatusWarning.reason}</p>
+                                    </div>
+                                )}
 
-                                        {message && (
-                                            <div className={styles.successBox}>
-                                                <UserCheck size={18} />
-                                                <span>{message}</span>
-                                            </div>
-                                        )}
+                                <p className={styles.zoomFooterText}>
+                                    Our team is reviewing your profile. This process typically takes 12-24 hours.
+                                </p>
 
-                                        <form onSubmit={handleForgotPassword}>
-                                            <div className={styles.formGroup}>
-                                                <label><Mail size={16} /> Email Address</label>
-                                                <input
-                                                    type="email"
-                                                    placeholder="name@example.com"
-                                                    required
-                                                    value={forgotEmail}
-                                                    onChange={e => setForgotEmail(e.target.value)}
-                                                />
-                                            </div>
-                                            <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                                {loading ? 'Sending...' : 'Send Reset Link'}
-                                            </button>
-                                        </form>
-                                        <button className={styles.backToLogin} onClick={() => setIsForgotPassword(false)}>
-                                            &larr; Back to Login
-                                        </button>
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="login"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                    >
-                                        <h2>Welcome Back</h2>
-                                        <div className={styles.loginTypeToggle}>
-                                            <button
-                                                className={loginType === 'user' ? styles.activeLoginType : ''}
-                                                onClick={() => setLoginType('user')}
-                                            >
-                                                Member Login
-                                            </button>
-                                            <button
-                                                className={loginType === 'staff' ? styles.activeLoginType : ''}
-                                                onClick={() => setLoginType('staff')}
-                                            >
-                                                Staff & Partner
-                                            </button>
-                                        </div>
-                                        <p className={styles.subtitle}>
-                                            {loginType === 'user'
-                                                ? "Enter your details to access your dashboard"
-                                                : "Login using your designated ID and passcode"}
-                                        </p>
-
-                                        {error && (
-                                            <div className={styles.errorBox}>
-                                                <AlertCircle size={18} />
-                                                <span>{error}</span>
-                                            </div>
-                                        )}
-
-                                        <form onSubmit={handleLogin}>
-                                            <div className={styles.formGroup}>
-                                                <label>
-                                                    {loginType === 'user' ? <Mail size={16} /> : <UserCheck size={16} />}
-                                                    {loginType === 'user' ? " Email Address" : " Login ID"}
-                                                </label>
-                                                <input
-                                                    type={loginType === 'user' ? "email" : "text"}
-                                                    placeholder={loginType === 'user' ? "name@example.com" : "EAD-XXXX-XXXX"}
-                                                    required
-                                                    value={email}
-                                                    onChange={e => setEmail(e.target.value)}
-                                                />
-                                            </div>
-                                            <div className={styles.formGroup}>
-                                                <div className={styles.labelWrapper}>
-                                                    <label><Lock size={16} /> {loginType === 'user' ? "Password" : "Passcode"}</label>
-                                                    <button type="button" className={styles.forgotLink} onClick={() => setIsForgotPassword(true)}>
-                                                        Forgot Password?
-                                                    </button>
-                                                </div>
-                                                <div className={styles.passwordWrapper}>
-                                                    <input
-                                                        type={showPassword ? "text" : "password"}
-                                                        placeholder="••••••••"
-                                                        required
-                                                        value={password}
-                                                        onChange={e => setPassword(e.target.value)}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className={styles.togglePasswordBtn}
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                    >
-                                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                                {loading ? 'Logging in...' : 'Login to Account'}
-                                            </button>
-                                        </form>
-                                    </motion.div>
-                                )
-                            ) : (
-                                <motion.div
-                                    key="register"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -20 }}
+                                <button
+                                    className={styles.goHomeBtn}
+                                    onClick={() => {
+                                        closeAuthModal();
+                                        navigate('/');
+                                    }}
                                 >
-                                    {regStep === 'choice' ? (
-                                        <>
-                                            <h2>Join E-Advocate</h2>
-                                            <p className={styles.subtitle}>Choose your account type to get started</p>
+                                    <Home size={18} /> Go Home
+                                </button>
 
-                                            <div className={styles.regOptions}>
-                                                <div className={styles.regOption} onClick={() => handleRegisterChoice('client')}>
-                                                    <div className={styles.iconCircle}><UserCheck /></div>
-                                                    <h3>I am a Client</h3>
-                                                    <p>Looking for professional legal assistance and case management.</p>
-                                                </div>
-                                                <div className={styles.regOption} onClick={() => handleRegisterChoice('advocate')}>
-                                                    <div className={styles.iconCircle}><Scale /></div>
-                                                    <h3>I am an Advocate</h3>
-                                                    <p>Providing legal services and managing professional portfolio.</p>
-                                                </div>
-                                                <div className={styles.regOption} onClick={() => handleRegisterChoice('provider')}>
-                                                    <div className={styles.iconCircle}><Mail /></div>
-                                                    <h3>I am a Legal Service Provider</h3>
-                                                    <p>Offering documentation, drafting, and specialized legal support.</p>
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <button className={styles.backBtn} onClick={() => setRegStep('choice')}>
-                                                &larr; Back to choice
-                                            </button>
-                                            <h2>{selectedRole === 'client' ? 'Client' : 'Advocate'} Registration</h2>
-                                            <p className={styles.subtitle}>Create your account as an {selectedRole}</p>
+                                <button
+                                    className={styles.backToLoginLink}
+                                    onClick={() => setAccountStatusWarning(null)}
+                                >
+                                    Back to Login
+                                </button>
+                            </motion.div>
+                        ) : (
+                            <AnimatePresence mode="wait">
+                                {activeTab === 'login' ? (
+                                    isForgotPassword ? (
+                                        <motion.div
+                                            key="forgot"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                        >
+                                            <h2>Reset Password</h2>
+                                            <p className={styles.subtitle}>Enter your email to receive a reset link</p>
 
                                             {error && (
                                                 <div className={styles.errorBox}>
@@ -379,19 +283,88 @@ const AuthModal: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            <form onSubmit={handleRegister}>
+                                            {message && (
+                                                <div className={styles.successBox}>
+                                                    <UserCheck size={18} />
+                                                    <span>{message}</span>
+                                                </div>
+                                            )}
+
+                                            <form onSubmit={handleForgotPassword}>
                                                 <div className={styles.formGroup}>
                                                     <label><Mail size={16} /> Email Address</label>
                                                     <input
                                                         type="email"
                                                         placeholder="name@example.com"
                                                         required
+                                                        value={forgotEmail}
+                                                        onChange={e => setForgotEmail(e.target.value)}
+                                                    />
+                                                </div>
+                                                <button type="submit" className={styles.submitBtn} disabled={loading}>
+                                                    {loading ? 'Sending...' : 'Send Reset Link'}
+                                                </button>
+                                            </form>
+                                            <button className={styles.backToLogin} onClick={() => setIsForgotPassword(false)}>
+                                                &larr; Back to Login
+                                            </button>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="login"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                        >
+                                            <h2>Welcome Back</h2>
+                                            <div className={styles.loginTypeToggle}>
+                                                <button
+                                                    className={loginType === 'user' ? styles.activeLoginType : ''}
+                                                    onClick={() => setLoginType('user')}
+                                                >
+                                                    Member Login
+                                                </button>
+                                                <button
+                                                    className={loginType === 'staff' ? styles.activeLoginType : ''}
+                                                    onClick={() => setLoginType('staff')}
+                                                >
+                                                    Staff & Partner
+                                                </button>
+                                            </div>
+                                            <p className={styles.subtitle}>
+                                                {loginType === 'user'
+                                                    ? "Enter your details to access your dashboard"
+                                                    : "Login using your designated ID and passcode"}
+                                            </p>
+
+                                            {error && (
+                                                <div className={styles.errorBox}>
+                                                    <AlertCircle size={18} />
+                                                    <span>{error}</span>
+                                                </div>
+                                            )}
+
+                                            <form onSubmit={handleLogin}>
+                                                <div className={styles.formGroup}>
+                                                    <label>
+                                                        {loginType === 'user' ? <Mail size={16} /> : <UserCheck size={16} />}
+                                                        {loginType === 'user' ? " Email Address" : " Login ID"}
+                                                    </label>
+                                                    <input
+                                                        type={loginType === 'user' ? "email" : "text"}
+                                                        placeholder={loginType === 'user' ? "name@example.com" : "EAD-XXXX-XXXX"}
+                                                        required
                                                         value={email}
                                                         onChange={e => setEmail(e.target.value)}
                                                     />
                                                 </div>
                                                 <div className={styles.formGroup}>
-                                                    <label><Lock size={16} /> Password</label>
+                                                    <div className={styles.labelWrapper}>
+                                                        <label><Lock size={16} /> {loginType === 'user' ? "Password" : "Passcode"}</label>
+                                                        <button type="button" className={styles.forgotLink} onClick={() => setIsForgotPassword(true)}>
+                                                            Forgot Password?
+                                                        </button>
+                                                    </div>
                                                     <div className={styles.passwordWrapper}>
                                                         <input
                                                             type={showPassword ? "text" : "password"}
@@ -410,14 +383,96 @@ const AuthModal: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <button type="submit" className={styles.submitBtn} disabled={loading}>
-                                                    {loading ? 'Creating Account...' : 'Create Account'}
+                                                    {loading ? 'Logging in...' : 'Login to Account'}
                                                 </button>
                                             </form>
-                                        </>
-                                    )}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                        </motion.div>
+                                    )
+                                ) : (
+                                    <motion.div
+                                        key="register"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                    >
+                                        {regStep === 'choice' ? (
+                                            <>
+                                                <h2>Join E-Advocate</h2>
+                                                <p className={styles.subtitle}>Choose your account type to get started</p>
+
+                                                <div className={styles.regOptions}>
+                                                    <div className={styles.regOption} onClick={() => handleRegisterChoice('client')}>
+                                                        <div className={styles.iconCircle}><UserCheck /></div>
+                                                        <h3>I am a Client</h3>
+                                                        <p>Looking for professional legal assistance and case management.</p>
+                                                    </div>
+                                                    <div className={styles.regOption} onClick={() => handleRegisterChoice('advocate')}>
+                                                        <div className={styles.iconCircle}><Scale /></div>
+                                                        <h3>I am an Advocate</h3>
+                                                        <p>Providing legal services and managing professional portfolio.</p>
+                                                    </div>
+                                                    <div className={styles.regOption} onClick={() => handleRegisterChoice('provider')}>
+                                                        <div className={styles.iconCircle}><Mail /></div>
+                                                        <h3>I am a Legal Service Provider</h3>
+                                                        <p>Offering documentation, drafting, and specialized legal support.</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button className={styles.backBtn} onClick={() => setRegStep('choice')}>
+                                                    &larr; Back to choice
+                                                </button>
+                                                <h2>{selectedRole === 'client' ? 'Client' : 'Advocate'} Registration</h2>
+                                                <p className={styles.subtitle}>Create your account as an {selectedRole}</p>
+
+                                                {error && (
+                                                    <div className={styles.errorBox}>
+                                                        <AlertCircle size={18} />
+                                                        <span>{error}</span>
+                                                    </div>
+                                                )}
+
+                                                <form onSubmit={handleRegister}>
+                                                    <div className={styles.formGroup}>
+                                                        <label><Mail size={16} /> Email Address</label>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="name@example.com"
+                                                            required
+                                                            value={email}
+                                                            onChange={e => setEmail(e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div className={styles.formGroup}>
+                                                        <label><Lock size={16} /> Password</label>
+                                                        <div className={styles.passwordWrapper}>
+                                                            <input
+                                                                type={showPassword ? "text" : "password"}
+                                                                placeholder="••••••••"
+                                                                required
+                                                                value={password}
+                                                                onChange={e => setPassword(e.target.value)}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                className={styles.togglePasswordBtn}
+                                                                onClick={() => setShowPassword(!showPassword)}
+                                                            >
+                                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" className={styles.submitBtn} disabled={loading}>
+                                                        {loading ? 'Creating Account...' : 'Create Account'}
+                                                    </button>
+                                                </form>
+                                            </>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        )}
                     </div>
                 </motion.div>
             </div>
