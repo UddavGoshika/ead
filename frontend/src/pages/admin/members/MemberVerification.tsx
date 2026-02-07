@@ -233,7 +233,7 @@ const MemberVerification: React.FC = () => {
 
     const isChecklistComplete = () => {
         if (!selectedMember) return false;
-        const required = selectedMember.role?.toLowerCase() === "advocate"
+        const required = (selectedMember.role?.toLowerCase() === "advocate" || selectedMember.role?.toLowerCase() === "legal_provider" || selectedMember.role?.toLowerCase() === "legal provider")
             ? ["id", "address", "degree", "license", "photo"]
             : ["id", "address", "photo"];
         return required.every(key => checklist[key]);
@@ -465,7 +465,7 @@ const MemberVerification: React.FC = () => {
                             </div>
 
                             {/* 2. Advocate Specific: Education & Practice */}
-                            {selectedMember.role?.toLowerCase() === "advocate" && (
+                            {(selectedMember.role?.toLowerCase() === "advocate" || selectedMember.role?.toLowerCase() === "legal_provider" || selectedMember.role?.toLowerCase() === "legal provider") && (
                                 <>
                                     <div className={styles.contentSection}>
                                         <h3 className={styles.sectionTitle}><GraduationCap size={18} /> Education & Certification</h3>
@@ -636,7 +636,7 @@ const MemberVerification: React.FC = () => {
                                         />
                                         <span>Is the address verified?</span>
                                     </label>
-                                    {selectedMember.role?.toLowerCase() === "advocate" && (
+                                    {(selectedMember.role?.toLowerCase() === "advocate" || selectedMember.role?.toLowerCase() === "legal_provider" || selectedMember.role?.toLowerCase() === "legal provider") && (
                                         <>
                                             <label className={styles.checkItem}>
                                                 <input

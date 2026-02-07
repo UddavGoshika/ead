@@ -224,7 +224,7 @@ router.get('/members', async (req, res) => {
 
         const members = await Promise.all(users.map(async (u) => {
             let profile = null;
-            if (u.role.toLowerCase() === 'advocate') {
+            if (u.role.toLowerCase() === 'advocate' || u.role.toLowerCase() === 'legal_provider') {
                 profile = await Advocate.findOne({ userId: u._id });
             } else if (u.role.toLowerCase() === 'client') {
                 profile = await Client.findOne({ userId: u._id });
@@ -232,7 +232,7 @@ router.get('/members', async (req, res) => {
 
             let location = 'N/A';
             if (profile) {
-                if (u.role.toLowerCase() === 'advocate' && profile.location?.city) {
+                if ((u.role.toLowerCase() === 'advocate' || u.role.toLowerCase() === 'legal_provider') && profile.location?.city) {
                     location = `${profile.location.city}, ${profile.location.state || ''}`;
                 } else if (u.role.toLowerCase() === 'client') {
                     const addr = profile.address || {};
@@ -323,7 +323,7 @@ router.patch('/members/:id/verify', async (req, res) => {
             await user.save();
 
             let profileName = 'User';
-            if (user.role.toLowerCase() === 'advocate') {
+            if (user.role.toLowerCase() === 'advocate' || user.role.toLowerCase() === 'legal_provider') {
                 const profile = await Advocate.findOneAndUpdate({ userId: user._id }, { verified: false }, { new: true });
                 if (profile) profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
             } else if (user.role.toLowerCase() === 'client') {
@@ -502,7 +502,7 @@ router.get('/members/:id', async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         let profile = null;
-        if (user.role.toLowerCase() === 'advocate') {
+        if (user.role.toLowerCase() === 'advocate' || user.role.toLowerCase() === 'legal_provider') {
             profile = await Advocate.findOne({ userId: user._id }).lean();
         } else if (user.role.toLowerCase() === 'client') {
             profile = await Client.findOne({ userId: user._id }).lean();
@@ -510,7 +510,7 @@ router.get('/members/:id', async (req, res) => {
 
         const documents = [];
         if (profile) {
-            if (user.role.toLowerCase() === 'advocate') {
+            if (user.role.toLowerCase() === 'advocate' || user.role.toLowerCase() === 'legal_provider') {
                 if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
                 if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: profile.education.certificatePath });
                 if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: profile.practice.licensePath });
