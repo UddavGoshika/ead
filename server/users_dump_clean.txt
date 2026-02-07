@@ -1,0 +1,21 @@
+Connected to MongoDB
+Total users: 19
+Email: admin@gmail.com | Name: undefined | Role: admin | Plan: Pro Platinum | Status: Active
+Email: advocate1@gmail.com | Name: undefined | Role: advocate | Plan: Free | Status: Active
+Email: advocate2@gmail.com | Name: undefined | Role: advocate | Plan: Pro Gold | Status: Active
+Email: advocate3@gmail.com | Name: undefined | Role: advocate | Plan: Free | Status: Active
+Email: client@gmail.com | Name: undefined | Role: client | Plan: Pro Lite Gold | Status: Active
+Email: suresh@gmail.com | Name: undefined | Role: client | Plan: Free | Status: Active
+Email: shivauddav187@gmail.com | Name: undefined | Role: client | Plan: Free | Status: Active
+Email: advisor@gmail.com | Name: undefined | Role: legal_provider | Plan: Pro | Status: Active
+Email: hoxedin211@ixunbo.com | Name: undefined | Role: advocate | Plan: Ultra Pro Gold | Status: Active
+Email: weviri8390@codgal.com | Name: undefined | Role: client | Plan: Free | Status: Active
+Email: riya.sharma@eadvocate.com | Name: undefined | Role: telecaller | Plan: Staff | Status: Active
+Email: amit.patel@eadvocate.com | Name: undefined | Role: manager | Plan: Staff | Status: Active
+Email: sarah.lee@eadvocate.com | Name: undefined | Role: support | Plan: Staff | Status: Active
+Email: abc@gmail.com | Name: undefined | Role: telecaller | Plan: Free | Status: Active
+Email: sai@gmail.com | Name: undefined | Role: telecaller | Plan: Free | Status: Active
+Email: rahul.v@gmail.com | Name: undefined | Role: live_chat | Plan: Free | Status: Active
+Email: neurogenix187@gmail.com | Name: undefined | Role: client | Plan: Free | Status: Active
+Email: cedana7889@helesco.com | Name: undefined | Role: advocate | Plan: Free | Status: Pending
+Email: famad78350@dnsclick.com | Name: undefined | Role: legal_provider | Plan: Free | Status: Pending

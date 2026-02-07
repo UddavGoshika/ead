@@ -349,6 +349,12 @@ router.patch('/members/:id/verify', async (req, res) => {
             if (!advocate) return res.status(404).json({ error: 'Advocate profile not found' });
 
             user.status = verified ? 'Active' : 'Pending';
+            if (verified) {
+                user.plan = 'Free';
+                user.planType = 'Free';
+                user.planTier = null;
+                user.isPremium = false;
+            }
             await user.save();
 
             if (verified) {
@@ -368,6 +374,12 @@ router.patch('/members/:id/verify', async (req, res) => {
             if (!profile) return res.status(404).json({ error: 'Client profile not found' });
 
             user.status = verified ? 'Active' : 'Pending';
+            if (verified) {
+                user.plan = 'Free';
+                user.planType = 'Free';
+                user.planTier = null;
+                user.isPremium = false;
+            }
             await user.save();
 
             if (verified) {

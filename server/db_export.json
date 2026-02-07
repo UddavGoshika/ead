@@ -1,0 +1,250 @@
+{
+  "users": [
+    {
+      "id": "697a6d17c535a870f2e77d7a",
+      "email": "admin@gmail.com",
+      "role": "admin",
+      "plan": "Pro Platinum",
+      "status": "Active"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d7c",
+      "email": "advocate1@gmail.com",
+      "role": "advocate",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d80",
+      "email": "advocate2@gmail.com",
+      "role": "advocate",
+      "plan": "Pro Silver",
+      "status": "Active"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d84",
+      "email": "advocate3@gmail.com",
+      "role": "advocate",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d88",
+      "email": "client@gmail.com",
+      "role": "client",
+      "plan": "Pro Lite Gold",
+      "status": "Active"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d8c",
+      "email": "suresh@gmail.com",
+      "role": "client",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "697b253711a4777cd08e1d36",
+      "email": "shivauddav187@gmail.com",
+      "role": "client",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "697dfda4331058c7e933b983",
+      "email": "advisor@gmail.com",
+      "role": "legal_provider",
+      "plan": "Pro",
+      "status": "Active"
+    },
+    {
+      "id": "697f118bf65039ceb55eedf2",
+      "email": "hoxedin211@ixunbo.com",
+      "role": "advocate",
+      "plan": "Ultra Pro Gold",
+      "status": "Active"
+    },
+    {
+      "id": "6982c5111a2e8e3e15739133",
+      "email": "weviri8390@codgal.com",
+      "role": "client",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "6982f6e77e58057cf07f2879",
+      "email": "riya.sharma@eadvocate.com",
+      "role": "telecaller",
+      "plan": "Staff",
+      "status": "Active"
+    },
+    {
+      "id": "6982f6e77e58057cf07f287e",
+      "email": "amit.patel@eadvocate.com",
+      "role": "manager",
+      "plan": "Staff",
+      "status": "Active"
+    },
+    {
+      "id": "6982f6e87e58057cf07f2883",
+      "email": "sarah.lee@eadvocate.com",
+      "role": "support",
+      "plan": "Staff",
+      "status": "Active"
+    },
+    {
+      "id": "6983041fb6365c2f6c734630",
+      "email": "abc@gmail.com",
+      "role": "telecaller",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "69830446b6365c2f6c734649",
+      "email": "sai@gmail.com",
+      "role": "telecaller",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "6983050c7cb5e3e7dbe88015",
+      "email": "rahul.v@gmail.com",
+      "role": "live_chat",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "698343c829cd74322a64a063",
+      "email": "neurogenix187@gmail.com",
+      "role": "client",
+      "plan": "Free",
+      "status": "Active"
+    },
+    {
+      "id": "69861d3287cf4e6d22cdb8d8",
+      "email": "cedana7889@helesco.com",
+      "role": "advocate",
+      "plan": "Free",
+      "status": "Pending"
+    },
+    {
+      "id": "6986275cbdc9dfc09ffc2de6",
+      "email": "famad78350@dnsclick.com",
+      "role": "legal_provider",
+      "plan": "Free",
+      "status": "Pending"
+    }
+  ],
+  "advocates": [
+    {
+      "id": "697a6d17c535a870f2e77d7e",
+      "userId": "697a6d17c535a870f2e77d7c",
+      "name": "Rajesh Kumar",
+      "email": "advocate1@gmail.com",
+      "unique_id": "ADV-100000",
+      "verified": true
+    },
+    {
+      "id": "697a6d17c535a870f2e77d82",
+      "userId": "697a6d17c535a870f2e77d80",
+      "name": "Priya asdfasd Sharma",
+      "email": "advocate2@gmail.com",
+      "unique_id": "ADV-100001",
+      "verified": true
+    },
+    {
+      "id": "697a6d17c535a870f2e77d86",
+      "userId": "697a6d17c535a870f2e77d84",
+      "name": "Vikram Reddy",
+      "email": "advocate3@gmail.com",
+      "unique_id": "ADV-100002",
+      "verified": true
+    },
+    {
+      "id": "697dfda4331058c7e933b985",
+      "userId": "697dfda4331058c7e933b983",
+      "name": "Vikram Malhotra",
+      "email": "advisor@gmail.com",
+      "unique_id": "TP-EAD-PADV77777",
+      "verified": true
+    },
+    {
+      "id": "697f118bf65039ceb55eedf5",
+      "userId": "697f118bf65039ceb55eedf2",
+      "name": "sri hari",
+      "email": "hoxedin211@ixunbo.com",
+      "unique_id": "TP-EAD-ADV58007",
+      "verified": true
+    },
+    {
+      "id": "6982c5111a2e8e3e15739136",
+      "userId": "6982c5111a2e8e3e15739133",
+      "name": "nani nweth",
+      "email": "weviri8390@codgal.com",
+      "unique_id": "TP-EAD-ADV7986",
+      "verified": true
+    },
+    {
+      "id": "6986275cbdc9dfc09ffc2de9",
+      "userId": "6986275cbdc9dfc09ffc2de6",
+      "name": "priyanka mohan",
+      "email": "famad78350@dnsclick.com",
+      "unique_id": "TP-EAD-LAS-SCUZF8",
+      "verified": false
+    },
+    {
+      "id": "6986b1c3459638414dbc25d2",
+      "userId": "69861d3287cf4e6d22cdb8d8",
+      "name": "swetha valmiki",
+      "email": "cedana7889@helesco.com",
+      "unique_id": "TP-EAD-ADV-VQLHDL",
+      "verified": false
+    }
+  ],
+  "clients": [
+    {
+      "id": "697a6d17c535a870f2e77d8a",
+      "userId": "697a6d17c535a870f2e77d88",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "client@gmail.com"
+    },
+    {
+      "id": "697a6d17c535a870f2e77d8e",
+      "userId": "697a6d17c535a870f2e77d8c",
+      "firstName": "Suresh",
+      "lastName": "Raina",
+      "email": "suresh@gmail.com"
+    },
+    {
+      "id": "697b253711a4777cd08e1d38",
+      "userId": "697b253711a4777cd08e1d36",
+      "firstName": "Goshika",
+      "lastName": "Uddav",
+      "email": "shivauddav187@gmail.com"
+    },
+    {
+      "id": "698343c829cd74322a64a066",
+      "userId": "698343c829cd74322a64a063",
+      "firstName": "shiva",
+      "lastName": "kumar",
+      "email": "neurogenix187@gmail.com",
+      "unique_id": "EA-CLI-BMQKPH"
+    },
+    {
+      "id": "69861d3387cf4e6d22cdb8db",
+      "userId": "69861d3287cf4e6d22cdb8d8",
+      "firstName": "swetha",
+      "lastName": "damera",
+      "email": "cedana7889@helesco.com",
+      "unique_id": "TP-EAD-CLI9284"
+    },
+    {
+      "id": "6986dc03b6af7dd3eec5cbfd",
+      "userId": "6982c5111a2e8e3e15739133",
+      "firstName": "lahari",
+      "lastName": "darmaram",
+      "email": "weviri8390@codgal.com",
+      "unique_id": "TP-EAD-CLI7796"
+    }
+  ]
+}

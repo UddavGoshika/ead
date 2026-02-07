@@ -146,7 +146,7 @@ router.post('/register', cpUpload, async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const { search, category, specialization, subDepartment, consultationMode, languages, city, state } = req.query;
-        let query = {};
+        let query = { verified: true };
         const conditions = [];
 
         const buildCondition = (field, value) => {
