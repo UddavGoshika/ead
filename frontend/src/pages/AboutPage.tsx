@@ -13,7 +13,10 @@ import {
     CheckCircle2,
     Lock,
     Cpu,
-    Award
+    Award,
+    Phone,
+    Mail,
+    MapPin
 } from 'lucide-react';
 
 const AboutPage: React.FC = () => {
@@ -28,6 +31,49 @@ const AboutPage: React.FC = () => {
                         Revolutionizing Legal Services through Digital Innovation, Connecting Clients with Expert
                         Advocates Seamlessly.
                     </p>
+                </div>
+
+                {/* Founder & CEO Section */}
+                <div className={styles.founderSection}>
+                    <div className={styles.founderImageWrapper}>
+                        <img
+                            src="/assets/manoj.png"
+                            alt="Manoj Kumar Vanam"
+                            className={styles.founderImage}
+                        />
+                    </div>
+                    <div className={styles.founderInfo}>
+                        <span className={styles.founderRole}>Founder & CEO</span>
+                        <h1 className={styles.founderName}>Manoj Kumar Vanam</h1>
+                        <div className={styles.founderTagline}>
+                            <span>💼</span>
+                            <span>Tech Entrepreneur</span>
+                        </div>
+
+                        <div className={styles.contactList}>
+                            <div className={styles.contactItem}>
+                                <div className={styles.contactIcon}>
+                                    <Phone size={20} />
+                                </div>
+                                <span>+91 70937 04706</span>
+                            </div>
+                            <div className={styles.contactItem}>
+                                <div className={styles.contactIcon}>
+                                    <Mail size={20} />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span>tatitoprojects@gmail.com</span>
+                                    <span>support@tatitoprojects.com</span>
+                                </div>
+                            </div>
+                            <div className={styles.contactItem}>
+                                <div className={styles.contactIcon}>
+                                    <MapPin size={20} />
+                                </div>
+                                <span>Tirupati, Andhra Pradesh 517501, India</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Main Grid */}
