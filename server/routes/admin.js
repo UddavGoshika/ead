@@ -240,6 +240,12 @@ router.get('/members', async (req, res) => {
                 }
             }
 
+            const normalizePath = (p) => {
+                if (!p) return null;
+                const clean = p.replace(/\\/g, '/');
+                return clean.startsWith('/') ? clean : `/${clean}`;
+            };
+
             return {
                 id: u._id,
                 email: u.email,
@@ -256,13 +262,27 @@ router.get('/members', async (req, res) => {
                 verifiedAt: profile ? profile.verifiedAt : null,
                 reported: profile ? (profile.reported || 0) : 0,
                 location: location,
-                avatar: profile ? (profile.profilePicPath || profile.avatar) : null,
-                image: profile ? (profile.profilePicPath || profile.avatar) : null,
+                avatar: profile ? normalizePath(profile.profilePicPath || profile.avatar) : null,
+                image: profile ? normalizePath(profile.profilePicPath || profile.avatar) : null,
                 unique_id: profile ? profile.unique_id : `U-${u._id.toString().slice(-4)}`,
                 specialization: profile ? (profile.practice?.specialization || 'N/A') : 'N/A',
                 legalDocumentation: profile ? (profile.legalDocumentation || []) : [],
                 rejectionReason: profile ? (profile.rejectionReason || '') : '',
-                verificationStatus: profile?.verified ? 'Verified' : (profile?.rejectionReason ? 'Rejected' : 'Pending')
+                verificationStatus: profile?.verified ? 'Verified' : (profile?.rejectionReason ? 'Rejected' : 'Pending'),
+                // Enhanced Document Fields for Admin Verification
+                education: profile?.education,
+                practice: profile?.practice,
+                idProof: profile?.idProof,
+                signaturePath: profile?.signaturePath ? normalizePath(profile.signaturePath) : null,
+                documentPath: profile?.documentPath ? normalizePath(profile.documentPath) : null,
+                documentType: profile?.documentType,
+                legalHelp: profile?.legalHelp,
+                career: profile?.career,
+                availability: profile?.availability,
+                interests: profile?.interests,
+                superInterests: profile?.superInterests,
+                address: profile?.address,
+                dob: profile?.dob
             };
         }));
 
@@ -508,18 +528,27 @@ router.get('/members/:id', async (req, res) => {
             profile = await Client.findOne({ userId: user._id }).lean();
         }
 
+        const normalizePath = (p) => {
+            if (!p) return null;
+            const clean = p.replace(/\\/g, '/');
+            return clean.startsWith('/') ? clean : `/${clean}`;
+        };
+
         const documents = [];
         if (profile) {
+            // Normalize profile pic in the profile object itself for direct access
+            if (profile.profilePicPath) profile.profilePicPath = normalizePath(profile.profilePicPath);
+
             if (user.role.toLowerCase() === 'advocate' || user.role.toLowerCase() === 'legal_provider') {
                 if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
-                if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: profile.education.certificatePath });
-                if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: profile.practice.licensePath });
-                if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: profile.idProof.docPath });
-                if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
+                if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: normalizePath(profile.education.certificatePath) });
+                if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: normalizePath(profile.practice.licensePath) });
+                if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: normalizePath(profile.idProof.docPath) });
+                if (profile.signaturePath) documents.push({ name: 'Signature', path: normalizePath(profile.signaturePath) });
             } else {
                 if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
-                if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: profile.documentPath });
-                if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
+                if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: normalizePath(profile.documentPath) });
+                if (profile.signaturePath) documents.push({ name: 'Signature', path: normalizePath(profile.signaturePath) });
             }
         }
 

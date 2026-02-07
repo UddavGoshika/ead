@@ -27,6 +27,7 @@ interface Member {
     career?: any;
     signaturePath?: string;
     rejectionReason?: string;
+    image?: string; // Add image property from parent
 }
 
 interface Props {
@@ -39,7 +40,18 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
 
     const renderFileLink = (path: string | undefined, label: string) => {
         if (!path) return null;
-        const fullUrl = path.startsWith('http') ? path : `/${path}`;
+
+        // Normalize path
+        let cleanPath = path.replace(/\\/g, '/');
+        const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
+        if (uploadIndex !== -1) {
+            cleanPath = cleanPath.substring(uploadIndex);
+        } else {
+            cleanPath = cleanPath.replace(/^\/+/, '');
+            if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
+        }
+        const fullUrl = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+
         return (
             <div className={styles.fileItem}>
                 <label>{label}</label>
@@ -63,11 +75,31 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
                 <div className={styles.content}>
                     <div className={styles.profileHeader}>
                         <div className={styles.avatarLarge}>
-                            {member.profilePicPath || member.avatar ? (
-                                <img src={member.profilePicPath ? (member.profilePicPath.startsWith('http') ? member.profilePicPath : `/${member.profilePicPath}`) : member.avatar} alt={member.name} />
-                            ) : (
-                                <UserCircle size={80} color="#64748b" />
-                            )}
+                            {(() => {
+                                // Prefer pre-processed image from parent, or process raw paths
+                                let src = member.image;
+                                if (!src) {
+                                    if (member.profilePicPath) {
+                                        src = member.profilePicPath.replace(/\\/g, '/');
+                                        if (!src.startsWith('http') && !src.startsWith('/')) src = `/${src}`;
+                                    } else if (member.avatar) {
+                                        src = member.avatar;
+                                    }
+                                }
+
+                                return src ? (
+                                    <img
+                                        src={src}
+                                        alt={member.name}
+                                        onError={(e) => {
+                                            e.currentTarget.src = '/avatar_placeholder.png';
+                                            e.currentTarget.onerror = null;
+                                        }}
+                                    />
+                                ) : (
+                                    <UserCircle size={80} color="#64748b" />
+                                );
+                            })()}
                         </div>
                         <div className={styles.basicInfo}>
                             <h1>{member.name || (member as any).firstName + ' ' + (member as any).lastName || 'Anonymous User'}</h1>

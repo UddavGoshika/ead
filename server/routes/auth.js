@@ -60,6 +60,7 @@ router.post('/login', async (req, res) => {
                 if (client) {
                     uniqueId = client.unique_id;
                     displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
+                    userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
                     rejectionReason = client.rejectionReason;
                 }
             }
@@ -171,6 +172,7 @@ router.get('/me', async (req, res) => {
             if (client) {
                 uniqueId = client.unique_id;
                 displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
+                userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
             }
         }
 

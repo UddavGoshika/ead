@@ -165,7 +165,11 @@ const getMediaUrl = (path: string | undefined): string => {
     }
 
     // 3. Ensure leading slash for relative URL (proxied)
-    return cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    let finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+
+    // Add cache buster to force reload if image changed
+    // return `${finalPath}?t=${Date.now()}`; // Disabled for performance, enable if caching issues persist
+    return finalPath;
 };
 
 const MemberVerification: React.FC = () => {
@@ -412,6 +416,10 @@ const MemberVerification: React.FC = () => {
                                     src={getMediaUrl(m.image)}
                                     className={styles.avatar}
                                     alt={m.name}
+                                    onError={(e) => {
+                                        e.currentTarget.src = "/avatar_placeholder.png"; // Fallback
+                                        e.currentTarget.onerror = null;
+                                    }}
                                 />
                                 <div className={styles.mInfo}>
                                     <span className={styles.mName}>{m.name}</span>
@@ -434,6 +442,10 @@ const MemberVerification: React.FC = () => {
                                     src={getMediaUrl(selectedMember.image)}
                                     className={styles.largeAvatar}
                                     alt={selectedMember.name}
+                                    onError={(e) => {
+                                        e.currentTarget.src = "/avatar_placeholder.png"; // Fallback
+                                        e.currentTarget.onerror = null;
+                                    }}
                                 />
                                 <div className={styles.profileTitle}>
                                     <h1>{selectedMember.name}</h1>
@@ -748,7 +760,7 @@ const MemberVerification: React.FC = () => {
                     <div className={styles.previewModal} onClick={e => e.stopPropagation()}>
                         <div className={styles.previewHeader}>
                             <h3>{previewFile.name}</h3>
-                            <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} />X</button>
+                            <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} /></button>
                         </div>
                         <div className={styles.previewBody}>
                             {previewFile.path.toLowerCase().endsWith('.pdf') ? (
@@ -762,6 +774,10 @@ const MemberVerification: React.FC = () => {
                                     src={getMediaUrl(previewFile.path)}
                                     alt="Document Preview"
                                     className={styles.previewImg}
+                                    onError={(e) => {
+                                        e.currentTarget.src = "https://via.placeholder.com/400x300?text=Preview+Not+Available";
+                                        console.error('Failed to load preview:', previewFile.path);
+                                    }}
                                 />
                             )}
                         </div>

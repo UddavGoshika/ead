@@ -899,7 +899,15 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                 </td>
                                 <td>
                                     <div className={styles.nameCell}>
-                                        <img src={m.image} alt={m.name} className={styles.avatar} />
+                                        <img
+                                            src={m.image}
+                                            alt={m.name}
+                                            className={styles.avatar}
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/avatar_placeholder.png'; // Fallback
+                                                e.currentTarget.onerror = null; // Prevent infinite loop
+                                            }}
+                                        />
                                         <div>
                                             <strong>{m.name}</strong>
                                             <div className={styles.idCode}>{m.code}</div>

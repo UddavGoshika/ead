@@ -3,7 +3,7 @@ import {
     ArrowLeft, MapPin, Heart, Briefcase, UserCheck, Star,
     X, Phone, CheckCircle, Handshake, Bookmark, MessageCircle, Send,
     AlertCircle, Loader2, Video, PlusCircle, ChevronRight,
-    Bell, Trash2, Clock, Globe, Award, ShieldCheck, GraduationCap, Gavel
+    Bell, Trash2, Clock, Globe, Award, ShieldCheck, GraduationCap, Gavel, Image
 } from 'lucide-react';
 import { advocateService, clientService } from '../../../services/api';
 import { interactionService } from '../../../services/interactionService';
@@ -154,7 +154,7 @@ const DetailedProfile: React.FC<Props> = ({
     );
 
     const displayName = profile.name || "Legal Professional";
-    const imageUrl = profile.image_url || "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400";
+    const imageUrl = "/assets/manoj.png";
     const experience = profile.experience || "8+";
     const loc = profile.location || "Location Not Provided";
 
@@ -200,53 +200,41 @@ const DetailedProfile: React.FC<Props> = ({
                     </div>
                 </div>
 
-                {/* Tabs Section - Rendered below header for clear separation */}
-                {tabs && tabs.length > 0 && (
-                    <div className={styles.profileTabs}>
-                        {tabs.map((t, idx) => (
-                            <button
-                                key={idx}
-                                className={`${styles.tabBtn} ${t.active ? styles.tabBtnActive : ''}`}
-                                onClick={t.onClick}
-                            >
-                                {t.label}
-                                {t.count !== undefined && <span className={styles.tabCount}>({t.count})</span>}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* Navigation Index - Moved below or integrated nicely */}
-                {items && items.length > 1 && currentIndex !== undefined && onNavigate && (
-                    <div className={styles.indexIndicator}>
-                        {currentIndex + 1} / {items.length}
-                    </div>
-                )}
-
-                <div className={styles.pageBanner}>
-                    <h1 className={styles.bannerName}>{displayName}</h1>
-                    <p className={styles.bannerSubtitle}>Professional Legal Expertise • Reliable Representation • Client Focused</p>
-                    <div className={styles.bannerLocation}><MapPin size={16} /> {loc}</div>
-                </div>
-
-                <div className={styles.profileCard}>
-                    <div className={styles.profileAvatarWrap}>
-                        <img src={imageUrl} alt={displayName} className={styles.profileAvatar} />
-                        <div className={styles.verifiedBadge}><CheckCircle size={14} /></div>
-                    </div>
-                    <div className={styles.profileInfo}>
-                        <h2>{displayName}</h2>
-                        <div className={styles.experienceRow}>
-                            <Briefcase size={18} /> <span>{experience} Years Experience</span>
+                <div className={styles.heroSection}>
+                    <img src={imageUrl} alt={displayName} className={styles.heroImage} />
+                    <div className={styles.heroOverlay}></div>
+                    <div className={styles.heroContent}>
+                        {/* Top Right Controls: Image Badge + Tabs */}
+                        <div className={styles.topRightControls}>
+                            {tabs && tabs.length > 0 && (
+                                <div className={styles.tabsContainer}>
+                                    {tabs.map((t, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`${styles.tabBtn} ${t.active ? styles.tabBtnActive : ''}`}
+                                            onClick={t.onClick}
+                                        >
+                                            {t.label}
+                                            {t.count !== undefined && <span className={styles.tabCount}>({t.count})</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div className={styles.imageCountBadge}>
+                                <Image size={14} /> 6
+                            </div>
                         </div>
 
-                        <div className={styles.tags}>
-                            {profile.specialties?.slice(0, 5).map((s: any, i: number) => <span key={i} className={styles.tag}>{s}</span>) ||
-                                ['Civil', 'Criminal', 'Corporate'].map((s, i) => <span key={i} className={styles.tag}>{s}</span>)}
-                            <span className={styles.tag}>+ {Math.floor(Math.random() * 20) + 10} more</span>
+                        <div className={styles.heroBottomContent}>
+                            <div className={styles.lastSeenBadge}>Last seen on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, '-')}</div>
+                            <h1 className={styles.heroName}>
+                                {displayName}, {profile.age || '28'}
+                                <span className={styles.verifiedTick}><CheckCircle size={16} fill="#3b82f6" color="white" /></span>
+                            </h1>
+                            <p className={styles.heroId}>ID - {profile.unique_id || String(profile.id).slice(-8).toUpperCase()}</p>
+                            {/* <p className={styles.heroManagedBy}>Profile managed by {profile.managed_by || 'Self'}</p> */}
                         </div>
                     </div>
-
                 </div>
 
                 <div className={styles.layoutGrid}>
@@ -320,25 +308,6 @@ const DetailedProfile: React.FC<Props> = ({
                     </div>
 
                     <div className={styles.sidebar}>
-                        <div className={styles.sideCard}>
-                            <div className={styles.sideHeader}><Handshake size={18} /> Connect with Advocate</div>
-                            <div className={styles.sideBody}>
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{ fontSize: '12px', color: '#64748b' }}>Full Name</label>
-                                    <input className={styles.formInput} placeholder="Your name" />
-                                </div>
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{ fontSize: '12px', color: '#64748b' }}>Mobile Number</label>
-                                    <input className={styles.formInput} placeholder="+91" />
-                                </div>
-                                <div style={{ marginBottom: '16px' }}>
-                                    <label style={{ fontSize: '12px', color: '#64748b' }}>Requirement</label>
-                                    <textarea className={styles.formTextarea} placeholder="Details of your request..." />
-                                </div>
-
-                            </div>
-                        </div>
-
                         <div className={styles.sideCard}>
                             <div className={styles.sideBody}>
                                 <div className={styles.detailItem}>
