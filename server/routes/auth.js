@@ -65,10 +65,10 @@ router.post('/login', async (req, res) => {
             }
 
             // CHECK STATUS AFTER PROFILE FETCH TO INCLUDE REASON
-            if (user.status === 'Pending' && user.role.toLowerCase() !== 'admin') {
+            if (['Blocked', 'Deactivated', 'Deleted'].includes(user.status)) {
                 return res.status(403).json({
-                    error: 'ACCOUNT_PENDING',
-                    message: 'Your account is currently pending verification.',
+                    error: 'ACCOUNT_RESTRICTED',
+                    message: `Your account is ${user.status}. Please contact support.`,
                     rejectionReason: rejectionReason
                 });
             }
@@ -252,9 +252,15 @@ router.post('/activate-demo', async (req, res) => {
 // SEND OTP
 router.post('/send-otp', async (req, res) => {
     const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const { checkUnique } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     try {
+        if (checkUnique) {
+            const user = await User.findOne({ email });
+            if (user) return res.status(400).json({ error: 'Email already registered. Please login or use a different email.' });
+        }
+
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 

@@ -197,6 +197,11 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                                     isPremium={isPremium}
                                     onAction={async (action, data) => {
                                         if (user) {
+                                            if (user.status === 'Pending') {
+                                                alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
+                                                return;
+                                            }
+
                                             const targetId = String(adv.id);
                                             const userId = String(user.id);
                                             const targetRole = 'advocate';
@@ -217,9 +222,7 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                                                 } else if (action === 'openFullChatPage') {
                                                     onSelectForChat(adv);
                                                 } else if (action === 'message_sent' && data) {
-                                                    const res = await interactionService.sendMessage(userId, targetId, data);
-                                                    // sendMessage currently doesn't return coins in backend? check interactions.js
-                                                    // Rule: Chat unlock happens via recordActivity('chat'), so sendMessage doesn't deduct.
+                                                    await interactionService.sendMessage(userId, targetId, data);
                                                     showToast(`Message sent to ${adv.name}`);
                                                 }
                                             } catch (err: any) {
@@ -227,7 +230,6 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                                                 const errorMsg = err.response?.data?.message || 'Operation failed. Please try again.';
                                                 showToast(errorMsg);
 
-                                                // If limit reached or insufficient coins, then redirect to upgrade
                                                 const errorCode = err.response?.data?.error;
                                                 const redirectErrors = [
                                                     'FEATURED_INTERACTION_LIMIT',

@@ -85,7 +85,8 @@ interface PendingMember {
     documents: { name: string, path: string }[];
 }
 
-const API_BASE_URL = window.location.hostname === 'localhost' ? "http://localhost:5000" : "";
+
+const API_BASE_URL = "";
 
 const MOCK_DEMO_MEMBER: PendingMember = {
     id: "demo-1",
@@ -143,21 +144,28 @@ const MOCK_DEMO_MEMBER: PendingMember = {
     ]
 };
 
+
 const getMediaUrl = (path: string | undefined): string => {
     if (!path) return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%2364748b'%3ENo Image%3C/text%3E%3C/svg%3E";
     if (path.startsWith('http') || path.startsWith('blob:')) return path;
 
-    // Normalize slashes
-    let cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+    // 1. Normalize slashes
+    let cleanPath = path.replace(/\\/g, '/');
 
-    // Encode filename part (last segment) to handle spaces/parentheses
-    const parts = cleanPath.split('/');
-    const filename = parts.pop();
-    if (filename) {
-        cleanPath = [...parts, encodeURIComponent(filename)].join('/');
+    // 2. Handle absolute paths by finding 'uploads/'
+    const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
+    if (uploadIndex !== -1) {
+        cleanPath = cleanPath.substring(uploadIndex);
+    } else {
+        // If 'uploads/' not found, verify if it's just a filename
+        cleanPath = cleanPath.replace(/^\/+/, ''); // Strip leading /
+        if (!cleanPath.includes('/') && cleanPath.length > 0) {
+            cleanPath = `uploads/${cleanPath}`;
+        }
     }
 
-    return `${API_BASE_URL}/${cleanPath}`;
+    // 3. Ensure leading slash for relative URL (proxied)
+    return cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
 };
 
 const MemberVerification: React.FC = () => {
@@ -168,6 +176,7 @@ const MemberVerification: React.FC = () => {
     const [testEmail, setTestEmail] = useState("");
     const [previewFile, setPreviewFile] = useState<{ name: string, path: string } | null>(null);
     const [isRejecting, setIsRejecting] = useState(false);
+    const [actionType, setActionType] = useState<"Rejected" | "Reverify">("Rejected");
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [filterRole, setFilterRole] = useState<"All" | "Advocate" | "Client" | "Legal Provider">("All");
@@ -234,15 +243,15 @@ const MemberVerification: React.FC = () => {
         setChecklist(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const handleAction = async (status: "Approved" | "Rejected") => {
+    const handleAction = async (status: "Approved" | "Rejected" | "Reverify") => {
         if (!selectedMember) return;
 
         if (status === "Approved" && !isChecklistComplete()) {
             alert("Please complete the verification checklist before approving.");
             return;
         }
-        if (status === "Rejected" && !remarks.trim()) {
-            alert("Please provide a reason for rejection.");
+        if ((status === "Rejected" || status === "Reverify") && !remarks.trim()) {
+            alert(`Please provide a reason for ${status === 'Reverify' ? 're-verification' : 'rejection'}.`);
             return;
         }
 
@@ -257,11 +266,13 @@ const MemberVerification: React.FC = () => {
                     });
                     alert(`SUCCESS: Welcome email (with unique ID) sent to ${targetEmail}`);
                 } else {
+                    // Handle both Reject and Reverify 
                     await axios.post(`${API_BASE_URL}/api/admin/test-reject-email`, {
                         email: targetEmail,
-                        remarks: remarks
+                        remarks: remarks,
+                        type: status
                     });
-                    alert(`SUCCESS: Rejection email (with solution) sent to ${targetEmail}`);
+                    alert(`SUCCESS: ${status} email sent to ${targetEmail}`);
                 }
                 setIsRejecting(false);
                 setRemarks("");
@@ -274,12 +285,19 @@ const MemberVerification: React.FC = () => {
                     verified: true
                 });
             } else {
+                // Determine if it's strict rejection or re-verification
+                // If Reverify, we might use a specific status if backend supports it, e.g. "Resubmitted" or just reject with note
+                const apiAction = status === "Reverify" ? "reverify-request" : "reject-inform";
+                // Fallback to reject-inform if endpoint doesn't exist, but passing meta in remarks
+                const finalRemarks = status === "Reverify" ? `[ACTION REQUIRED: RE-VERIFICATION] ${remarks}` : remarks;
+
                 await axios.patch(`${API_BASE_URL}/api/admin/members/${selectedMember.id}/reject-inform`, {
-                    remarks
+                    remarks: finalRemarks,
+                    isReverify: status === "Reverify"
                 });
             }
 
-            alert(`Member ${selectedMember.name} has been ${status}.`);
+            alert(`Member ${selectedMember.name} has been processed: ${status}.`);
             setIsRejecting(false);
             setRemarks("");
             setChecklist({});
@@ -665,7 +683,7 @@ const MemberVerification: React.FC = () => {
                                         )}
                                         <textarea
                                             className={styles.remarksArea}
-                                            placeholder="Specify reason for rejection (this will be sent to the member)..."
+                                            placeholder={actionType === "Reverify" ? "Specify what needs to be corrected..." : "Specify reason for rejection..."}
                                             value={remarks}
                                             onChange={(e) => setRemarks(e.target.value)}
                                             autoFocus
@@ -673,11 +691,11 @@ const MemberVerification: React.FC = () => {
                                         <div className={styles.rejectionActions}>
                                             <button className={styles.cancelBtn} onClick={() => setIsRejecting(false)}>Cancel</button>
                                             <button
-                                                className={styles.confirmRejectBtn}
-                                                onClick={() => handleAction("Rejected")}
+                                                className={actionType === "Reverify" ? styles.reverifyBtn : styles.confirmRejectBtn}
+                                                onClick={() => handleAction(actionType)}
                                                 disabled={actionLoading}
                                             >
-                                                {actionLoading ? "Processing..." : "Confirm Reject & Inform"}
+                                                {actionLoading ? "Processing..." : (actionType === "Reverify" ? "Request Re-verification" : "Confirm Rejection")}
                                             </button>
                                         </div>
                                     </div>
@@ -697,8 +715,11 @@ const MemberVerification: React.FC = () => {
                                             </div>
                                         )}
                                         <div className={styles.actionButtons}>
-                                            <button className={styles.rejectBtn} onClick={() => setIsRejecting(true)}>
-                                                <AlertTriangle size={18} /> Reject Profile
+                                            <button className={styles.rejectBtn} onClick={() => { setActionType("Rejected"); setIsRejecting(true); }}>
+                                                <AlertTriangle size={18} /> Reject
+                                            </button>
+                                            <button className={styles.reverifyBtn} onClick={() => { setActionType("Reverify"); setIsRejecting(true); }}>
+                                                <ShieldCheck size={18} /> Reverify
                                             </button>
                                             <button
                                                 className={styles.approveBtn}

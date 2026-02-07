@@ -49,7 +49,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         setSending(true);
         setEmailMessage({ text: '', type: '' });
         try {
-            const res = await (authService as any).sendOtp(formData.email);
+            const res = await (authService as any).sendOtp(formData.email, true);
             if (res.data.success) {
                 setEmailMessage({ text: 'OTP sent to your email.', type: 'success' });
                 setCountdown(60);
@@ -248,7 +248,8 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
                     )}
                 </div>
 
-                {/* Mobile OTP */}
+                {/* Mobile OTP - Hidden as per request, logic preserved for future integration */}
+                {/* 
                 <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Smartphone size={14} />
@@ -284,7 +285,8 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
                             {mobileMessage.text}
                         </p>
                     )}
-                </div>
+                </div> 
+                */}
             </div>
         </div>
     );

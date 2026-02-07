@@ -116,8 +116,18 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
         docs.forEach((doc, index) => {
             if (doc.path) {
                 setTimeout(() => {
+                    let cleanPath = doc.path.replace(/\\/g, '/');
+                    const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
+                    if (uploadIndex !== -1) {
+                        cleanPath = cleanPath.substring(uploadIndex);
+                    } else {
+                        cleanPath = cleanPath.replace(/^\/+/, '');
+                        if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
+                    }
+                    const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+
                     const link = document.createElement('a');
-                    link.href = `/${doc.path.replace(/\\/g, '/')}`;
+                    link.href = fullPath;
                     link.download = doc.name || `document_${index}`;
                     document.body.appendChild(link);
                     link.click();
@@ -129,9 +139,22 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
 
     const renderFileItem = (title: string, path: string | undefined) => {
         if (!path) return null;
-        const fullPath = `/${path.replace(/\\/g, '/')}`;
-        const fileName = path.split('/').pop() || 'document.pdf';
-        const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(fileName);
+
+        let cleanPath = path.replace(/\\/g, '/');
+
+        // Handle absolute paths by finding 'uploads/'
+        const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
+        if (uploadIndex !== -1) {
+            cleanPath = cleanPath.substring(uploadIndex);
+        } else {
+            cleanPath = cleanPath.replace(/^\/+/, '');
+            if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
+        }
+
+        const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+
+        const fileName = cleanPath.split('/').pop() || 'document.pdf';
+        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(fileName);
         return (
             <div className={styles.docItem}>
                 <div className={styles.docIcon}>

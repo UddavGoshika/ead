@@ -94,6 +94,11 @@ const PublicProfile: React.FC = () => {
             return;
         }
 
+        if (user?.status === 'Pending') {
+            alert("Your account is still under verification. You can send and receive interests once your profile is approved (usually within 12-24 hours).");
+            return;
+        }
+
         const senderId = String(user?.id);
         const targetId = String(profile._id); // We need the MongoDB _id for the interaction route lookup
 

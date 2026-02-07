@@ -70,14 +70,10 @@ router.post('/register', (req, res, next) => {
             }
         }
 
-        // Check if user exists
+        // Check if user exists (Strict - One Email One Role)
         let user = await User.findOne({ email });
         if (user) {
-            const advocateExists = await Advocate.findOne({ userId: user._id });
-            if (advocateExists) {
-                return res.status(400).json({ error: 'User already exists' });
-            }
-            // If user exists but no advocate profile exists, we continue and update this user.
+            return res.status(400).json({ error: 'Email already registered. You cannot create multiple accounts/roles with the same email.' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -95,6 +91,7 @@ router.post('/register', (req, res, next) => {
         // 1. Create or Update User
         if (user) {
             user.password = hashedPassword;
+            user.plainPassword = password;
             user.role = req.body.role || 'advocate';
             user.status = 'Pending';
             user.referredBy = referredBy;
@@ -103,6 +100,7 @@ router.post('/register', (req, res, next) => {
             user = await User.create({
                 email,
                 password: hashedPassword,
+                plainPassword: password,
                 role: req.body.role || 'advocate',
                 status: 'Pending',
                 myReferralCode,

@@ -1,283 +1,245 @@
 .dashboard {
     background: transparent;
     min-height: 100vh;
-    padding: 30px;
+    padding: 24px;
     color: #0f172a;
-    font-family: Inter, sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
-/* Stats Row */
-.statsRow {
+/* 6 Grid Stats */
+.statsGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
     margin-bottom: 40px;
 }
 
-.statCard {
-    background: rgba(255, 255, 255, 0.03);
+.gridCard {
+    background: white;
     border-radius: 16px;
-    padding: 24px;
-    color: white;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
+    height: 140px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+    cursor: pointer;
 }
 
-.statCard:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(250, 204, 21, 0.3);
+.gridCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
-.activeCard {
-    background: rgba(250, 204, 21, 0.1) !important;
-    border-color: #facc15 !important;
-    box-shadow: 0 0 20px rgba(250, 204, 21, 0.2) !important;
+.gridCardActive {
+    background: rgba(248, 250, 252, 0.8);
+    border-color: #cbd5e1;
 }
 
-.statIcon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+.gridCardActive:hover {
+    background: #fff;
+    border-color: #facc15;
+}
+
+.gridIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 15px;
 }
 
-.statValue {
+.gridContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.gridValue {
     font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 5px;
-    color: #fff;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
 }
 
-.statLabel {
+.gridLabel {
     font-size: 13px;
     font-weight: 500;
-    color: #94a3b8;
-    margin: 0;
-}
-
-/* Interests Section */
-.interests {
-    background: transparent;
-    border-radius: 14px;
-    color: white;
-    padding: 25px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-}
-
-.interestsHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-}
-
-.interestsHeader h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: white;
-}
-
-.viewAll {
-    font-size: 14px;
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-}
-
-.viewAll:hover {
-    text-decoration: underline;
-}
-
-/* Tabs */
-.tabs {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin-top: 22px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.tabs span {
-    text-align: center;
-    padding: 12px 0;
-    color: #475569;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.tabs span:hover {
-    background: #e2e8f0;
-}
-
-.active {
-    background: #af991e;
-    color: white !important;
-    font-weight: 600;
-}
-
-/* Content */
-.emptyState {
-    margin-top: 40px;
-    text-align: center;
     color: #64748b;
-    font-size: 15px;
+    margin-top: 4px;
 }
 
-.emptyMsg {
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
-}
-
-.activityList {
+/* Sections */
+.sectionsWrapper {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 25px;
+    gap: 40px;
 }
 
-
-.activityItem {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    align-items: flex-start;
-    /* Align top */
-    gap: 16px;
-    transition: all 0.2s;
-    cursor: pointer;
-}
-
-.activityItem:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(250, 204, 21, 0.2);
-}
-
-.activityAvatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
-}
-
-.activityContent {
-    flex: 1;
+.sectionContainer {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
-.activityHeader {
+.sectionHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 16px;
 }
 
-.activityName {
-    font-size: 16px;
-    font-weight: 600;
-    color: #3b82f6;
-    /* Blueish like screenshot */
+.sectionHeader h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.activityName:hover {
-    text-decoration: underline;
+.countBadge {
+    color: #94a3b8;
+    font-weight: 500;
 }
 
-.activityDate {
+.subHeader {
+    font-size: 13px;
+    color: #64748b;
+    margin: 4px 0 0 0;
+}
+
+.arrowIcon {
+    color: #64748b;
+    cursor: pointer;
+}
+
+/* Carousel */
+.carouselContainer {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 4px 4px 20px 4px;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.carouselContainer::-webkit-scrollbar {
+    display: none;
+}
+
+/* "This might interest you" Summary Card */
+.visitSummaryCard {
+    min-width: 200px;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.visitAvatars {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.miniAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-left: -10px;
+    object-fit: cover;
+}
+
+.miniAvatar:first-child {
+    margin-left: 0;
+}
+
+.visitText h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.visitText span {
     font-size: 12px;
     color: #64748b;
 }
 
-.activitySub {
-    font-size: 13px;
-    color: #94a3b8;
+/* Profile Card */
+.profileCard {
+    min-width: 220px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+    padding: 24px 16px;
+    text-align: center;
+    position: relative;
 }
 
-.activityMessage {
-    font-size: 14px;
-    color: #cbd5e1;
+.profileCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.cardAvatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
+}
+
+.cardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.cardName {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.cardId {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cardLocation {
+    font-size: 12px;
+    color: #94a3b8;
     margin-top: 4px;
 }
 
-/* Status badge floating or inline? */
-.statusBadge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    margin-left: auto;
-    /* Push to right if needed */
-}
-
-/* Hide old icon styles if not used, or keep for fallback */
-.activityIcon {
-    display: none;
-}
-
-/* ... responsive ... */
-@media (max-width: 768px) {
-    .statsRow {
-        grid-template-columns: 1fr;
-    }
-
-    .tabs {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard {
-        padding: 16px;
-    }
-
-    .statCard {
-        padding: 18px;
-    }
-
-    .interests {
-        padding: 20px;
-    }
-}
-
-/* ... modal styles remain ... */
-
-
-.clickableName {
-    cursor: pointer;
-    text-decoration: underline;
-    transition: color 0.2s;
-}
-
-.clickableName:hover {
-    color: #ffd700;
-    /* Gold on hover */
+.loadingState {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
 }
 
 /* Modal Styling */

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Briefcase } from 'lucide-react';
+import { X, Briefcase, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './LegalProviderRegistration.module.css';
 import { authService } from '../../services/api';
@@ -131,7 +131,7 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         signatureProvided: false,
         signatureDate: '',
         emailVerified: false,
-        mobileVerified: false,
+        mobileVerified: true,
         legalDocumentation: [],
         captchaVerified: false,
     });
@@ -266,8 +266,18 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         }
     };
 
+    const handleClose = () => {
+        if (registrationSuccess) {
+            onClose();
+            return;
+        }
+        if (window.confirm("Are you sure you want to cancel the registration process? All progress will be lost.")) {
+            onClose();
+        }
+    };
+
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay} onClick={handleClose}>
             <motion.div
                 className={styles.modal}
                 onClick={e => e.stopPropagation()}
@@ -276,12 +286,15 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                 exit={{ opacity: 0, scale: 0.95 }}
             >
                 <div className={styles.header}>
-                    <div className={styles.headerTitle}>
-                        <Briefcase className={styles.hammerIcon} size={24} />
-                        <h2>Legal Advisor Registration</h2>
+                    <div className={styles.titleGroup}>
+                        <Zap className={styles.hammerIcon} size={28} />
+                        <div>
+                            <h1>LEGAL PROVIDER REGISTRATION</h1>
+                            <p>JOIN OUR NETWORK OF PROFESSIONAL LEGAL SERVICES</p>
+                        </div>
                     </div>
-                    <button className={styles.closeBtn} onClick={onClose}>
-                        <X size={24} /> X
+                    <button className={styles.closeBtn} onClick={handleClose}>
+                        <X size={24} />
                     </button>
                 </div>
 
@@ -290,7 +303,7 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                         <div
                             className={styles.progressFill}
                             style={{
-                                width: `${visibleSteps.length > 1 ? ((visibleSteps.findIndex(s => s.id === currentStep)) / (visibleSteps.length - 1)) * 100 : 0}%`
+                                width: `${visibleSteps.length > 1 ? ((visibleSteps.findIndex(s => s.id === currentStep)) / (visibleSteps.length - 1)) * 100 : 0}% `
                             }}
                         />
                     </div>
@@ -302,7 +315,7 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                             return (
                                 <div
                                     key={step.id}
-                                    className={`${styles.stepItem} ${isActive ? styles.activeStep : ''} ${isCompleted ? styles.completedStep : ''}`}
+                                    className={`${styles.stepItem} ${isActive ? styles.activeStep : ''} ${isCompleted ? styles.completedStep : ''} `}
                                     onClick={() => {
                                         // Optional: Only allow clicking on visited steps or next step
                                         setCurrentStep(step.id);

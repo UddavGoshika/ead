@@ -474,6 +474,7 @@
 .actionButtons {
     display: flex;
     gap: 12px;
+    justify-content: flex-end;
 }
 
 .demoTestInput {
@@ -492,8 +493,9 @@
 }
 
 .rejectBtn,
-.approveBtn {
-    padding: 14px 36px;
+.approveBtn,
+.reverifyBtn {
+    padding: 14px 24px;
     border-radius: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -502,6 +504,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    font-size: 0.9rem;
 }
 
 .rejectBtn {
@@ -514,6 +517,18 @@
     color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(244, 63, 94, 0.3);
+}
+
+.reverifyBtn {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+}
+
+.reverifyBtn:hover {
+    background: #f59e0b;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
 }
 
 .approveBtn {

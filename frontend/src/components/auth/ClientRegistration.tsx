@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, RefreshCcw, User, MapPin, Briefcase, ShieldCheck, Mail, Phone, Calendar, Globe, Clock, Layout } from 'lucide-react';
+import { X, CheckCircle, RefreshCcw, User, MapPin, Briefcase, ShieldCheck, Mail, Phone, Calendar, Globe, Clock, Layout, FileText } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ClientRegistration.module.css';
@@ -58,7 +58,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         emailOtp: '',
         emailVerified: false,
         mobileOtp: '',
-        mobileVerified: false,
+        mobileVerified: true,
         captchaVerified: false
     });
 
@@ -135,7 +135,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         setOtpSending(true);
         setOtpMessage({ text: '', type: '' });
         try {
-            const res = await (authService as any).sendOtp(formData.email);
+            const res = await (authService as any).sendOtp(formData.email, true);
             if (res.data.success) {
                 setOtpMessage({ text: 'OTP sent to your email.', type: 'success' });
                 setCountdown(60);
@@ -520,7 +520,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             )}
                         </div>
 
-                        {/* Mobile Verification (Firebase) */}
+                        {/* Mobile Verification (Firebase) - Hidden as per request */}
+                        {/* 
                         <div className={styles.formGroup} style={{ marginTop: '20px' }}>
                             <label>Mobile OTP <span className={styles.required}>*</span>
                                 {formData.mobile && <span style={{ textTransform: 'none', marginLeft: '10px', color: '#64748b' }}>({formData.mobile})</span>}
@@ -559,7 +560,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     {mobileMessage.text}
                                 </p>
                             )}
-                        </div>
+                        </div> 
+                        */}
                     </div>
                 );
 
@@ -1303,8 +1305,18 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
     };
 
+    const handleClose = () => {
+        if (registrationSuccess) {
+            onClose();
+            return;
+        }
+        if (window.confirm("Are you sure you want to cancel the registration process? All progress will be lost.")) {
+            onClose();
+        }
+    };
+
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay} onClick={handleClose}>
             <motion.div
                 className={styles.modal}
                 onClick={e => e.stopPropagation()}
@@ -1314,8 +1326,14 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             >
                 {/* Header */}
                 <div className={styles.header}>
-                    <h2 className={styles.title}>Client Registration</h2>
-                    <button className={styles.closeBtn} onClick={onClose}>
+                    <div className={styles.titleGroup}>
+                        <FileText className={styles.hammerIcon} size={28} />
+                        <div>
+                            <h1>CLIENT REGISTRATION</h1>
+                            <p>FIND THE BEST LEGAL ASSISTANCE FOR YOUR NEEDS</p>
+                        </div>
+                    </div>
+                    <button className={styles.closeBtn} onClick={handleClose}>
                         <X size={24} />
                     </button>
                 </div>

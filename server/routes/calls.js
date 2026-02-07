@@ -144,4 +144,38 @@ router.get('/:callId', async (req, res) => {
     }
 });
 
+// GET CALL HISTORY FOR USER
+router.get('/history/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { type } = req.query; // optional filter: 'audio' or 'video'
+
+        const filter = {
+            $or: [{ caller: userId }, { receiver: userId }]
+        };
+        if (type && ['audio', 'video'].includes(type)) {
+            filter.type = type;
+        }
+
+        const callsRaw = await Call.find(filter).sort({ timestamp: -1 }).limit(50);
+
+        const callHistory = await Promise.all(callsRaw.map(async (call) => {
+            const isSender = String(call.caller) === String(userId);
+            const partnerId = isSender ? call.receiver : call.caller;
+            const partnerDetails = await getProfileDetails(partnerId);
+
+            return {
+                ...call.toObject(),
+                partnerDetails,
+                isSender
+            };
+        }));
+
+        res.json({ success: true, history: callHistory });
+    } catch (err) {
+        console.error('Call History Error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;

@@ -105,6 +105,10 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     // Centralized Interaction Handler
     const handleInteraction = async (profile: any, action: string, data?: any) => {
         if (!user) return;
+        if (user.status === 'Pending') {
+            alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
+            return;
+        }
 
         const targetId = String(profile.id);
         const userId = String(user.id);

@@ -100,6 +100,10 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
 
     const handleAction = async (adv: Advocate, action: string, data?: string) => {
         if (!user) return;
+        if (user.status === 'Pending') {
+            alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
+            return;
+        }
         if (onAction) onAction(action, adv);
 
         const targetId = String(adv.id);

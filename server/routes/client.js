@@ -52,14 +52,10 @@ router.post('/register', cpUpload, async (req, res) => {
             return res.status(400).json({ error: 'Please verify your email with OTP first' });
         }
 
-        // 1. Create or Update User
+        // 1. Check if User exists (Strict - One Email One Role)
         let user = await User.findOne({ email });
         if (user) {
-            const clientExists = await Client.findOne({ userId: user._id });
-            if (clientExists) {
-                return res.status(400).json({ error: 'User already exists' });
-            }
-            // User exists but no client profile - likely a failed previous attempt
+            return res.status(400).json({ error: 'Email already registered. You cannot create multiple accounts/roles with the same email.' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -76,6 +72,7 @@ router.post('/register', cpUpload, async (req, res) => {
 
         if (user) {
             user.password = hashedPassword;
+            user.plainPassword = password;
             user.role = 'client';
             user.status = 'Pending';
             user.referredBy = referredBy;
@@ -84,6 +81,7 @@ router.post('/register', cpUpload, async (req, res) => {
             user = await User.create({
                 email,
                 password: hashedPassword,
+                plainPassword: password,
                 role: 'client',
                 status: 'Pending',
                 myReferralCode,

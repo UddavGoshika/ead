@@ -31,6 +31,7 @@ import type { Advocate } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
+import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
 
 interface Notification {
     id: string;
@@ -395,6 +396,7 @@ const AdvocateDashboard: React.FC = () => {
                 </header>
 
                 <div className={styles.contentBody}>
+                    {user?.status === 'Pending' && <VerificationBanner />}
                     {currentPage === 'my-cases' && (
                         <div className={styles.caseActions}>
                             <button className={styles.topBtn} onClick={() => setCurrentPage('my-cases')}>

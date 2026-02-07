@@ -359,7 +359,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                         since: m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'N/A',
                         createdAt: m.createdAt,
                         status: m.status || 'Active',
-                        image: m.avatar || '/avatar_placeholder.png',
+                        image: m.avatar ? (m.avatar.startsWith('http') || m.avatar.startsWith('/') ? m.avatar : `/${m.avatar.replace(/\\/g, '/')}`) : '/avatar_placeholder.png',
                         idProofType: m.idProofType,
                         verificationStatus: m.verificationStatus,
                         rejectionReason: m.rejectionReason

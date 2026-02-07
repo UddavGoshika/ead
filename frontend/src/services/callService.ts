@@ -30,5 +30,10 @@ export const callService = {
     getCallDetails: async (callId: string) => {
         const response = await api.get(`/calls/${callId}`);
         return response.data.call;
+    },
+
+    getCallHistory: async (userId: string, type?: string) => {
+        const response = await api.get(`/calls/history/${userId}${type ? `?type=${type}` : ''}`);
+        return response.data.history;
     }
 };

@@ -122,9 +122,11 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         terms3: false,
         terms4: false,
         signatureProvided: false,
-        signatureDate: '',
+        // Verification Statuses
         emailVerified: false,
-        mobileVerified: false,
+        mobileVerified: true,
+        referralCode: '',
+        signatureDate: '',
         legalDocumentation: [],
         captchaVerified: false,
     });
@@ -285,8 +287,18 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         }
     };
 
+    const handleClose = () => {
+        if (registrationSuccess) {
+            onClose();
+            return;
+        }
+        if (window.confirm("Are you sure you want to cancel the registration process? All progress will be lost.")) {
+            onClose();
+        }
+    };
+
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay} onClick={handleClose}>
             <motion.div
                 className={styles.modal}
                 onClick={e => e.stopPropagation()}
@@ -296,11 +308,14 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
             >
                 {/* Header */}
                 <div className={styles.header}>
-                    <div className={styles.headerTitle}>
-                        <Hammer className={styles.hammerIcon} size={24} />
-                        <h2>Advocate Registration</h2>
+                    <div className={styles.titleGroup}>
+                        <Hammer className={styles.hammerIcon} size={28} />
+                        <div>
+                            <h1>ADVOCATE REGISTRATION</h1>
+                            <p>JOIN THE LARGEST NETWORK OF LEGAL PROFESSIONALS</p>
+                        </div>
                     </div>
-                    <button className={styles.closeBtn} onClick={onClose}>
+                    <button className={styles.closeBtn} onClick={handleClose}>
                         <X size={24} />
                     </button>
                 </div>

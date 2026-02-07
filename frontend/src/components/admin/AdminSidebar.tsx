@@ -50,7 +50,7 @@ export const MENU_SCHEMA: MenuItem[] = [
             { id: "free-members", name: "Free Members", path: "/admin/members/free" },
             { id: "premium-members", name: "Premium Members", path: "/admin/members/premium" },
             { id: "approved-members", name: "Approved Members", path: "/admin/members/approved" },
-            { id: "unapproved-profile-pictures", name: "Unapproved Profile", path: "/admin/members/unapproved-pictures" },
+            { id: "unapproved-profile-pictures", name: "Rejected Members", path: "/admin/members/unapproved-pictures" },
 
             { id: "pending-members", name: "Unapproved Members", path: "/admin/members/pending" },
             { id: "deactivated-members", name: "Deactivated Members", path: "/admin/members/deactivated" },

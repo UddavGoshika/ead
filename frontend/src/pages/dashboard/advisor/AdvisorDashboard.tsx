@@ -23,6 +23,7 @@ import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
 
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview.tsx';
+import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner.tsx';
 
 const AdvisorDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -170,6 +171,7 @@ const AdvisorDashboard: React.FC = () => {
                 </header>
 
                 <div className={styles.contentBody}>
+                    {user?.status === 'Pending' && <VerificationBanner />}
                     {renderPage()}
                 </div>
             </main>

@@ -30,6 +30,7 @@ import type { Advocate } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
+import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
 interface Notification {
     id: string;
     message: string;
@@ -386,11 +387,12 @@ const ClientDashboard: React.FC = () => {
                 </header>
 
                 <div className={styles.contentBody}>
+                    {user?.status === 'Pending' && <VerificationBanner />}
                     {currentPage === 'my-cases' && (
                         <div className={styles.caseActions}>
-                            <button className={styles.topBtn} onClick={() => setCurrentPage('my-cases')}>
+                            <button className={styles.topBtn} onClick={() => window.open('https://filing.ecourts.gov.in/', '_blank')}>
                                 <Briefcase size={18} />
-                                My Cases
+                                File a case
                             </button>
                             <button className={styles.topBtnPrimary} onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank')}>
                                 <FileText size={18} />
