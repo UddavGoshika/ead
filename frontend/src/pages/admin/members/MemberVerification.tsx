@@ -353,7 +353,14 @@ const MemberVerification: React.FC = () => {
                 </div>
                 <div className={styles.memberList}>
                     {members
-                        .filter(m => filterRole === "All" || m.role === filterRole)
+                        .filter(m => {
+                            if (filterRole === "All") return true;
+                            const dbRole = (m.role || "").toLowerCase();
+                            if (filterRole === "Legal Provider") {
+                                return dbRole === "legal_provider" || dbRole === "legal provider";
+                            }
+                            return dbRole === filterRole.toLowerCase();
+                        })
                         .map(m => (
                             <div
                                 key={m.id}

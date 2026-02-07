@@ -3,6 +3,7 @@ import { X, Hammer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AdvocateRegistration.module.css';
 import { authService } from '../../services/api';
+import { useAdminConfig } from '../../hooks/useAdminConfig';
 
 // Import Step Components
 import Step1Personal from './steps/Step1Personal';
@@ -31,8 +32,6 @@ const steps = [
     { id: 9, label: 'REVIEW' },
 ];
 
-import { useAdminConfig } from '../../hooks/useAdminConfig';
-
 const stepMapping: Record<number, string> = {
     1: "Personal Information",
     2: "Verification Status",
@@ -55,7 +54,6 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
     const [currentStep, setCurrentStep] = useState<number>(visibleSteps.length > 0 ? visibleSteps[0].id : 1);
 
     const [formData, setFormData] = useState<any>({
-        // ... (rest of form data state remains same)
         firstName: '',
         lastName: '',
         gender: '',
@@ -68,7 +66,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
 
         // Step 2 - Verification
         emailOtp: '',
-        phoneOtp: '',
+        phoneOtp: '', // Note: In logic we use emailOtp/mobileOtp check but fields might be these
 
         // Step 3 - Password
         password: '',
@@ -96,34 +94,29 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         // Step 6 - Location
         currAddress: '',
         currState: '',
-        currCity: '',
         currDistrict: '',
+        currCity: '',
         currPincode: '',
+        sameAsCurrent: false,
         permAddress: '',
         permState: '',
-        permCity: '',
         permDistrict: '',
+        permCity: '',
         permPincode: '',
-        sameAsCurrent: false,
 
         // Step 7 - Career
-        currentFirm: '',
-        position: '',
         workType: '',
-        languages: [],
-        otherLanguages: '',
         careerBio: '',
-        website: '',
-        linkedin: '',
+        languages: [],
 
         // Step 8 - Availability
-        consultationTypes: [],
+        workStart: '',
+        workEnd: '',
         availableDays: [],
-        workStart: '09:00',
-        workEnd: '18:00',
+        consultationTypes: [],
         consultFee: '',
 
-        // Step 9 - Review & Submit
+        // Step 9 - Review & Terms
         terms1: false,
         terms2: false,
         terms3: false,
@@ -137,15 +130,15 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
     });
 
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
-
-
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
 
     const updateFormData = (newData: any) => {
+        setErrors({}); // Clear errors on change
         setFormData((prev: any) => ({ ...prev, ...newData }));
     };
 
     const renderStepContent = () => {
-        const props = { formData, updateFormData, onSubmit: handleNext };
+        const props = { formData, updateFormData, onSubmit: handleNext, errors };
         switch (currentStep) {
             case 1: return <Step1Personal {...props} />;
             case 2: return <Step2Verification {...props} />;
@@ -160,106 +153,61 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         }
     };
 
-    const isStepValid = () => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    formData.firstName &&
-                    formData.lastName &&
-                    formData.gender &&
-                    formData.dob &&
-                    formData.mobile &&
-                    formData.email &&
-                    formData.idProofType &&
-                    formData.idProofDocument &&
-                    formData.profilePhoto
-                );
-            case 2:
-                // Only require email/phone verification if they are not already verified
-                // But for registration flow, we usually force it.
-                // Assuming OTP verification sets these flags.
-                return (
-                    formData.emailVerified &&
-                    formData.mobileVerified
-                );
-            case 3:
-                return formData.password && formData.confirmPassword && (formData.password === formData.confirmPassword);
-            case 4:
-                return (
-                    formData.degree &&
-                    formData.university &&
-                    formData.college &&
-                    formData.passingYear &&
-                    formData.enrollmentNumber &&
-                    formData.degreeCertificate &&
-                    formData.aboutMe
-                );
+    const validateAndHighlight = () => {
+        const newErrors: Record<string, boolean> = {};
 
-            case 5:
-                return (
-                    formData.barRegNo &&
-                    formData.stateBar &&
-                    formData.courtOfPractice &&
-                    formData.experienceRange &&
-                    formData.specialization &&
-                    formData.practiceLicense
-                );
+        const requiredFields: Record<number, string[]> = {
+            1: ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'idProofType', 'idProofDocument', 'profilePhoto'],
+            4: ['degree', 'university', 'college', 'passingYear', 'enrollmentNumber', 'degreeCertificate', 'aboutMe'],
+            5: ['barRegNo', 'stateBar', 'courtOfPractice', 'experienceRange', 'specialization', 'practiceLicense'],
+            6: ['currAddress', 'currState', 'currDistrict', 'currCity', 'currPincode'],
+            7: ['workType', 'careerBio'],
+            9: ['terms1', 'terms2', 'terms3', 'terms4', 'signatureProvided', 'captchaVerified']
+        };
 
-            case 6:
-                return (
-                    formData.currAddress &&
-                    formData.currState &&
-                    formData.currDistrict &&
-                    formData.currCity &&
-                    formData.currPincode &&
-                    (
-                        formData.sameAsCurrent ||
-                        (formData.permAddress &&
-                            formData.permState &&
-                            formData.permDistrict &&
-                            formData.permCity &&
-                            formData.permPincode)
-                    )
-                );
+        const fields = requiredFields[currentStep] || [];
+        fields.forEach(field => {
+            if (!formData[field]) newErrors[field] = true;
+        });
 
-            case 7:
-                return (
-                    formData.workType &&
-                    Array.isArray(formData.languages) &&
-                    formData.languages.length > 0 &&
-                    formData.careerBio
-                );
-
-            case 8:
-                return (
-                    Array.isArray(formData.consultationTypes) &&
-                    formData.consultationTypes.length > 0 &&
-                    Array.isArray(formData.availableDays) &&
-                    formData.availableDays.length > 0 &&
-                    formData.workStart &&
-                    formData.workEnd
-                );
-
-
-            case 9:
-                return (
-                    formData.terms1 &&
-                    formData.terms2 &&
-                    formData.terms3 &&
-                    formData.terms4 &&
-                    formData.signatureProvided &&
-                    formData.signatureDate &&
-                    formData.captchaVerified
-                );
-
-            default:
-                return true;
+        if (currentStep === 2) {
+            if (!formData.emailVerified) newErrors['emailOtp'] = true;
+            if (!formData.mobileVerified) newErrors['phoneOtp'] = true;
         }
+
+        if (currentStep === 3) {
+            if (!formData.password) newErrors['password'] = true;
+            if (!formData.confirmPassword) newErrors['confirmPassword'] = true;
+            if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+                newErrors['confirmPassword'] = true;
+                alert('Passwords do not match');
+            }
+        }
+
+        if (currentStep === 6 && !formData.sameAsCurrent) {
+            ['permAddress', 'permState', 'permDistrict', 'permCity', 'permPincode'].forEach(field => {
+                if (!formData[field]) newErrors[field] = true;
+            });
+        }
+
+        if (currentStep === 7) {
+            if (!formData.languages || formData.languages.length === 0) newErrors['languages'] = true;
+        }
+
+        if (currentStep === 8) {
+            if (!formData.workStart) newErrors['workStart'] = true;
+            if (!formData.workEnd) newErrors['workEnd'] = true;
+            if (!formData.availableDays || formData.availableDays.length === 0) newErrors['availableDays'] = true;
+            if (!formData.consultationTypes || formData.consultationTypes.length === 0) newErrors['consultationTypes'] = true;
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleNext = async () => {
-        if (!isStepValid()) {
-            alert('Please fill all required fields correctly before proceeding.');
+        if (!validateAndHighlight()) {
+            alert('Please fill all highlighted required fields.');
             return;
         }
 
@@ -353,7 +301,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                         <h2>Advocate Registration</h2>
                     </div>
                     <button className={styles.closeBtn} onClick={onClose}>
-                        <X size={24} /> X
+                        <X size={24} />
                     </button>
                 </div>
 

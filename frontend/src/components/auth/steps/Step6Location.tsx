@@ -6,9 +6,10 @@ import { LOCATION_DATA_RAW } from '../../layout/statesdis';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    errors?: Record<string, boolean>;
 }
 
-const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step6Location: React.FC<StepProps> = ({ formData, updateFormData, errors }) => {
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -82,6 +83,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         placeholder="Enter current address"
                         value={formData.currAddress || ''}
                         onChange={handleChange}
+                        className={errors?.currAddress ? styles.inputError : ''}
                     />
                 </div>
 
@@ -91,6 +93,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         name="currState"
                         value={formData.currState || ''}
                         onChange={handleChange}
+                        className={errors?.currState ? styles.inputError : ''}
                     >
                         <option value="">Select State</option>
                         {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
@@ -106,6 +109,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.currDistrict || ''}
                         disabled={!formData.currState}
                         onChange={handleChange}
+                        className={errors?.currDistrict ? styles.inputError : ''}
                     >
                         <option value="">Select District</option>
                         {formData.currState && Object.keys(LOCATION_DATA_RAW[formData.currState] || {}).sort().map(dist => (
@@ -121,6 +125,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.currCity || ''}
                         disabled={!formData.currDistrict}
                         onChange={handleChange}
+                        className={errors?.currCity ? styles.inputError : ''}
                     >
                         <option value="">Select City</option>
                         {formData.currState && formData.currDistrict &&
@@ -139,6 +144,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.currPincode || ''}
                         onChange={handleChange}
                         maxLength={6}
+                        className={errors?.currPincode ? styles.inputError : ''}
                     />
                 </div>
             </div>
@@ -171,6 +177,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.permAddress || ''}
                         onChange={handleChange}
                         disabled={formData.sameAsCurrent}
+                        className={errors?.permAddress ? styles.inputError : ''}
                     />
                 </div>
 
@@ -181,6 +188,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.permState || ''}
                         onChange={handleChange}
                         disabled={formData.sameAsCurrent}
+                        className={errors?.permState ? styles.inputError : ''}
                     >
                         <option value="">Select State</option>
                         {Object.keys(LOCATION_DATA_RAW).sort().map(state => (
@@ -196,6 +204,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.permDistrict || ''}
                         disabled={formData.sameAsCurrent || !formData.permState}
                         onChange={handleChange}
+                        className={errors?.permDistrict ? styles.inputError : ''}
                     >
                         <option value="">Select District</option>
                         {formData.permState && Object.keys(LOCATION_DATA_RAW[formData.permState] || {}).sort().map(dist => (
@@ -211,6 +220,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         value={formData.permCity || ''}
                         disabled={formData.sameAsCurrent || !formData.permDistrict}
                         onChange={handleChange}
+                        className={errors?.permCity ? styles.inputError : ''}
                     >
                         <option value="">Select City</option>
                         {formData.permState && formData.permDistrict &&
@@ -230,6 +240,7 @@ const Step6Location: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         onChange={handleChange}
                         maxLength={6}
                         disabled={formData.sameAsCurrent}
+                        className={errors?.permPincode ? styles.inputError : ''}
                     />
                 </div>
             </div>

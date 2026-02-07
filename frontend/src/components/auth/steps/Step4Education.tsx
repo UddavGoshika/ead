@@ -7,13 +7,14 @@ interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
     isOptional?: boolean;
+    errors?: Record<string, boolean>;
 }
 
 const universities = Object.keys(universitiesData).sort();
 
 const years = Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i);
 
-const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptional }) => {
+const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptional, errors }) => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
@@ -48,6 +49,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         name="degree"
                         value={formData.degree || ''}
                         onChange={handleChange}
+                        className={errors?.degree ? styles.inputError : ''}
                     >
                         <option value="">Select Degree</option>
                         <option value="llb">LL.B.</option>
@@ -67,6 +69,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         name="university"
                         value={formData.university || ''}
                         onChange={handleChange}
+                        className={errors?.university ? styles.inputError : ''}
                     >
                         <option value="">Select University</option>
                         {universities.map(uni => (
@@ -85,6 +88,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         value={formData.college || ''}
                         onChange={handleChange}
                         disabled={!formData.university}
+                        className={errors?.college ? styles.inputError : ''}
                     >
                         <option value="">Select College</option>
                         {availableColleges.map((college: string) => (
@@ -102,6 +106,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         name="passingYear"
                         value={formData.passingYear || ''}
                         onChange={handleChange}
+                        className={errors?.passingYear ? styles.inputError : ''}
                     >
                         <option value="">Select Year</option>
                         {years.map((year) => (
@@ -123,6 +128,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         placeholder="Bar enrollment number"
                         value={formData.enrollmentNumber || ''}
                         onChange={handleChange}
+                        className={errors?.enrollmentNumber ? styles.inputError : ''}
                     />
                 </div>
 
@@ -145,7 +151,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                             }}
                         />
 
-                        <label htmlFor="degreeCertificate" className={styles.uploadBtn}>
+                        <label htmlFor="degreeCertificate" className={`${styles.uploadBtn} ${errors?.degreeCertificate ? styles.fileUploadError : ''}`}>
                             <Upload size={16} /> Upload Certificate
                         </label>
 
@@ -167,7 +173,7 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                         placeholder="Tell us about yourself"
                         value={formData.aboutMe || ''}
                         onChange={handleChange}
-                        className={styles.textArea}
+                        className={`${styles.textArea} ${errors?.aboutMe ? styles.inputError : ''}`}
                     />
                 </div>
 

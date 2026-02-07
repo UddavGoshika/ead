@@ -6,6 +6,7 @@ interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
     onSubmit: () => void;
+    errors?: Record<string, boolean>;
 }
 
 const ReviewRow = ({ label, value }: { label: string; value?: any }) => (
@@ -15,7 +16,7 @@ const ReviewRow = ({ label, value }: { label: string; value?: any }) => (
     </div>
 );
 
-const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }) => {
+const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, errors }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [drawing, setDrawing] = useState(false);
     const [termsUnlocked, setTermsUnlocked] = useState(false);
@@ -241,7 +242,7 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
 
                 <div className={styles.termsCheckboxes}>
                     {[1, 2, 3, 4].map((i) => (
-                        <label key={i} className={styles.termCheckbox}>
+                        <label key={i} className={`${styles.termCheckbox} ${errors?.[`terms${i}`] ? styles.inputError : ''}`}>
                             <input
                                 type="checkbox"
                                 disabled={!termsUnlocked}
@@ -274,7 +275,7 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
                         <input
                             type="text"
                             placeholder="Type Code Above"
-                            className={styles.captchaInput}
+                            className={`${styles.captchaInput} ${errors?.captchaVerified ? styles.inputError : ''}`}
                             onChange={(e) => {
                                 if (e.target.value.toUpperCase() === 'LEX-7A9B2') {
                                     updateFormData({ captchaVerified: true });
@@ -294,7 +295,7 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit }
 
                 <canvas
                     ref={canvasRef}
-                    className={styles.signatureCanvas}
+                    className={`${styles.signatureCanvas} ${errors?.signatureProvided ? styles.inputError : ''}`}
                     onMouseDown={start}
                     onMouseMove={draw}
                     onMouseUp={stop}

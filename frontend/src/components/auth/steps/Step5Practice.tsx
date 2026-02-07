@@ -9,9 +9,10 @@ interface StepProps {
     updateFormData: (data: any) => void;
     isOptional?: boolean;
     role?: string;
+    errors?: Record<string, boolean>;
 }
 
-const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role }) => {
+const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role, errors }) => {
     const { getOptions } = useAdminConfig(role);
 
     const handleChange = (
@@ -39,6 +40,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         placeholder="Enter Registration Number"
                         value={formData.barRegNo || ''}
                         onChange={handleChange}
+                        className={errors?.barRegNo ? styles.inputError : ''}
                     />
                 </div>
 
@@ -53,6 +55,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         placeholder="Enter State Bar Council"
                         value={formData.stateBar || ''}
                         onChange={handleChange}
+                        className={errors?.stateBar ? styles.inputError : ''}
                     />
                 </div>
 
@@ -65,6 +68,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         name="courtOfPractice"
                         value={formData.courtOfPractice || ''}
                         onChange={handleChange}
+                        className={errors?.courtOfPractice ? styles.inputError : ''}
                     >
                         <option value="">Select Court</option>
                         {getOptions('practice_area').map(opt => (
@@ -82,6 +86,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                         name="experienceRange"
                         value={formData.experienceRange || ''}
                         onChange={handleChange}
+                        className={errors?.experienceRange ? styles.inputError : ''}
                     >
                         <option value="">Select Experience</option>
                         {getOptions('experience').map(opt => (
@@ -102,6 +107,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                             handleChange(e);
                             updateFormData({ subSpecialization: '' }); // Reset sub-dept
                         }}
+                        className={errors?.specialization ? styles.inputError : ''}
                     >
                         <option value="">Select Specialization</option>
                         {getOptions('specialization').map(opt => (
@@ -158,7 +164,7 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                             }}
                         />
 
-                        <label htmlFor="practiceLicense" className={styles.uploadBtn}>
+                        <label htmlFor="practiceLicense" className={`${styles.uploadBtn} ${errors?.practiceLicense ? styles.fileUploadError : ''}`}>
                             <Upload size={16} /> Upload Certificate
                         </label>
 

@@ -8,9 +8,10 @@ import { auth } from '../../../firebase';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    errors?: Record<string, boolean>;
 }
 
-const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, errors }) => {
     const [sending, setSending] = React.useState(false);
     const [verifying, setVerifying] = React.useState(false);
     const [countdown, setCountdown] = React.useState(0);
@@ -224,6 +225,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
                             onChange={handleEmailOtpChange}
                             maxLength={6}
                             disabled={formData.emailVerified}
+                            className={errors?.emailOtp ? styles.inputError : ''}
                         />
                         {!formData.emailVerified ? (
                             <button
@@ -261,6 +263,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData }) =>
                             onChange={handlePhoneOtpChange}
                             maxLength={6}
                             disabled={formData.mobileVerified}
+                            className={errors?.phoneOtp ? styles.inputError : ''}
                         />
                         {!formData.mobileVerified ? (
                             <button

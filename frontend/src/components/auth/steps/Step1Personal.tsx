@@ -6,9 +6,10 @@ import styles from '../AdvocateRegistration.module.css';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    errors?: Record<string, boolean>;
 }
 
-const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const profilePicInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +44,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         placeholder="Enter first name"
                         value={formData.firstName || ''}
                         onChange={handleChange}
+                        className={errors?.firstName ? styles.inputError : ''}
                     />
                 </div>
                 <div className={styles.formGroup}>
@@ -53,6 +55,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         placeholder="Enter last name"
                         value={formData.lastName || ''}
                         onChange={handleChange}
+                        className={errors?.lastName ? styles.inputError : ''}
                     />
                 </div>
                 <div className={styles.formGroup}>
@@ -61,6 +64,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         name="gender"
                         value={formData.gender || ''}
                         onChange={handleChange}
+                        className={errors?.gender ? styles.inputError : ''}
                     >
                         <option value="" disabled>Select Gender</option>
                         <option value="male">Male</option>
@@ -76,6 +80,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                             name="dob"
                             value={formData.dob || ''}
                             onChange={handleChange}
+                            className={errors?.dob ? styles.inputError : ''}
                         />
                     </div>
                 </div>
@@ -87,6 +92,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         placeholder="10-digit number"
                         value={formData.mobile || ''}
                         onChange={handleChange}
+                        className={errors?.mobile ? styles.inputError : ''}
                     />
                 </div>
                 <div className={styles.formGroup}>
@@ -97,6 +103,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         placeholder="Enter email address"
                         value={formData.email || ''}
                         onChange={handleChange}
+                        className={errors?.email ? styles.inputError : ''}
                     />
                 </div>
 
@@ -106,6 +113,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         name="idProofType"
                         value={formData.idProofType || ''}
                         onChange={handleChange}
+                        className={errors?.idProofType ? styles.inputError : ''}
                     >
                         <option value="" disabled>Select Document</option>
                         <option value="aadhaar">Aadhaar Card</option>
@@ -128,7 +136,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         />
                         <button
                             type="button"
-                            className={styles.fileUploadButton}
+                            className={`${styles.fileUploadButton} ${errors?.idProofDocument ? styles.fileUploadError : ''}`}
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <Upload size={18} />
@@ -159,7 +167,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData }) => {
                         />
                         <button
                             type="button"
-                            className={styles.fileUploadButton}
+                            className={`${styles.fileUploadButton} ${errors?.profilePhoto ? styles.fileUploadError : ''}`}
                             onClick={() => profilePicInputRef.current?.click()}
                         >
                             <Upload size={18} />

@@ -5,6 +5,7 @@ import styles from '../AdvocateRegistration.module.css';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    errors?: Record<string, boolean>;
 }
 
 const consultationTypes = [
@@ -23,7 +24,7 @@ const daysList = [
     { id: 'sun', label: 'Sun' }
 ];
 
-const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData, errors }) => {
 
     const toggleConsultationType = (id: string) => {
         const current = formData.consultationTypes || [];
@@ -56,7 +57,7 @@ const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData }) =>
                     CONSULTATION MODE <span className={styles.required}>*</span>
                 </label>
 
-                <div className={styles.checkboxGrid}>
+                <div className={`${styles.checkboxGrid} ${errors?.consultationTypes ? styles.inputError : ''}`}>
                     {consultationTypes.map((type) => (
                         <div
                             key={type.id}
@@ -83,7 +84,7 @@ const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData }) =>
                     AVAILABLE DAYS <span className={styles.required}>*</span>
                 </label>
 
-                <div className={styles.checkboxGrid}>
+                <div className={`${styles.checkboxGrid} ${errors?.availableDays ? styles.inputError : ''}`}>
                     {daysList.map((day) => (
                         <div
                             key={day.id}
@@ -117,6 +118,7 @@ const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData }) =>
                         onChange={(e) =>
                             updateFormData({ workStart: e.target.value })
                         }
+                        className={errors?.workStart ? styles.inputError : ''}
                     />
                 </div>
 
@@ -131,6 +133,7 @@ const Step8Availability: React.FC<StepProps> = ({ formData, updateFormData }) =>
                         onChange={(e) =>
                             updateFormData({ workEnd: e.target.value })
                         }
+                        className={errors?.workEnd ? styles.inputError : ''}
                     />
                 </div>
 

@@ -1079,6 +1079,33 @@ refreal code  */
 }
 
 .finishBtn:hover {
+    background: #eab308;
     transform: translateY(-2px);
     box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4);
+}
+
+@keyframes errorBlink {
+
+    0%,
+    100% {
+        border-color: rgba(255, 77, 77, 0.4);
+        box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.1);
+    }
+
+    50% {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    }
+}
+
+.inputError {
+    border-color: #ef4444 !important;
+    animation: errorBlink 0.5s ease-in-out 3;
+    background-color: rgba(239, 68, 68, 0.05) !important;
+}
+
+.fileUploadError {
+    border: 2px dashed #ef4444 !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+    animation: errorBlink 0.5s ease-in-out 3;
 }

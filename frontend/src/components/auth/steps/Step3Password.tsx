@@ -5,9 +5,10 @@ import styles from '../AdvocateRegistration.module.css';
 interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
+    errors?: Record<string, boolean>;
 }
 
-const Step3Password: React.FC<StepProps> = ({ formData, updateFormData }) => {
+const Step3Password: React.FC<StepProps> = ({ formData, updateFormData, errors }) => {
     const [showPassword, setShowPassword] = React.useState(false);
     const [showConfirm, setShowConfirm] = React.useState(false);
 
@@ -31,6 +32,7 @@ const Step3Password: React.FC<StepProps> = ({ formData, updateFormData }) => {
                             placeholder="Min 8 characters"
                             value={formData.password || ''}
                             onChange={handleChange}
+                            className={errors?.password ? styles.inputError : ''}
                         />
                         <button
                             type="button"
@@ -50,6 +52,7 @@ const Step3Password: React.FC<StepProps> = ({ formData, updateFormData }) => {
                             placeholder="Re-enter password"
                             value={formData.confirmPassword || ''}
                             onChange={handleChange}
+                            className={errors?.confirmPassword ? styles.inputError : ''}
                         />
                         <button
                             type="button"

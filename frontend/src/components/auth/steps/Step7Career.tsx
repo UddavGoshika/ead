@@ -2,11 +2,7 @@ import React from 'react';
 import { Award, Globe, Linkedin } from 'lucide-react';
 import styles from '../AdvocateRegistration.module.css';
 
-interface StepProps {
-    formData: any;
-    updateFormData: (data: any) => void;
-    isOptional?: boolean;
-}
+
 
 import { useAdminConfig } from '../../../hooks/useAdminConfig';
 
@@ -14,10 +10,12 @@ interface StepProps {
     formData: any;
     updateFormData: (data: any) => void;
     isOptional?: boolean;
+
     role?: string;
+    errors?: Record<string, boolean>;
 }
 
-const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role }) => {
+const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional, role, errors }) => {
     const { getOptions } = useAdminConfig(role);
 
     const handleChange = (
@@ -76,6 +74,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional
                         name="workType"
                         value={formData.workType || ''}
                         onChange={handleChange}
+                        className={errors?.workType ? styles.inputError : ''}
                     >
                         <option value="">Select Work Type</option>
                         <option value="litigation">Litigation</option>
@@ -92,7 +91,10 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional
                         LANGUAGES KNOWN {!isOptional && <span className={styles.required}>*</span>}
                     </label>
 
-                    <div className={styles.languageGrid}>
+
+
+
+                    <div className={`${styles.languageGrid} ${errors?.languages ? styles.inputError : ''}`}>
                         {getOptions('language').map((lang) => (
                             <label key={lang.id} className={styles.checkboxItem}>
                                 <input
@@ -126,6 +128,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional
                         rows={4}
                         value={formData.careerBio || ''}
                         onChange={handleChange}
+                        className={errors?.careerBio ? styles.inputError : ''}
                     />
                 </div>
 
@@ -159,7 +162,7 @@ const Step7Career: React.FC<StepProps> = ({ formData, updateFormData, isOptional
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

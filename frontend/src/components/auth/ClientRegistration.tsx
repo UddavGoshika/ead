@@ -74,6 +74,41 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     const [mobileMessage, setMobileMessage] = useState({ text: '', type: '' });
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+    const validateStep = (stepId: number) => {
+        const newErrors: Record<string, boolean> = {};
+
+        if (stepId === 1) {
+            ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'password', 'documentType'].forEach(field => {
+                if (!formData[field]) newErrors[field] = true;
+            });
+            if (!formData.document) newErrors['document'] = true;
+            if (!formData.profilePic) newErrors['profilePic'] = true;
+        } else if (stepId === 2) {
+            if (!formData.emailVerified) newErrors['emailOtp'] = true;
+            if (!formData.mobileVerified) newErrors['mobileOtp'] = true;
+        } else if (stepId === 3) {
+            if (!currentAddress.state) newErrors['currState'] = true;
+            if (!currentAddress.district) newErrors['currDistrict'] = true;
+            if (!currentAddress.city) newErrors['currCity'] = true;
+            if (!currentAddress.pincode) newErrors['currPincode'] = true;
+
+            if (!sameAsCurrent) {
+                if (!permanentAddress.state) newErrors['permState'] = true;
+                if (!permanentAddress.district) newErrors['permDistrict'] = true;
+                if (!permanentAddress.city) newErrors['permCity'] = true;
+                if (!permanentAddress.pincode) newErrors['permPincode'] = true;
+            }
+        } else if (stepId === 4) {
+            ['category', 'specialization', 'subDepartment', 'mode', 'advocateType', 'languages', 'issueDescription'].forEach(field => {
+                if (!formData[field]) newErrors[field] = true;
+            });
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     React.useEffect(() => {
         let timer: any;
@@ -310,15 +345,19 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
                                 <label>First Name *</label>
-                                <input value={formData.firstName || ''} onChange={(e) => updateFormData('firstName', e.target.value)} />
+                                <input
+                                    value={formData.firstName || ''}
+                                    onChange={(e) => updateFormData('firstName', e.target.value)}
+                                    className={errors.firstName ? styles.inputError : ''}
+                                />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Last Name *</label>
-                                <input value={formData.lastName || ''} onChange={(e) => updateFormData('lastName', e.target.value)} />
+                                <input value={formData.lastName || ''} onChange={(e) => updateFormData('lastName', e.target.value)} className={errors.lastName ? styles.inputError : ''} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Gender *</label>
-                                <select value={formData.gender || ''} onChange={(e) => updateFormData('gender', e.target.value)}>
+                                <select value={formData.gender || ''} onChange={(e) => updateFormData('gender', e.target.value)} className={errors.gender ? styles.inputError : ''}>
                                     <option value="">Select Gender</option>
                                     <option>Male</option>
                                     <option>Female</option>
@@ -327,25 +366,26 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Date of Birth *</label>
-                                <input type="date" value={formData.dob || ''} onChange={(e) => updateFormData('dob', e.target.value)} />
+                                <input type="date" value={formData.dob || ''} onChange={(e) => updateFormData('dob', e.target.value)} className={errors.dob ? styles.inputError : ''} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Mobile *</label>
-                                <input value={formData.mobile || ''} onChange={(e) => updateFormData('mobile', e.target.value)} />
+                                <input value={formData.mobile || ''} onChange={(e) => updateFormData('mobile', e.target.value)} className={errors.mobile ? styles.inputError : ''} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email *</label>
-                                <input value={formData.email || ''} onChange={(e) => updateFormData('email', e.target.value)} />
+                                <input value={formData.email || ''} onChange={(e) => updateFormData('email', e.target.value)} className={errors.email ? styles.inputError : ''} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Password *</label>
-                                <input type="password" value={formData.password || ''} onChange={(e) => updateFormData('password', e.target.value)} />
+                                <input type="password" value={formData.password || ''} onChange={(e) => updateFormData('password', e.target.value)} className={errors.password ? styles.inputError : ''} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Document Type *</label>
                                 <select
                                     value={formData.documentType || ''}
                                     onChange={(e) => updateFormData('documentType', e.target.value)}
+                                    className={errors.documentType ? styles.inputError : ''}
                                 >
                                     <option value="">Select Document</option>
                                     <option>Aadhar</option>
@@ -362,6 +402,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         const file = e.target.files?.[0];
                                         if (file) updateFormData('document', file);
                                     }}
+                                    className={errors.document ? styles.inputError : ''}
                                 />
                             </div>
                             <div className={styles.formGroup}>
@@ -373,6 +414,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         const file = e.target.files?.[0];
                                         if (file) updateFormData('profilePic', file);
                                     }}
+                                    className={errors.profilePic ? styles.inputError : ''}
                                 />
                             </div>
                         </div>
@@ -539,6 +581,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>State *</label>
                                 <select
                                     value={currentAddress.state}
+                                    className={errors.currState ? styles.inputError : ''}
                                     onChange={(e) => {
                                         const newState = e.target.value;
                                         setCurrentAddress({ ...currentAddress, state: newState, district: '', city: '' });
@@ -559,6 +602,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={currentAddress.district}
                                     disabled={!currentAddress.state}
+                                    className={errors.currDistrict ? styles.inputError : ''}
                                     onChange={(e) => {
                                         const newDist = e.target.value;
                                         setCurrentAddress({ ...currentAddress, district: newDist, city: '' });
@@ -579,6 +623,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={currentAddress.city}
                                     disabled={!currentAddress.district}
+                                    className={errors.currCity ? styles.inputError : ''}
                                     onChange={(e) => {
                                         const newCity = e.target.value;
                                         setCurrentAddress({ ...currentAddress, city: newCity });
@@ -599,6 +644,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>Pin Code *</label>
                                 <input
                                     value={currentAddress.pincode}
+                                    className={errors.currPincode ? styles.inputError : ''}
                                     onChange={(e) => {
                                         const val = e.target.value;
                                         setCurrentAddress({ ...currentAddress, pincode: val });
@@ -738,6 +784,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={formData.category || ''}
                                     onChange={(e) => updateFormData('category', e.target.value)}
+                                    className={errors.category ? styles.inputError : ''}
                                 >
                                     <option value="">Select Category</option>
                                     {getOptions('specialization').map(opt => (
@@ -750,6 +797,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>Specialization *</label>
                                 <select
                                     value={formData.specialization || ''}
+                                    className={errors.specialization ? styles.inputError : ''}
                                     onChange={(e) => {
                                         updateFormData('specialization', e.target.value);
                                         updateFormData('subDepartment', ''); // Reset sub-dept on change
@@ -767,6 +815,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={formData.subDepartment || ''}
                                     onChange={(e) => updateFormData('subDepartment', e.target.value)}
+                                    className={errors.subDepartment ? styles.inputError : ''}
                                 >
                                     <option value="">Select Sub Department</option>
                                     {(getOptions('sub_department') as any[])
@@ -782,6 +831,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={formData.mode || ''}
                                     onChange={(e) => updateFormData('mode', e.target.value)}
+                                    className={errors.mode ? styles.inputError : ''}
                                 >
                                     <option value="">Select Mode</option>
                                     <option>Online</option>
@@ -795,6 +845,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <select
                                     value={formData.advocateType || ''}
                                     onChange={(e) => updateFormData('advocateType', e.target.value)}
+                                    className={errors.advocateType ? styles.inputError : ''}
                                 >
                                     <option value="">Select Type</option>
                                     <option>Senior</option>
@@ -857,6 +908,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <label>Brief Legal Issue *</label>
                                 <textarea
                                     value={formData.issueDescription || ''}
+                                    className={errors.issueDescription ? styles.inputError : ''}
                                     onChange={(e) => updateFormData('issueDescription', e.target.value)}
                                     placeholder="Describe your legal issue..."
                                 />
@@ -887,7 +939,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 </p>
                             </div>
 
-                            <label className={styles.checkboxRow}>
+                            <label className={`${styles.checkboxRow} ${errors.declaration1 ? styles.inputError : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={formData.declaration1 || false}
@@ -911,7 +963,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 </p>
                             </div>
 
-                            <label className={styles.checkboxRow}>
+                            <label className={`${styles.checkboxRow} ${errors.declaration2 ? styles.inputError : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={formData.declaration2 || false}
@@ -932,7 +984,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 </p>
                             </div>
 
-                            <label className={styles.checkboxRow}>
+                            <label className={`${styles.checkboxRow} ${errors.declaration3 ? styles.inputError : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={formData.declaration3 || false}
@@ -1037,7 +1089,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                             }
                                         }
                                     }}
-                                    className={styles.signatureCanvas}
+                                    className={`${styles.signatureCanvas} ${errors.signature ? styles.inputError : ''}`}
                                     style={{
                                         border: '2px dashed #cbd5e1',
                                         borderRadius: '8px',
@@ -1088,7 +1140,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     <input
                                         type="text"
                                         placeholder="Type Code Above"
-                                        className={styles.captchaInput}
+                                        className={`${styles.captchaInput} ${errors.captchaVerified ? styles.inputError : ''}`}
                                         style={{
                                             backgroundColor: '#1a1a1aff',
                                             border: '1px solid #333',
@@ -1304,12 +1356,13 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
                             const isLastStep = currentIndex === visibleSteps.length - 1;
 
+                            if (!validateStep(currentStep)) {
+                                alert('Please fill all highlighted required fields.');
+                                return;
+                            }
+
                             // Validation Specific to Steps (by ID)
                             if (currentStep === 2) {
-                                if (!formData.emailVerified && !formData.mobileVerified) {
-                                    alert('Please verify both email and mobile before proceeding.');
-                                    return;
-                                }
                                 if (!formData.emailVerified) {
                                     alert('Please verify your email via OTP before proceeding.');
                                     return;
@@ -1321,12 +1374,18 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             }
 
                             if (isLastStep) {
-                                if (!formData.captchaVerified) {
-                                    alert('Please complete the Captcha verification before submitting.');
-                                    return;
-                                }
-                                if (!formData.declaration1 || !formData.declaration2 || !formData.declaration3 || !formData.signature) {
-                                    alert('Please agree to all declarations and provide signature.');
+                                const newErrors: Record<string, boolean> = {};
+                                let hasError = false;
+
+                                if (!formData.captchaVerified) { newErrors['captchaVerified'] = true; hasError = true; }
+                                if (!formData.declaration1) { newErrors['declaration1'] = true; hasError = true; }
+                                if (!formData.declaration2) { newErrors['declaration2'] = true; hasError = true; }
+                                if (!formData.declaration3) { newErrors['declaration3'] = true; hasError = true; }
+                                if (!formData.signature) { newErrors['signature'] = true; hasError = true; }
+
+                                if (hasError) {
+                                    setErrors(newErrors);
+                                    alert('Please agree to all declarations, provide signature, and verify captcha.');
                                     return;
                                 }
                                 handleSubmit();
@@ -1381,8 +1440,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     );
 };
 

@@ -137,13 +137,15 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
     });
 
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
 
     const updateFormData = (newData: any) => {
+        setErrors({}); // Clear errors on change
         setFormData((prev: any) => ({ ...prev, ...newData }));
     };
 
     const renderStepContent = () => {
-        const props = { formData, updateFormData, onSubmit: handleNext };
+        const props = { formData, updateFormData, onSubmit: handleNext, errors };
         switch (currentStep) {
             case 1: return <Step1Personal {...props} />;
             case 2: return <Step2Verification {...props} />;
@@ -158,76 +160,56 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         }
     };
 
-    const isStepValid = () => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    formData.firstName &&
-                    formData.lastName &&
-                    formData.gender &&
-                    formData.dob &&
-                    formData.mobile &&
-                    formData.email &&
-                    formData.idProofType &&
-                    formData.idProofDocument &&
-                    formData.profilePhoto
-                );
-            case 2:
-                return (
-                    formData.emailVerified &&
-                    formData.mobileVerified
-                );
-            case 3:
-                return formData.password && formData.confirmPassword && (formData.password === formData.confirmPassword);
+    const validateAndHighlight = () => {
+        const newErrors: Record<string, boolean> = {};
 
-            case 4: return true; // Education is optional for Providers
-            case 5: return true; // Practice is optional for Providers
-            case 7: return true; // Career is optional for Providers
+        // Required fields per step (excluding optional steps 4, 5, 7)
+        const requiredFields: Record<number, string[]> = {
+            1: ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'idProofType', 'idProofDocument', 'profilePhoto'],
+            // Steps 4, 5, 7 are optional for providers
+            6: ['currAddress', 'currState', 'currDistrict', 'currCity', 'currPincode'],
+            9: ['terms1', 'terms2', 'terms3', 'terms4', 'signatureProvided', 'captchaVerified']
+        };
 
-            case 6:
-                return (
-                    formData.currAddress &&
-                    formData.currState &&
-                    formData.currCity &&
-                    formData.currPincode &&
-                    (
-                        formData.sameAsCurrent ||
-                        (formData.permAddress &&
-                            formData.permState &&
-                            formData.permCity &&
-                            formData.permPincode)
-                    )
-                );
+        const fields = requiredFields[currentStep] || [];
+        fields.forEach(field => {
+            if (!formData[field]) newErrors[field] = true;
+        });
 
-            case 8:
-                return (
-                    Array.isArray(formData.consultationTypes) &&
-                    formData.consultationTypes.length > 0 &&
-                    Array.isArray(formData.availableDays) &&
-                    formData.availableDays.length > 0 &&
-                    formData.workStart &&
-                    formData.workEnd
-                );
-
-            case 9:
-                return (
-                    formData.terms1 &&
-                    formData.terms2 &&
-                    formData.terms3 &&
-                    formData.terms4 &&
-                    formData.signatureProvided &&
-                    formData.signatureDate &&
-                    formData.captchaVerified
-                );
-
-            default:
-                return true;
+        if (currentStep === 2) {
+            if (!formData.emailVerified) newErrors['emailOtp'] = true;
+            if (!formData.mobileVerified) newErrors['phoneOtp'] = true;
         }
+
+        if (currentStep === 3) {
+            if (!formData.password) newErrors['password'] = true;
+            if (!formData.confirmPassword) newErrors['confirmPassword'] = true;
+            if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
+                newErrors['confirmPassword'] = true;
+                alert('Passwords do not match');
+            }
+        }
+
+        if (currentStep === 6 && !formData.sameAsCurrent) {
+            ['permAddress', 'permState', 'permDistrict', 'permCity', 'permPincode'].forEach(field => {
+                if (!formData[field]) newErrors[field] = true;
+            });
+        }
+
+        if (currentStep === 8) {
+            if (!formData.workStart) newErrors['workStart'] = true;
+            if (!formData.workEnd) newErrors['workEnd'] = true;
+            if (!formData.availableDays || formData.availableDays.length === 0) newErrors['availableDays'] = true;
+            if (!formData.consultationTypes || formData.consultationTypes.length === 0) newErrors['consultationTypes'] = true;
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleNext = async () => {
-        if (!isStepValid()) {
-            alert('Please fill all required fields correctly before proceeding.');
+        if (!validateAndHighlight()) {
+            alert('Please fill all highlighted required fields.');
             return;
         }
 
@@ -271,7 +253,8 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                 }
             } catch (err: any) {
                 console.error('Registration Error:', err);
-                alert('Connection error: ' + (err.response?.data?.error || err.message));
+                const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
+                alert(errorMessage);
             }
         }
     };
