@@ -10,7 +10,10 @@ const { createNotification } = require('../utils/notif');
 // Storage config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+    filename: (req, file, cb) => {
+        const sanitized = file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+        cb(null, Date.now() + '-' + sanitized);
+    }
 });
 const upload = multer({ storage: storage });
 

@@ -143,6 +143,23 @@ const MOCK_DEMO_MEMBER: PendingMember = {
     ]
 };
 
+const getMediaUrl = (path: string | undefined): string => {
+    if (!path) return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%2364748b'%3ENo Image%3C/text%3E%3C/svg%3E";
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+
+    // Normalize slashes
+    let cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+
+    // Encode filename part (last segment) to handle spaces/parentheses
+    const parts = cleanPath.split('/');
+    const filename = parts.pop();
+    if (filename) {
+        cleanPath = [...parts, encodeURIComponent(filename)].join('/');
+    }
+
+    return `${API_BASE_URL}/${cleanPath}`;
+};
+
 const MemberVerification: React.FC = () => {
     const [members, setMembers] = useState<PendingMember[]>([]);
     const [selectedMember, setSelectedMember] = useState<PendingMember | null>(null);
@@ -283,7 +300,7 @@ const MemberVerification: React.FC = () => {
             if (doc.path) {
                 setTimeout(() => {
                     const link = document.createElement('a');
-                    link.href = `${API_BASE_URL}/${doc.path}`;
+                    link.href = getMediaUrl(doc.path);
                     link.download = doc.name || `document_${index}`;
                     document.body.appendChild(link);
                     link.click();
@@ -374,7 +391,7 @@ const MemberVerification: React.FC = () => {
                                 }}
                             >
                                 <img
-                                    src={m.image ? (m.image.startsWith('http') ? m.image : `${API_BASE_URL}/${m.image}`) : "https://via.placeholder.com/50"}
+                                    src={getMediaUrl(m.image)}
                                     className={styles.avatar}
                                     alt={m.name}
                                 />
@@ -396,7 +413,7 @@ const MemberVerification: React.FC = () => {
                         <div className={styles.reviewHeader}>
                             <div className={styles.profileSummary}>
                                 <img
-                                    src={selectedMember.image ? (selectedMember.image.startsWith('http') ? selectedMember.image : `${API_BASE_URL}/${selectedMember.image}`) : "https://via.placeholder.com/100"}
+                                    src={getMediaUrl(selectedMember.image)}
                                     className={styles.largeAvatar}
                                     alt={selectedMember.name}
                                 />
@@ -540,7 +557,7 @@ const MemberVerification: React.FC = () => {
                                                 <div className={styles.docIcon}>
                                                     {isImage ? (
                                                         <img
-                                                            src={`${API_BASE_URL}/${doc.path}`}
+                                                            src={getMediaUrl(doc.path)}
                                                             alt=""
                                                             className={styles.docThumbnail}
                                                             onClick={() => setPreviewFile(doc)}
@@ -560,7 +577,7 @@ const MemberVerification: React.FC = () => {
                                                             <Eye size={14} /> View
                                                         </button>
                                                         <a
-                                                            href={`${API_BASE_URL}/${doc.path}`}
+                                                            href={getMediaUrl(doc.path)}
                                                             download
                                                             className={styles.docBtn}
                                                             target="_blank"
@@ -715,13 +732,13 @@ const MemberVerification: React.FC = () => {
                         <div className={styles.previewBody}>
                             {previewFile.path.toLowerCase().endsWith('.pdf') ? (
                                 <iframe
-                                    src={`${API_BASE_URL}/${previewFile.path}`}
+                                    src={getMediaUrl(previewFile.path)}
                                     className={styles.pdfViewer}
                                     title="PDF Preview"
                                 />
                             ) : (
                                 <img
-                                    src={previewFile.path.startsWith('http') ? previewFile.path : `${API_BASE_URL}/${previewFile.path}`}
+                                    src={getMediaUrl(previewFile.path)}
                                     alt="Document Preview"
                                     className={styles.previewImg}
                                 />
