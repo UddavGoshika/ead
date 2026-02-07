@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import styles from "./mycases.module.css";
 import { X, Phone, FileText, Loader2, MessageSquare, Briefcase, Filter, Plus, Shield, Clock, CheckCircle, ChevronRight, User, AlertCircle } from "lucide-react";
 import { caseService } from "../../../../services/api";
+import { useAuth } from "../../../../context/AuthContext";
 import { useCall } from "../../../../context/CallContext";
+import PremiumTryonModal from "../../shared/PremiumTryonModal";
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
 import axios from 'axios';
@@ -14,7 +16,12 @@ interface MyCasesProps {
 const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
     const [cases, setCases] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
     const { initiateCall } = useCall();
+    const [showTrialModal, setShowTrialModal] = useState(false);
+
+    const plan = (user?.plan || 'Free').toLowerCase();
+    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
 
     const [activeModal, setActiveModal] = useState<'docs' | 'details' | 'initiate' | null>(null);
     const [selectedCase, setSelectedCase] = useState<any>(null);
@@ -107,11 +114,16 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
     };
 
     const handleCall = (item: any) => {
-        if (!item.clientId?._id) {
+        if (!isPremium) {
+            setShowTrialModal(true);
+            return;
+        }
+        const targetId = item.clientId?._id || item.clientId;
+        if (!targetId) {
             alert("No client assigned to this case.");
             return;
         }
-        initiateCall(String(item.clientId._id), 'audio');
+        initiateCall(String(targetId), 'audio');
     };
 
     const handleInitiateSubmit = async (e: React.FormEvent) => {
@@ -406,6 +418,10 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showTrialModal && (
+                <PremiumTryonModal onClose={() => setShowTrialModal(false)} />
             )}
         </div>
     );

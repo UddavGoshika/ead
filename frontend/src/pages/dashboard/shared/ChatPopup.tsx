@@ -10,13 +10,17 @@ import {
     Video,
     X,
     Shield,
-    MapPin
+    MapPin,
+    Lock,
+    Star
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
 import { useCall } from '../../../context/CallContext';
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
+
+import PremiumTryonModal from './PremiumTryonModal';
 
 interface ChatPopupProps {
     advocate: any; // Relaxed type to handle both Advocate and Client profiles efficiently
@@ -27,27 +31,24 @@ interface ChatPopupProps {
 // Robust helper to extract the correct User ID for signaling/sockets
 const resolveUserId = (entity: any) => {
     if (!entity) return null;
-    // If populated user object with _id
-    if (typeof entity.userId === 'object' && entity.userId?._id) return entity.userId._id;
-    // If string userId
-    if (typeof entity.userId === 'string') return entity.userId;
-    // Fallback to direct id if it mimics user id (less reliable but possible)
-    if (entity.id) return entity.id;
-    return null;
+    if (typeof entity === 'string') return entity;
+    const uid = entity.userId?._id || entity.userId || entity._id || entity.id;
+    return String(uid);
 };
 
 const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     const [messageText, setMessageText] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isMoreOpen, setIsMoreOpen] = useState(false);
+    const [showTrialModal, setShowTrialModal] = useState(false);
     const [interactionStatus, setInteractionStatus] = useState<'none' | 'interest' | 'superInterest'>('none');
     const chatEndRef = useRef<HTMLDivElement>(null);
     const { user, refreshUser } = useAuth();
     const { initiateCall } = useCall();
 
-    // Plan check
-    const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    // Plan check: Any plan that isn't 'free' is considered premium
+    const plan = (user?.plan || 'Free').toLowerCase();
+    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
 
     useEffect(() => {
         if (user && advocate) {
@@ -64,7 +65,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
 
             const fetchMsgs = async () => {
                 try {
-                    const msgs = await interactionService.getConversationMessages(currentUserId, partnerUserId);
+                    const msgs = await interactionService.getConversationMessages(currentUserId, partnerUserId, currentUserId);
                     setMessages(msgs);
                     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
                 } catch (error) {
@@ -154,6 +155,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
 
 
     const handleCall = () => {
+        if (!isPremium) {
+            setShowTrialModal(true);
+            return;
+        }
         const partnerUserId = resolveUserId(advocate);
         if (!partnerUserId) {
             alert("Cannot initiate call: User ID not found.");
@@ -163,13 +168,16 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
     };
 
     const handleVideoCall = () => {
+        if (!isPremium) {
+            setShowTrialModal(true);
+            return;
+        }
         const partnerUserId = resolveUserId(advocate);
         if (!partnerUserId) {
             alert("Cannot initiate call: User ID not found.");
             return;
         }
         initiateCall(partnerUserId, 'video');
-
     };
 
     const handleAddContact = () => {
@@ -308,7 +316,13 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                         return (
                             <div key={msg.id} className={isMine ? styles.myMsg : styles.theirMsg}>
                                 {showLocked ? (
-                                    <span className={styles.lockedMsg}>Message locked. Upgrade to view.</span>
+                                    <div className={styles.blurredMsgWrapper} onClick={() => setShowTrialModal(true)}>
+                                        <div className={styles.blurredText}>████████████████</div>
+                                        <div className={styles.lockOverlay}>
+                                            <Lock size={12} />
+                                            <span>Unlock to reveal message</span>
+                                        </div>
+                                    </div>
                                 ) : msg.text}
                             </div>
                         );
@@ -341,6 +355,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                     )}
                 </div>
             </div >
+            {showTrialModal && (
+                <PremiumTryonModal onClose={() => setShowTrialModal(false)} />
+            )}
         </div >
     );
 };

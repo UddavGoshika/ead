@@ -7,6 +7,7 @@ import { useCall } from "../../../../context/CallContext";
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
 import type { Case } from "../../../../types";
+import PremiumTryonModal from "../../shared/PremiumTryonModal";
 import axios from 'axios';
 
 interface CasesProps {
@@ -22,6 +23,10 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
     const [activeModal, setActiveModal] = useState<'review' | 'docs' | null>(null);
     const [selectedCase, setSelectedCase] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
+    const [showTrialModal, setShowTrialModal] = useState(false);
+
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     // Filter States
     const [search, setSearch] = useState('');
@@ -78,11 +83,16 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
     };
 
     const handleCall = (item: any) => {
-        if (!item.advocateId?._id) {
+        if (!isPremium) {
+            setShowTrialModal(true);
+            return;
+        }
+        const targetId = item.advocateId?._id || item.advocateId;
+        if (!targetId) {
             alert("No advocate assigned to this case yet.");
             return;
         }
-        initiateCall(String(item.advocateId._id), 'audio');
+        initiateCall(String(targetId), 'audio');
     };
 
     const openReview = (c: any) => {
@@ -340,6 +350,10 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showTrialModal && (
+                <PremiumTryonModal onClose={() => setShowTrialModal(false)} />
             )}
         </div>
     );

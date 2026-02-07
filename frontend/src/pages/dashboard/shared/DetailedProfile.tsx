@@ -10,6 +10,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useCall } from '../../../context/CallContext';
 import type { Advocate } from '../../../types';
 import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
+import PremiumTryonModal from './PremiumTryonModal';
 import styles from './DetailedProfile.module.css';
 
 interface Props {
@@ -29,6 +30,7 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
     const [loading, setLoading] = useState(true);
     const [contactInfo, setContactInfo] = useState<{ email?: string, mobile?: string, whatsapp?: string } | null>(null);
     const [showTopup, setShowTopup] = useState(false);
+    const [showTryonModal, setShowTryonModal] = useState(false);
 
     // Visibility settings (could be dynamic later)
     const [visibilitySettings] = useState<Record<string, boolean>>({
@@ -40,8 +42,8 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
 
     const { user, refreshUser } = useAuth();
     const { initiateCall } = useCall();
-    const plan = user?.plan || 'Free';
-    const isPremium = user?.role === 'advocate' || user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const plan = (user?.plan || 'Free').toLowerCase();
+    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
     const isPro = user?.role === 'advocate' || plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
     const isUltra = user?.role === 'advocate' || plan.toLowerCase().includes('ultra');
 
@@ -170,6 +172,10 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
 
     const handleCall = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!isPremium) {
+            setShowTryonModal(true);
+            return;
+        }
         if (!profile) return;
         const targetId = typeof profile.userId === 'object' ? profile.userId._id : (profile.userId || profile.id);
         initiateCall(String(targetId), 'audio');
@@ -177,6 +183,10 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
 
     const handleVideoCall = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!isPremium) {
+            setShowTryonModal(true);
+            return;
+        }
         if (!profile) return;
         const targetId = typeof profile.userId === 'object' ? profile.userId._id : (profile.userId || profile.id);
         initiateCall(String(targetId), 'video');
@@ -556,6 +566,10 @@ const DetailedProfile: React.FC<Props> = ({ profileId, backToProfiles, isModal, 
                     onClose={() => setShowTopup(false)}
                     onTopup={() => window.location.href = '/dashboard?page=upgrade'}
                 />
+
+                {showTryonModal && (
+                    <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
+                )}
             </>
         );
     };

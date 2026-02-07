@@ -2,6 +2,7 @@ export type UserRole = 'client' | 'advocate' | 'admin' | 'ADMIN' | 'VERIFIER' | 
 
 export interface User {
     id: number | string;
+    _id?: string;
     unique_id: string;
     name: string;
     email: string;

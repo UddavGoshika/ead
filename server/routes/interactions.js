@@ -498,6 +498,8 @@ router.post('/messages', async (req, res) => {
 router.get('/messages/:id1/:id2', async (req, res) => {
     try {
         const { id1, id2 } = req.params;
+        const { viewerId } = req.query; // Optional: who is fetching the messages
+
         let messages = await Message.find({
             $or: [
                 { sender: id1, receiver: id2 },
@@ -505,27 +507,35 @@ router.get('/messages/:id1/:id2', async (req, res) => {
             ]
         }).sort({ timestamp: 1 }).lean();
 
-        // Process message content based on recipient premium status
-        const formattedMessages = await Promise.all(messages.map(async (msg) => {
-            const receiverUser = await User.findById(msg.receiver);
-            if (receiverUser) {
-                const planStr = (receiverUser.plan || 'Free').toLowerCase();
-                const isPremium = receiverUser.isPremium || (planStr !== 'free' && planStr !== '');
+        // If no viewerId provided, we can't safely mask without context.
+        // But we should at least check if BOTH are free.
+        // Actually, the most robust way is to just return indicates and let frontend handle if it's purely for UI.
+        // However, for security, we check the viewerId.
 
-                if (!isPremium) {
-                    // Logic: If receiver is free, hide the text
-                    // (But allow the sender to see their own sent messages)
-                    // Wait, the spec says "If a free user receives a message: Message content is hidden"
-                    // So we hide it specifically when the person viewing IT is the receiver?
-                    // Usually id1 or id2 is the viewer. Let's assume the fetch is for both.
-                    // We'll add a 'isLocked' flag that the frontend handles.
-                    return {
-                        ...msg,
-                        text: "Someone sent you a message. Upgrade to view.",
-                        isLocked: true
-                    };
+        const formattedMessages = await Promise.all(messages.map(async (msg) => {
+            // NEVER mask if the viewer is the sender of THIS specific message
+            if (viewerId && String(msg.sender) === String(viewerId)) {
+                return msg;
+            }
+
+            // If we have a viewerId, check THEIR premium status
+            if (viewerId && String(msg.receiver) === String(viewerId)) {
+                const viewer = await User.findById(viewerId);
+                if (viewer) {
+                    const planStr = (viewer.plan || 'Free').toLowerCase();
+                    const isPremium = viewer.isPremium || (planStr !== 'free' && planStr !== '');
+
+                    if (!isPremium) {
+                        return {
+                            ...msg,
+                            text: "████████████████", // Use a placeholder instead of the old string
+                            isLocked: true
+                        };
+                    }
                 }
             }
+
+            // Default: show original message
             return msg;
         }));
 

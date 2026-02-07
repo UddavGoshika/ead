@@ -91,13 +91,14 @@ export const interactionService = {
         } as Message;
     },
 
-    getConversationMessages: async (id1: string, id2: string): Promise<Message[]> => {
-        const response = await api.get(`/interactions/messages/${id1}/${id2}`);
+    getConversationMessages: async (id1: string, id2: string, viewerId?: string): Promise<Message[]> => {
+        const response = await api.get(`/interactions/messages/${id1}/${id2}${viewerId ? `?viewerId=${viewerId}` : ''}`);
         return response.data.messages.map((msg: any) => ({
             id: msg._id,
             senderId: msg.sender,
             receiverId: msg.receiver,
             text: msg.text,
+            isLocked: msg.isLocked,
             timestamp: new Date(msg.timestamp).getTime()
         }));
     },

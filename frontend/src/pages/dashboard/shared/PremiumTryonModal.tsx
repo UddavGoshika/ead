@@ -75,7 +75,10 @@ const PremiumTryonModal: React.FC<PremiumTryonModalProps> = ({ onClose }) => {
                             </div>
                             <div className={styles.footer}>
                                 <button className={styles.activateBtn} onClick={() => setStep('confirm')}>
-                                    Get Started Free
+                                    Activate 1-Day Trial
+                                </button>
+                                <button className={styles.upgradeNowBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>
+                                    Upgrade to Premium
                                 </button>
                                 <button className={styles.skipBtn} onClick={handleClose}>
                                     Maybe Later

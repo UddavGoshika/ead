@@ -23,7 +23,21 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+const getSocketUrl = () => {
+    const envUrl = import.meta.env.VITE_BACKEND_URL;
+    if (envUrl) return envUrl;
+
+    const { hostname, protocol, origin } = window.location;
+
+    // If we're on localhost or an IP address, the backend is likely on port 5000
+    if (hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname)) {
+        return `${protocol}//${hostname}:5000`;
+    }
+
+    return origin; // Fallback to current origin (Production)
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
@@ -92,11 +106,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Socket Event Loop (Depends only on user ID and Stable cleanup)
     useEffect(() => {
-        if (!user?.id) return;
+        if (!user) return;
+        const userId = user.id || user._id;
+        if (!userId) return;
 
-        console.log('[CallContext] Initializing Socket for user:', user.id);
+        console.log('[CallContext] Initializing Socket for user:', userId);
         socket.current = io(SOCKET_URL);
-        socket.current.emit('register', String(user.id));
+        socket.current.emit('register', String(userId));
 
         socket.current.on('incoming-call', ({ from, offer, type, callerInfo }) => {
             console.log('[CallContext] Incoming call event from:', from);
@@ -104,7 +120,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setIncomingCall({
                     _id: callerInfo.callId,
                     caller: callerInfo,
-                    receiver: { _id: String(user.id), name: user.name, unique_id: user.unique_id },
+                    receiver: { _id: String(user.id || user._id), name: user.name, unique_id: user.unique_id },
                     type,
                     status: 'ringing',
                     offer,
@@ -185,7 +201,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             cleanupCall();
             socket.current?.disconnect();
         };
-    }, [user?.id, cleanupCall]); // cleanupCall is stable now, no more loops!
+    }, [user?.id, user?._id, cleanupCall]); // cleanupCall is stable now, no more loops!
 
     const createPeerConnection = (targetUserId: string) => {
         // Robust ICE Servers for Production
@@ -253,8 +269,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await pc.setLocalDescription(offer);
 
             // 4. Send signal
+            const currentUserId = user?.id || user?._id;
             const callerInfo = {
-                _id: String(user?.id),
+                _id: String(currentUserId),
                 name: user?.name || 'User',
                 image_url: user?.image_url || '/default-avatar.png',
                 unique_id: user?.unique_id || 'UID',
@@ -262,7 +279,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 roomName: call.roomName
             };
 
-            socket.current?.emit('call-user', { to: receiverId, offer, from: String(user?.id), type, callerInfo });
+            socket.current?.emit('call-user', { to: receiverId, offer, from: String(currentUserId), type, callerInfo });
 
             // 5. Timeout
             callTimeoutRef.current = setTimeout(() => {
@@ -336,7 +353,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const endCall = async () => {
-        let targetId = activeCall ? (String(user?.id) === String(activeCall.caller._id) ? (activeCall.receiver._id || activeCall.receiver) : (activeCall.caller._id || activeCall.caller)) : incomingCall?.caller._id;
+        const currentUserId = user?.id || user?._id;
+        let targetId = activeCall ? (String(currentUserId) === String(activeCall.caller._id) ? (activeCall.receiver._id || activeCall.receiver) : (activeCall.caller._id || activeCall.caller)) : incomingCall?.caller._id;
 
         if (targetId) socket.current?.emit('hangup', { to: String(targetId) });
         if (activeCall?._id) await callService.updateCallStatus(activeCall._id, 'ended').catch(() => { });

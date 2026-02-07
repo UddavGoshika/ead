@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './CallWindow.module.css';
 import { useCall } from '../../context/CallContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize, Minimize, X, Volume2, VolumeX } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize, Minimize, X, Volume2, VolumeX, Star, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import PremiumTryonModal from '../../pages/dashboard/shared/PremiumTryonModal';
 
 const CallWindow: React.FC = () => {
     const {
@@ -27,6 +28,10 @@ const CallWindow: React.FC = () => {
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const [isMinimized, setIsMinimized] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+    const plan = (user?.plan || 'Free').toLowerCase();
+    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
 
     // Correctly identify the other person in the call
     const getPartner = () => {
@@ -49,14 +54,14 @@ const CallWindow: React.FC = () => {
     useEffect(() => {
         if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
+            // Force mute if not premium (Feature Teasing)
+            if (!isPremium) {
+                remoteVideoRef.current.muted = true;
+            } else {
+                remoteVideoRef.current.muted = !isSpeakerOn;
+            }
         }
-    }, [remoteStream, callStatus]);
-
-    useEffect(() => {
-        if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = !isSpeakerOn;
-        }
-    }, [isSpeakerOn, remoteStream]);
+    }, [remoteStream, callStatus, isPremium, isSpeakerOn]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -85,22 +90,32 @@ const CallWindow: React.FC = () => {
                                 ? (incomingPartner.image_url.startsWith('http') ? incomingPartner.image_url : `${window.location.origin}${incomingPartner.image_url}`)
                                 : "/default-avatar.png"}
                             alt="Caller"
-                            className={styles.callerAvatar}
+                            className={`${styles.callerAvatar} ${!isPremium ? styles.blurredAvatar : ''}`}
                         />
+                        {!isPremium && <div className={styles.lockIconOverlay}><Lock size={32} /></div>}
                     </div>
                     <h2 className={styles.callTypeTitle}>{incomingCall.type === 'video' ? 'Video' : 'Voice'} Call</h2>
-                    <p className={styles.callerName}>{incomingPartner?.name || 'Someone'}</p>
-                    <p className={styles.callerId}>{incomingPartner?.unique_id}</p>
+                    <p className={styles.callerName}>
+                        {isPremium ? (incomingPartner?.name || 'Someone') : 'Incoming Premium Call'}
+                    </p>
+                    <p className={styles.callerId}>{isPremium ? incomingPartner?.unique_id : 'Experience HD calling'}</p>
 
                     <div className={styles.actionButtons}>
-                        <button className={styles.acceptBtn} onClick={acceptCall} title="Accept Call">
-                            <Phone size={24} />
-                        </button>
+                        {isPremium ? (
+                            <button className={styles.acceptBtn} onClick={acceptCall} title="Accept Call">
+                                <Phone size={24} />
+                            </button>
+                        ) : (
+                            <button className={styles.unlockCallBtn} onClick={() => setShowPremiumModal(true)}>
+                                <Star size={20} fill="currentColor" /> Unlock Experience
+                            </button>
+                        )}
                         <button className={styles.rejectBtn} onClick={rejectCall} title="Reject Call">
                             <PhoneOff size={24} />
                         </button>
                     </div>
                 </div>
+                {showPremiumModal && <PremiumTryonModal onClose={() => setShowPremiumModal(false)} />}
             </div>
         );
     }
@@ -169,7 +184,7 @@ const CallWindow: React.FC = () => {
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={styles.remoteVideo}
+                        className={`${styles.remoteVideo} ${!isPremium ? styles.premiumBlur : ''}`}
                     />
                 ) : (
                     <video
@@ -180,8 +195,23 @@ const CallWindow: React.FC = () => {
                     />
                 )}
 
+                {!isPremium && callStatus === 'connected' && (
+                    <div className={styles.premiumTeaseOverlay}>
+                        <div className={styles.teaseContent}>
+                            <div className={styles.teaseIcon}>
+                                <Star size={48} className={styles.sparkle} />
+                            </div>
+                            <h3>Experience Clarity</h3>
+                            <p>Premium users enjoy crystal clear video and high-fidelity audio.</p>
+                            <button className={styles.upgradeTeaseBtn} onClick={() => setShowPremiumModal(true)}>
+                                Upgrade to Unlock
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {activeCall?.type === 'audio' && (
-                    <div className={styles.audioOnlyOverlay}>
+                    <div className={`${styles.audioOnlyOverlay} ${!isPremium ? styles.premiumBlur : ''}`}>
                         <div className={styles.audioAvatarWrapper}>
                             <img
                                 src={partner?.image_url && partner.image_url !== '/default-avatar.png'
@@ -223,11 +253,12 @@ const CallWindow: React.FC = () => {
                 </button>
 
                 <button
-                    className={`${styles.controlBtn} ${!isSpeakerOn ? styles.muted : ''}`}
-                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                    title={isSpeakerOn ? "Speaker Off" : "Speaker On"}
+                    className={`${styles.controlBtn} ${!isSpeakerOn || !isPremium ? styles.muted : ''}`}
+                    onClick={() => isPremium && setIsSpeakerOn(!isSpeakerOn)}
+                    disabled={!isPremium}
+                    title={!isPremium ? "Premium feature" : (isSpeakerOn ? "Speaker Off" : "Speaker On")}
                 >
-                    {isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />}
+                    {!isPremium ? <VolumeX size={24} /> : (isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />)}
                 </button>
 
                 <button className={styles.hangupBtn} onClick={endCall} title="End Call">
@@ -252,6 +283,7 @@ const CallWindow: React.FC = () => {
                     {isMinimized ? <Maximize size={24} /> : <Minimize size={24} />}
                 </button>
             </div>
+            {showPremiumModal && <PremiumTryonModal onClose={() => setShowPremiumModal(false)} />}
         </div>
     );
 };

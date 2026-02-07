@@ -530,3 +530,114 @@
     width: 50px;
     height: 50px;
 }
+.blurredAvatar {
+    filter: blur(20px);
+    opacity: 0.6;
+}
+
+.lockIconOverlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #facc15;
+    filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.5));
+    z-index: 10;
+}
+
+.unlockCallBtn {
+    background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+    color: #0c142d;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 10px 25px rgba(250, 204, 21, 0.3);
+}
+
+.unlockCallBtn:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 15px 35px rgba(250, 204, 21, 0.5);
+}
+
+.premiumBlur {
+    filter: blur(60px);
+    opacity: 0.8;
+}
+
+.premiumTeaseOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 12010;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.teaseContent {
+    max-width: 320px;
+    padding: 2.5rem;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    border-radius: 2rem;
+    text-align: center;
+    color: white;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+.teaseIcon {
+    margin-bottom: 1.5rem;
+    color: #facc15;
+}
+
+.sparkle {
+    animation: sparkleAnim 2s infinite ease-in-out;
+}
+
+@keyframes sparkleAnim {
+    0%, 100% { transform: scale(1) rotate(0); opacity: 0.8; }
+    50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+}
+
+.teaseContent h3 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #fff 0%, #facc15 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+} 
+
+.teaseContent p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.upgradeTeaseBtn {
+    background: #facc15;
+    color: #0c142d;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+}
+
+.upgradeTeaseBtn:hover {
+    background: #eab308;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);
+}
