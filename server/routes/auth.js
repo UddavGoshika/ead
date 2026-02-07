@@ -13,7 +13,8 @@ const authMiddleware = require('../middleware/auth');
 
 // LOGIN
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const { password } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -250,7 +251,7 @@ router.post('/activate-demo', async (req, res) => {
 
 // SEND OTP
 router.post('/send-otp', async (req, res) => {
-    const { email } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase() : '';
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
     try {
@@ -311,7 +312,8 @@ router.post('/send-otp', async (req, res) => {
 
 // VERIFY OTP
 router.post('/verify-otp', async (req, res) => {
-    const { email, otp } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const { otp } = req.body;
     if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
 
     try {
@@ -337,7 +339,8 @@ router.post('/verify-otp', async (req, res) => {
 
 // REGISTER
 router.post('/register', async (req, res) => {
-    const { email, password, role, referredBy } = req.body;
+    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const { password, role, referredBy } = req.body;
 
     try {
         const existingUser = await User.findOne({ email });

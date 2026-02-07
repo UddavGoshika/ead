@@ -123,145 +123,252 @@ export const DEPARTMENT_DATA: Record<
         subDepartments: { value: string; label: string }[];
     }
 > = {
-    criminal: {
-        label: 'Criminal',
-        subDepartments: [
-            { value: 'ipc_crpc', label: 'IPC & CrPC' },
-            { value: 'cyber_crimes', label: 'Cyber Crimes' },
-            { value: 'juvenile_justice', label: 'Juvenile Justice' },
-            { value: 'white_collar', label: 'White-Collar Crime' },
-            { value: 'narcotics', label: 'Narcotics Law' }
-        ]
-    },
-    family: {
-        label: 'Family',
-        subDepartments: [
-            { value: 'marriage_divorce', label: 'Marriage & Divorce' },
-            { value: 'maintenance', label: 'Maintenance' },
-            { value: 'adoption', label: 'Adoption' },
-            { value: 'hindu_law', label: 'Hindu Law' },
-            { value: 'muslim_law', label: 'Muslim Law' },
-            { value: 'christian_law', label: 'Christian Law' }
-        ]
-    },
-    corporate: {
-        label: 'Corporate',
-        subDepartments: [
-            { value: 'company_incorporation', label: 'Company Incorporation' },
-            { value: 'mergers_acquisitions', label: 'Mergers & Acquisitions' },
-            { value: 'insolvency_bankruptcy', label: 'Insolvency & Bankruptcy' },
-            { value: 'sebi_compliance', label: 'SEBI Compliance' }
-        ]
-    },
     constitutional: {
         label: 'Constitutional',
         subDepartments: [
             { value: 'fundamental_rights', label: 'Fundamental Rights' },
-            { value: 'writ_petitions', label: 'Writ Petitions' },
+            { value: 'writ_32', label: 'Writs under Article 32' },
+            { value: 'writ_226', label: 'Writs under Article 226' },
+            { value: 'pil', label: 'Public Interest Litigation (PIL)' },
+            { value: 'judicial_review', label: 'Judicial Review' },
+            { value: 'constitutional_challenges', label: 'Constitutional Challenges' },
             { value: 'election_law', label: 'Election Law' },
-            { value: 'centre_state', label: 'Centre-State Relations' }
+            { value: 'centre_state', label: 'Centre–State Relations' },
+            { value: 'administrative_actions', label: 'State Administrative Actions' }
         ]
     },
-    intellectual_property: {
-        label: 'Intellectual Property',
-        subDepartments: [
-            { value: 'patents', label: 'Patents' },
-            { value: 'trademarks', label: 'Trademarks' },
-            { value: 'copyrights', label: 'Copyrights' },
-            { value: 'designs', label: 'Designs' },
-            { value: 'gi_tags', label: 'GI Tags' }
-        ]
-    },
-    cyber: {
-        label: 'Cyber Law',
-        subDepartments: [
-            { value: 'data_privacy', label: 'Data Privacy' },
-            { value: 'it_act', label: 'IT Act Cases' },
-            { value: 'online_fraud', label: 'Online Fraud' },
-            { value: 'digital_contracts', label: 'Digital Contracts' }
-        ]
-    },
-    contract: {
-        label: 'Contract',
-        subDepartments: [
-            { value: 'commercial_contracts', label: 'Commercial Contracts' },
-            { value: 'e_contracts', label: 'E-Contracts' },
-            { value: 'service_agreements', label: 'Service Agreements' },
-            { value: 'government_contracts', label: 'Government Contracts' }
-        ]
-    },
-    tort: {
-        label: 'Tort Law',
-        subDepartments: [
-            { value: 'negligence', label: 'Negligence' },
-            { value: 'defamation', label: 'Defamation' },
-            { value: 'nuisance', label: 'Nuisance' },
-            { value: 'medical_malpractice', label: 'Medical Malpractice' }
-        ]
-    },
+
     administrative: {
-        label: 'Administrative',
+        label: 'Administrative Law',
         subDepartments: [
             { value: 'service_law', label: 'Service Law' },
-            { value: 'tribunals', label: 'Tribunals' },
-            { value: 'rti', label: 'RTI & Public Duty' },
-            { value: 'disciplinary_actions', label: 'Disciplinary Actions' }
+            { value: 'disciplinary_proceedings', label: 'Disciplinary Proceedings' },
+            { value: 'tribunal_matters', label: 'Tribunal Matters' },
+            { value: 'administrative_appeals', label: 'Administrative Appeals' },
+            { value: 'government_employees', label: 'Government Employees Law' }
         ]
     },
-    labour_employment: {
-        label: 'Labour & Employment',
+
+    // =========================
+    // CRIMINAL LAW
+    // =========================
+    criminal: {
+        label: 'Criminal',
         subDepartments: [
-            { value: 'wages_salary', label: 'Wages & Salary Law' },
-            { value: 'industrial_disputes', label: 'Industrial Disputes' },
-            { value: 'workplace_harassment', label: 'Workplace Harassment' },
-            { value: 'epf_esi', label: 'EPF & ESI Law' }
+            { value: 'ipc', label: 'Indian Penal Code (IPC)' },
+            { value: 'crpc', label: 'Criminal Procedure Code (CrPC)' },
+            { value: 'criminal_trials', label: 'Criminal Trials' },
+            { value: 'criminal_appeals', label: 'Criminal Appeals' },
+            { value: 'criminal_revisions', label: 'Criminal Revisions' },
+            { value: 'bail', label: 'Bail & Anticipatory Bail' },
+            { value: 'white_collar', label: 'White-Collar Crime' },
+            { value: 'economic_offences', label: 'Economic Offences' },
+            { value: 'ndps', label: 'NDPS / Narcotics Law' },
+            { value: 'pmla', label: 'PMLA & Money Laundering' },
+            { value: 'cyber_crimes', label: 'Cyber Crimes' },
+            { value: 'juvenile_justice', label: 'Juvenile Justice Act' },
+            { value: 'anti_corruption', label: 'Anti-Corruption / CBI' },
+            { value: 'forensic_evidence', label: 'Forensic & Digital Evidence' }
         ]
     },
+
+    // =========================
+    // CIVIL & PROCEDURAL
+    // =========================
+    civil: {
+        label: 'Civil Litigation',
+        subDepartments: [
+            { value: 'civil_suits', label: 'Civil Suits' },
+            { value: 'injunctions', label: 'Injunction Matters' },
+            { value: 'specific_relief', label: 'Specific Relief Act' },
+            { value: 'recovery_suits', label: 'Recovery & Money Suits' },
+            { value: 'execution', label: 'Execution Proceedings' },
+            { value: 'civil_appeals', label: 'Civil Appeals' },
+            { value: 'civil_revisions', label: 'Civil Revisions' },
+            { value: 'limitation', label: 'Limitation Act' },
+            { value: 'procedural_law', label: 'Procedural Law (CPC)' }
+        ]
+    },
+
+    evidence: {
+        label: 'Evidence Law',
+        subDepartments: [
+            { value: 'indian_evidence_act', label: 'Indian Evidence Act' },
+            { value: 'documentary_evidence', label: 'Documentary Evidence' },
+            { value: 'electronic_evidence', label: 'Electronic Evidence' },
+            { value: 'expert_evidence', label: 'Expert & Forensic Evidence' }
+        ]
+    },
+
+    // =========================
+    // FAMILY & PERSONAL
+    // =========================
+    family: {
+        label: 'Family Law',
+        subDepartments: [
+            { value: 'marriage_divorce', label: 'Marriage & Divorce' },
+            { value: 'maintenance', label: 'Maintenance & Alimony' },
+            { value: 'child_custody', label: 'Child Custody' },
+            { value: 'guardianship', label: 'Guardianship' },
+            { value: 'adoption', label: 'Adoption' },
+            { value: 'domestic_violence', label: 'Domestic Violence Act' },
+            { value: 'hindu_law', label: 'Hindu Personal Law' },
+            { value: 'muslim_law', label: 'Muslim Personal Law' },
+            { value: 'christian_law', label: 'Christian & Parsi Law' },
+            { value: 'succession', label: 'Succession & Inheritance' }
+        ]
+    },
+
+    // =========================
+    // PROPERTY & LAND
+    // =========================
     property: {
-        label: 'Property',
+        label: 'Property & Land',
         subDepartments: [
-            { value: 'lease_rent', label: 'Lease & Rent' },
-            { value: 'land_titles', label: 'Land Titles' },
-            { value: 'transfer_property', label: 'Transfer of Property' },
+            { value: 'title_due_diligence', label: 'Title Due Diligence' },
+            { value: 'transfer_property', label: 'Transfer of Property Act' },
+            { value: 'lease_rent', label: 'Lease & Rent Control' },
+            { value: 'partition', label: 'Partition Suits' },
+            { value: 'land_acquisition', label: 'Land Acquisition' },
+            { value: 'revenue_laws', label: 'Revenue & Land Laws' },
+            { value: 'builder_buyer', label: 'Builder-Buyer Disputes' },
             { value: 'rera', label: 'Real Estate (RERA)' }
         ]
     },
+
+    // =========================
+    // CORPORATE & COMMERCIAL
+    // =========================
+    corporate: {
+        label: 'Corporate Law',
+        subDepartments: [
+            { value: 'company_incorporation', label: 'Company Incorporation' },
+            { value: 'company_compliance', label: 'Company Law Compliance' },
+            { value: 'corporate_governance', label: 'Corporate Governance' },
+            { value: 'shareholder_disputes', label: 'Shareholder Disputes' },
+            { value: 'mna', label: 'Mergers & Acquisitions' },
+            { value: 'joint_ventures', label: 'Joint Ventures' },
+            { value: 'commercial_suits', label: 'Commercial Suits' },
+            { value: 'startup_law', label: 'Startup & VC Law' }
+        ]
+    },
+
+    contract: {
+        label: 'Contract Law',
+        subDepartments: [
+            { value: 'commercial_contracts', label: 'Commercial Contracts' },
+            { value: 'service_agreements', label: 'Service Agreements' },
+            { value: 'government_contracts', label: 'Government Contracts' },
+            { value: 'e_contracts', label: 'Electronic Contracts' },
+            { value: 'contract_breach', label: 'Breach of Contract' }
+        ]
+    },
+
+    // =========================
+    // BANKING, FINANCE & INSOLVENCY
+    // =========================
     banking_finance: {
         label: 'Banking & Finance',
         subDepartments: [
-            { value: 'debt_recovery', label: 'Debt Recovery' },
+            { value: 'banking_litigation', label: 'Banking Litigation' },
+            { value: 'loan_documentation', label: 'Loan Documentation' },
             { value: 'loan_default', label: 'Loan Default Cases' },
-            { value: 'nbfc_rbi', label: 'NBFC & RBI Compliance' },
-            { value: 'sebi_securities', label: 'SEBI & Securities Law' }
+            { value: 'drt', label: 'Debt Recovery Tribunal (DRT)' },
+            { value: 'sarfaesi', label: 'SARFAESI Act' },
+            { value: 'financial_fraud', label: 'Financial Fraud' },
+            { value: 'nbfc', label: 'NBFC Compliance' },
+            { value: 'rbi', label: 'RBI Regulations' }
         ]
     },
-    consumer_protection: {
-        label: 'Consumer Protection',
+
+    insolvency: {
+        label: 'Insolvency & Bankruptcy',
         subDepartments: [
-            { value: 'ecommerce', label: 'E-commerce Complaints' },
-            { value: 'service_deficiency', label: 'Service Deficiency' },
-            { value: 'product_liability', label: 'Product Liability' },
-            { value: 'consumer_forums', label: 'Consumer Forums' }
+            { value: 'ibc', label: 'IBC Proceedings' },
+            { value: 'corporate_insolvency', label: 'Corporate Insolvency' },
+            { value: 'personal_insolvency', label: 'Personal Insolvency' },
+            { value: 'liquidation', label: 'Liquidation' },
+            { value: 'resolution_plans', label: 'Resolution Plans' }
         ]
     },
-    environmental: {
-        label: 'Environmental',
-        subDepartments: [
-            { value: 'pollution_control', label: 'Pollution Control' },
-            { value: 'forest_wildlife', label: 'Forest & Wildlife' },
-            { value: 'eia', label: 'Environment Impact Assessment' },
-            { value: 'climate_litigation', label: 'Climate Litigation' }
-        ]
-    },
+
+    // =========================
+    // TAX
+    // =========================
     taxation: {
         label: 'Taxation',
         subDepartments: [
             { value: 'income_tax', label: 'Income Tax' },
-            { value: 'gst', label: 'GST Law' },
-            { value: 'customs_excise', label: 'Customs & Excise' },
-            { value: 'tax_appeals', label: 'Tax Appeals' }
+            { value: 'gst', label: 'GST' },
+            { value: 'customs', label: 'Customs Law' },
+            { value: 'excise', label: 'Excise Law' },
+            { value: 'transfer_pricing', label: 'Transfer Pricing' },
+            { value: 'international_tax', label: 'International Taxation' },
+            { value: 'tax_appeals', label: 'Tax Appeals & Tribunals' }
         ]
     },
+
+    // =========================
+    // IP, TECH & MEDIA
+    // =========================
+    intellectual_property: {
+        label: 'Intellectual Property',
+        subDepartments: [
+            { value: 'trademarks', label: 'Trademarks' },
+            { value: 'patents', label: 'Patents' },
+            { value: 'copyrights', label: 'Copyrights' },
+            { value: 'designs', label: 'Design Law' },
+            { value: 'gi', label: 'Geographical Indications' },
+            { value: 'ip_litigation', label: 'IP Litigation' },
+            { value: 'licensing', label: 'IP Licensing' }
+        ]
+    },
+
+    cyber: {
+        label: 'Cyber & Technology Law',
+        subDepartments: [
+            { value: 'it_act', label: 'IT Act Matters' },
+            { value: 'data_privacy', label: 'Data Protection & Privacy' },
+            { value: 'cyber_security', label: 'Cyber Security Compliance' },
+            { value: 'digital_evidence', label: 'Digital Evidence' },
+            { value: 'ai_blockchain', label: 'AI & Blockchain Law' }
+        ]
+    },
+
+    media: {
+        label: 'Media & Entertainment',
+        subDepartments: [
+            { value: 'media_law', label: 'Media Law' },
+            { value: 'defamation_media', label: 'Media Defamation' },
+            { value: 'film_contracts', label: 'Film & OTT Contracts' },
+            { value: 'sports_law', label: 'Sports & Gaming Law' }
+        ]
+    },
+
+    // =========================
+    // LABOUR, CONSUMER, SOCIAL
+    // =========================
+    labour: {
+        label: 'Labour & Employment',
+        subDepartments: [
+            { value: 'industrial_disputes', label: 'Industrial Disputes' },
+            { value: 'employment_contracts', label: 'Employment Contracts' },
+            { value: 'posh', label: 'POSH Act' },
+            { value: 'epf_esi', label: 'EPF & ESI' },
+            { value: 'trade_unions', label: 'Trade Union Law' }
+        ]
+    },
+
+    consumer: {
+        label: 'Consumer Protection',
+        subDepartments: [
+            { value: 'consumer_forums', label: 'Consumer Forums' },
+            { value: 'product_liability', label: 'Product Liability' },
+            { value: 'service_deficiency', label: 'Deficiency of Service' },
+            { value: 'ecommerce', label: 'E-commerce Complaints' }
+        ]
+    },
+
     human_rights: {
         label: 'Human Rights',
         subDepartments: [
@@ -271,26 +378,44 @@ export const DEPARTMENT_DATA: Record<
             { value: 'minority_rights', label: 'Minority Rights' }
         ]
     },
+
+    // =========================
+    // ENVIRONMENT, ENERGY, INTERNATIONAL
+    // =========================
+    environmental: {
+        label: 'Environmental & Energy',
+        subDepartments: [
+            { value: 'ngt', label: 'NGT Matters' },
+            { value: 'pollution_control', label: 'Pollution Control Laws' },
+            { value: 'forest_wildlife', label: 'Forest & Wildlife Law' },
+            { value: 'climate_change', label: 'Climate Change Litigation' },
+            { value: 'renewable_energy', label: 'Renewable Energy Law' }
+        ]
+    },
+
     arbitration: {
-        label: 'Arbitration',
+        label: 'Arbitration & ADR',
         subDepartments: [
             { value: 'domestic_arbitration', label: 'Domestic Arbitration' },
             { value: 'international_arbitration', label: 'International Arbitration' },
             { value: 'mediation', label: 'Mediation' },
-            { value: 'conciliation', label: 'Conciliation' }
+            { value: 'conciliation', label: 'Conciliation' },
+            { value: 'award_enforcement', label: 'Enforcement of Awards' }
         ]
     },
-    media: {
-        label: 'Media & Entertainment',
+
+    international: {
+        label: 'International Law',
         subDepartments: [
-            { value: 'censorship', label: 'Censorship Law' },
-            { value: 'ott_regulation', label: 'OTT Regulation' },
-            { value: 'film_contracts', label: 'Film Contracts' },
-            { value: 'artist_rights', label: 'Artist Rights' }
+            { value: 'public_international', label: 'Public International Law' },
+            { value: 'private_international', label: 'Private International Law' },
+            { value: 'wto', label: 'WTO & Trade Law' },
+            { value: 'cross_border', label: 'Cross-Border Transactions' },
+            { value: 'maritime', label: 'Maritime & Admiralty Law' },
+            { value: 'aviation', label: 'Aviation Law' }
         ]
     }
 };
-
 const FilterModal: React.FC = () => {
     const { isFilterModalOpen, closeFilterModal } = useAuth();
     const navigate = useNavigate();

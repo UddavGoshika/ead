@@ -43,7 +43,8 @@ async function generateClientId() {
 // REGISTER CLIENT
 router.post('/register', cpUpload, async (req, res) => {
     try {
-        const { email, password, firstName, lastName } = req.body;
+        const email = req.body.email ? req.body.email.toLowerCase() : '';
+        const { password, firstName, lastName } = req.body;
 
         // Verify OTP was completed for this email
         const otpRecord = await Otp.findOne({ email });

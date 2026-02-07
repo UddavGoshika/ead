@@ -56,10 +56,12 @@ router.post('/register', (req, res, next) => {
     });
 }, async (req, res) => {
     try {
-        const { email, password, firstName, lastName } = req.body;
+        const email = req.body.email ? req.body.email.toLowerCase() : '';
+        const { password, firstName, lastName } = req.body;
+        const submittedOtp = req.body.otp || req.body.emailOtp;
 
         // Verify OTP was completed for this email
-        const otpRecord = await Otp.findOne({ email, otp: req.body.otp });
+        const otpRecord = await Otp.findOne({ email, otp: submittedOtp });
         if (!otpRecord || !otpRecord.verified) {
             // Check if it was verified even without the specific OTP in this request (fallback)
             const genericOtpRecord = await Otp.findOne({ email, verified: true });
