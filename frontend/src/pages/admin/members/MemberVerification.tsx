@@ -22,6 +22,13 @@ interface PendingMember {
     dob?: string;
     location: string;
 
+    // Staff specific
+    department?: string;
+    vendor?: string;
+    level?: string;
+    currentProject?: string;
+    joinedDate?: string;
+
     // Advocate specific
     experience?: string;
     education?: {
@@ -162,19 +169,23 @@ const MemberVerification: React.FC = () => {
     const [actionType, setActionType] = useState<"Rejected" | "Reverify">("Rejected");
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
-    const [filterRole, setFilterRole] = useState<"All" | "Advocate" | "Client" | "Legal Provider">("All");
+    const [filterRole, setFilterRole] = useState<"All" | "Advocate" | "Client" | "Legal Provider" | "Staff">("All");
+    const [contextFilter, setContextFilter] = useState<"pending" | "reverify">("pending");
 
     useEffect(() => {
-        fetchPendingMembers();
+        fetchMembers("pending");
     }, []);
 
-    const fetchPendingMembers = async () => {
+    const fetchPendingMembers = () => fetchMembers("pending");
+
+    const fetchMembers = async (context: "pending" | "reverify" = "pending") => {
         try {
             setLoading(true);
-            const res = await axios.get(`${API_BASE_URL}/api/admin/members?context=pending`);
+            setContextFilter(context);
+            const res = await axios.get(`${API_BASE_URL}/api/admin/members?context=${context}`);
             if (res.data.success) {
                 let memberList = res.data.members;
-                if (memberList.length === 0) {
+                if (memberList.length === 0 && context === "pending") {
                     memberList = [MOCK_DEMO_MEMBER];
                 }
                 setMembers(memberList);
@@ -359,15 +370,31 @@ const MemberVerification: React.FC = () => {
                     </h2>
                 </div>
                 <div className={styles.filterBar}>
-                    {(["All", "Advocate", "Client", "Legal Provider"] as const).map((role) => (
+                    {(["All", "Advocate", "Client", "Legal Provider", "Staff"] as const).map((role) => (
                         <button
                             key={role}
                             className={`${styles.filterTab} ${filterRole === role ? styles.activeTab : ''}`}
                             onClick={() => setFilterRole(role)}
                         >
-                            {role === "Legal Provider" ? "Legal Advisors" : role === "All" ? "All Queue" : `${role}s`}
+                            {role === "Legal Provider" ? "Legal Advisors" : role === "All" ? "All Queue" : role === "Staff" ? "Employees" : `${role}s`}
                         </button>
                     ))}
+                </div>
+                <div className={styles.filterBar} style={{ marginTop: '10px' }}>
+                    <button
+                        className={`${styles.filterTab} ${contextFilter === "pending" ? styles.activeTab : ''}`}
+                        onClick={() => fetchMembers("pending")}
+                        style={{ flex: 1 }}
+                    >
+                        Pending Verification
+                    </button>
+                    <button
+                        className={`${styles.filterTab} ${contextFilter === "reverify" ? styles.activeTab : ''}`}
+                        onClick={() => fetchMembers("reverify")}
+                        style={{ flex: 1 }}
+                    >
+                        Reverify Profiles
+                    </button>
                 </div>
                 <div className={styles.memberList}>
                     {members
@@ -376,6 +403,9 @@ const MemberVerification: React.FC = () => {
                             const dbRole = (m.role || "").toLowerCase();
                             if (filterRole === "Legal Provider") {
                                 return dbRole === "legal_provider" || dbRole === "legal provider";
+                            }
+                            if (filterRole === "Staff") {
+                                return !["advocate", "client", "legal_provider", "legal provider"].includes(dbRole);
                             }
                             return dbRole === filterRole.toLowerCase();
                         })
@@ -537,6 +567,20 @@ const MemberVerification: React.FC = () => {
                                         </div>
                                     </div>
                                 </>
+                            )}
+
+                            {/* Staff Specific */}
+                            {!["advocate", "client", "legal_provider", "legal provider"].includes(selectedMember.role?.toLowerCase() || "") && (
+                                <div className={styles.contentSection}>
+                                    <h3 className={styles.sectionTitle}><Briefcase size={18} /> Staff / Employee Information</h3>
+                                    <div className={styles.dataGrid}>
+                                        {renderDataField("Department", selectedMember.department)}
+                                        {renderDataField("Vendor/Team", selectedMember.vendor)}
+                                        {renderDataField("Level/Rank", selectedMember.level)}
+                                        {renderDataField("Current Project", selectedMember.currentProject)}
+                                        {renderDataField("Joined Date", selectedMember.joinedDate ? new Date(selectedMember.joinedDate).toLocaleDateString() : null)}
+                                    </div>
+                                </div>
                             )}
 
                             {/* 4. Interests & Preferences */}

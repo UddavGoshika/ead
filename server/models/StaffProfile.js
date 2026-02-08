@@ -13,7 +13,10 @@ const StaffProfileSchema = new mongoose.Schema({
     netAmount: { type: Number, default: 0 },
     currentProject: { type: String },
     joinedDate: { type: Date, default: Date.now },
-    lastActive: { type: Date, default: Date.now }
+    lastActive: { type: Date, default: Date.now },
+    verified: { type: Boolean, default: false },
+    verifiedAt: { type: Date },
+    rejectionReason: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('StaffProfile', StaffProfileSchema);

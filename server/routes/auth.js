@@ -8,6 +8,26 @@ const Otp = require('../models/Otp');
 const { sendEmail } = require('../utils/mailer');
 const { createNotification } = require('../utils/notif');
 const authMiddleware = require('../middleware/auth');
+const Advocate = require('../models/Advocate');
+const Client = require('../models/Client');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// MULTER CONFIG FOR DOCS
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/docs';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `doc-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+const upload = multer({ storage });
 
 
 
@@ -45,7 +65,7 @@ router.post('/login', async (req, res) => {
             let userImage = null;
             let rejectionReason = null;
 
-            if (user.role === 'advocate') {
+            if (user.role === 'advocate' || user.role === 'legal_provider') {
                 const Advocate = require('../models/Advocate');
                 const advocate = await Advocate.findOne({ userId: user._id });
                 if (advocate) {
@@ -63,6 +83,12 @@ router.post('/login', async (req, res) => {
                     userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
                     rejectionReason = client.rejectionReason;
                 }
+            } else {
+                // Check StaffProfile for rejection reason
+                const profile = await StaffProfile.findOne({ userId: user._id });
+                if (profile) {
+                    rejectionReason = profile.rejectionReason;
+                }
             }
 
             // CHECK STATUS AFTER PROFILE FETCH TO INCLUDE REASON
@@ -70,6 +96,14 @@ router.post('/login', async (req, res) => {
                 return res.status(403).json({
                     error: 'ACCOUNT_RESTRICTED',
                     message: `Your account is ${user.status}. Please contact support.`,
+                    rejectionReason: rejectionReason
+                });
+            }
+
+            if (['Pending', 'Reverify'].includes(user.status)) {
+                return res.status(403).json({
+                    error: 'ACCOUNT_PENDING',
+                    message: `Your account is pending verification. Please check back later.`,
                     rejectionReason: rejectionReason
                 });
             }
@@ -84,6 +118,7 @@ router.post('/login', async (req, res) => {
                     unique_id: uniqueId || `TP-EAD-${user._id.toString().slice(-6).toUpperCase()}`,
                     image_url: userImage,
                     status: user.status,
+                    rejectionReason: rejectionReason,
                     plan: user.plan || 'Free',
                     isPremium: (user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free')) && (!user.demoExpiry || new Date() < new Date(user.demoExpiry)),
                     coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
@@ -157,8 +192,9 @@ router.get('/me', async (req, res) => {
         let uniqueId = null;
         let displayName = user.email; // Default
         let userImage = null;
+        let rejectionReason = null;
 
-        if (user.role === 'advocate') {
+        if (user.role === 'advocate' || user.role === 'legal_provider') {
             const Advocate = require('../models/Advocate');
             const advocate = await Advocate.findOne({ userId: user._id });
             if (advocate) {
@@ -173,6 +209,12 @@ router.get('/me', async (req, res) => {
                 uniqueId = client.unique_id;
                 displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
                 userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
+                rejectionReason = client.rejectionReason;
+            }
+        } else {
+            const profile = await StaffProfile.findOne({ userId: user._id });
+            if (profile) {
+                rejectionReason = profile.rejectionReason;
             }
         }
 
@@ -186,6 +228,7 @@ router.get('/me', async (req, res) => {
                 unique_id: uniqueId || `TP-EAD-${user._id.toString().slice(-6).toUpperCase()}`,
                 image_url: userImage,
                 status: user.status,
+                rejectionReason: rejectionReason,
                 plan: user.plan || 'Free',
                 isPremium: (user.isPremium || (user.plan && user.plan.toLowerCase() !== 'free')) && (!user.demoExpiry || new Date() < new Date(user.demoExpiry)),
                 coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
@@ -512,6 +555,60 @@ router.post('/change-password', async (req, res) => {
     } catch (err) {
         console.error('Change Password Error:', err);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// RESUBMIT PROFILE DOCUMENTS
+router.post('/resubmit-profile', authMiddleware, upload.fields([
+    { name: 'idProof', maxCount: 1 },
+    { name: 'license', maxCount: 1 },
+    { name: 'certificate', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        let profile;
+        const role = user.role.toLowerCase();
+
+        if (role === 'advocate' || role === 'legal_provider') {
+            profile = await Advocate.findOne({ userId: user._id });
+        } else if (role === 'client') {
+            profile = await Client.findOne({ userId: user._id });
+        } else {
+            profile = await StaffProfile.findOne({ userId: user._id });
+        }
+
+        if (!profile) return res.status(404).json({ error: 'Profile not found' });
+
+        // Update files in profile
+        if (req.files['idProof']) {
+            const filePath = `uploads/docs/${req.files['idProof'][0].filename}`;
+            if (role === 'client') {
+                profile.documentPath = filePath;
+            } else if (role === 'advocate' || role === 'legal_provider') {
+                profile.idProof = { docType: profile.idProofType || 'ID Proof', docPath: filePath };
+            }
+        }
+
+        if (req.files['license'] && (role === 'advocate' || role === 'legal_provider')) {
+            profile.practice.licensePath = `uploads/docs/${req.files['license'][0].filename}`;
+        }
+
+        if (req.files['certificate'] && (role === 'advocate' || role === 'legal_provider')) {
+            profile.education.certificatePath = `uploads/docs/${req.files['certificate'][0].filename}`;
+        }
+
+        user.status = 'Reverify';
+        await user.save();
+        await profile.save();
+
+        createNotification('profileUpdate', 'Your profile documents were resubmitted for verification.', 'System', user._id);
+
+        res.json({ success: true, message: 'Profile resubmitted successfully. Status changed to Reverify.' });
+    } catch (err) {
+        console.error('Resubmit error:', err);
+        res.status(500).json({ error: 'Server error during resubmission' });
     }
 });
 

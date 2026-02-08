@@ -211,9 +211,9 @@ router.get('/members', async (req, res) => {
         } else if (context === 'deleted') {
             query.status = 'Deleted'; // Assuming you have soft delete status
         } else if (context === 'pending') {
-            // For pending, we often check profile.verified, but basic user status might serve too.
-            // We'll refine pending after profile fetch if needed.
-            query.status = { $in: ['Pending', 'Active'] }; // Fetch potential candidates
+            query.status = { $in: ['Pending', 'Active', 'Reverify'] };
+        } else if (context === 'reverify') {
+            query.status = 'Reverify';
         }
 
         // 2b. Default status filter (Exclude Deleted by default if not strictly requested)
@@ -229,6 +229,9 @@ router.get('/members', async (req, res) => {
                 profile = await Advocate.findOne({ userId: u._id }).lean();
             } else if (u.role.toLowerCase() === 'client') {
                 profile = await Client.findOne({ userId: u._id }).lean();
+            } else {
+                // Check if it's a staff role
+                profile = await StaffProfile.findOne({ userId: u._id }).lean();
             }
 
             let location = 'N/A';
@@ -314,7 +317,9 @@ router.get('/members', async (req, res) => {
             filteredMembers = members.filter(m => !m.verified && m.status !== 'Deleted');
         } else if (context === 'rejected') {
             // Specifically members who have been rejected
-            filteredMembers = members.filter(m => !m.verified && m.verificationStatus === 'Rejected' && m.status !== 'Deleted');
+            filteredMembers = members.filter(m => !m.verified && (m.status === 'Rejected' || m.verificationStatus === 'Rejected') && m.status !== 'Deleted');
+        } else if (context === 'reverify') {
+            filteredMembers = members.filter(m => m.status === 'Reverify');
         }
 
         res.json({ success: true, members: filteredMembers });
@@ -419,7 +424,25 @@ router.patch('/members/:id/verify', async (req, res) => {
             createNotification('profileUpdate', `Your client profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
             res.json({ success: true, message: `Client ${verified ? 'verified' : 'unverified'} successfully` });
         } else {
-            res.status(400).json({ error: 'Invalid user role for verification' });
+            // Handle Staff Verification
+            const profile = await StaffProfile.findOneAndUpdate(
+                { userId: user._id },
+                { verified, verifiedAt: verified ? new Date() : null },
+                { new: true }
+            );
+            if (!profile) return res.status(404).json({ error: 'Staff profile not found' });
+
+            user.status = verified ? 'Active' : 'Pending';
+            await user.save();
+
+            if (verified) {
+                const emailSubject = 'Welcome to E-Advocate - Your Staff Account is Verified!';
+                const emailText = `Hello,\n\nCongratulations! Your staff account (${user.role}) has been successfully verified. You now have access to the staff portal.\n\nLogin here: ${req.protocol}://${req.get('host')}/login\n\nBest regards,\nE-Advocate Team`;
+                await sendEmail(user.email, emailSubject, emailText);
+            }
+
+            createNotification('profileUpdate', `Your staff profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
+            res.json({ success: true, message: `Staff ${verified ? 'verified' : 'unverified'} successfully` });
         }
     } catch (err) {
         console.error('Verify error:', err);
@@ -434,8 +457,8 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // Update status to Pending
-        user.status = 'Pending';
+        // Update status to Rejected
+        user.status = 'Rejected';
         await user.save();
 
         let profileName = 'User';
@@ -457,6 +480,16 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
             );
             if (profile) {
                 profileName = `${profile.firstName} ${profile.lastName}`;
+            }
+        } else {
+            // Handle Staff Rejection
+            const profile = await StaffProfile.findOneAndUpdate(
+                { userId: user._id },
+                { verified: false, rejectionReason: remarks },
+                { new: true }
+            );
+            if (profile) {
+                profileName = `Staff Member (${user.email})`;
             }
         }
 

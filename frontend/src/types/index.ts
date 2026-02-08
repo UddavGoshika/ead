@@ -23,6 +23,7 @@ export interface User {
     planTier?: string;
     coinsReceived?: number;
     coinsUsed?: number;
+    rejectionReason?: string;
 }
 
 export interface AuthResponse {

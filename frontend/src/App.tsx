@@ -216,6 +216,7 @@ import ManagerPermissions from './pages/admin/settings/ManagerPermissions';
 import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
 import StaffGlobalDashboard from './pages/staff/StaffGlobalDashboard';
 import CallOverlay from './components/CallOverlay';
+import RejectionOverlay from './components/auth/RejectionOverlay';
 
 import { useAuth } from './context/AuthContext';
 
@@ -246,6 +247,7 @@ const App: React.FC = () => {
         <CallProvider>
           <Router>
             <CallWindow />
+            <RejectionOverlay />
             <ScrollToTop />
             <ImpersonationBanner />
             <Routes>

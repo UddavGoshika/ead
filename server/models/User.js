@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
         ],
         default: 'client'
     },
-    status: { type: String, enum: ['Active', 'Blocked', 'Deactivated', 'Deleted', 'Pending'], default: 'Active' },
+    status: { type: String, enum: ['Active', 'Blocked', 'Deactivated', 'Deleted', 'Pending', 'Rejected', 'Reverify'], default: 'Active' },
     coins: { type: Number, default: 10 },
     walletBalance: { type: Number, default: 0 },
     totalActions: { type: Number, default: 0 },
