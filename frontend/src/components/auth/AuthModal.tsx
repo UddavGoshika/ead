@@ -203,7 +203,7 @@ const AuthModal: React.FC = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 >
-                    <button className={styles.closeBtn} onClick={closeAuthModal}><X size={20} />X</button>
+                    <button className={styles.closeBtn} onClick={closeAuthModal}><X size={20} /></button>
 
                     <div className={styles.tabs}>
                         <button

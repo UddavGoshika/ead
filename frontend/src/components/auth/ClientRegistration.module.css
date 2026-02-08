@@ -389,6 +389,30 @@
 /* Footer Actions */
 .footer {
     padding: 20px 40px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.signInOption {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.signInLink {
+    background: none;
+    border: none;
+    color: #6d5dfc;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 5px;
+    text-decoration: underline;
+}
+
+.signInLink:hover {
+    color: white;
 }
 
 .nextBtn {

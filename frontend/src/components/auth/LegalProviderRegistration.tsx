@@ -3,6 +3,7 @@ import { X, Briefcase, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './LegalProviderRegistration.module.css';
 import { authService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 // Import Step Components
 import Step1Personal from './steps/Step1Personal';
@@ -47,6 +48,7 @@ const stepMapping: Record<number, string> = {
 
 const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ onClose }) => {
     const { isSectionEnabled } = useAdminConfig('legal_provider');
+    const { openAuthModal } = useAuth();
 
     // Filter steps based on enabled sections
     const visibleSteps = steps.filter(step => isSectionEnabled(stepMapping[step.id]));
@@ -280,6 +282,11 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         }
     };
 
+    const handleSignInClick = () => {
+        onClose();
+        openAuthModal('login');
+    };
+
     return (
         <div className={styles.overlay} onClick={handleClose}>
             <motion.div
@@ -348,16 +355,21 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                 </div>
 
                 <div className={styles.footer}>
-                    <button
-                        className={styles.backBtn}
-                        disabled={visibleSteps.length > 0 && currentStep === visibleSteps[0].id}
-                        onClick={handlePrevious}
-                    >
-                        Previous
-                    </button>
-                    <button className={styles.nextBtn} onClick={handleNext}>
-                        {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
-                    </button>
+                    <div className={styles.signInOption}>
+                        Already have an account? <button onClick={handleSignInClick} className={styles.signInLink}>Sign In</button>
+                    </div>
+                    <div className={styles.footerBtns}>
+                        <button
+                            className={styles.backBtn}
+                            disabled={visibleSteps.length > 0 && currentStep === visibleSteps[0].id}
+                            onClick={handlePrevious}
+                        >
+                            Previous
+                        </button>
+                        <button className={styles.nextBtn} onClick={handleNext}>
+                            {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* SUCCESS NOTIFICATION OVERLAY */}

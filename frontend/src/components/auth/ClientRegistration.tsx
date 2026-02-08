@@ -4,6 +4,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ClientRegistration.module.css';
 import { authService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { auth } from '../../firebase';
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useAdminConfig } from '../../hooks/useAdminConfig';
@@ -33,6 +34,7 @@ const stepMapping: Record<number, string> = {
 
 const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     const { isSectionEnabled, getOptions } = useAdminConfig('client');
+    const { openAuthModal } = useAuth();
     const visibleSteps = steps.filter(step => isSectionEnabled(stepMapping[step.id]));
     const [currentStep, setCurrentStep] = useState(visibleSteps.length > 0 ? visibleSteps[0].id : 1);
     const [formData, setFormData] = useState<any>({
@@ -1341,6 +1343,11 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
     };
 
+    const handleSignInClick = () => {
+        onClose();
+        openAuthModal('login');
+    };
+
     return (
         <div className={styles.overlay} onClick={handleClose}>
             <motion.div
@@ -1393,6 +1400,9 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                 </div>
 
                 <div className={styles.footer}>
+                    <div className={styles.signInOption}>
+                        Already have an account? <button onClick={handleSignInClick} className={styles.signInLink}>Sign In</button>
+                    </div>
                     <button
                         className={styles.nextBtn}
                         onClick={() => {
