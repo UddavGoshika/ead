@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, CheckCircle, AlertTriangle, FileText, Download, User, Briefcase, GraduationCap, MapPin, ShieldCheck, Mail, Phone, Calendar } from 'lucide-react';
+import { formatImageUrl } from '../../utils/imageHelper';
 import styles from './MemberVerificationModal.module.css';
 
 interface Member {
@@ -119,15 +120,7 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
         docs.forEach((doc, index) => {
             if (doc.path) {
                 setTimeout(() => {
-                    let cleanPath = doc.path.replace(/\\/g, '/');
-                    const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
-                    if (uploadIndex !== -1) {
-                        cleanPath = cleanPath.substring(uploadIndex);
-                    } else {
-                        cleanPath = cleanPath.replace(/^\/+/, '');
-                        if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
-                    }
-                    const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+                    const fullPath = formatImageUrl(doc.path);
 
                     const link = document.createElement('a');
                     link.href = fullPath;
@@ -148,26 +141,7 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
             path.toLowerCase().includes('signature') ||
             path.toLowerCase().includes('photo');
 
-        let cleanPath = path.replace(/\\/g, '/');
-
-        // Handle absolute paths by finding 'uploads/'
-        // If path contains 'uploads/', take everything from there
-        const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
-        if (uploadIndex !== -1) {
-            cleanPath = cleanPath.substring(uploadIndex);
-        } else {
-            // If no 'uploads/', strip leading slashes
-            cleanPath = cleanPath.replace(/^\/+/, '');
-            // If it doesn't look like a URL and doesn't have uploads/, prepend
-            if (!cleanPath.startsWith('http') && !cleanPath.includes('/') && cleanPath.length > 0) {
-                cleanPath = `uploads/${cleanPath}`;
-            }
-        }
-
-        // Construct full URL
-        const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/'))
-            ? cleanPath
-            : `/${cleanPath}`;
+        const fullPath = formatImageUrl(path);
 
         const fileName = fullPath.split('/').pop() || 'document.pdf';
         const isImageFinal = isImage ||

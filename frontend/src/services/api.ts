@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AuthResponse, Case, Advocate } from '../types';
+import { API_BASE_URL } from '../config';
 
 export interface ClientProfile {
     id: string;
@@ -12,7 +13,7 @@ export interface ClientProfile {
 }
 
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: API_BASE_URL ? `${API_BASE_URL.replace(/\/$/, '')}/api` : '/api',
 });
 
 // Add a request interceptor to attach the token

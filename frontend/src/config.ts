@@ -4,16 +4,20 @@
  * In production, it defaults to the current origin if not provided.
  */
 export const getApiBaseUrl = () => {
+    // 1. Check if VITE_API_URL is explicitly set (highest priority)
     const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl && envUrl !== 'http://localhost:5000') {
+
+    // In production (not localhost), we MUST have a URL if frontend and backend are separate
+    if (envUrl && window.location.hostname !== 'localhost') {
         return envUrl;
     }
 
+    // 2. In development (localhost)
     if (window.location.hostname === 'localhost') {
-        return 'http://localhost:5000';
+        return envUrl || 'http://localhost:5000';
     }
 
-    // In production, if served from same origin, use relative paths
+    // 3. Fallback: If hosted on same origin in production, use empty string for relative paths
     return '';
 };
 

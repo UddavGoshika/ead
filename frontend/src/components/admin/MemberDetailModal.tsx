@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, UserCircle } from 'lucide-react';
+import { formatImageUrl } from '../../utils/imageHelper';
 import styles from './MemberDetailModal.module.css';
 
 interface Member {
@@ -40,17 +41,7 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
 
     const renderFileLink = (path: string | undefined, label: string) => {
         if (!path) return null;
-
-        // Normalize path
-        let cleanPath = path.replace(/\\/g, '/');
-        const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
-        if (uploadIndex !== -1) {
-            cleanPath = cleanPath.substring(uploadIndex);
-        } else {
-            cleanPath = cleanPath.replace(/^\/+/, '');
-            if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
-        }
-        const fullUrl = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+        const fullUrl = formatImageUrl(path);
 
         return (
             <div className={styles.fileItem}>
@@ -77,15 +68,7 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
                         <div className={styles.avatarLarge}>
                             {(() => {
                                 // Prefer pre-processed image from parent, or process raw paths
-                                let src = member.image;
-                                if (!src) {
-                                    if (member.profilePicPath) {
-                                        src = member.profilePicPath.replace(/\\/g, '/');
-                                        if (!src.startsWith('http') && !src.startsWith('/')) src = `/${src}`;
-                                    } else if (member.avatar) {
-                                        src = member.avatar;
-                                    }
-                                }
+                                const src = member.image || formatImageUrl(member.profilePicPath || member.avatar);
 
                                 return src ? (
                                     <img

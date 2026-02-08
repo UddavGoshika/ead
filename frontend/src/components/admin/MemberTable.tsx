@@ -11,6 +11,7 @@ import MemberWalletModal from "./MemberWalletModal";
 import { BulkAddModal } from './BulkAddModal';
 import { useAuth } from "../../context/AuthContext";
 import { getFeaturesFromPlan } from "../../config/completePackageConfig";
+import { formatImageUrl } from "../../utils/imageHelper";
 
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 export type MemberContext = 'all' | 'free' | 'premium' | 'approved' | 'pending' | 'rejected' | 'blocked' | 'deactivated' | 'deleted' | 'reported';
@@ -284,9 +285,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     let finalImage = member.image; // Fallback to list image
                     const rawImage = user.avatar || user.image || profile.image || profile.profilePicture;
                     if (rawImage) {
-                        finalImage = (rawImage.startsWith('http') || rawImage.startsWith('/'))
-                            ? rawImage
-                            : `/${rawImage.replace(/\\/g, '/')}`;
+                        finalImage = formatImageUrl(rawImage);
                     }
 
                     // Specific mapping for docs
@@ -301,10 +300,10 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                         ...member, // Defaults
                         ...user, // User details
                         ...profile, // Profile details (education, etc)
-                        documents: apiData.documents || [],
+                        documents: (apiData.documents || []).map((d: any) => ({ ...d, path: formatImageUrl(d.path) })),
                         id: user._id || member.id,
                         image: finalImage,
-                        signaturePath: sigPath
+                        signaturePath: formatImageUrl(sigPath)
                     };
                     setSelectedMember(fullMember);
                 } else {
@@ -379,13 +378,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     else if (displayRole === 'Legal Provider') formattedCode = `TP-EAD-LSP${suffix}`;
 
                     // Robust Image Logic
-                    let displayImage = '/avatar_placeholder.png';
-                    const rawImg = m.avatar || m.image || (m.profile && m.profile.image);
-                    if (rawImg) {
-                        displayImage = (rawImg.startsWith('http') || rawImg.startsWith('/'))
-                            ? rawImg
-                            : `/${rawImg.replace(/\\/g, '/')}`;
-                    }
+                    const displayImage = formatImageUrl(m.avatar || m.image || (m.profile && m.profile.image));
 
                     return {
                         id: m.id,

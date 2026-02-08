@@ -4,6 +4,7 @@ import styles from "./LoginMemberDetails.module.css";
 import axios from "axios";
 import { Loader2, Search, Key, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
+import { formatImageUrl } from "../../../utils/imageHelper";
 
 interface LoginDetail {
     id: string;
@@ -44,7 +45,7 @@ const LoginMemberDetails: React.FC = () => {
                 const mapped: LoginDetail[] = res.data.members.map((m: any, index: number) => ({
                     id: m.id,
                     serialNo: index + 1,
-                    photo: m.avatar || '/avatar_placeholder.png',
+                    photo: formatImageUrl(m.avatar),
                     name: m.name,
                     uniqueId: m.unique_id || m.code,
                     email: m.email,
@@ -163,7 +164,15 @@ const LoginMemberDetails: React.FC = () => {
                                 <tr key={member.id}>
                                     <td>#{idx + 1}</td>
                                     <td>
-                                        <img src={member.photo} alt={member.name} className={styles.avatar} />
+                                        <img
+                                            src={member.photo}
+                                            alt={member.name}
+                                            className={styles.avatar}
+                                            onError={(e) => {
+                                                e.currentTarget.src = "/avatar_placeholder.png";
+                                                e.currentTarget.onerror = null;
+                                            }}
+                                        />
                                     </td>
                                     <td>
                                         <div className={styles.nameCell}>
