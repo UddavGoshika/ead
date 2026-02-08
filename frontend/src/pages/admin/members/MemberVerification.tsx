@@ -86,7 +86,7 @@ interface PendingMember {
 }
 
 
-const API_BASE_URL = "";
+import { API_BASE_URL } from "../../../config";
 
 const MOCK_DEMO_MEMBER: PendingMember = {
     id: "demo-1",
@@ -145,31 +145,10 @@ const MOCK_DEMO_MEMBER: PendingMember = {
 };
 
 
+import { formatImageUrl } from "../../../utils/imageHelper";
+
 const getMediaUrl = (path: string | undefined): string => {
-    if (!path) return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%2364748b'%3ENo Image%3C/text%3E%3C/svg%3E";
-    if (path.startsWith('http') || path.startsWith('blob:')) return path;
-
-    // 1. Normalize slashes
-    let cleanPath = path.replace(/\\/g, '/');
-
-    // 2. Handle absolute paths by finding 'uploads/'
-    const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
-    if (uploadIndex !== -1) {
-        cleanPath = cleanPath.substring(uploadIndex);
-    } else {
-        // If 'uploads/' not found, verify if it's just a filename
-        cleanPath = cleanPath.replace(/^\/+/, ''); // Strip leading /
-        if (!cleanPath.includes('/') && cleanPath.length > 0) {
-            cleanPath = `uploads/${cleanPath}`;
-        }
-    }
-
-    // 3. Ensure leading slash for relative URL (proxied)
-    let finalPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-
-    // Add cache buster to force reload if image changed
-    // return `${finalPath}?t=${Date.now()}`; // Disabled for performance, enable if caching issues persist
-    return finalPath;
+    return formatImageUrl(path);
 };
 
 const MemberVerification: React.FC = () => {

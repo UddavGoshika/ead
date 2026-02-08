@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Client = require('../models/Client');
 const Otp = require('../models/Otp');
 const { createNotification } = require('../utils/notif');
+const { getImageUrl, getFullImageUrl } = require('../utils/pathHelper');
 
 // Storage config
 const storage = multer.diskStorage({
@@ -325,7 +326,7 @@ router.get('/', async (req, res) => {
                 category: client.legalHelp?.category || 'General',
                 experience: 'Client Profile',
                 specialization: client.legalHelp?.specialization || 'General Legal Help',
-                image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
+                image_url: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
                 isMasked: shouldMask
             };
         });
@@ -412,8 +413,8 @@ router.get('/:userId', async (req, res) => {
             mobile: client.mobile,
             location: client.address,
             legalHelp: client.legalHelp,
-            img: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
-            image_url: client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
+            img: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
+            image_url: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             profilePicPath: client.profilePicPath,
             contactInfo: contactInfo
         };

@@ -5,7 +5,7 @@ import type { Transaction, SortState, FilterState, SortField } from "./types";
 
 import axios from "axios";
 
-const API_BASE_URL = window.location.hostname === 'localhost' ? "http://localhost:5000" : "";
+import { API_BASE_URL } from "../../../config";
 
 const initialTransactions: Transaction[] = [];
 

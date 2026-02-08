@@ -1,5 +1,5 @@
-import React from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { formatImageUrl } from '../../../utils/imageHelper';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
     Coins, LogOut, Briefcase, Lock, Wallet, FileText
@@ -39,7 +39,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, o
             <div className={styles.profileSection}>
                 <div className={styles.avatarContainer}>
                     {user?.image_url ? (
-                        <img src={user.image_url} alt={user.name} className={styles.profileAvatar} />
+                        <img src={formatImageUrl(user.image_url)} alt={user.name} className={styles.profileAvatar} />
                     ) : (
                         <div className={styles.avatarFallback}>
                             {user?.name?.charAt(0) || 'A'}

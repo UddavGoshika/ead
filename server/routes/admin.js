@@ -19,6 +19,7 @@ const CommissionRule = require('../models/CommissionRule');
 const Contact = require('../models/Contact');
 
 const { createNotification } = require('../utils/notif');
+const { getImageUrl } = require('../utils/pathHelper');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -240,18 +241,7 @@ router.get('/members', async (req, res) => {
                 }
             }
 
-            const normalizePath = (p) => {
-                if (!p) return null;
-                let clean = p.replace(/\\/g, '/');
-
-                // If path contains 'uploads/', strip everything before it to handle absolute paths
-                const uploadIndex = clean.toLowerCase().indexOf('uploads/');
-                if (uploadIndex !== -1) {
-                    clean = clean.substring(uploadIndex);
-                }
-
-                return clean.startsWith('/') ? clean : `/${clean}`;
-            };
+            const normalizePath = getImageUrl;
 
             // Normalize nested paths
             if (profile?.education) {

@@ -12,6 +12,7 @@ import { useCall } from '../../../context/CallContext';
 import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
 import PremiumTryonModal from './PremiumTryonModal';
 import styles from './DetailedProfile.module.css';
+import { formatImageUrl } from '../../../utils/imageHelper';
 
 interface Props {
     profileId: string | null;
@@ -257,7 +258,7 @@ const DetailedProfile: React.FC<Props> = ({
 
                         {/* Right: Cover Image */}
                         <div className={styles.heroRight}>
-                            <img src={imageUrl} alt={displayName} className={styles.coverImage} />
+                            <img src={formatImageUrl(imageUrl)} alt={displayName} className={styles.coverImage} />
                             <div className={styles.imageOverlay} />
 
                             {/* Old Arrows Removed */}

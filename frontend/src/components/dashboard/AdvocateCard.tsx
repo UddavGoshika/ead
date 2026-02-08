@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import styles from './AdvocateCard.module.css';
 import type { Advocate } from '../../types';
+import { formatImageUrl } from '../../utils/imageHelper';
 
 interface AdvocateCardProps {
     advocate: Advocate;
@@ -165,7 +166,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                 <div className={styles.imageContainer}>
                     {advocate.image_url ? (
                         <img
-                            src={advocate.image_url.startsWith('http') ? advocate.image_url : `${advocate.image_url}`}
+                            src={formatImageUrl(advocate.image_url)}
                             alt={advocate.name}
                             className={`${styles.advocateImg} ${shouldBlur ? styles.blurredImage : ''}`}
                             onError={(e) => {

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import styles from './AdvocateCard.module.css'; // Reuse advocate card styles for consistency
 import type { Client } from '../../types';
+import { formatImageUrl } from '../../utils/imageHelper';
 
 interface ClientCardProps {
     client: Client;
@@ -163,7 +164,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                 <div className={styles.imageContainer}>
                     {client.image_url ? (
                         <img
-                            src={client.image_url.startsWith('http') ? client.image_url : `${client.image_url}`}
+                            src={formatImageUrl(client.image_url)}
                             alt={clientName}
                             className={`${styles.advocateImg} ${shouldBlur ? styles.blurredImage : ''}`}
                             onError={(e) => {

@@ -22,6 +22,7 @@ import { callService } from "../../../services/callService";
 import type { Message, Conversation } from "../../../services/interactionService";
 import type { Advocate } from "../../../types";
 import DetailedProfile from "./DetailedProfile";
+import { formatImageUrl } from "../../../utils/imageHelper";
 
 interface MessengerProps {
     view?: 'list' | 'chat';
@@ -406,7 +407,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 onClick={() => handleSelectConversation(conv)}
                             >
                                 <img
-                                    src={(conv.advocate as any).profilePic || (conv.advocate as any).img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400'}
+                                    src={formatImageUrl((conv.advocate as any).profilePic || (conv.advocate as any).img)}
                                     alt={conv.advocate.name}
                                     className={styles.convAvatar}
                                 />
@@ -453,7 +454,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 img: act.partnerImg
                             })}>
                                 <img
-                                    src={act.partnerImg}
+                                    src={formatImageUrl(act.partnerImg)}
                                     className={styles.convAvatar}
                                     alt={act.partnerName}
                                 />
@@ -501,7 +502,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     img: act.partnerImg
                                 })}>
                                     <img
-                                        src={act.partnerImg}
+                                        src={formatImageUrl(act.partnerImg)}
                                         className={styles.convAvatar}
                                         alt={act.partnerName}
                                     />
@@ -580,7 +581,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 {filteredCalls.map(call => (
                                     <div key={call._id} className={styles.convItem}>
                                         <img
-                                            src={call.partnerDetails.image_url}
+                                            src={formatImageUrl(call.partnerDetails.image_url)}
                                             className={styles.convAvatar}
                                             alt={call.partnerDetails.name}
                                             onClick={(e) => handleClientClick(String(call.partnerDetails._id), e)}

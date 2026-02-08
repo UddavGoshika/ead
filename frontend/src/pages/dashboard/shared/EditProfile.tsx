@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { advocateService, authService, clientService } from '../../../services/api';
+import { formatImageUrl } from '../../../utils/imageHelper';
 
 interface Props {
   backToHome?: () => void;
@@ -149,7 +150,7 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         const newName = updated.name || (updated.firstName ? `${updated.firstName} ${updated.lastName}` : '');
         if (newName) refreshUser({ name: newName });
         if (updated.profilePicPath) {
-          refreshUser({ image_url: `/${updated.profilePicPath.replace(/\\/g, '/')}` });
+          refreshUser({ image_url: formatImageUrl(updated.profilePicPath) });
         }
 
         showToast?.('Profile updated successfully');
@@ -221,7 +222,7 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className={styles.avatarWrapper}>
             <img
-              src={profileData?.image_url || user?.image_url || 'https://i.pravatar.cc/150'}
+              src={formatImageUrl(profileData?.image_url || user?.image_url)}
               className={styles.avatar}
               alt="Profile"
             />

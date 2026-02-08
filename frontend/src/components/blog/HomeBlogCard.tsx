@@ -17,16 +17,19 @@ interface HomeBlogCardProps {
     };
 }
 
+import { API_BASE_URL } from '../../config';
+import { formatImageUrl } from '../../utils/imageHelper';
+
 const HomeBlogCard: React.FC<HomeBlogCardProps> = ({ post }) => {
     const navigate = useNavigate();
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const apiUrl = API_BASE_URL;
 
     // Correction Logic due to legacy data
     const displayAuthor = post.author.includes('Health Plus') ? 'e-Advocate Services' : post.author;
     const displayDate = post.date === 'Invalid Date' ? 'Recently Updated' : post.date;
 
     // Fallback image logic
-    const [imgSrc, setImgSrc] = React.useState(post.image);
+    const [imgSrc, setImgSrc] = React.useState(formatImageUrl(post.image));
 
     const handleReadClick = async () => {
         try {

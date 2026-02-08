@@ -4,6 +4,7 @@ import { useCall } from '../../context/CallContext';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize, Minimize, X, Volume2, VolumeX, Star, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PremiumTryonModal from '../../pages/dashboard/shared/PremiumTryonModal';
+import { formatImageUrl } from '../../utils/imageHelper';
 
 const CallWindow: React.FC = () => {
     const {
@@ -86,9 +87,7 @@ const CallWindow: React.FC = () => {
                 <div className={styles.incomingPopup}>
                     <div className={styles.pulseWrapper}>
                         <img
-                            src={incomingPartner?.image_url && incomingPartner.image_url !== '/default-avatar.png'
-                                ? (incomingPartner.image_url.startsWith('http') ? incomingPartner.image_url : `${window.location.origin}${incomingPartner.image_url}`)
-                                : "/default-avatar.png"}
+                            src={formatImageUrl(incomingPartner?.image_url)}
                             alt="Caller"
                             className={`${styles.callerAvatar} ${!isPremium ? styles.blurredAvatar : ''}`}
                         />
@@ -138,9 +137,7 @@ const CallWindow: React.FC = () => {
                 <div className={styles.incomingPopup}>
                     <div className={styles.pulseWrapper}>
                         <img
-                            src={outgoingPartner?.image_url && outgoingPartner.image_url !== '/default-avatar.png'
-                                ? (outgoingPartner.image_url.startsWith('http') ? outgoingPartner.image_url : `${window.location.origin}${outgoingPartner.image_url}`)
-                                : (outgoingPartner?.image_url || "/default-avatar.png")}
+                            src={formatImageUrl(outgoingPartner?.image_url)}
                             alt="Recipient"
                             className={styles.callerAvatar}
                         />
@@ -214,9 +211,7 @@ const CallWindow: React.FC = () => {
                     <div className={`${styles.audioOnlyOverlay} ${!isPremium ? styles.premiumBlur : ''}`}>
                         <div className={styles.audioAvatarWrapper}>
                             <img
-                                src={partner?.image_url && partner.image_url !== '/default-avatar.png'
-                                    ? (partner.image_url.startsWith('http') ? partner.image_url : `${window.location.origin}${partner.image_url}`)
-                                    : "/default-avatar.png"}
+                                src={formatImageUrl(partner?.image_url)}
                                 alt="User"
                                 className={styles.audioAvatarLarge}
                             />

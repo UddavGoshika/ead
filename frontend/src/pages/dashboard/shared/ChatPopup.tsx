@@ -21,6 +21,7 @@ import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
 import PremiumTryonModal from './PremiumTryonModal';
+import { formatImageUrl } from '../../../utils/imageHelper';
 
 interface ChatPopupProps {
     advocate: any; // Relaxed type to handle both Advocate and Client profiles efficiently
@@ -209,7 +210,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate, onClose, onSent }) => {
                         <ChevronLeft size={24} />
                     </button>
                     <img
-                        src={displayImage}
+                        src={formatImageUrl(displayImage)}
                         alt={displayName}
                         className={`${styles.avatar} ${!isPremium ? styles.blurredAvatar : ''}`}
                         onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}

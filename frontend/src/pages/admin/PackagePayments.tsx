@@ -30,7 +30,7 @@ interface Props {
     title?: string;
 }
 
-const API_BASE_URL = window.location.hostname === 'localhost' ? "http://localhost:5000" : "";
+import { API_BASE_URL } from "../../config";
 
 const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" }) => {
     const [payments, setPayments] = useState<Payment[]>([]);

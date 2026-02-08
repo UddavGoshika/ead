@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Advocate = require('../models/Advocate');
 const Otp = require('../models/Otp');
 const { createNotification } = require('../utils/notif');
+const { getImageUrl } = require('../utils/pathHelper');
 
 // Storage config
 const storage = multer.diskStorage({
@@ -318,7 +319,7 @@ router.get('/', async (req, res) => {
 
             let displayName = adv.name || `${adv.firstName} ${adv.lastName}`;
             let displayId = adv.unique_id || 'N/A';
-            let displayImage = adv.profilePicPath ? `/${adv.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
+            let displayImage = getImageUrl(adv.profilePicPath) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
 
             // Mask details if viewer is Free
             if (shouldMask) {
@@ -378,7 +379,7 @@ router.get('/me', async (req, res) => {
             success: true,
             advocate: {
                 ...advocate.toObject(),
-                image_url: advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null
+                image_url: getImageUrl(advocate.profilePicPath)
             }
         });
     } catch (err) {
@@ -463,7 +464,7 @@ router.get('/:uniqueId', async (req, res) => {
 
         let displayName = advocate.name || `${advocate.firstName} ${advocate.lastName}`;
         let displayId = advocate.unique_id;
-        let displayImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
+        let displayImage = getImageUrl(advocate.profilePicPath) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
         let bio = advocate.career?.bio || '';
 
         if (shouldMask) {
