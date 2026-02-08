@@ -3,7 +3,7 @@ import {
     ArrowLeft, MapPin, Heart, Briefcase, UserCheck, Star,
     X, Phone, CheckCircle, Handshake, Bookmark, MessageCircle, Send,
     AlertCircle, Loader2, Video, PlusCircle, ChevronRight,
-    Bell, Trash2, Clock, Globe, Award, ShieldCheck, GraduationCap, Gavel, Image
+    Bell, Trash2, Clock, Globe, Award, ShieldCheck, GraduationCap, Gavel, Image, FileText
 } from 'lucide-react';
 import { advocateService, clientService } from '../../../services/api';
 import { interactionService } from '../../../services/interactionService';
@@ -52,27 +52,54 @@ const DetailedProfile: React.FC<Props> = ({
     const [showTopup, setShowTopup] = useState(false);
     const [showTryonModal, setShowTryonModal] = useState(false);
 
+    // Animation States
+    const [animClass, setAnimClass] = useState('');
+    const [prevIndex, setPrevIndex] = useState(currentIndex || 0);
+
     const { user, refreshUser } = useAuth();
     const { initiateCall } = useCall();
-    const plan = (user?.plan || 'Free').toLowerCase();
-    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
+
+    // Detect Tab Changes to animate
+    useEffect(() => {
+        if (tabs) {
+            setAnimClass(styles.animTabSwitch);
+            const t = setTimeout(() => setAnimClass(''), 400);
+            return () => clearTimeout(t);
+        }
+    }, [tabs, listTitle]); // Re-anim on tab/list change
+
+    // Detect Profile Navigation (Left/Right)
+    useEffect(() => {
+        if (currentIndex !== undefined) {
+            if (currentIndex > prevIndex) {
+                setAnimClass(styles.animSlideFromRight);
+            } else if (currentIndex < prevIndex) {
+                setAnimClass(styles.animSlideFromLeft);
+            }
+            const t = setTimeout(() => setAnimClass(''), 400);
+            setPrevIndex(currentIndex);
+            return () => clearTimeout(t);
+        } else if (profileId) {
+            // Initial load or direct ID change
+            setAnimClass(styles.animSlideFromRight);
+            const t = setTimeout(() => setAnimClass(''), 400);
+            return () => clearTimeout(t);
+        }
+    }, [currentIndex, profileId]);
 
     useEffect(() => {
         const fetchProfile = async () => {
             if (!profileId) return;
             try {
                 setLoading(true);
-                let fetchedProfile = null;
-
-                // Try fetching as advocate first
+                // Try fetching as advocate
                 try {
                     const response = await advocateService.getAdvocateById(profileId);
                     if (response.data.success) {
-                        const adv = response.data.advocate;
-                        setProfile({ ...adv, role: 'advocate' });
-                        if (adv.contactInfo) setContactInfo(adv.contactInfo);
-                        if (user && adv.id) {
-                            interactionService.recordActivity('advocate', String(adv.id), 'visit', String(user.id));
+                        setProfile({ ...response.data.advocate, role: 'advocate' });
+                        if (response.data.advocate.contactInfo) setContactInfo(response.data.advocate.contactInfo);
+                        if (user && response.data.advocate.id) {
+                            interactionService.recordActivity('advocate', String(response.data.advocate.id), 'visit', String(user.id));
                         }
                         return;
                     }
@@ -83,21 +110,19 @@ const DetailedProfile: React.FC<Props> = ({
                     const clientRes = await clientService.getClientById(profileId);
                     if (clientRes.data.success) {
                         const client = clientRes.data.client;
-                        const formattedClient = {
+                        setProfile({
                             ...client,
                             role: 'client',
-                            id: client.id,
                             name: client.name || `${client.firstName} ${client.lastName}`,
                             image_url: client.image_url || client.img,
                             location: typeof client.location === 'object' ? `${client.location.city}, ${client.location.state}` : client.location,
                             experience: 'Client',
                             specialties: client.legalHelp ? [client.legalHelp.category, client.legalHelp.specialization].filter(Boolean) : [],
                             bio: client.legalHelp?.issueDescription || 'Legal client looking for assistance.'
-                        };
-                        setProfile(formattedClient);
+                        });
                         if (client.contactInfo) setContactInfo(client.contactInfo);
-                        if (user && formattedClient.id) {
-                            interactionService.recordActivity('client', String(formattedClient.id), 'visit', String(user.id));
+                        if (user && client.id) {
+                            interactionService.recordActivity('client', String(client.id), 'visit', String(user.id));
                         }
                     }
                 } catch (e) { }
@@ -128,263 +153,218 @@ const DetailedProfile: React.FC<Props> = ({
         }
     };
 
-    const handleInterestClick = (e: React.MouseEvent) => { e.stopPropagation(); handleAction('interest'); setPopupType('interest_upgrade'); };
-    const handleSuperInterestClick = (e: React.MouseEvent) => { e.stopPropagation(); setPopupType('super_interest_confirm'); };
-    const confirmSuperInterest = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('superInterest'); setPopupType('none'); } catch (err) { } };
-    const handleViewContact = (e: React.MouseEvent) => { e.stopPropagation(); setPopupType('contact_confirm'); };
-    const confirmViewContact = async (e: React.MouseEvent) => { e.stopPropagation(); try { await handleAction('view_contact'); setPopupType('none'); } catch (err) { } };
-
     if (loading) return (
         <div className={styles.modalWrapper}>
-            <div className={styles.loadingContainer}>
-                <Loader2 className="animate-spin" size={48} color="#facc15" />
-                <p style={{ color: '#fff', marginTop: '20px' }}>Loading Profile Details...</p>
-            </div>
+            <Loader2 className="animate-spin" size={48} color="#facc15" />
         </div>
     );
 
-    if (!profile) return (
-        <div className={styles.modalWrapper}>
-            <div className={styles.errorContainer}>
-                <AlertCircle size={48} color="#ef4444" />
-                <h2 style={{ color: '#fff', margin: '20px 0' }}>Profile Not Found</h2>
-                <button onClick={backToProfiles} className={styles.backToResults}>Back to Search</button>
-            </div>
-        </div>
-    );
+    if (!profile) return null;
 
-    const displayName = profile.name || "Legal Professional";
-    const imageUrl = "/assets/manoj.png";
-    const experience = profile.experience || "8+";
-    const loc = profile.location || "Location Not Provided";
+    const displayName = profile.name || (profile.firstName ? `${profile.firstName} ${profile.lastName}` : "Legal Professional");
+    const imageUrl = profile.image_url || "/assets/manoj.png";
+    const experience = profile.experience || "8 Years";
+    const loc = profile.location || "New Delhi, India";
+    const uniqueId = profile.unique_id || "TP-EAD-ADV-0YGLVF";
+    const bio = profile.bio || "A dedicated and results-driven professional.";
 
-    const legalServices = [
-        { name: "Court Representation", icon: <Gavel size={18} /> },
-        { name: "Document Preparation", icon: <Award size={18} /> },
-        { name: "Contract Review", icon: <ShieldCheck size={18} /> },
-        { name: "Dispute Resolution", icon: <UserCheck size={18} /> },
-        { name: "Family Law", icon: <Heart size={18} /> },
-        { name: "Corporate Law", icon: <Briefcase size={18} /> },
-        { name: "Real Estate", icon: <MapPin size={18} /> },
-        { name: "Criminal Defense", icon: <ShieldCheck size={18} /> }
+    const servicesList = [
+        { name: "Legal Consultation", icon: <UserCheck size={16} /> },
+        { name: "Doc Review", icon: <FileText size={16} /> },
+        { name: "Litigation", icon: <Gavel size={16} /> },
+        { name: "Arbitration", icon: <Handshake size={16} /> },
+        { name: "Corporate Law", icon: <Briefcase size={16} /> },
+        { name: "Property Disputes", icon: <MapPin size={16} /> }
     ];
 
-    const notableCases = [
-        { title: "Corporate Fraud Investigation", desc: "Successfully represented a major corporation in a multi-million dollar fraud case.", status: "Won", year: "2021" },
-        { title: "Intellectual Property Dispute", desc: "Defended client's patent rights against infringement claims from a competitor.", status: "Settled", year: "2018" },
-        { title: "Family Estate Settlement", desc: "Mediated a complex family estate dispute involving multiple beneficiaries.", status: "Resolved", year: "2021" }
-    ];
+    const allSpecializations = (profile.specialties && profile.specialties.length > 0)
+        ? profile.specialties
+        : [
+            "Criminal Defense", "Civil Litigation", "Corporate Law", "Family Law",
+            "Intellectual Property", "Real Estate", "Banking & Finance", "Tax Law",
+            "Cyber Law", "Labor & Employment", "Environmental Law", "Human Rights",
+            "Constitutional Law", "Arbitration", "Mediation", "Merger & Acquisition",
+            "Startup Advisory", "Immigration Law", "Medical Negligence", "Consumer Protection",
+            "Insurance Law", "Maritime Law", "Aviation Law", "Entertainment Law",
+            "Sports Law", "International Trade", "Bankruptcy", "Wills & Trusts",
+            "Personal Injury", "Product Liability", "Defamation", "Education Law", "Public Interest"
+        ];
 
     return (
         <div className={isModal ? styles.modalWrapper : styles.container} onClick={() => isModal && onClose && onClose()}>
-            <div className={isModal ? styles.modalContent : styles.container} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
 
-                {/* Floating Sliders */}
-                {items && items.length > 1 && currentIndex !== undefined && onNavigate && (
-                    <>
-                        <button className={`${styles.floatingNavBtn} ${styles.navLeft}`} onClick={() => onNavigate(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0}>
-                            <ChevronRight size={32} style={{ transform: 'rotate(180deg)' }} />
-                        </button>
-                        <button className={`${styles.floatingNavBtn} ${styles.navRight}`} onClick={() => onNavigate(Math.min(items.length - 1, currentIndex + 1))} disabled={currentIndex === items.length - 1}>
-                            <ChevronRight size={32} />
-                        </button>
-                    </>
-                )}
+                {/* 0. TOP NAVIGATION ROW (Outside Hero) */}
+                <div className={styles.topNavRow}>
+                    {/* Left: Back Button */}
+                    <button className={styles.topNavBackBtn} onClick={isModal ? onClose : backToProfiles}><ArrowLeft size={20} />⬅</button>
 
-                <div className={styles.topBar}>
-                    <div className={styles.topBarLeft}>
-                        <button className={styles.backBtn} onClick={isModal ? onClose : backToProfiles}>
-                            <ArrowLeft size={24} />
-                        </button>
-                        {listTitle && <h2 className={styles.navTitle}>{listTitle}</h2>}
+                    {/* Center/Right: Toggle Tabs */}
+                    {tabs && tabs.length > 0 ? (
+                        <div className={styles.toggleTabContainer}>
+                            {tabs.map((t, idx) => (
+                                <button
+                                    key={idx}
+                                    className={`${styles.toggleTab} ${t.active ? styles.toggleTabActive : ''}`}
+                                    onClick={t.onClick}
+                                >
+                                    {t.label} {t.count !== undefined && `(${t.count})`}
+                                </button>
+                            ))}
+                        </div>
+                    ) : <div></div>} {/* Spacer if no tabs */}
+
+                    {/* Right spacer / Counter */}
+                    <div style={{ minWidth: 40, color: '#94a3b8', fontSize: 14, fontWeight: 600 }}>
+                        {currentIndex !== undefined && items ? `${currentIndex + 1} / ${items.length}` : ''}
                     </div>
                 </div>
 
-                <div className={styles.heroSection}>
-                    <img src={imageUrl} alt={displayName} className={styles.heroImage} />
-                    <div className={styles.heroOverlay}></div>
-                    <div className={styles.heroContent}>
-                        {/* Top Right Controls: Image Badge + Tabs */}
-                        <div className={styles.topRightControls}>
-                            {tabs && tabs.length > 0 && (
-                                <div className={styles.tabsContainer}>
-                                    {tabs.map((t, idx) => (
-                                        <button
-                                            key={idx}
-                                            className={`${styles.tabBtn} ${t.active ? styles.tabBtnActive : ''}`}
-                                            onClick={t.onClick}
-                                        >
-                                            {t.label}
-                                            {t.count !== undefined && <span className={styles.tabCount}>({t.count})</span>}
-                                        </button>
+                {/* WRAPPER FOR ANIMATED CONTENT */}
+                <div key={profileId} className={`${styles.profileContentWrapper} ${animClass}`}>
+
+                    {/* 1. HERO SECTION (Split 40/60) */}
+                    <div className={styles.heroSection}>
+                        {/* Left: Info & Tags */}
+                        <div className={styles.heroLeft}>
+
+                            <div className={styles.profileIdentity}>
+                                <span className={styles.lastSeen}>Last seen on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, '-')}</span>
+                                <h1 className={styles.heroName}>{displayName}, {profile.age || 28} <CheckCircle style={{ display: 'inline', verticalAlign: 'middle' }} size={24} fill="#3b82f6" color="#0f172a" /></h1>
+                                <p className={styles.heroId}>ID - {uniqueId}</p>
+                            </div>
+
+                            {/* Specializations Cloud (Scrollable if needed) */}
+                            <div className={styles.specSection}>
+                                <div className={styles.specTitle}><Award size={14} /> Expertise & Specializations</div>
+                                <div className={styles.tagsGrid}>
+                                    {allSpecializations.map((s: string, i: number) => (
+                                        <div key={i} className={styles.tagItem}><CheckCircle size={10} color="#10b981" /> {s}</div>
                                     ))}
                                 </div>
-                            )}
-                            <div className={styles.imageCountBadge}>
-                                <Image size={14} /> 6
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className={styles.heroActions}>
+                                <button className={`${styles.actionBtn} ${styles.btnPrimary}`} onClick={() => setPopupType('chat_confirm')}>
+                                    <MessageCircle size={18} /> Chat with Advocate
+                                </button>
+                                <button className={`${styles.actionBtn} ${styles.btnSecondary}`} onClick={() => setPopupType('super_interest_confirm')}>
+                                    <Heart size={18} fill={popupType === 'super_interest_confirm' ? 'white' : 'none'} /> Super Interest
+                                </button>
                             </div>
                         </div>
 
-                        <div className={styles.heroBottomContent}>
-                            <div className={styles.lastSeenBadge}>Last seen on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).replace(/ /g, '-')}</div>
-                            <h1 className={styles.heroName}>
-                                {displayName}, {profile.age || '28'}
-                                <span className={styles.verifiedTick}><CheckCircle size={16} fill="#3b82f6" color="white" /></span>
-                            </h1>
-                            <p className={styles.heroId}>ID - {profile.unique_id || String(profile.id).slice(-8).toUpperCase()}</p>
-                            {/* <p className={styles.heroManagedBy}>Profile managed by {profile.managed_by || 'Self'}</p> */}
+                        {/* Right: Cover Image */}
+                        <div className={styles.heroRight}>
+                            <img src={imageUrl} alt={displayName} className={styles.coverImage} />
+                            <div className={styles.imageOverlay} />
+
+                            {/* Old Arrows Removed */}
                         </div>
                     </div>
-                </div>
 
-                <div className={styles.layoutGrid}>
-                    <div className={styles.mainContentArea}>
-                        <div className={styles.section}>
-                            <div className={styles.sectionHeader}>
-                                <UserCheck className={styles.sectionIcon} size={22} />
-                                <h3>About {displayName}</h3>
+                    {/* 2. BOTTOM CONTENT (Restored Grid) */}
+                    <div className={styles.contentContainer}>
+                        {/* Main Left Column */}
+                        <div className={styles.mainColumn}>
+                            {/* About */}
+                            <div className={styles.contentSection}>
+                                <div className={styles.sectionHeader}><UserCheck size={20} color="#facc15" /> <h3>About {displayName}</h3></div>
+                                <p className={styles.aboutText}>{bio}</p>
                             </div>
-                            <span className={styles.aboutDegrees}>Expert Legal Practitioner</span>
-                            <p className={styles.aboutText}>{profile.bio || "A dedicated legal professional with extensive experience in handling complex litigation and advisory matters. Committed to providing excellence and results-driven representation for all clients."}</p>
-                        </div>
 
-                        <div className={styles.section}>
-                            <div className={styles.sectionHeader}>
-                                <Award className={styles.sectionIcon} size={22} />
-                                <h3>Experience & Expertise</h3>
-                            </div>
-                            <div className={styles.statsRow}>
-                                <div className={styles.statItem}>
-                                    <div className={styles.statIconWrap}><Clock size={20} /></div>
-                                    <div className={styles.statInfo}><span className={styles.statValue}>{experience}</span><span className={styles.statLabel}>Experience</span></div>
-                                </div>
-                                <div className={styles.statItem}>
-                                    <div className={styles.statIconWrap}><ShieldCheck size={20} /></div>
-                                    <div className={styles.statInfo}><span className={styles.statValue}>150+</span><span className={styles.statLabel}>Cases</span></div>
-                                </div>
-
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-                                <div>
-                                    <h4 className={styles.listHeading}>Key Specializations</h4>
-                                    <div className={styles.specializationGrid}>
-                                        {(profile.specialties || ['General Practice', 'Litigation', 'Legal Advice']).map((s: string, i: number) => (
-                                            <div key={i} className={styles.listItem}>
-                                                <CheckCircle className={styles.checkIcon} size={14} /> {s}
-                                            </div>
-                                        ))}
+                            {/* Experience Stats */}
+                            <div className={styles.contentSection}>
+                                <div className={styles.sectionHeader}><Briefcase size={20} color="#facc15" /> <h3>Experience & Track Record</h3></div>
+                                <div className={styles.statsRow}>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><Clock size={20} /></div>
+                                        <div className={styles.statInfo}><span className={styles.statVal}>{experience}</span><span className={styles.statLbl}>Experience</span></div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><ShieldCheck size={20} /></div>
+                                        <div className={styles.statInfo}><span className={styles.statVal}>150+</span><span className={styles.statLbl}>Cases Won</span></div>
                                     </div>
                                 </div>
-                                <div>
-                                    <h4 className={styles.listHeading}>Recent History</h4>
-                                    <div className={styles.experienceTimeline}>
-                                        <div className={styles.timelinePoint}>
-                                            <span className={styles.timelineYear}>Current</span>
-                                            <span className={styles.timelineRole}>Legal Consultant</span>
-                                        </div>
-                                        <div className={styles.timelinePoint}>
-                                            <span className={styles.timelineYear}>Earlier</span>
-                                            <span className={styles.timelineRole}>Senior Associate</span>
-                                        </div>
+
+                                {/* Timeline */}
+                                <div className={styles.timelineBox}>
+                                    <div className={styles.timelineItem}>
+                                        <span className={styles.tDot}></span>
+                                        <span className={styles.tYear}>Current</span>
+                                        <h4 className={styles.tRole}>Senior Legal Consultant</h4>
+                                        <p className={styles.tDesc}>Leading corporate advisory and litigation at E-Advocate Services.</p>
                                     </div>
+                                    <div className={styles.timelineItem}>
+                                        <span className={styles.tDot}></span>
+                                        <span className={styles.tYear}>2018 - 2023</span>
+                                        <h4 className={styles.tRole}>Associate Partner</h4>
+                                        <p className={styles.tDesc}>Specialized in Family Law and Civil Dispute Resolution.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Services */}
+                            <div className={styles.contentSection}>
+                                <div className={styles.sectionHeader}><Award size={20} color="#facc15" /> <h3>Legal Services</h3></div>
+                                <div className={styles.servGrid}>
+                                    {servicesList.map((s, i) => (
+                                        <div key={i} className={styles.servCard}>{s.icon} {s.name}</div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
 
-                        <div className={styles.section}>
-                            <div className={styles.sectionHeader}>
-                                <Briefcase className={styles.sectionIcon} size={22} />
-                                <h3>Legal Services</h3>
-                            </div>
-                            <div className={styles.servicesGrid}>
-                                {legalServices.map((s, i) => (
-                                    <div key={i} className={styles.serviceCard}>
-                                        <div className={styles.serviceIcon}>{s.icon}</div>
-                                        {s.name}
-                                    </div>
-                                ))}
+                        {/* Sidebar Column */}
+                        <div className={styles.sidebarColumn}>
+                            <div className={styles.contactCard}>
+                                <div className={styles.contactTitle}><Handshake size={20} color="#facc15" /> Connect Now</div>
+                                <input type="text" className={styles.cInput} placeholder="Your Full Name" />
+                                <input type="text" className={styles.cInput} placeholder="Mobile Number" />
+                                <textarea className={styles.cInput} style={{ minHeight: 100, resize: 'vertical' }} placeholder="Briefly describe your case..."></textarea>
+                                <button className={styles.cBtn} onClick={() => setPopupType('contact_confirm')}>Send Request <Send size={16} /></button>
                             </div>
                         </div>
                     </div>
 
-                    <div className={styles.sidebar}>
-                        <div className={styles.sideCard}>
-                            <div className={styles.sideBody}>
-                                <div className={styles.detailItem}>
-                                    <Phone className={styles.detailIcon} size={18} />
-                                    <div className={styles.detailText} onClick={handleViewContact}>
-                                        <span className={styles.detailLabel}>Mobile</span>
-                                        <span className={styles.detailValue}>{contactInfo?.mobile || '••••••••••'}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <MapPin className={styles.detailIcon} size={18} />
-                                    <div className={styles.detailText}>
-                                        <span className={styles.detailLabel}>Location</span>
-                                        <span className={styles.detailValue}>{loc}</span>
-                                    </div>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <Clock className={styles.detailIcon} size={18} />
-                                    <div className={styles.detailText}>
-                                        <span className={styles.detailLabel}>Working Hours</span>
-                                        <span className={styles.detailValue}>Flexible / Professional</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div> {/* End of ProfileContentWrapper */}
 
-                        <div className={styles.sideCard}>
-                            <div className={styles.sideHeader}><Globe size={18} /> Languages</div>
-                            <div className={styles.sideBody}>
-                                <div className={styles.langGrid}>
-                                    {['English', 'Hindi', 'Regional'].map(l => <span key={l} className={styles.langChip}>{l}</span>)}
-                                </div>
-                            </div>
-                        </div>
-
-                        <button onClick={backToProfiles} className={styles.backToResults}><ArrowLeft size={18} /> Back to Search</button>
-                    </div>
-                </div>
-
-                {/* Bottom Quick Actions Bar */}
+                {/* Bottom Quick Actions (Restored) */}
                 <div className={styles.quickActionsWrap}>
                     <div className={styles.quickActionsBar}>
-                        <div className={styles.quickActionItem} onClick={handleInterestClick}>
-                            <div className={styles.quickActionIcon}><Bell size={24} /></div>
+                        <div className={styles.quickActionItem} onClick={() => handleAction('interest')}>
+                            <div className={styles.quickActionIcon}><Bell size={20} /></div>
                             <span className={styles.quickActionLabel}>Remind</span>
                         </div>
-                        <div className={styles.quickActionItem} onClick={handleSuperInterestClick}>
-                            <div className={styles.quickActionIcon}><Heart size={24} /></div>
-                            <span className={styles.quickActionLabel}>Super Interest</span>
+                        <div className={styles.quickActionItem} onClick={() => setPopupType('super_interest_confirm')}>
+                            <div className={styles.quickActionIcon}><Heart size={20} /></div>
+                            <span className={styles.quickActionLabel}>Super</span>
                         </div>
                         <div className={styles.quickActionItem} onClick={() => handleAction('decline')}>
-                            <div className={styles.quickActionIcon}><Trash2 size={24} /></div>
+                            <div className={styles.quickActionIcon}><Trash2 size={20} /></div>
                             <span className={styles.quickActionLabel}>Cancel</span>
                         </div>
-                        <div className={styles.quickActionItem} onClick={handleViewContact}>
-                            <div className={styles.quickActionIcon}><Phone size={24} /></div>
-                            <span className={styles.quickActionLabel}>Contact</span>
+                        <div className={styles.quickActionItem} onClick={() => setPopupType('chat_confirm')}>
+                            <div className={styles.quickActionIcon}><MessageCircle size={20} /></div>
+                            <span className={styles.quickActionLabel}>Chat</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Truly Fixed Interaction Popups */}
+                {/* Popups */}
                 {popupType !== 'none' && (
-                    <div className={styles.popupOverlay} onClick={() => setPopupType('none')}>
-                        <div className={styles.popupCard} onClick={e => e.stopPropagation()}>
-                            <Award size={48} color="#facc15" style={{ marginBottom: '20px' }} />
-                            <h4 className={styles.popupTitle}>
-                                {popupType === 'contact_confirm' ? 'Unlock Contact' : 'Confirm Interest'}
-                            </h4>
-                            <p className={styles.popupMsg}>
-                                {popupType === 'contact_confirm'
-                                    ? 'Spend 1 coin to reveal direct contact details for this professional.'
-                                    : 'Send an interest notification to start bridging the gap.'}
+                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }} onClick={() => setPopupType('none')}>
+                        <div style={{ background: '#1e293b', padding: 40, borderRadius: 20, maxWidth: 400, width: '100%', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                            <h3 style={{ color: '#fff', marginTop: 0 }}>
+                                {popupType === 'chat_confirm' ? 'Start Chat Session' : 'Premium Feature'}
+                            </h3>
+                            <p style={{ color: '#cbd5e1' }}>
+                                {popupType === 'chat_confirm' ? 'Start a direct chat session with this advocate. Costs 5 coins.' : 'This action requires coins. Proceed?'}
                             </p>
-                            <div className={styles.popupActions}>
-                                <button className={styles.confirmBtn} onClick={popupType === 'contact_confirm' ? confirmViewContact : confirmSuperInterest}>Confirm</button>
-                                <button className={styles.cancelBtn} onClick={() => setPopupType('none')}>Cancel</button>
+                            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
+                                <button className={styles.cBtn} style={{ marginTop: 0 }} onClick={() => { handleAction('view_contact'); setPopupType('none'); }}>Confirm</button>
+                                <button className={styles.cBtn} style={{ marginTop: 0, background: '#334155', color: '#fff' }} onClick={() => setPopupType('none')}>Cancel</button>
                             </div>
                         </div>
                     </div>
@@ -393,6 +373,23 @@ const DetailedProfile: React.FC<Props> = ({
                 <TokenTopupModal isOpen={showTopup} onClose={() => setShowTopup(false)} onTopup={() => window.location.href = '/dashboard?page=upgrade'} />
                 {showTryonModal && <PremiumTryonModal onClose={() => setShowTryonModal(false)} />}
             </div>
+
+            {/* FIXED NAV ARROWS (Outside Content) */}
+            {items && items.length > 1 && currentIndex !== undefined && onNavigate && (
+                <>
+                    {currentIndex > 0 && (
+                        <div className={`${styles.navArrow} ${styles.navLeft}`} onClick={(e) => { e.stopPropagation(); onNavigate(Math.max(0, currentIndex - 1)); }}>
+                            <ChevronRight size={30} style={{ transform: 'rotate(180deg)' }} />
+                        </div>
+                    )}
+                    {currentIndex < items.length - 1 && (
+                        <div className={`${styles.navArrow} ${styles.navRight}`} onClick={(e) => { e.stopPropagation(); onNavigate(Math.min(items.length - 1, currentIndex + 1)); }}>
+                            <ChevronRight size={30} />
+                        </div>
+                    )}
+                </>
+            )}
+
         </div>
     );
 };

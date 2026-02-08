@@ -5,12 +5,11 @@ import styles from './AdminLayout.module.css';
 import NotificationBell from "./notification";
 import AdvocateRegistration from '../components/auth/AdvocateRegistration';
 import ClientRegistration from '../components/auth/ClientRegistration';
+import LegalProviderRegistration from '../components/auth/LegalProviderRegistration';
 import { useAuth } from '../context/AuthContext';
 
-
-
 const AdminLayout: React.FC = () => {
-    const { logout, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg } = useAuth();
+    const { logout, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg, isLegalProviderRegOpen, closeLegalProviderReg } = useAuth();
     // Initialize collapsed state: Mobile (hidden) or Tablet (icon-only) for < 1024px
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -135,6 +134,7 @@ const AdminLayout: React.FC = () => {
             </main>
             {isAdvocateRegOpen && <AdvocateRegistration onClose={closeAdvocateReg} />}
             {isClientRegOpen && <ClientRegistration onClose={closeClientReg} />}
+            {isLegalProviderRegOpen && <LegalProviderRegistration onClose={closeLegalProviderReg} />}
         </div>
     );
 };

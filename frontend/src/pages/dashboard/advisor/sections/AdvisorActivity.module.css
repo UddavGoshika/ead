@@ -1,0 +1,377 @@
+.dashboard {
+    background: transparent;
+    min-height: 100vh;
+    padding: 24px;
+    color: #f8fafc;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Stats Row */
+.statsRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 30px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.statsRow::-webkit-scrollbar {
+    height: 6px;
+}
+
+.statsRow::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.statsRow::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.statCard {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 160px;
+    flex: 1;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+    background: #334155;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.activeCard {
+    background: #334155;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.statIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.statValue {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.statLabel {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Interests / Activities Section */
+.interests {
+    background: #1e293b;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 250px);
+    /* Fill remaining height roughly */
+}
+
+.interestsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.interestsHeader h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.viewAll {
+    font-size: 13px;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.viewAll:hover {
+    text-decoration: underline;
+}
+
+.activityList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 8px;
+    /* space for scrollbar */
+}
+
+.activityList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activityList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.activityList::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.activityItem {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.activityItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.activityAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.activityContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activityHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activityName {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.activityDate {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.activitySub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.activityMessage {
+    font-size: 13px;
+    color: #cbd5e1;
+}
+
+.statusBadge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.emptyMsg {
+    text-align: center;
+    color: #94a3b8;
+    padding: 40px;
+    font-size: 14px;
+}
+
+/* Modal Styling Reuse */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 90%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.modalHeader h3 {
+    color: #f8fafc;
+    margin: 0;
+    font-size: 16px;
+}
+
+.modalHeader button {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.modalBody {
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.profileHeader h4 {
+    margin: 0 0 4px 0;
+    color: #f8fafc;
+    font-size: 18px;
+}
+
+.uid {
+    margin: 0;
+    font-size: 12px;
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.infoGrid {
+    display: grid;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.infoItem label {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.infoItem p {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 14px;
+}
+
+.legalSection h5 {
+    color: #f8fafc;
+    margin: 0 0 10px 0;
+    font-size: 15px;
+}
+
+.tagContainer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.tag {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.descBox {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.descBox label {
+    display: block;
+    color: #94a3b8;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.descBox p {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.5;
+}

@@ -15,7 +15,22 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + sanitized);
     }
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        const docFields = ['adr-degreeCert', 'adr-idProof', 'adr-practiceLicense'];
+        if (docFields.includes(file.fieldname)) {
+            allowedTypes.push('application/pdf');
+        }
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Allowed: JPG, PNG' + (docFields.includes(file.fieldname) ? ', PDF' : '')));
+        }
+    }
+});
 
 const advUpload = upload.fields([
     { name: 'adr-profilePic', maxCount: 1 },

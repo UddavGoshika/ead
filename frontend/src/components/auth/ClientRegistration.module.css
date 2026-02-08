@@ -166,29 +166,47 @@
     overflow-y: scroll;
     overflow-x: hidden;
     position: relative;
-    padding: 40px;
+    padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .header {
+    background: #0f172a;
+    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+    align-items: flex-start;
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.title {
-    font-size: 2.2rem;
-    font-weight: 700;
+.titleGroup {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.hammerIcon {
+    color: #4ade80;
+}
+
+.titleGroup h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 0;
-    background: linear-gradient(to right, #6d5dfc, #a855f7);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+}
+
+.titleGroup p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 400;
 }
 
 .closeBtn {
-    background: #1a1a2e;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
 
@@ -201,7 +219,7 @@
 }
 
 .closeBtn:hover {
-    background: #c92816;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Tabs Styles */
@@ -210,6 +228,7 @@
     gap: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 40px;
+    padding: 0 40px;
     padding-bottom: 0px;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -257,6 +276,7 @@
 /* Content Area */
 .content {
     min-height: 400px;
+    padding: 30px 40px;
 }
 
 .formGrid {
@@ -275,6 +295,14 @@
     color: white;
     font-size: 0.95rem;
     font-weight: 500;
+}
+
+.fileHint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: none;
+    font-weight: 400;
+    margin-left: 5px;
 }
 
 .formGroup input,
@@ -360,7 +388,7 @@
 
 /* Footer Actions */
 .footer {
-    padding-top: 40px;
+    padding: 20px 40px 40px;
 }
 
 .nextBtn {

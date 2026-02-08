@@ -16,7 +16,21 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + sanitized);
     }
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (file.fieldname === 'uploaddocument') {
+            allowedTypes.push('application/pdf');
+        }
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Allowed: JPG, PNG' + (file.fieldname === 'uploaddocument' ? ', PDF' : '')));
+        }
+    }
+});
 
 const cpUpload = upload.fields([
     { name: 'uploaddocument', maxCount: 1 },

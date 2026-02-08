@@ -23,42 +23,50 @@
 }
 
 .header {
-    background: linear-gradient(to right, #2a5a9e, #4a90e2);
-    padding: 20px 30px;
+    background: #0f172a;
+    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.headerTitle {
+.titleGroup {
     display: flex;
-    align-items: center;
     gap: 15px;
+    align-items: center;
 }
 
 .hammerIcon {
-    transform: rotate(-15deg);
+    color: #4ade80;
 }
 
-.headerTitle h2 {
-    font-size: 1.8rem;
-    font-weight: 700;
+.titleGroup h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 0;
+    color: #f8fafc;
+    letter-spacing: 0.5px;
+}
+
+.titleGroup p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 400;
 }
 
 .closeBtn {
     background: rgba(255, 255, 255, 0.2);
     border: none;
     color: white;
-    width: 36px;
-    height: 36px;
+
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s;
 }
 
 .closeBtn:hover {
@@ -190,6 +198,14 @@
 
 .required {
     color: #ff4d4d;
+}
+
+.fileHint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: none;
+    font-weight: 400;
+    margin-left: 5px;
 }
 
 .formGroup input,

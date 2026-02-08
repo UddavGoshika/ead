@@ -318,7 +318,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                 submissionData.append('profilePic', formData.profilePic);
             }
             if (formData.signature) {
-                submissionData.append('signature', formData.signature);
+                submissionData.append('signature', formData.signature, 'signature.png');
             }
 
             const response = await authService.registerClient(submissionData);
@@ -394,25 +394,51 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 </select>
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Upload ID Proof *</label>
+                                <label>Upload ID Proof * <span className={styles.fileHint}>(JPG, PNG, PDF | Max 5MB)</span></label>
                                 <input
                                     type="file"
-                                    accept="image/*,.pdf"
+                                    accept=".jpg,.jpeg,.png,.pdf"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
-                                        if (file) updateFormData('document', file);
+                                        if (file) {
+                                            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                                            if (!allowedTypes.includes(file.type)) {
+                                                alert('Invalid file type. Please upload JPG, PNG or PDF.');
+                                                e.target.value = '';
+                                                return;
+                                            }
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                alert('File size exceeds 5MB limit.');
+                                                e.target.value = '';
+                                                return;
+                                            }
+                                            updateFormData('document', file);
+                                        }
                                     }}
                                     className={errors.document ? styles.inputError : ''}
                                 />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Upload Profile Photo *</label>
+                                <label>Upload Profile Photo * <span className={styles.fileHint}>(JPG, PNG | Max 5MB)</span></label>
                                 <input
                                     type="file"
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
-                                        if (file) updateFormData('profilePic', file);
+                                        if (file) {
+                                            const allowedTypes = ['image/jpeg', 'image/png'];
+                                            if (!allowedTypes.includes(file.type)) {
+                                                alert('Invalid file type. Please upload JPG or PNG.');
+                                                e.target.value = '';
+                                                return;
+                                            }
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                alert('File size exceeds 5MB limit.');
+                                                e.target.value = '';
+                                                return;
+                                            }
+                                            updateFormData('profilePic', file);
+                                        }
                                     }}
                                     className={errors.profilePic ? styles.inputError : ''}
                                 />

@@ -60,6 +60,21 @@ export interface Member {
     supportType?: string;
     idProofType?: string;
     rejectionReason?: string;
+
+    // Document & Profile Fields
+    education?: any;
+    practice?: any;
+    idProof?: any;
+    signaturePath?: string;
+    documentPath?: string;
+    documentType?: string;
+    legalHelp?: any;
+    career?: any;
+    availability?: any;
+    interests?: string[];
+    superInterests?: string[];
+    address?: any;
+    dob?: string;
 }
 
 interface MemberTableProps {
@@ -213,7 +228,7 @@ const MemberActions: React.FC<{
 };
 
 const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaultStatus, context, initialRole, initialVerifiedFilter }) => {
-    const { openAdvocateReg, openClientReg, impersonate } = useAuth();
+    const { openAdvocateReg, openClientReg, openLegalProviderReg, impersonate } = useAuth();
     const [members, setMembers] = useState<Member[]>(initialMembers || []);
     const [loading, setLoading] = useState(!initialMembers);
     const [searchTerm, setSearchTerm] = useState("");
@@ -261,14 +276,35 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
             try {
                 const res = await axios.get(`/api/admin/members/${member.id}`);
                 if (res.data.success) {
-                    // Combine user and profile data safely
                     const apiData = res.data.member;
+                    const user = apiData.user || {};
+                    const profile = apiData.profile || {};
+
+                    // Specific mapping for image
+                    let finalImage = member.image; // Fallback to list image
+                    const rawImage = user.avatar || user.image || profile.image || profile.profilePicture;
+                    if (rawImage) {
+                        finalImage = (rawImage.startsWith('http') || rawImage.startsWith('/'))
+                            ? rawImage
+                            : `/${rawImage.replace(/\\/g, '/')}`;
+                    }
+
+                    // Specific mapping for docs
+                    let sigPath = profile.signaturePath;
+                    // If not in profile, maybe search in documents array?
+                    if (!sigPath && apiData.documents && Array.isArray(apiData.documents)) {
+                        const sigDoc = apiData.documents.find((d: any) => d.type === 'Signature' || d.name === 'Signature');
+                        if (sigDoc) sigPath = sigDoc.path;
+                    }
+
                     const fullMember = {
-                        ...member,
-                        ...(apiData.user || {}),
-                        ...(apiData.profile || {}),
+                        ...member, // Defaults
+                        ...user, // User details
+                        ...profile, // Profile details (education, etc)
                         documents: apiData.documents || [],
-                        id: apiData.user?._id || member.id // Maintain consistent ID
+                        id: user._id || member.id,
+                        image: finalImage,
+                        signaturePath: sigPath
                     };
                     setSelectedMember(fullMember);
                 } else {
@@ -342,6 +378,15 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     if (displayRole === 'Advocate') formattedCode = `TP-EAD-ADV${suffix}`;
                     else if (displayRole === 'Legal Provider') formattedCode = `TP-EAD-LSP${suffix}`;
 
+                    // Robust Image Logic
+                    let displayImage = '/avatar_placeholder.png';
+                    const rawImg = m.avatar || m.image || (m.profile && m.profile.image);
+                    if (rawImg) {
+                        displayImage = (rawImg.startsWith('http') || rawImg.startsWith('/'))
+                            ? rawImg
+                            : `/${rawImg.replace(/\\/g, '/')}`;
+                    }
+
                     return {
                         id: m.id,
                         code: formattedCode,
@@ -356,15 +401,32 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                         view: 0,
                         plan: m.plan || 'Free',
                         coins: m.coins || 0,
-                        since: m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'N/A',
-                        createdAt: m.createdAt,
+                        since: m.createdAt ? new Date(m.createdAt).toLocaleDateString() : 'Just Joined',
+                        createdAt: m.createdAt || new Date().toISOString(), // Fallback to now if missing so they appear top
                         status: m.status || 'Active',
-                        image: m.avatar ? (m.avatar.startsWith('http') || m.avatar.startsWith('/') ? m.avatar : `/${m.avatar.replace(/\\/g, '/')}`) : '/avatar_placeholder.png',
+                        image: displayImage,
                         idProofType: m.idProofType,
                         verificationStatus: m.verificationStatus,
-                        rejectionReason: m.rejectionReason
+                        rejectionReason: m.rejectionReason,
+
+                        // Pass through document/profile fields for modals
+                        education: m.education,
+                        practice: m.practice,
+                        idProof: m.idProof,
+                        signaturePath: m.signaturePath,
+                        documentPath: m.documentPath,
+                        documentType: m.documentType,
+                        legalHelp: m.legalHelp,
+                        career: m.career,
+                        availability: m.availability,
+                        interests: m.interests,
+                        superInterests: m.superInterests,
+                        address: m.address,
+                        dob: m.dob
                     };
                 });
+                // Sort immediately by newest to force order
+                mapped.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
                 setMembers(mapped);
             }
         } catch (err) {
@@ -578,6 +640,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                 }}
                 onAddClick={(role) => {
                     if (role === 'advocate') openAdvocateReg();
+                    else if (role === 'legal_provider') openLegalProviderReg();
                     else openClientReg();
                 }}
                 placeholder="Search by name, code or phone..."

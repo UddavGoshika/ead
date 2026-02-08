@@ -220,14 +220,14 @@ router.get('/members', async (req, res) => {
             query.status = { $ne: 'Deleted' };
         }
 
-        const users = await User.find(query);
+        const users = await User.find(query).sort({ createdAt: -1 }).lean();
 
         const members = await Promise.all(users.map(async (u) => {
             let profile = null;
             if (u.role.toLowerCase() === 'advocate' || u.role.toLowerCase() === 'legal_provider') {
-                profile = await Advocate.findOne({ userId: u._id });
+                profile = await Advocate.findOne({ userId: u._id }).lean();
             } else if (u.role.toLowerCase() === 'client') {
-                profile = await Client.findOne({ userId: u._id });
+                profile = await Client.findOne({ userId: u._id }).lean();
             }
 
             let location = 'N/A';
@@ -242,9 +242,27 @@ router.get('/members', async (req, res) => {
 
             const normalizePath = (p) => {
                 if (!p) return null;
-                const clean = p.replace(/\\/g, '/');
+                let clean = p.replace(/\\/g, '/');
+
+                // If path contains 'uploads/', strip everything before it to handle absolute paths
+                const uploadIndex = clean.toLowerCase().indexOf('uploads/');
+                if (uploadIndex !== -1) {
+                    clean = clean.substring(uploadIndex);
+                }
+
                 return clean.startsWith('/') ? clean : `/${clean}`;
             };
+
+            // Normalize nested paths
+            if (profile?.education) {
+                if (profile.education.certificatePath) profile.education.certificatePath = normalizePath(profile.education.certificatePath);
+            }
+            if (profile?.practice) {
+                if (profile.practice.licensePath) profile.practice.licensePath = normalizePath(profile.practice.licensePath);
+            }
+            if (profile?.idProof) {
+                if (profile.idProof.docPath) profile.idProof.docPath = normalizePath(profile.idProof.docPath);
+            }
 
             return {
                 id: u._id,
@@ -530,7 +548,14 @@ router.get('/members/:id', async (req, res) => {
 
         const normalizePath = (p) => {
             if (!p) return null;
-            const clean = p.replace(/\\/g, '/');
+            let clean = p.replace(/\\/g, '/');
+
+            // If path contains 'uploads/', strip everything before it
+            const uploadIndex = clean.toLowerCase().indexOf('uploads/');
+            if (uploadIndex !== -1) {
+                clean = clean.substring(uploadIndex);
+            }
+
             return clean.startsWith('/') ? clean : `/${clean}`;
         };
 

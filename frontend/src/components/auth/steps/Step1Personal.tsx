@@ -21,6 +21,23 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
         const file = e.target.files?.[0];
         if (file) {
+            const isID = field === 'idProofDocument';
+            const allowedTypes = isID
+                ? ['image/jpeg', 'image/png', 'application/pdf']
+                : ['image/jpeg', 'image/png'];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert(`Invalid file type. Please upload ${isID ? 'JPG, PNG or PDF' : 'JPG or PNG'}.`);
+                e.target.value = '';
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size exceeds 5MB limit.');
+                e.target.value = '';
+                return;
+            }
+
             updateFormData({ [field]: file });
         }
     };
@@ -125,7 +142,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label>UPLOAD ID PROOF <span className={styles.required}>*</span></label>
+                    <label>UPLOAD ID PROOF <span className={styles.required}>*</span> <span className={styles.fileHint}>(JPG, PNG, PDF | Max 5MB)</span></label>
                     <div className={styles.fileUploadContainer}>
                         <input
                             type="file"
@@ -156,7 +173,7 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label>PROFILE PHOTO <span className={styles.required}>*</span></label>
+                    <label>PROFILE PHOTO <span className={styles.required}>*</span> <span className={styles.fileHint}>(JPG, PNG | Max 5MB)</span></label>
                     <div className={styles.fileUploadContainer}>
                         <input
                             type="file"
@@ -186,50 +203,47 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
                     </div>
                     <p className={styles.fileNote}>Accepted formats: JPG, PNG (Max 5MB)</p>
                 </div>
+            </div>
 
-                <div className={styles.referralBox}>
-                    <h4>Have a Referral Code?</h4>
-                    <div className={styles.referralInputWrap}>
-                        <input
-                            type="text"
-                            placeholder="Enter referral code (e.g. LEX-ABCDE)"
-                            value={formData.referralCode || ''}
-                            onChange={(e) => {
-                                updateFormData({ referralCode: e.target.value.toUpperCase(), referralValidated: false, referralError: null, referrerName: null });
-                            }}
-                            className={formData.referralError ? styles.inputError : formData.referralValidated ? styles.inputSuccess : ''}
-                        />
-                        <button
-                            type="button"
-                            className={styles.applyReferralBtn}
-                            disabled={!formData.referralCode || formData.referralValidated}
-                            onClick={async () => {
-                                try {
-                                    const res = await axios.get(`/api/auth/validate-referral/${formData.referralCode}`);
-                                    if (res.data.success) {
-                                        updateFormData({
-                                            referralValidated: true,
-                                            referralError: null,
-                                            referrerName: res.data.referrerName
-                                        });
-                                    }
-                                } catch (err: any) {
+            <div className={styles.referralBox}>
+                <h4>Have a Referral Code?</h4>
+                <div className={styles.referralInputWrap}>
+                    <input
+                        type="text"
+                        placeholder="Enter referral code (e.g. LEX-ABCDE)"
+                        value={formData.referralCode || ''}
+                        onChange={(e) => {
+                            updateFormData({ referralCode: e.target.value.toUpperCase(), referralValidated: false, referralError: null, referrerName: null });
+                        }}
+                        className={formData.referralError ? styles.inputError : formData.referralValidated ? styles.inputSuccess : ''}
+                    />
+                    <button
+                        type="button"
+                        className={styles.applyReferralBtn}
+                        disabled={!formData.referralCode || formData.referralValidated}
+                        onClick={async () => {
+                            try {
+                                const res = await axios.get(`/api/auth/validate-referral/${formData.referralCode}`);
+                                if (res.data.success) {
                                     updateFormData({
-                                        referralValidated: false,
-                                        referralError: err.response?.data?.error || "Invalid code"
+                                        referralValidated: true,
+                                        referralError: null,
+                                        referrerName: res.data.referrerName
                                     });
                                 }
-                            }}
-                        >
-                            {formData.referralValidated ? 'Applied ✔' : 'Apply'}
-                        </button>
-                    </div>
-                    {formData.referralError && <p className={styles.referralErrorText}>{formData.referralError}</p>}
-                    {formData.referralValidated && <p className={styles.referralSuccessText}>Applied! Code from {formData.referrerName}</p>}
+                            } catch (err: any) {
+                                updateFormData({
+                                    referralValidated: false,
+                                    referralError: err.response?.data?.error || "Invalid code"
+                                });
+                            }
+                        }}
+                    >
+                        {formData.referralValidated ? 'Applied ✔' : 'Apply'}
+                    </button>
                 </div>
-
-
-
+                {formData.referralError && <p className={styles.referralErrorText}>{formData.referralError}</p>}
+                {formData.referralValidated && <p className={styles.referralSuccessText}>Applied! Code from {formData.referrerName}</p>}
             </div>
 
 

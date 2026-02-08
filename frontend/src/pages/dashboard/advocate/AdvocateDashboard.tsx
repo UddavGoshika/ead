@@ -260,6 +260,20 @@ const AdvocateDashboard: React.FC = () => {
         }
     };
 
+    // Click outside handler for notifications
+    const notifRef = React.useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+                setShowNotifications(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
         <div className={styles.advocatedashboard}>
             <AdvocateSidebar
@@ -292,40 +306,10 @@ const AdvocateDashboard: React.FC = () => {
                                 ✨ LATEST NEWS: SOMEONE JUST POSTED A NEW PROFESSIONAL BLOG! BOOST YOUR VISIBILITY TODAY • COMPLETE YOUR PROFILE TO GET MORE LEADS ✨
                             </span>
                         </div>
-
-                        {/* Profile Header - On Top */}
-                        {/* <div className={styles.profileHeader} style={{ position: 'relative', zIndex: 10, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(4px)' }}>
-                            <div className={styles.profileInfoQuick}>
-                                <img
-                                    src={user?.image_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400'}
-                                    className={styles.miniProfileImg}
-                                    alt="Profile"
-                                />
-                                <div className={styles.miniNameStack}>
-                                    <span className={styles.miniName}>{user?.name}</span>
-                                    <span className={styles.miniId}>{user?.unique_id}</span>
-                                </div>
-                            </div>
-                        </div> */}
                     </div>
 
                     <div className={styles.topBarRight}>
                         <div className={styles.statusGroup} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {/* Coins & Plan */}
-                            {/* <div className={styles.coinBadge} style={{ marginRight: '0' }}>
-                                <span className={styles.coinCount}>{user?.coins || 0}</span>
-                                <span className={styles.coinLabel}>Coins</span>
-                            </div> */}
-
-                            {/* <div className={styles.badgeStack}>
-                                {isPremium && plan.toLowerCase() !== 'free' ? (
-                                    <span className={`${styles.badgePlan} ${isUltra ? styles.ultraBadge : isPro ? styles.proBadge : styles.liteBadge}`}>
-                                        {plan.toUpperCase()} PLAN
-                                    </span>
-                                ) : (
-                                    <span className={`${styles.badgePlan} ${styles.freeBadge}`}>FREE MEMBER</span>
-                                )}
-                            </div> */}
                         </div>
 
                         {/* Special Action: Write Blog (Only if Premium & on Blog Page) */}
@@ -341,7 +325,7 @@ const AdvocateDashboard: React.FC = () => {
                         )}
 
                         {/* Notification Button & Dropdown */}
-                        <div className={styles.notificationWrapper}>
+                        <div className={styles.notificationWrapper} ref={notifRef}>
                             <button
                                 className={styles.notificationBtn}
                                 onClick={() => setShowNotifications(!showNotifications)}

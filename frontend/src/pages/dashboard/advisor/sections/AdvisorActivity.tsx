@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import styles from "../../advocate/sections/Activity.module.css";
+import styles from "./AdvisorActivity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare, X } from "lucide-react";

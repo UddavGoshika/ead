@@ -239,7 +239,11 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
 
                     // Handle special file fields
                     if (fileFieldsMapping[key]) {
-                        submissionData.append(fileFieldsMapping[key], value);
+                        if (key === 'signature' && value instanceof Blob) {
+                            submissionData.append(fileFieldsMapping[key], value, 'signature.png');
+                        } else {
+                            submissionData.append(fileFieldsMapping[key], value);
+                        }
                     }
                     // Handle arrays
                     else if (Array.isArray(value)) {

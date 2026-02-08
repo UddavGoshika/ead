@@ -581,7 +581,11 @@ const MemberVerification: React.FC = () => {
                                 </div>
                                 <div className={styles.fileGrid}>
                                     {selectedMember.documents?.map((doc, idx) => {
-                                        const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.path);
+                                        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(doc.path) ||
+                                            doc.path.toLowerCase().endsWith('-blob') ||
+                                            doc.name?.toLowerCase().includes('signature') ||
+                                            doc.name?.toLowerCase().includes('photo') ||
+                                            doc.name?.toLowerCase().includes('id proof');
                                         return (
                                             <div key={idx} className={styles.docCard}>
                                                 <div className={styles.docIcon}>

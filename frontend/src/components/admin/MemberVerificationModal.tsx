@@ -37,6 +37,7 @@ interface Member {
     state?: string;
     city?: string;
     pincode?: string;
+    image?: string;
 }
 
 interface Props {
@@ -104,11 +105,13 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
     const handleDownloadAll = () => {
         if (!member) return;
         const docs = isAdvocate ? [
+            { name: 'Profile_Picture', path: member.image },
             { name: 'ID_Proof', path: member.idProof?.docPath },
             { name: 'Education', path: member.education?.certificatePath },
             { name: 'License', path: member.practice?.licensePath },
             { name: 'Signature', path: member.signaturePath }
         ] : [
+            { name: 'Profile_Picture', path: member.image },
             { name: 'Verification_Doc', path: member.documentPath },
             { name: 'Signature', path: member.signaturePath }
         ];
@@ -140,33 +143,57 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
     const renderFileItem = (title: string, path: string | undefined) => {
         if (!path) return null;
 
+        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(path) ||
+            path.toLowerCase().endsWith('-blob') ||
+            path.toLowerCase().includes('signature') ||
+            path.toLowerCase().includes('photo');
+
         let cleanPath = path.replace(/\\/g, '/');
 
         // Handle absolute paths by finding 'uploads/'
+        // If path contains 'uploads/', take everything from there
         const uploadIndex = cleanPath.toLowerCase().indexOf('uploads/');
         if (uploadIndex !== -1) {
             cleanPath = cleanPath.substring(uploadIndex);
         } else {
+            // If no 'uploads/', strip leading slashes
             cleanPath = cleanPath.replace(/^\/+/, '');
-            if (!cleanPath.includes('/') && cleanPath.length > 0) cleanPath = `uploads/${cleanPath}`;
+            // If it doesn't look like a URL and doesn't have uploads/, prepend
+            if (!cleanPath.startsWith('http') && !cleanPath.includes('/') && cleanPath.length > 0) {
+                cleanPath = `uploads/${cleanPath}`;
+            }
         }
 
-        const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/')) ? cleanPath : `/${cleanPath}`;
+        // Construct full URL
+        const fullPath = (cleanPath.startsWith('http') || cleanPath.startsWith('blob:') || cleanPath.startsWith('/'))
+            ? cleanPath
+            : `/${cleanPath}`;
 
-        const fileName = cleanPath.split('/').pop() || 'document.pdf';
-        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(fileName);
+        const fileName = fullPath.split('/').pop() || 'document.pdf';
+        const isImageFinal = isImage ||
+            /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fileName) ||
+            fullPath.toLowerCase().includes('avatar') ||
+            fullPath.toLowerCase().includes('profile');
+
         return (
             <div className={styles.docItem}>
                 <div className={styles.docIcon}>
-                    {isImage ? (
-                        <img src={fullPath} alt="" className={styles.docThumbnail} />
+                    {isImageFinal ? (
+                        <div className={styles.imgPreviewWrapper} onClick={() => window.open(fullPath, '_blank')}>
+                            <img src={fullPath} alt={title} className={styles.docThumbnail} onError={(e) => {
+                                // Fallback if image fails
+                                (e.target as HTMLImageElement).src = '/file_placeholder.png';
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).parentElement!.innerText = 'Image Error';
+                            }} />
+                        </div>
                     ) : (
                         <FileText size={20} />
                     )}
                 </div>
                 <div className={styles.docInfo}>
                     <h4>{title}</h4>
-                    <p>{fileName}</p>
+                    <p title={fileName}>{fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName}</p>
                 </div>
                 <div className={styles.docActions}>
                     <a
@@ -183,6 +210,8 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                         download={fileName}
                         className={styles.downloadFileBtn}
                         title="Download File"
+                        target="_blank"
+                        rel="noopener noreferrer"
                     >
                         <Download size={14} />
                     </a>
@@ -207,6 +236,85 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                         <ShieldCheck size={16} />
                         <span>Carefully review all uploaded credentials and professional history before certifying this member.</span>
                     </div>
+
+                    {/* MOVED TO TOP: 6. VERIFICATION CHECKLIST & DOCUMENTS */}
+                    <div className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <h3 className={styles.sectionTitle}><FileText size={16} /> Registration Documents</h3>
+                            <button className={styles.downloadAllBtn} onClick={handleDownloadAll}>
+                                <Download size={14} /> Download All (Images)
+                            </button>
+                        </div>
+                        <div className={styles.fileGrid}>
+                            {isAdvocate ? (
+                                <>
+                                    {member.image && renderFileItem("Profile Picture", member.image)}
+                                    {renderFileItem("ID Proof Document", profile.idProof?.docPath)}
+                                    {renderFileItem("Education Certificate", profile.education?.certificatePath)}
+                                    {renderFileItem("Practice License / Bar ID", profile.practice?.licensePath)}
+                                    {renderFileItem("Digitized Signature", profile.signaturePath)}
+                                </>
+                            ) : (
+                                <>
+                                    {member.image && renderFileItem("Profile Picture", member.image)}
+                                    {renderFileItem(profile.documentType || "Verification Document", profile.documentPath)}
+                                    {renderFileItem("Digitized Signature", profile.signaturePath)}
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className={styles.verificationForm}>
+                        <h3 className={styles.sectionTitle}><ShieldCheck size={18} /> Official Verification Checklist</h3>
+                        <div className={styles.checklistGrid}>
+                            <label className={styles.checkItem}>
+                                <input
+                                    type="checkbox"
+                                    checked={checklist.identityProof}
+                                    onChange={() => setChecklist({ ...checklist, identityProof: !checklist.identityProof })}
+                                />
+                                <span>Identity Proof (Aadhar/PAN/Passport) Matches Name</span>
+                            </label>
+                            <label className={styles.checkItem}>
+                                <input
+                                    type="checkbox"
+                                    checked={checklist.addressProof}
+                                    onChange={() => setChecklist({ ...checklist, addressProof: !checklist.addressProof })}
+                                />
+                                <span>Address Verification Completed</span>
+                            </label>
+                            {isAdvocate && (
+                                <>
+                                    <label className={styles.checkItem}>
+                                        <input
+                                            type="checkbox"
+                                            checked={checklist.professionalDegree}
+                                            onChange={() => setChecklist({ ...checklist, professionalDegree: !checklist.professionalDegree })}
+                                        />
+                                        <span>Educational Degree & Certificates Authenticated</span>
+                                    </label>
+                                    <label className={styles.checkItem}>
+                                        <input
+                                            type="checkbox"
+                                            checked={checklist.practiceLicense}
+                                            onChange={() => setChecklist({ ...checklist, practiceLicense: !checklist.practiceLicense })}
+                                        />
+                                        <span>Practice License/Bar ID Validated with State Council</span>
+                                    </label>
+                                </>
+                            )}
+                            <label className={styles.checkItem}>
+                                <input
+                                    type="checkbox"
+                                    checked={checklist.photoMatch}
+                                    onChange={() => setChecklist({ ...checklist, photoMatch: !checklist.photoMatch })}
+                                />
+                                <span>Profile Picture Matches Government ID</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr style={{ margin: '30px 0', borderColor: 'rgba(255,255,255,0.1)' }} />
 
                     {/* 1. BASIC INFORMATION */}
                     <div className={styles.section}>
@@ -304,82 +412,6 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
                             </div>
                         </div>
                     )}
-
-                    {/* 5. DOCUMENTS */}
-                    <div className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <h3 className={styles.sectionTitle}><FileText size={16} /> Registration Documents</h3>
-                            <button className={styles.downloadAllBtn} onClick={handleDownloadAll}>
-                                <Download size={14} /> Download All (Images)
-                            </button>
-                        </div>
-                        <div className={styles.fileGrid}>
-                            {isAdvocate ? (
-                                <>
-                                    {renderFileItem("ID Proof Document", profile.idProof?.docPath)}
-                                    {renderFileItem("Education Certificate", profile.education?.certificatePath)}
-                                    {renderFileItem("Practice License / Bar ID", profile.practice?.licensePath)}
-                                    {renderFileItem("Digitized Signature", profile.signaturePath)}
-                                </>
-                            ) : (
-                                <>
-                                    {renderFileItem(profile.documentType || "Verification Document", profile.documentPath)}
-                                    {renderFileItem("Digitized Signature", profile.signaturePath)}
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 6. VERIFICATION CHECKLIST (NEW FORM) */}
-                    <div className={styles.verificationForm}>
-                        <h3 className={styles.sectionTitle}><ShieldCheck size={18} /> Official Verification Checklist</h3>
-                        <div className={styles.checklistGrid}>
-                            <label className={styles.checkItem}>
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.identityProof}
-                                    onChange={() => setChecklist({ ...checklist, identityProof: !checklist.identityProof })}
-                                />
-                                <span>Identity Proof (Aadhar/PAN/Passport) Matches Name</span>
-                            </label>
-                            <label className={styles.checkItem}>
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.addressProof}
-                                    onChange={() => setChecklist({ ...checklist, addressProof: !checklist.addressProof })}
-                                />
-                                <span>Address Verification Completed</span>
-                            </label>
-                            {isAdvocate && (
-                                <>
-                                    <label className={styles.checkItem}>
-                                        <input
-                                            type="checkbox"
-                                            checked={checklist.professionalDegree}
-                                            onChange={() => setChecklist({ ...checklist, professionalDegree: !checklist.professionalDegree })}
-                                        />
-                                        <span>Educational Degree & Certificates Authenticated</span>
-                                    </label>
-                                    <label className={styles.checkItem}>
-                                        <input
-                                            type="checkbox"
-                                            checked={checklist.practiceLicense}
-                                            onChange={() => setChecklist({ ...checklist, practiceLicense: !checklist.practiceLicense })}
-                                        />
-                                        <span>Practice License/Bar ID Validated with State Council</span>
-                                    </label>
-                                </>
-                            )}
-                            <label className={styles.checkItem}>
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.photoMatch}
-                                    onChange={() => setChecklist({ ...checklist, photoMatch: !checklist.photoMatch })}
-                                />
-                                <span>Profile Picture Matches Government ID</span>
-                            </label>
-                        </div>
-                    </div>
                 </div>
 
                 <div className={styles.footer}>

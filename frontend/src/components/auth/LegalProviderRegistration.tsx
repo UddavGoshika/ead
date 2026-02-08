@@ -232,7 +232,11 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                     if (value === null || value === undefined) return;
 
                     if (fileFieldsMapping[key]) {
-                        submissionData.append(fileFieldsMapping[key], value);
+                        if (key === 'signature' && value instanceof Blob) {
+                            submissionData.append(fileFieldsMapping[key], value, 'signature.png');
+                        } else {
+                            submissionData.append(fileFieldsMapping[key], value);
+                        }
                     } else if (Array.isArray(value)) {
                         submissionData.append(key, JSON.stringify(value));
                     } else {
