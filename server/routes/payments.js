@@ -508,19 +508,25 @@ router.post('/verify', authenticate, async (req, res) => {
 
                 console.log(`[PAYMENT] Updated ${user.role} Plan to: ${user.plan} and allocated ${totalAllocated} coins.`);
             } else if (transaction.packageId.toLowerCase().includes('wallet')) {
-                // Wallet recharge
-                const amount = transaction.amount;
-                user.walletBalance = (user.walletBalance || 0) + amount;
-                console.log(`[PAYMENT] Recharged wallet with ₹${amount}.`);
+                // Wallet recharge - DO NOT update balance immediately. 
+                // Set status to pending_verification for admin to approve.
+                transaction.status = 'pending_verification';
+                console.log(`[PAYMENT] Wallet recharge of ₹${amount} initiated. Pending Admin Approval.`);
             } else {
                 user.plan = transaction.packageId.charAt(0).toUpperCase() + transaction.packageId.slice(1);
             }
 
-            await user.save();
-            createNotification('payment', `Payment Successful! Your account has been upgraded to ${user.plan}.`, user.email, user._id);
+            if (!transaction.packageId.toLowerCase().includes('wallet')) {
+                await user.save();
+                createNotification('payment', `Payment Successful! Your account has been upgraded to ${user.plan}.`, user.email, user._id);
+            } else {
+                // Notify user that approval is pending
+                createNotification('payment', `Wallet recharge request of ₹${amount} received. Pending Admin Approval.`, user.email, user._id);
+            }
         }
 
-        res.json({ success: true, message: 'Payment verified and account updated' });
+        await transaction.save();
+        res.json({ success: true, message: 'Transaction processed. Wallet updates pending admin approval where applicable.' });
     } catch (err) {
         console.error('Verify Payment Error:', err);
         res.status(500).json({ success: false, message: 'Server error verifying payment' });
@@ -564,7 +570,7 @@ router.get('/my-transactions', authenticate, async (req, res) => {
 router.get('/balance', authenticate, async (req, res) => {
     try {
         const user = await User.findById(req.user.id || req.user._id);
-        res.json({ success: true, balance: user.coins || 0 });
+        res.json({ success: true, balance: user.walletBalance || 0 });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -601,8 +607,8 @@ router.post('/admin/transactions/:orderId/verify', authenticate, async (req, res
         const transaction = await Transaction.findOne({ orderId: req.params.orderId });
         if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
 
-        if (transaction.status === 'success' || transaction.status === 'completed') {
-            return res.json({ success: true, message: 'Already approved' });
+        if (transaction.status === 'completed' || transaction.status === 'success' && !transaction.packageId.toLowerCase().includes('wallet')) {
+            return res.status(400).json({ success: false, message: 'Transaction already completed' });
         }
 
         transaction.status = 'completed';
@@ -612,16 +618,24 @@ router.post('/admin/transactions/:orderId/verify', authenticate, async (req, res
         const user = await User.findById(transaction.userId);
         if (user) {
             if (transaction.packageId && transaction.packageId.includes('wallet')) {
-                const coinsAdded = Math.floor(transaction.amount / 10);
-                user.coins = (user.coins || 0) + coinsAdded;
+                // Handle Wallet Recharge Approval
+                user.walletBalance = (user.walletBalance || 0) + transaction.amount;
+                createNotification('payment', `Wallet Recharge Approved! ₹${transaction.amount} added to your balance.`, 'Admin', null, { userId: user._id });
+                console.log(`[ADMIN] Approved Wallet Recharge for ${user.email}: +₹${transaction.amount}`);
+            } else if (transaction.packageId === 'withdrawal') {
+                // Withdrawal already deducted from balance on request, just notify
+                createNotification('payment', `Withdrawal Request Approved! ₹${transaction.amount} has been processed.`, 'Admin', null, { userId: user._id });
+                console.log(`[ADMIN] Approved Withdrawal for ${user.email}: ₹${transaction.amount}`);
             } else if (transaction.packageId) {
+                // Plan upgrade approval
                 user.plan = transaction.packageId;
                 user.isPremium = true;
+                createNotification('payment', `Plan Upgrade Approved! You are now on ${user.plan}.`, 'Admin', null, { userId: user._id });
             }
             await user.save();
         }
 
-        res.json({ success: true, message: 'Transaction verified and account updated' });
+        res.json({ success: true, message: 'Transaction approved and account updated' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -632,11 +646,29 @@ router.post('/admin/transactions/:orderId/reject', authenticate, async (req, res
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access Denied' });
 
-        const transaction = await Transaction.findOneAndUpdate(
-            { orderId: req.params.orderId },
-            { status: 'failed', message: req.body.reason || 'Admin rejection' },
-            { new: true }
-        );
+        const transaction = await Transaction.findOne({ orderId: req.params.orderId });
+        if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
+
+        if (transaction.status === 'failed' || transaction.status === 'completed') {
+            return res.status(400).json({ success: false, message: 'Transaction already processed' });
+        }
+
+        transaction.status = 'failed';
+        transaction.message = req.body.reason || 'Admin rejection';
+        await transaction.save();
+
+        // If it was a withdrawal, REFUND the user
+        if (transaction.packageId === 'withdrawal') {
+            const user = await User.findById(transaction.userId);
+            if (user) {
+                user.walletBalance = (user.walletBalance || 0) + transaction.amount;
+                await user.save();
+                createNotification('payment', `Withdrawal Request Rejected: ${transaction.message}. ₹${transaction.amount} refunded to your wallet.`, 'Admin', null, { userId: user._id });
+                console.log(`[ADMIN] Rejected Withdrawal for ${user.email}: ₹${transaction.amount} refunded.`);
+            }
+        } else if (transaction.packageId && transaction.packageId.includes('wallet')) {
+            createNotification('payment', `Wallet Recharge Rejected: ${transaction.message}.`, 'Admin', null, { userId: transaction.userId });
+        }
 
         res.json({ success: true, transaction });
     } catch (err) {

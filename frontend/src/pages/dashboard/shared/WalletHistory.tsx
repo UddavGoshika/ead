@@ -77,16 +77,21 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
             if (balanceRes.data.success) setBalance(balanceRes.data.balance);
             if (txRes.data.success) {
-                const mapped: Transaction[] = txRes.data.transactions.map((t: any) => ({
-                    id: t.orderId.split('_').pop() || t.orderId,
-                    type: t.status === 'success' || t.status === 'completed' ? 'credit' : 'debit', // simplistic for now
-                    amount: t.amount,
-                    description: t.packageId || 'Wallet Operation',
-                    date: new Date(t.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                    status: t.status.charAt(0).toUpperCase() + t.status.slice(1),
-                    method: t.gateway.toUpperCase(),
-                    category: t.packageId && t.packageId.includes('wallet') ? 'Recharge' : 'Membership'
-                }));
+                const mapped: Transaction[] = txRes.data.transactions.map((t: any) => {
+                    const status = t.status.toLowerCase();
+                    const isCredit = status === 'success' || status === 'completed' || status === 'pending_verification';
+
+                    return {
+                        id: t.orderId.split('_').pop() || t.orderId,
+                        type: isCredit ? 'credit' : 'debit',
+                        amount: t.amount,
+                        description: t.packageId || 'Wallet Operation',
+                        date: new Date(t.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                        status: t.status.replace(/_/g, ' ').charAt(0).toUpperCase() + t.status.replace(/_/g, ' ').slice(1),
+                        method: t.gateway.toUpperCase(),
+                        category: t.packageId && t.packageId.includes('wallet') ? 'Recharge' : 'Membership'
+                    };
+                });
                 setTransactions(mapped);
             }
         } catch (err) {
@@ -417,15 +422,14 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                                             headers: { Authorization: token || '' }
                                                         });
 
-                                                        if (response.data.success) {
-                                                            alert("Payment verified successfully! Your balance will be updated.");
+                                                        if (response?.data?.success) {
+                                                            alert("Payment request received. Your balance will be updated after Admin Approval.");
                                                             setUpiUrl(null);
                                                             setCurrentOrderId(null);
                                                             setShowAddMoney(false);
-                                                            // In a real app, refresh balance here
-                                                            window.location.reload();
+                                                            fetchRealWalletData();
                                                         } else {
-                                                            alert("Verification failed: " + response.data.message);
+                                                            alert("Verification failed: " + (response?.data?.message || "Unknown error"));
                                                         }
                                                     } catch (err: any) {
                                                         alert("Error verifying payment: " + err.message);
@@ -475,22 +479,11 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                                         // We just wait or show a 'Redirecting' state if needed.
                                                         console.log("Redirecting to Cashfree...");
                                                     } else {
-                                                        alert(result.message || "Payment completed successfully");
+                                                        alert(result.message || "Recharge request sent! Awaiting Admin Approval.");
                                                         setShowAddMoney(false);
 
-                                                        // Optimistic Update: Add BASE amount to wallet
-                                                        setBalance(prev => prev + baseVal);
-                                                        const newTxn: Transaction = {
-                                                            id: 'TXN' + Math.floor(Math.random() * 10000),
-                                                            type: 'credit',
-                                                            amount: baseVal,
-                                                            description: 'Wallet Recharge',
-                                                            date: new Date().toLocaleString(),
-                                                            status: 'Completed',
-                                                            method: selectedGateway.toUpperCase(),
-                                                            category: 'Recharge'
-                                                        };
-                                                        setTransactions([newTxn, ...transactions]);
+                                                        // Refresh transaction history
+                                                        fetchRealWalletData();
                                                     }
                                                 } else {
                                                     alert(`Payment failed: ${result.error}`);
@@ -510,104 +503,107 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
-            {showWithdraw && (
-                <div className={styles.modalOverlay} onClick={() => setShowWithdraw(false)}>
-                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            {
+                showWithdraw && (
+                    <div className={styles.modalOverlay} onClick={() => setShowWithdraw(false)}>
+                        <div className={styles.modal} onClick={e => e.stopPropagation()}>
 
-                        {/* HEADER */}
-                        <div className={styles.modalHeader}>
-                            <div>
-                                <h3>Authorize Payout</h3>
-                                <p className={styles.modalSubtext}>Review and authorize this withdrawal request</p>
+                            {/* HEADER */}
+                            <div className={styles.modalHeader}>
+                                <div>
+                                    <h3>Authorize Payout</h3>
+                                    <p className={styles.modalSubtext}>Review and authorize this withdrawal request</p>
+                                </div>
+                                <X className={styles.closeIcon} onClick={() => setShowWithdraw(false)} />
                             </div>
-                            <X className={styles.closeIcon} onClick={() => setShowWithdraw(false)} />
-                        </div>
 
-                        {/* BODY */}
-                        <div className={styles.modalBody}>
+                            {/* BODY */}
+                            <div className={styles.modalBody}>
 
-                            {withdrawStep === 1 ? (
-                                <div className={styles.withdrawForm}>
+                                {withdrawStep === 1 ? (
+                                    <div className={styles.withdrawForm}>
 
-                                    {/* USER INFO */}
-                                    <div className={styles.userSummary}>
-                                        <div>
-                                            <label>User</label>
-                                            <span>Rohan Mehta (ADV-001)</span>
+                                        {/* USER INFO */}
+                                        <div className={styles.userSummary}>
+                                            <div>
+                                                <label>User</label>
+                                                <span>Rohan Mehta (ADV-001)</span>
+                                            </div>
+                                            <div>
+                                                <label>Available Balance</label>
+                                                <span className={styles.balanceText}>₹12,000</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label>Available Balance</label>
-                                            <span className={styles.balanceText}>₹12,000</span>
+
+                                        {/* AMOUNT INPUT */}
+                                        <div className={styles.inputGroup}>
+                                            <label>Withdrawal Amount</label>
+                                            <div className={styles.amountInputWrapper}>
+                                                <span className={styles.currency}>₹</span>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Enter amount"
+                                                    value={withdrawAmount}
+                                                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* AMOUNT INPUT */}
-                                    <div className={styles.inputGroup}>
-                                        <label>Withdrawal Amount</label>
-                                        <div className={styles.amountInputWrapper}>
-                                            <span className={styles.currency}>₹</span>
-                                            <input
-                                                type="number"
-                                                placeholder="Enter amount"
-                                                value={withdrawAmount}
-                                                onChange={(e) => setWithdrawAmount(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
+                                        {/* ERROR */}
+                                        {withdrawError && (
+                                            <div className={styles.errorBox}>
+                                                {withdrawError}
+                                            </div>
+                                        )}
 
-                                    {/* ERROR */}
-                                    {withdrawError && (
-                                        <div className={styles.errorBox}>
-                                            {withdrawError}
-                                        </div>
-                                    )}
-
-                                    {/* ACTION */}
-                                    <button
-                                        className={styles.confirmWithdraw}
-                                        onClick={handleWithdraw}
-                                    >
-                                        🔐 Authorize Payout
-                                    </button>
-
-                                    <p className={styles.securityNote}>
-                                        This will send an authorization request to the payout gateway.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className={styles.successStep}>
-
-                                    <div className={styles.successIcon}>✔</div>
-
-                                    <h4>Authorization Sent</h4>
-                                    <p>
-                                        The payout request has been securely sent to the payment gateway.
-                                        You’ll be notified once it is processed.
-                                    </p>
-
-                                    <div className={styles.modalActions}>
+                                        {/* ACTION */}
                                         <button
-                                            className={styles.primaryBtn}
-                                            onClick={() => {
-                                                setShowWithdraw(false);
-                                                setWithdrawalStep(1);
-                                            }}
+                                            className={styles.confirmWithdraw}
+                                            onClick={handleWithdraw}
                                         >
-                                            Close
+                                            🔐 Authorize Payout
                                         </button>
+
+                                        <p className={styles.securityNote}>
+                                            This will send an authorization request to the payout gateway.
+                                        </p>
                                     </div>
+                                ) : (
+                                    <div className={styles.successStep}>
 
-                                </div>
-                            )}
+                                        <div className={styles.successIcon}>✔</div>
 
+                                        <h4>Authorization Sent</h4>
+                                        <p>
+                                            The payout request has been securely sent to the payment gateway.
+                                            You’ll be notified once it is processed.
+                                        </p>
+
+                                        <div className={styles.modalActions}>
+                                            <button
+                                                className={styles.primaryBtn}
+                                                onClick={() => {
+                                                    setShowWithdraw(false);
+                                                    setWithdrawalStep(1);
+                                                }}
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                )}
+
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

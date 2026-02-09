@@ -790,7 +790,7 @@ router.post('/blogs', upload.single('image'), async (req, res) => {
             category,
             content,
             status: status || 'Pending',
-            image: req.file ? `/uploads/blogs/${req.file.filename}` : null,
+            image: req.file ? req.file.path : null,
             author,
             authorName: authorName || 'Admin'
         });
@@ -840,7 +840,7 @@ router.patch('/blogs/:id', upload.single('image'), async (req, res) => {
     try {
         const updateData = { ...req.body };
         if (req.file) {
-            updateData.image = `/uploads/blogs/${req.file.filename}`;
+            updateData.image = req.file.path;
         }
 
         const blog = await Blog.findByIdAndUpdate(req.params.id, updateData, { new: true });

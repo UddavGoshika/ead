@@ -568,7 +568,7 @@ router.post('/resubmit-profile', authMiddleware, upload.fields([
 
         // Update files in profile
         if (req.files['idProof']) {
-            const filePath = `uploads/docs/${req.files['idProof'][0].filename}`;
+            const filePath = req.files['idProof'][0].path;
             if (role === 'client') {
                 profile.documentPath = filePath;
             } else if (role === 'advocate' || role === 'legal_provider') {
@@ -577,11 +577,11 @@ router.post('/resubmit-profile', authMiddleware, upload.fields([
         }
 
         if (req.files['license'] && (role === 'advocate' || role === 'legal_provider')) {
-            profile.practice.licensePath = `uploads/docs/${req.files['license'][0].filename}`;
+            profile.practice.licensePath = req.files['license'][0].path;
         }
 
         if (req.files['certificate'] && (role === 'advocate' || role === 'legal_provider')) {
-            profile.education.certificatePath = `uploads/docs/${req.files['certificate'][0].filename}`;
+            profile.education.certificatePath = req.files['certificate'][0].path;
         }
 
         user.status = 'Reverify';
