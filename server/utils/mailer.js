@@ -56,10 +56,12 @@ const sendEmail = async (to, subject, text, html) => {
     return new Promise((resolve) => {
         const API_KEY = process.env.BREVO_API_KEY || process.env.SMTP_PASS;
 
+        console.log("🔍 [Mailer] Attempting Brevo API...");
         if (!API_KEY) {
-            console.error("❌ ERROR: No SMTP_HOST and no API Key found! Cannot send email.");
-            return resolve({ success: false, error: "Configuration Missing: Please set SMTP_HOST or BREVO_API_KEY" });
+            console.error("❌ [Mailer] ERROR: No API Key found (checked BREVO_API_KEY and SMTP_PASS).");
+            return resolve({ success: false, error: "Configuration Missing: Please set BREVO_API_KEY" });
         }
+        console.log(`🔑 [Mailer] Using API Key: ${API_KEY.substring(0, 10)}...`);
 
         const data = JSON.stringify({
             sender: { name: "E-Advocate Services", email: SENDER_EMAIL },
