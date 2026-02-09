@@ -6,16 +6,7 @@ const Client = require('../models/Client');
 const Message = require('../models/Message');
 const Activity = require('../models/Activity');
 const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
-const { createNotification } = require('../utils/notif');
-
-// Storage config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage: storage });
+const { upload } = require('../config/cloudinary');
 
 // GET ACTIVITY STATS
 router.get('/stats/:userId', async (req, res) => {
@@ -678,7 +669,7 @@ router.post('/upload-document', upload.single('file'), (req, res) => {
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
-        const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        const fileUrl = req.file.path.startsWith('http') ? req.file.path : `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         res.json({ success: true, fileUrl });
     } catch (err) {
         console.error('Upload Error:', err);

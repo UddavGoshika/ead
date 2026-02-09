@@ -9,6 +9,11 @@ const path = require('path');
 const getImageUrl = (filePath) => {
     if (!filePath) return null;
 
+    // Check if it is already a full URL (e.g. from Cloudinary/S3)
+    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        return filePath;
+    }
+
     // Convert Windows backslashes to forward slashes
     let cleanPath = filePath.replace(/\\/g, '/');
 

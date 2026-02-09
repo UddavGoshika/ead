@@ -26,20 +26,7 @@ const fs = require('fs');
 const { sendEmail } = require('../utils/mailer');
 const bcrypt = require('bcryptjs');
 
-// MULTER CONFIG FOR BLOG IMAGES
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/blogs';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, `blog-${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
-const upload = multer({ storage });
+const { upload } = require('../config/cloudinary');
 
 // GET ATTRIBUTES BY CATEGORY
 router.get('/attributes', async (req, res) => {
