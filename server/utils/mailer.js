@@ -34,6 +34,7 @@ if (SMTP_HOST) {
 
 const sendEmail = async (to, subject, text, html) => {
     // 1. SMTP PATH
+    // 1. SMTP PATH
     if (smtpTransport) {
         try {
             console.log(`📤 Sending SMTP email to: ${to} via ${SMTP_HOST}`);
@@ -48,8 +49,8 @@ const sendEmail = async (to, subject, text, html) => {
             return { success: true, messageId: info.messageId };
         } catch (err) {
             console.error("❌ SMTP Error:", err.message);
-            // Fallback: If SMTP fails and we have a key, we COULD try API, but usually better to report error
-            return { success: false, error: `SMTP Connection Alert: ${err.message}` };
+            console.log("⚠️ Switching to Brevo API Fallback due to SMTP failure...");
+            // Do NOT return here. Let it fall through to API method logic below.
         }
     }
 
