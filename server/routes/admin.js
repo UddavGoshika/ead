@@ -233,15 +233,15 @@ router.get('/members', async (req, res) => {
 
             const normalizePath = getImageUrl;
 
-            // Normalize nested paths
-            if (profile?.education) {
-                if (profile.education.certificatePath) profile.education.certificatePath = normalizePath(profile.education.certificatePath);
-            }
-            if (profile?.practice) {
-                if (profile.practice.licensePath) profile.practice.licensePath = normalizePath(profile.practice.licensePath);
-            }
-            if (profile?.idProof) {
-                if (profile.idProof.docPath) profile.idProof.docPath = normalizePath(profile.idProof.docPath);
+            // Normalize ALL paths in the profile object
+            if (profile) {
+                if (profile.profilePicPath) profile.profilePicPath = normalizePath(profile.profilePicPath);
+                if (profile.signaturePath) profile.signaturePath = normalizePath(profile.signaturePath);
+                if (profile.documentPath) profile.documentPath = normalizePath(profile.documentPath);
+
+                if (profile.education?.certificatePath) profile.education.certificatePath = normalizePath(profile.education.certificatePath);
+                if (profile.practice?.licensePath) profile.practice.licensePath = normalizePath(profile.practice.licensePath);
+                if (profile.idProof?.docPath) profile.idProof.docPath = normalizePath(profile.idProof.docPath);
             }
 
             return {
@@ -556,34 +556,35 @@ router.get('/members/:id', async (req, res) => {
             profile = await Client.findOne({ userId: user._id }).lean();
         }
 
-        const normalizePath = (p) => {
-            if (!p) return null;
-            let clean = p.replace(/\\/g, '/');
-
-            // If path contains 'uploads/', strip everything before it
-            const uploadIndex = clean.toLowerCase().indexOf('uploads/');
-            if (uploadIndex !== -1) {
-                clean = clean.substring(uploadIndex);
-            }
-
-            return clean.startsWith('/') ? clean : `/${clean}`;
-        };
+        const normalizePath = getImageUrl;
 
         const documents = [];
         if (profile) {
-            // Normalize profile pic in the profile object itself for direct access
+            // Normalize ALL paths in the profile object itself
             if (profile.profilePicPath) profile.profilePicPath = normalizePath(profile.profilePicPath);
+            if (profile.signaturePath) profile.signaturePath = normalizePath(profile.signaturePath);
+            if (profile.documentPath) profile.documentPath = normalizePath(profile.documentPath);
+
+            if (profile.education?.certificatePath) {
+                profile.education.certificatePath = normalizePath(profile.education.certificatePath);
+            }
+            if (profile.practice?.licensePath) {
+                profile.practice.licensePath = normalizePath(profile.practice.licensePath);
+            }
+            if (profile.idProof?.docPath) {
+                profile.idProof.docPath = normalizePath(profile.idProof.docPath);
+            }
 
             if (user.role.toLowerCase() === 'advocate' || user.role.toLowerCase() === 'legal_provider') {
                 if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
-                if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: normalizePath(profile.education.certificatePath) });
-                if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: normalizePath(profile.practice.licensePath) });
-                if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: normalizePath(profile.idProof.docPath) });
-                if (profile.signaturePath) documents.push({ name: 'Signature', path: normalizePath(profile.signaturePath) });
+                if (profile.education?.certificatePath) documents.push({ name: 'Education Certificate', path: profile.education.certificatePath });
+                if (profile.practice?.licensePath) documents.push({ name: 'Practice License', path: profile.practice.licensePath });
+                if (profile.idProof?.docPath) documents.push({ name: profile.idProof.docType || 'ID Proof', path: profile.idProof.docPath });
+                if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             } else {
                 if (profile.profilePicPath) documents.push({ name: 'Profile Photo', path: profile.profilePicPath });
-                if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: normalizePath(profile.documentPath) });
-                if (profile.signaturePath) documents.push({ name: 'Signature', path: normalizePath(profile.signaturePath) });
+                if (profile.documentPath) documents.push({ name: profile.documentType || 'Verification Document', path: profile.documentPath });
+                if (profile.signaturePath) documents.push({ name: 'Signature', path: profile.signaturePath });
             }
         }
 

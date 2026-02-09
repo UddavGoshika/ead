@@ -9,8 +9,8 @@ const path = require('path');
 const getImageUrl = (filePath) => {
     if (!filePath) return null;
 
-    // Check if it is already a full URL (e.g. from Cloudinary/S3)
-    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    // Check if it is already a full URL or a Data URL (base64)
+    if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
         return filePath;
     }
 

@@ -136,18 +136,25 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
     const renderFileItem = (title: string, path: string | undefined) => {
         if (!path) return null;
 
-        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(path) ||
-            path.toLowerCase().endsWith('-blob') ||
-            path.toLowerCase().includes('signature') ||
-            path.toLowerCase().includes('photo');
+        const lowerPath = path.toLowerCase();
+        const isPdf = /\.pdf($|\?|#)/i.test(path) || lowerPath.includes('resource_type/raw');
+
+        const isImage = !isPdf && (
+            /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(path) ||
+            lowerPath.endsWith('-blob') ||
+            lowerPath.includes('signature') ||
+            lowerPath.includes('photo') ||
+            path.startsWith('data:')
+        );
 
         const fullPath = formatImageUrl(path);
 
         const fileName = fullPath.split('/').pop() || 'document.pdf';
-        const isImageFinal = isImage ||
-            /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fileName) ||
-            fullPath.toLowerCase().includes('avatar') ||
-            fullPath.toLowerCase().includes('profile');
+        const lowerFileName = fileName.toLowerCase();
+        const isImageFinal = (isImage ||
+            (/\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fileName)) ||
+            lowerFileName.includes('avatar') ||
+            lowerFileName.includes('profile')) && !isPdf && !lowerFileName.endsWith('.pdf');
 
         return (
             <div className={styles.docItem}>

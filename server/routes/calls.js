@@ -4,6 +4,7 @@ const Call = require('../models/Call');
 const User = require('../models/User');
 const Advocate = require('../models/Advocate');
 const Client = require('../models/Client');
+const { getImageUrl } = require('../utils/pathHelper');
 
 // Helper to get profile details for a user
 async function getProfileDetails(userId) {
@@ -22,7 +23,7 @@ async function getProfileDetails(userId) {
 
     let imageUrl = '/default-avatar.png';
     if (profile?.profilePicPath) {
-        imageUrl = `/${profile.profilePicPath.replace(/\\/g, '/')}`;
+        imageUrl = getImageUrl(profile.profilePicPath);
     } else if (profile?.img) {
         imageUrl = profile.img;
     }

@@ -13,6 +13,7 @@ const Client = require('../models/Client');
 const path = require('path');
 const fs = require('fs');
 const { upload } = require('../config/cloudinary');
+const { getImageUrl } = require('../utils/pathHelper');
 
 
 
@@ -56,7 +57,7 @@ router.post('/login', async (req, res) => {
                 if (advocate) {
                     uniqueId = advocate.unique_id;
                     displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
-                    userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
+                    userImage = getImageUrl(advocate.profilePicPath);
                     rejectionReason = advocate.rejectionReason;
                 }
             } else if (user.role === 'client') {
@@ -65,7 +66,7 @@ router.post('/login', async (req, res) => {
                 if (client) {
                     uniqueId = client.unique_id;
                     displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
-                    userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
+                    userImage = getImageUrl(client.profilePicPath);
                     rejectionReason = client.rejectionReason;
                 }
             } else {
@@ -185,7 +186,7 @@ router.get('/me', async (req, res) => {
             if (advocate) {
                 uniqueId = advocate.unique_id;
                 displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
-                userImage = advocate.profilePicPath ? `/${advocate.profilePicPath.replace(/\\/g, '/')}` : null;
+                userImage = getImageUrl(advocate.profilePicPath);
             }
         } else if (user.role === 'client') {
             const Client = require('../models/Client');
@@ -193,7 +194,7 @@ router.get('/me', async (req, res) => {
             if (client) {
                 uniqueId = client.unique_id;
                 displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
-                userImage = client.profilePicPath ? `/${client.profilePicPath.replace(/\\/g, '/')}` : null;
+                userImage = getImageUrl(client.profilePicPath);
                 rejectionReason = client.rejectionReason;
             }
         } else {

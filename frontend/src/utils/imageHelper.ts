@@ -7,8 +7,8 @@ import { API_BASE_URL } from '../config';
 export const formatImageUrl = (path: string | null | undefined): string => {
     if (!path) return 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
 
-    // If it's already a full URL or blob, return as is
-    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    // If it's already a full URL, blob, or base64 data URL, return as is
+    if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) return path;
 
     // 1. Normalize slashes (handle Windows backslashes)
     let cleanPath = path.replace(/\\/g, '/');
@@ -27,9 +27,10 @@ export const formatImageUrl = (path: string | null | undefined): string => {
 
     // 3. If API_BASE_URL exists and we are not in dev-proxy mode, prepend it
     // Note: If API_BASE_URL is empty, it means we're in prod on same origin (proxy works)
+    const encodedPath = encodeURI(cleanPath);
     if (API_BASE_URL) {
-        return `${API_BASE_URL.replace(/\/$/, '')}${cleanPath}`;
+        return `${API_BASE_URL.replace(/\/$/, '')}${encodedPath}`;
     }
 
-    return cleanPath;
+    return encodedPath;
 };
