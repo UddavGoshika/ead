@@ -33,8 +33,6 @@ if (SMTP_HOST) {
 }
 
 const sendEmail = async (to, subject, text, html) => {
-    // 1. SMTP PATH
-    // 1. SMTP PATH
     if (smtpTransport) {
         try {
             console.log(`📤 Sending SMTP email to: ${to} via ${SMTP_HOST}`);
