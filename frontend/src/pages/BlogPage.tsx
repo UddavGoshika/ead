@@ -65,7 +65,7 @@ const BlogPage: React.FC = () => {
             <section className={styles.hero}>
                 <div className={styles.container}>
                     <h1 className={styles.heroTitle}>Blogs</h1>
-                    <p className={styles.heroSubtitle}>Insights, updates & success stories from advocates & legal experts</p>
+                    <p className={styles.heroSubtitle}>Insights, updates & success stories from advocates </p>
                 </div>
             </section>
 

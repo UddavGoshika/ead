@@ -63,19 +63,28 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
             setEnabledGateways(gateways);
         };
         loadGateways();
-
         fetchRealWalletData();
     }, []);
+
+    const [promoCode, setPromoCode] = useState('');
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [cards, setCards] = useState<any[]>([]);
+    const [banksList, setBanksList] = useState<any[]>([]);
 
     const fetchRealWalletData = async () => {
         try {
             const token = localStorage.getItem('token');
-            const [balanceRes, txRes] = await Promise.all([
+            const [balanceRes, txRes, bankRes, cardRes] = await Promise.all([
                 axios.get('/api/payments/balance', { headers: { Authorization: token || '' } }),
-                axios.get('/api/payments/my-transactions', { headers: { Authorization: token || '' } })
+                axios.get('/api/payments/my-transactions', { headers: { Authorization: token || '' } }),
+                axios.get('/api/payments/bank-accounts', { headers: { Authorization: token || '' } }),
+                axios.get('/api/payments/cards', { headers: { Authorization: token || '' } })
             ]);
 
             if (balanceRes.data.success) setBalance(balanceRes.data.balance);
+            if (bankRes.data.success) setBanksList(bankRes.data.bankAccounts);
+            if (cardRes.data.success) setCards(cardRes.data.cards);
+
             if (txRes.data.success) {
                 const mapped: Transaction[] = txRes.data.transactions.map((t: any) => {
                     const status = t.status.toLowerCase();
@@ -103,6 +112,12 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
     // UI States
     const [showAddMoney, setShowAddMoney] = useState(false);
     const [showWithdraw, setShowWithdraw] = useState(false);
+    const [showLinkMethod, setShowLinkMethod] = useState(false);
+    const [linkMethodType, setLinkMethodType] = useState<'bank' | 'card' | null>(null);
+
+    const [newBank, setNewBank] = useState({ bankName: '', accountNumber: '', ifsc: '', holderName: '', isPrimary: false });
+    const [newCard, setNewCard] = useState({ cardNum: '', cardType: 'VISA', expiry: '', holderName: '' });
+
     const [withdrawStep, setWithdrawalStep] = useState(1);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawError, setWithdrawError] = useState('');
@@ -149,7 +164,12 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
         }
 
         try {
-            const response = await walletService.withdraw({ amount: amt, bankDetails: banks[0] }); // defaulting to primary bank
+            const primaryBank = banksList.find(b => b.isPrimary) || banksList[0];
+            if (!primaryBank) {
+                setWithdrawError('Please link a bank account first.');
+                return;
+            }
+            const response = await walletService.withdraw({ amount: amt, bankDetails: primaryBank });
             if (response.data.success) {
                 setWithdrawalStep(2);
                 setWithdrawError('');
@@ -159,6 +179,82 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
         } catch (err: any) {
             setWithdrawError(err.response?.data?.error || 'Withdrawal request failed');
         }
+    };
+
+    const handleRedeemPromo = async () => {
+        if (!promoCode) return;
+        setPromoLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('/api/payments/redeem-promo', { code: promoCode }, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) {
+                alert(res.data.message);
+                setPromoCode('');
+                fetchRealWalletData();
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to redeem code");
+        } finally {
+            setPromoLoading(false);
+        }
+    };
+
+    const handleAddBank = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('/api/payments/bank-accounts', newBank, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) {
+                setBanksList(res.data.bankAccounts);
+                setShowLinkMethod(false);
+                setLinkMethodType(null);
+                setNewBank({ bankName: '', accountNumber: '', ifsc: '', holderName: '', isPrimary: false });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to add bank account");
+        }
+    };
+
+    const handleAddCard = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('/api/payments/cards', newCard, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) {
+                setCards(res.data.cards);
+                setShowLinkMethod(false);
+                setLinkMethodType(null);
+                setNewCard({ cardNum: '', cardType: 'VISA', expiry: '', holderName: '' });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to add card");
+        }
+    };
+
+    const handleDeleteBank = async (id: string) => {
+        if (!window.confirm("Delete this bank account?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.delete(`/api/payments/bank-accounts/${id}`, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) setBanksList(res.data.bankAccounts);
+        } catch (err) { alert("Delete failed"); }
+    };
+
+    const handleDeleteCard = async (id: string) => {
+        if (!window.confirm("Delete this card?")) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.delete(`/api/payments/cards/${id}`, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) setCards(res.data.cards);
+        } catch (err) { alert("Delete failed"); }
     };
 
     return (
@@ -206,7 +302,17 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                         </div>
                         <div className={styles.promoCard}>
                             <div className={styles.promoHeader}><Gift size={18} /> <span>Redeem Promo</span></div>
-                            <div className={styles.promoInputGroup}><input type="text" placeholder="Code" /><button>Apply</button></div>
+                            <div className={styles.promoInputGroup}>
+                                <input
+                                    type="text"
+                                    placeholder="Code"
+                                    value={promoCode}
+                                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                />
+                                <button onClick={handleRedeemPromo} disabled={promoLoading}>
+                                    {promoLoading ? '...' : 'Apply'}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -252,15 +358,32 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
             {activeTab === 'bank' && (
                 <div className={styles.bankGrid}>
-                    {banks.map(bank => (
-                        <div key={bank.id} className={styles.realBankCard}>
+                    {banksList.length > 0 ? banksList.map(bank => (
+                        <div key={bank._id} className={styles.realBankCard}>
                             <div className={styles.cardChip}></div>
+                            <div className={styles.bankNameLabel}>{bank.bankName}</div>
                             <div className={styles.cardNum}>{bank.accountNumber}</div>
                             <p>{bank.holderName}</p>
                             {bank.isPrimary && <div className={styles.primaryBadge}>PRIMARY</div>}
+                            <button className={styles.deleteMini} onClick={() => handleDeleteBank(bank._id)}><X size={12} /></button>
+                        </div>
+                    )) : (
+                        <div style={{ padding: '20px', color: '#94a3b8' }}>No banks linked. Link one for payouts.</div>
+                    )}
+
+                    {cards.map(card => (
+                        <div key={card._id} className={`${styles.realBankCard} ${styles.creditCard}`}>
+                            <div className={styles.cardChip}></div>
+                            <div className={styles.bankNameLabel}>{card.cardType || 'Credit Card'}</div>
+                            <div className={styles.cardNum}>{card.cardNum}</div>
+                            <p>{card.holderName}</p>
+                            <button className={styles.deleteMini} onClick={() => handleDeleteCard(card._id)}><X size={12} /></button>
                         </div>
                     ))}
-                    <button className={styles.addBankCard}><Plus size={32} /><span>Link Method</span></button>
+
+                    <button className={styles.addBankCard} onClick={() => setShowLinkMethod(true)}>
+                        <Plus size={32} /><span>Link Method</span>
+                    </button>
                 </div>
             )}
 
@@ -603,6 +726,59 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
                 )
             }
+
+            {showLinkMethod && (
+                <div className={styles.modalOverlay} onClick={() => setShowLinkMethod(false)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h3>Link New Method</h3>
+                                <p className={styles.modalSubtext}>Securely add a bank account or credit/debit card</p>
+                            </div>
+                            <X className={styles.closeIcon} onClick={() => setShowLinkMethod(false)} />
+                        </div>
+
+                        <div className={styles.modalBody}>
+                            {!linkMethodType ? (
+                                <div className={styles.methodTypeGrid}>
+                                    <button onClick={() => setLinkMethodType('bank')} className={styles.typeBtn}>
+                                        <Building2 size={32} />
+                                        <span>Bank Account</span>
+                                    </button>
+                                    <button onClick={() => setLinkMethodType('card')} className={styles.typeBtn}>
+                                        <CreditCard size={32} />
+                                        <span>Saved Card</span>
+                                    </button>
+                                </div>
+                            ) : linkMethodType === 'bank' ? (
+                                <div className={styles.addMethodForm}>
+                                    <div className={styles.inputGroup}><label>Bank Name</label><input value={newBank.bankName} onChange={e => setNewBank({ ...newBank, bankName: e.target.value })} placeholder="e.g. HDFC Bank" /></div>
+                                    <div className={styles.inputGroup}><label>Account Number</label><input value={newBank.accountNumber} onChange={e => setNewBank({ ...newBank, accountNumber: e.target.value })} placeholder="XXXX XXXX XXXX" /></div>
+                                    <div className={styles.inputGroup}><label>IFSC Code</label><input value={newBank.ifsc} onChange={e => setNewBank({ ...newBank, ifsc: e.target.value.toUpperCase() })} placeholder="HDFC0001234" /></div>
+                                    <div className={styles.inputGroup}><label>Account Holder</label><input value={newBank.holderName} onChange={e => setNewBank({ ...newBank, holderName: e.target.value })} placeholder="Full Name" /></div>
+                                    <button className={styles.primaryBtn} onClick={handleAddBank}>Add Bank Account</button>
+                                    <button className={styles.cancelLink} onClick={() => setLinkMethodType(null)}>Back</button>
+                                </div>
+                            ) : (
+                                <div className={styles.addMethodForm}>
+                                    <div className={styles.inputGroup}><label>Card Number</label><input value={newCard.cardNum} onChange={e => setNewCard({ ...newCard, cardNum: e.target.value })} placeholder="4111 1111 1111 1111" /></div>
+                                    <div className={styles.inputGroup}><label>Card Type</label>
+                                        <select value={newCard.cardType} onChange={e => setNewCard({ ...newCard, cardType: e.target.value as any })}>
+                                            <option>VISA</option>
+                                            <option>Mastercard</option>
+                                            <option>Rupay</option>
+                                        </select>
+                                    </div>
+                                    <div className={styles.inputGroup}><label>Expiry (MM/YY)</label><input value={newCard.expiry} onChange={e => setNewCard({ ...newCard, expiry: e.target.value })} placeholder="12/28" /></div>
+                                    <div className={styles.inputGroup}><label>Card Holder</label><input value={newCard.holderName} onChange={e => setNewCard({ ...newCard, holderName: e.target.value })} placeholder="Full Name" /></div>
+                                    <button className={styles.primaryBtn} onClick={handleAddCard}>Save Card</button>
+                                    <button className={styles.cancelLink} onClick={() => setLinkMethodType(null)}>Back</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

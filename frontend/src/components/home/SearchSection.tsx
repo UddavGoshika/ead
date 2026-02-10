@@ -394,9 +394,24 @@ const SearchSection: React.FC = () => {
                 ) : (
                     <div className={styles.resultsGrid}>
                         {results.length > 0 ? (
-                            results.map((profile: any) => {
+                            (searchRole === 'advocates'
+                                ? [...results].sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                                : results
+                            ).slice(0, 6).map((profile: any) => {
                                 const name = profile.name || (profile.firstName + ' ' + profile.lastName) || 'User';
                                 const initial = name.charAt(0).toUpperCase();
+
+                                // Fix Image URL Logic
+                                let imageUrl = null;
+                                if (profile.profilePicPath) {
+                                    if (profile.profilePicPath.startsWith('http')) {
+                                        imageUrl = profile.profilePicPath;
+                                    } else {
+                                        imageUrl = `/${profile.profilePicPath.replace(/\\/g, '/')}`;
+                                    }
+                                } else if (profile.image_url) { // Fallback to image_url if exists
+                                    imageUrl = profile.image_url;
+                                }
 
                                 return (
                                     <div
@@ -410,14 +425,20 @@ const SearchSection: React.FC = () => {
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <div className={styles.cardContent}>
-                                            {profile.profilePicPath ? (
+                                            {imageUrl ? (
                                                 <img
-                                                    src={`/${profile.profilePicPath.replace(/\\/g, '/')}`}
+                                                    src={imageUrl}
                                                     className={styles.profileImage}
                                                     alt={name}
+                                                    onError={(e) => {
+                                                        // Fallback on error
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                        ((e.target as HTMLImageElement).nextSibling as HTMLElement).style.display = 'flex';
+                                                    }}
                                                 />
-                                            ) : (
-                                                <div className={styles.largeInitial}>{initial}</div>
+                                            ) : null}
+                                            {(!imageUrl || (imageUrl && false)) && ( // We handle fallback in onError above, but also render initial div which is hidden by css if img exists? No, conditional rendering.
+                                                <div className={styles.largeInitial} style={{ display: imageUrl ? 'none' : 'flex' }}>{initial}</div>
                                             )}
 
                                             <div className={styles.topRightBadge}>

@@ -78,7 +78,7 @@ const ProviderDashboard: React.FC = () => {
                             <h2>Documentation Provider Dashboard</h2>
                             <p>Manage your legal drafting services and client requests.</p>
                         </div>
-                        <Activity />
+                        <Activity onSelectForChat={handleSelectForChat} />
                     </div>
                 );
             case 'featured-profiles':
@@ -116,7 +116,7 @@ const ProviderDashboard: React.FC = () => {
             case 'messenger':
                 return <Messenger view="list" onSelectForChat={handleSelectForChat} />;
             default:
-                return <Activity />;
+                return <Activity onSelectForChat={handleSelectForChat} />;
         }
     };
 

@@ -44,6 +44,15 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('All Status');
     const [selectedDept, setSelectedDept] = useState('All');
+    const [selectedSubDept, setSelectedSubDept] = useState('All');
+    const [selectedState, setSelectedState] = useState('');
+    const [selectedDistrict, setSelectedDistrict] = useState('');
+    const [selectedCity, setSelectedCity] = useState('');
+
+    const states = Object.keys(LOCATION_DATA_RAW);
+    const districts = selectedState ? Object.keys(LOCATION_DATA_RAW[selectedState] || {}) : [];
+    const cities = (selectedState && selectedDistrict) ? LOCATION_DATA_RAW[selectedState][selectedDistrict] : [];
+    const subDepartments = selectedDept !== 'All' ? LEGAL_DOMAINS[selectedDept] || [] : [];
 
     const fetchCases = async () => {
         setLoading(true);
@@ -52,6 +61,10 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
             if (search) params.search = search;
             if (status !== 'All Status') params.status = status;
             if (selectedDept !== 'All') params.department = selectedDept;
+            if (selectedSubDept !== 'All') params.subDepartment = selectedSubDept;
+            if (selectedState) params.state = selectedState;
+            if (selectedDistrict) params.district = selectedDistrict;
+            if (selectedCity) params.city = selectedCity;
 
             const response = await caseService.getCases(params);
             setCases(response.data.cases);
@@ -177,19 +190,22 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.searchSection}>
-                <div className={styles.searchContainer}>
+            <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '12px',
+                    width: '100%'
+                }}>
                     <input
                         type="text"
-                        placeholder="Search by Case ID or Client..."
+                        placeholder="Search Case ID or Client..."
                         className={styles.dashboardSearchInput}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        style={{ paddingRight: '20px' }}
                     />
-                    <button className={styles.searchBtnInside} onClick={fetchCases}>Search</button>
-                </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                     <select className={styles.filterSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
                         <option>All Status</option>
                         <option>Case Request Received</option>
@@ -198,8 +214,33 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
                         <option>Closed</option>
                     </select>
 
-                    <button className={styles.initiateBtn} onClick={() => setActiveModal('initiate')}>
-                        <Plus size={18} /> Initiate New Case
+                    <select className={styles.filterSelect} value={selectedDept} onChange={(e) => { setSelectedDept(e.target.value); setSelectedSubDept('All'); }}>
+                        <option value="All">All Departments</option>
+                        {Object.keys(LEGAL_DOMAINS).map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedSubDept} onChange={(e) => setSelectedSubDept(e.target.value)} disabled={selectedDept === 'All'}>
+                        <option value="All">All Sub-Depts</option>
+                        {subDepartments.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedState} onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); setSelectedCity(''); }}>
+                        <option value="">All States</option>
+                        {states.sort().map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedCity(''); }} disabled={!selectedState}>
+                        <option value="">All Districts</option>
+                        {districts.sort().map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} disabled={!selectedDistrict}>
+                        <option value="">All Cities</option>
+                        {cities.sort().map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+
+                    <button className={styles.searchBtnInside} onClick={fetchCases} style={{ height: '100%', minHeight: '45px', position: 'static', borderRadius: '12px' }}>
+                        Search
                     </button>
                 </div>
             </div>

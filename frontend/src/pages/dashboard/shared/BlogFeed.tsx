@@ -71,7 +71,7 @@ const BlogFeed: React.FC = () => {
             <section className={styles.hero} style={{ marginTop: '0', padding: '100px 20px 60px' }}>
                 <div className={styles.container} style={{ maxWidth: '1400px' }}>
                     <h1 className={styles.heroTitle} style={{ fontSize: 'clamp(3rem, 5vw, 5rem)' }}>E-Advocate Blogs</h1>
-                    <p className={styles.heroSubtitle}>Insights, updates & success stories from advocates & legal experts</p>
+                    <p className={styles.heroSubtitle}>Insights, updates & success stories from advocates & experts</p>
                 </div>
             </section>
 

@@ -5,7 +5,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, Bookmark, Zap, Trash2, X, ThumbsDown, Ban, ChevronRight, Octagon } from "lucide-react";
 import DetailedProfile from "../../shared/DetailedProfile";
 
-const Activity = () => {
+const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => void }) => {
     const { user } = useAuth();
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -100,22 +100,42 @@ const Activity = () => {
         { label: "Ignored Profiles", value: ignored.length, items: ignored, icon: <Octagon size={20} />, color: "#94a3b8", bg: "rgba(148, 163, 184, 0.1)" }
     ];
 
+    const handleDeleteActivity = async (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        if (!window.confirm("Are you sure you want to remove this from your activity?")) return;
+        try {
+            await interactionService.deleteActivity(id);
+            setActivities(prev => prev.filter(a => (a._id || a.id) !== id));
+            if (modalState && getModalItems()[modalState.currentIndex]?._id === id) {
+                setModalState(null);
+            }
+        } catch (err) {
+            console.error("Delete Error:", err);
+            alert("Failed to delete activity");
+        }
+    };
+
     const renderProfileCard = (act: any, idx: number, category: string, tab: 'sent' | 'received') => {
         const partnerName = act.partnerName || 'Unknown User';
         const partnerImg = act.partnerImg || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
         const partnerId = act.partnerUniqueId || 'N/A';
         const age = act.partnerAge || '28';
+        const activityId = act._id || act.id;
 
         return (
             <div
-                key={act._id || idx}
+                key={activityId || idx}
                 className={styles.profileCard}
                 onClick={() => openCategory(category, tab, idx)}
             >
                 <div className={styles.cardHeader}>
                     <img src={partnerImg} alt={partnerName} className={styles.cardAvatar} />
-                    <button className={styles.cardMenuBtn}>
-                        <div className={styles.dots} />
+                    <button
+                        className={styles.cardMenuBtn}
+                        onClick={(e) => handleDeleteActivity(activityId, e)}
+                        title="Delete Activity"
+                    >
+                        <Trash2 size={18} color="#ef4444" />
                     </button>
                 </div>
                 <div className={styles.cardInfo}>
@@ -129,8 +149,9 @@ const Activity = () => {
 
     const renderSection = (title: string, category: string, tab: 'sent' | 'received', items: any[]) => {
         if (items.length === 0) return null;
+        const categoryClass = category.toLowerCase().replace(' ', '');
         return (
-            <div className={styles.sectionContainer}>
+            <div className={`${styles.sectionContainer} ${styles[categoryClass]}`}>
                 <div className={styles.sectionHeader}>
                     <h3>{title}{<span className={styles.countBadge}> ({items.length})</span>}</h3>
                     <ChevronRight size={20} className={styles.arrowIcon} />
@@ -142,22 +163,65 @@ const Activity = () => {
         );
     };
 
+    const cleanupBroken = async () => {
+        const broken = activities.filter(a => !a.partnerUniqueId && a.type !== 'visit');
+        if (broken.length === 0) {
+            alert("No broken records found.");
+            return;
+        }
+        if (!window.confirm(`Found ${broken.length} broken profile records. These are profiles that are no longer active. Delete them all?`)) return;
+
+        try {
+            for (const act of broken) {
+                await interactionService.deleteActivity(act._id || act.id).catch(() => { });
+            }
+            setActivities(prev => prev.filter(a => a.partnerUniqueId || a.type === 'visit'));
+            alert("Cleanup complete.");
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     return (
         <div className={styles.dashboard}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '22px', color: '#fff' }}>Activity Overview</h2>
+                <button
+                    onClick={cleanupBroken}
+                    style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        color: '#f87171',
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
+                >
+                    <Trash2 size={14} />
+                    Cleanup Broken
+                </button>
+            </div>
+
             {/* 7 Grid Stats - Click Handling Updated */}
             <div className={styles.statsGrid}>
                 {statItems.map((item, idx) => (
                     <div
                         key={idx}
                         className={`${styles.gridCard} ${item.value > 0 ? styles.gridCardActive : ''}`}
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             if (item.value === 0) return;
                             // Map labels to categories
-                            if (item.label === 'Accepted Interests') openCategory('Accepted', 'sent'); // No tabs really
+                            if (item.label === 'Accepted Interests') openCategory('Accepted', 'sent');
                             else if (item.label === 'Interests Received') openCategory('Interests', 'received');
                             else if (item.label === 'Interests Sent') openCategory('Interests', 'sent');
                             else if (item.label === 'Shortlisted Profiles') openCategory('Shortlisted', 'sent');
-                            else if (item.label === 'Declined Profiles') openCategory('Declined', 'sent'); // Default to 'sent' (my declines)
+                            else if (item.label === 'Declined Profiles') openCategory('Declined', 'sent');
                             else if (item.label === 'Blocked Profiles') openCategory('Blocked', 'sent');
                             else if (item.label === 'Ignored Profiles') openCategory('Ignored', 'sent');
                         }}
@@ -242,11 +306,30 @@ const Activity = () => {
 
             {modalState && (
                 <DetailedProfile
-                    profileId={(() => {
+                    key={(() => {
                         const items = getModalItems();
                         const act = items[modalState.currentIndex];
+                        return (act?._id || act?.id || 'empty') + '-' + modalState.currentIndex;
+                    })()}
+                    profileId={(() => {
+                        const items = getModalItems();
+                        if (!items || modalState.currentIndex === undefined) return null;
+                        const act = items[modalState.currentIndex];
                         if (!act) return null;
-                        return String(act.partnerUniqueId || (act.partnerDetails?._id) || (act.isSender ? act.receiver : act.sender));
+
+                        // Prioritize partnerUniqueId as it's best for fetching
+                        if (act.partnerUniqueId && act.partnerUniqueId !== 'N/A' && act.partnerUniqueId !== 'null') {
+                            return String(act.partnerUniqueId);
+                        }
+
+                        // Fallback to specific IDs if available (unlocked by services)
+                        if (act.advocateId) return String(act.advocateId);
+                        if (act.clientId) return String(act.clientId);
+
+                        // Final fallback: use the partner's User ID
+                        const pid = act.isSender ? act.receiver : act.sender;
+                        if (!pid || typeof pid === 'object') return null;
+                        return String(pid);
                     })()}
                     isModal={true}
                     onClose={() => setModalState(null)}
@@ -277,6 +360,7 @@ const Activity = () => {
                             onClick: () => setModalState({ ...modalState, activeTab: 'sent', currentIndex: 0 })
                         }
                     ] : undefined}
+                    onSelectForChat={onSelectForChat}
                 />
             )}
         </div>

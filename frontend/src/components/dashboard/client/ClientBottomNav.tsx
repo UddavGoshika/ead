@@ -1,4 +1,4 @@
-import { Star, MessageSquare, Clock, Newspaper, Briefcase } from 'lucide-react';
+import { Star, MessageSquare, Clock, Newspaper, Briefcase, Users } from 'lucide-react';
 import styles from '../MobileNav.module.css';
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
 
 const ClientBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => {
     const items = [
-        { id: 'featured-profiles', label: 'Profiles', icon: Star },
+        { id: 'featured-profiles', label: 'Profiles', icon: Users },
         { id: 'messenger', label: 'Messenger', icon: MessageSquare },
         { id: 'activity', label: 'Activity', icon: Clock },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },

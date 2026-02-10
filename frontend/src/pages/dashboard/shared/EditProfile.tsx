@@ -8,7 +8,8 @@ import {
   X,
   Settings,
   GraduationCap,
-  Layers
+  Layers,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { advocateService, authService, clientService } from '../../../services/api';
@@ -287,15 +288,121 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
                 </>
               )}
               {activeLayout === 'Account & Settings' && (
-                <p style={{ color: '#fff' }}>Account settings coming soon...</p>
+                <div className={styles.settingsWrapper}>
+                  {!formData.settingsView ? (
+                    <div className={styles.settingsGrid}>
+                      {[
+                        { id: 'privacy', label: 'Privacy Settings', icon: <Shield size={18} /> },
+                        { id: 'notifications', label: 'Notification Settings', icon: <Settings size={18} /> },
+                        { id: 'messaging', label: 'Messaging Settings', icon: <Layers size={18} /> }
+                      ].map(s => (
+                        <div key={s.id} className={styles.settingItem} onClick={() => setFormData({ ...formData, settingsView: s.id })}>
+                          <div className={styles.sIcon}>{s.icon}</div>
+                          <span>{s.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.settingsSubView}>
+                      <button className={styles.backToGrid} onClick={() => setFormData({ ...formData, settingsView: null })}>
+                        <ArrowLeft size={14} /> Back to Settings
+                      </button>
+                      <h4 style={{ color: '#facc15', marginBottom: '15px' }}>{formData.settingsView.toUpperCase()}</h4>
+
+                      {formData.settingsView === 'privacy' && (
+                        <div className={styles.toggleList}>
+                          {[
+                            { key: 'showProfile', label: 'Public Profile' },
+                            { key: 'showContact', label: 'Show Contact Number' },
+                            { key: 'showEmail', label: 'Show Email' }
+                          ].map(t => (
+                            <div key={t.key} className={styles.modalToggle}>
+                              <span>{t.label}</span>
+                              <input
+                                type="checkbox"
+                                checked={!!profileData?.privacySettings?.[t.key]}
+                                onChange={async (e) => {
+                                  const newPrivacy = { ...profileData.privacySettings, [t.key]: e.target.checked };
+                                  try {
+                                    const { settingsService } = await import('../../../services/api');
+                                    await settingsService.updatePrivacy(newPrivacy);
+                                    setProfileData({ ...profileData, privacySettings: newPrivacy });
+                                    showToast?.('Settings updated');
+                                  } catch (e) { showToast?.('Update failed'); }
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {formData.settingsView === 'notifications' && (
+                        <div className={styles.toggleList}>
+                          {[
+                            { key: 'email', label: 'Email Alerts' },
+                            { key: 'push', label: 'Push Notifications' },
+                            { key: 'sms', label: 'SMS Alerts' }
+                          ].map(t => (
+                            <div key={t.key} className={styles.modalToggle}>
+                              <span>{t.label}</span>
+                              <input
+                                type="checkbox"
+                                checked={!!profileData?.notificationSettings?.[t.key]}
+                                onChange={async (e) => {
+                                  const newNotifs = { ...profileData.notificationSettings, [t.key]: e.target.checked };
+                                  try {
+                                    const { settingsService } = await import('../../../services/api');
+                                    await settingsService.updateNotifications(newNotifs);
+                                    setProfileData({ ...profileData, notificationSettings: newNotifs });
+                                    showToast?.('Settings updated');
+                                  } catch (e) { showToast?.('Update failed'); }
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {formData.settingsView === 'messaging' && (
+                        <div className={styles.toggleList}>
+                          {[
+                            { key: 'allowDirectMessages', label: 'Allow Direct Messages' },
+                            { key: 'readReceipts', label: 'Read Receipts' }
+                          ].map(t => (
+                            <div key={t.key} className={styles.modalToggle}>
+                              <span>{t.label}</span>
+                              <input
+                                type="checkbox"
+                                checked={!!profileData?.messageSettings?.[t.key]}
+                                onChange={async (e) => {
+                                  const newMsg = { ...profileData.messageSettings, [t.key]: e.target.checked };
+                                  try {
+                                    const { settingsService } = await import('../../../services/api');
+                                    await settingsService.updateMessaging(newMsg);
+                                    setProfileData({ ...profileData, messageSettings: newMsg });
+                                    showToast?.('Settings updated');
+                                  } catch (e) { showToast?.('Update failed'); }
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
             <div className={styles.modalActions}>
-              <button className={styles.cancel} onClick={() => setActiveLayout(null)}>Cancel</button>
-              <button className={styles.save} onClick={handleSave} disabled={loading}>
-                {loading ? 'Saving...' : 'Save'}
+              <button className={styles.cancel} onClick={() => setActiveLayout(null)}>
+                {activeLayout === 'Account & Settings' ? 'Close' : 'Cancel'}
               </button>
+              {activeLayout !== 'Account & Settings' && (
+                <button className={styles.save} onClick={handleSave} disabled={loading}>
+                  {loading ? 'Saving...' : 'Save'}
+                </button>
+              )}
             </div>
           </div>
         </div>

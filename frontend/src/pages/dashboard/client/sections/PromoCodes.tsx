@@ -56,14 +56,24 @@ const PromoCodes: React.FC = () => {
         }
     ];
 
-    const handleApply = () => {
+    const handleApply = async () => {
         if (!inputValue) return;
         setApplying(true);
-        setTimeout(() => {
-            alert(`Promo code "${inputValue}" applied successfully!`);
+        try {
+            const token = localStorage.getItem('token');
+            const { default: axios } = await import('axios');
+            const res = await axios.post('/api/payments/redeem-promo', { code: inputValue }, {
+                headers: { Authorization: token || '' }
+            });
+            if (res.data.success) {
+                alert(res.data.message);
+                setInputValue('');
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to redeem code");
+        } finally {
             setApplying(false);
-            setInputValue('');
-        }, 1500);
+        }
     };
 
     const copyToClipboard = (id: string, code: string) => {

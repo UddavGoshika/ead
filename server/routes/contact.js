@@ -19,8 +19,9 @@ router.post('/', async (req, res) => {
             id: ticketId,
             subject: req.body.subject || `Inquiry from ${req.body.source || 'Website'}`,
             user: req.body.email || req.body.name || 'Visitor',
-            category: 'General Inquiry',
-            priority: 'Medium',
+            userId: req.body.userId,
+            category: req.body.category || 'General Inquiry',
+            priority: (req.body.category === 'Technical Issue' || req.body.category === 'Report User') ? 'High' : 'Medium',
             status: 'Open',
             messages: [{
                 sender: req.body.name || 'Visitor',

@@ -161,10 +161,11 @@
     /* Very dark blue matching the image */
     width: 100%;
     max-width: 900px;
-    height: 70vh;
+    height: 85vh;
     border-radius: 16px;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     position: relative;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -178,6 +179,7 @@
     align-items: flex-start;
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .titleGroup {
@@ -227,13 +229,14 @@
     display: flex;
     gap: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 40px;
-    padding: 0 40px;
-    padding-bottom: 0px;
+    margin-bottom: 0;
+    /* Reduced margin */
+    padding: 20px 40px 0;
+    /* Adjusted padding */
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    /* Hide scrollbar for Firefox */
+    flex-shrink: 0;
 }
 
 .tabsContainer::-webkit-scrollbar {
@@ -249,6 +252,7 @@
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
+    white-space: nowrap;
 }
 
 .tabItem:hover {
@@ -275,7 +279,9 @@
 
 /* Content Area */
 .content {
-    min-height: 400px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
     padding: 30px 40px;
 }
 

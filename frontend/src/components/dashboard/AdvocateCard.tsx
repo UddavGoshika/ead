@@ -6,10 +6,19 @@ import {
     Handshake,
     Star,
     CheckCircle2,
+    Check,
     Send,
     X,
-    Zap
+    Zap,
+    MapPin,
+    Briefcase,
+    Scale,
+    User,
+    Share2,
+    Link2
 } from 'lucide-react';
+import { FaMapMarkerAlt, FaBriefcase, FaWhatsapp, FaFacebook, FaLinkedin } from "react-icons/fa";
+
 import styles from './AdvocateCard.module.css';
 import type { Advocate } from '../../types';
 import { formatImageUrl } from '../../utils/imageHelper';
@@ -26,6 +35,8 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
     const [popupType, setPopupType] = useState<'none' | 'interest_upgrade' | 'super_interest_confirm' | 'chat_confirm' | 'need_interest'>('none');
     const [interestSent, setInterestSent] = useState(false);
     const [message, setMessage] = useState('');
+    const [shareCount, setShareCount] = useState(advocate.shares || 0);
+    const [showShareMenu, setShowShareMenu] = useState(false);
 
     const IS_MASKED = !isPremium;
 
@@ -91,6 +102,29 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
         setInteractionStage('none');
     };
 
+    const handleShareOptionClick = async (platform: string) => {
+        try {
+            const url = window.location.origin + `/detailed-profile/${advocate.id}`;
+            const text = `Check out this professional profile on e-Advocate: ${advocate.name}`;
+
+            if (platform === 'whatsapp') {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+            } else if (platform === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+            } else if (platform === 'linkedin') {
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+            } else if (platform === 'copy') {
+                navigator.clipboard.writeText(url);
+                alert('Profile link copied to clipboard!');
+            }
+
+            setShareCount(prev => prev + 1);
+            setShowShareMenu(false);
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
+    };
+
     const handleUpgradeToSuper = (e: React.MouseEvent) => {
         e.stopPropagation();
         setPopupType('none');
@@ -103,6 +137,12 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
 
     return (
         <div className={cardClass}>
+            {shareCount > 0 && (
+                <div className={styles.topShareBadge}>
+                    <Share2 size={12} />
+                    <span>{shareCount} Shares</span>
+                </div>
+            )}
             {/* Unified Popups */}
             {popupType !== 'none' && (
                 <div className={styles.popupOverlay} onClick={() => setPopupType('none')}>
@@ -164,9 +204,9 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
 
             <div className={styles.avatarSection}>
                 <div className={styles.imageContainer}>
-                    {advocate.image_url ? (
+                    {(advocate.image_url || (advocate as any).img) ? (
                         <img
-                            src={formatImageUrl(advocate.image_url)}
+                            src={formatImageUrl(advocate.image_url || (advocate as any).img)}
                             alt={advocate.name}
                             className={`${styles.advocateImg} ${shouldBlur ? styles.blurredImage : ''}`}
                             onError={(e) => {
@@ -188,42 +228,57 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
                         <span className={styles.topIdText}>{maskId(advocate.unique_id)}</span>
-                        <div className={styles.badgeDivider}></div>
-                        {variant === 'featured' ? (
-                            <div className={styles.premiumVerified}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="11" fill="url(#blue_grad_bold)" />
-                                    <path d="M7.5 12.5L10.5 15.5L16.5 8.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                    <defs>
-                                        <linearGradient id="blue_grad_bold" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-                                            <stop stopColor="#38bdf8" />
-                                            <stop offset="0.5" stopColor="#0ea5e9" />
-                                            <stop offset="1" stopColor="#0284c7" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
+                        {/* Remove green verified button , replace with meta badge for featured */}
+                        {variant === 'featured' && (
+                            <div className={styles.metaBadgeContainer}>
+                                <div className={styles.metaBadge}>
+                                    <Check size={16} color="white" strokeWidth={4} />
+                                </div>
                             </div>
-                        ) : (
-                            <CheckCircle2 size={16} fill="#22c55e" color="white" />
                         )}
                     </div>
                 </div>
 
                 <div className={`${styles.profileTextOverlay} ${shouldBlur ? styles.blurredText : ''}`}>
-                    <h3 className={styles.overlayName}>{maskName(advocate.name)}, {advocate.age || 27}</h3>
-                    <div className={styles.overlayDetails}>
-                        <p>{advocate.location}</p>
-                        <p>{advocate.experience} experience</p>
+                    <h3 className={styles.overlayName} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <User size={20} className="text-yellow-400" fill="#facc15" stroke="none" />
+                        {maskName(advocate.name)}
+                        {advocate.age ? <span style={{ fontSize: '0.8em', opacity: 0.8, fontWeight: 400 }}>, {advocate.age}</span> : ''}
+                    </h3>
+
+                    <div className={styles.overlayDetails} style={{ marginTop: '4px' }}>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <MapPin size={14} color="#38bdf8" />
+                            {typeof advocate.location === 'object' && advocate.location !== null
+                                // @ts-ignore
+                                ? `${advocate.location.city || ''}, ${advocate.location.state || ''}`
+                                : (advocate.location || 'India')
+                            }
+                        </p>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Briefcase size={14} color="#4ade80" />
+                            {advocate.experience || '0'} Years Experience
+                        </p>
                     </div>
                 </div>
 
                 <div className={styles.rightBadgeStack}>
-                    <div className={styles.overlayDepartmentBadge}>
-                        {Array.isArray(advocate.specialties) ? advocate.specialties[0] : (advocate.specialties || 'General')}
+                    <div className={styles.overlayDepartmentBadge} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Scale size={14} color="#a78bfa" />
+                        {Array.isArray(advocate.specialties) && advocate.specialties.length > 0
+                            ? advocate.specialties[0]
+                            : (typeof advocate.specialties === 'string' ? advocate.specialties : 'General')
+                        }
                     </div>
                     <div className={styles.idBadge}>
                         <Shield size={14} fill="currentColor" stroke="currentColor" />
-                        <span className={styles.idText}>{maskId(advocate.bar_council_id || 'TS/1428/5256')}</span>
+                        <span className={styles.idText}>
+                            {(() => {
+                                const realId = advocate.bar_council_id || (advocate as any).barCouncilId;
+                                const displayId = realId || 'N/A';
+                                return (variant === 'featured' || isPremium) ? displayId : maskId(displayId);
+                            })()}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -258,7 +313,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                             <span>{interestSent ? 'Interested' : 'Interest'}</span>
                         </button>
                         <button className={styles.actionBtn} onClick={handleSuperInterestClick}>
-                            {variant === 'featured' ? <Star size={22} /> : <Zap size={22} />}
+                            <Zap size={22} />
                             <span>Super Interest</span>
                         </button>
                         <button className={styles.actionBtn} onClick={handleShortlistClick}>
@@ -269,6 +324,31 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                             <MessageCircle size={22} />
                             <span>Chat</span>
                         </button>
+                        {/* <div style={{ position: 'relative', display: 'flex' }}>
+                            <button
+                                className={styles.actionBtn}
+                                onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}
+                                style={{ padding: '8px 12px' }}
+                            >
+                                <Share2 size={22} />
+                            </button>
+                            {showShareMenu && (
+                                <div className={styles.shareMenu}>
+                                    <div className={`${styles.shareOption} ${styles.whatsapp}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('whatsapp'); }}>
+                                        <FaWhatsapp size={20} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.facebook}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('facebook'); }}>
+                                        <FaFacebook size={20} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.linkedin}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('linkedin'); }}>
+                                        <FaLinkedin size={20} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.copyLink}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('copy'); }}>
+                                        <Link2 size={20} />
+                                    </div>
+                                </div>
+                            )}
+                        </div> */}
                     </div>
                 )}
             </div>

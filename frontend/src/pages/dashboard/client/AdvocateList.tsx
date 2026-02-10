@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { advocateService } from '../../../services/api';
 import type { Advocate } from '../../../types';
 import AdvocateCard from '../../../components/dashboard/AdvocateCard';
-import { Search, SlidersHorizontal, Loader2, Star, ArrowRight } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, Star, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
 import styles from './AdvocateList.module.css';
@@ -157,95 +157,87 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
         <div className={styles.page}>
             <header className={styles.header}>
                 <div className={styles.headerSection} style={{ justifyContent: 'space-between', width: '100%', marginBottom: '20px' }}>
-                    <div className={styles.titleSection}>
-                        <h1 style={{ color: '#facc15', fontSize: '2rem', marginBottom: '8px' }}>Profiles</h1>
-                        <p style={{ color: '#94a3b8' }}>Connect with highly qualified legal professionals nationwide</p>
+                    <div className={styles.titleSection} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {onAction && (
+                            <button
+                                className={styles.backLink}
+                                onClick={() => onAction('switchFeatured', {} as Advocate)}
+                                style={{
+                                    // background: 'rgba(250, 204, 21, 0.1)',
+                                    padding: '10px 20px',
+                                    borderRadius: '12px',
+                                    // border: '1px solid rgba(250, 204, 21, 0.3)',
+                                    color: '#facc15'
+                                }}
+                            >
+                                <ArrowLeft size={18} />
+
+                                {/* <Star size={18} fill="#facc15" /> */}
+                                <span style={{ fontWeight: 700 }}>Switch to Featured Profiles</span>
+                            </button>
+                        )}
+
+                        {/* <h1 style={{ color: '#facc15', fontSize: '2rem', marginBottom: '8px' }}>Profiles</h1> */}
+                        {/* <p style={{ color: '#94a3b8' }}>Connect with highly qualified legal professionals nationwide</p> */}
                     </div>
-                    {onAction && (
-                        <button
-                            className={styles.backLink}
-                            onClick={() => onAction('switchFeatured', {} as Advocate)}
-                            style={{
-                                background: 'rgba(250, 204, 21, 0.1)',
-                                padding: '10px 20px',
-                                borderRadius: '12px',
-                                border: '1px solid rgba(250, 204, 21, 0.3)',
-                                color: '#facc15'
-                            }}
-                        >
-                            <Star size={18} fill="#facc15" />
-                            <span style={{ fontWeight: 700 }}>Switch to Featured Profiles</span>
-                            <ArrowRight size={18} />
-                        </button>
-                    )}
+
                 </div>
 
-                <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px', background: 'rgba(15, 23, 42, 0.4)' }}>
-                    <form className={styles.searchContainer} onSubmit={handleSearchSubmit} style={{ width: '100%' }}>
+                <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
+                    {/* Unified Search & Filter Grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '12px',
+                        width: '100%'
+                    }}>
                         <input
                             type="text"
                             name="search"
                             value={filters.search}
                             onChange={handleFilterChange}
-                            placeholder="Find by Advocate Name or ID..."
+                            placeholder="Search Name or ID..."
                             className={styles.dashboardSearchInput}
+                            style={{ paddingRight: '20px' }}
                         />
-                        <button type="submit" className={styles.searchBtnInside}>Search</button>
-                    </form>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', width: '100%' }}>
                         <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
-                            <option value="">All Specializations</option>
+                            <option value="">All Departments</option>
                             {Object.keys(LEGAL_DOMAINS).map(dept => (
                                 <option key={dept} value={dept}>{dept}</option>
                             ))}
                         </select>
 
                         <select name="subDepartment" value={filters.subDepartment} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.specialization}>
-                            <option value="">Sub-Department</option>
+                            <option value="">All Sub-Departments</option>
                             {availableSubDepartments.map(sub => (
                                 <option key={sub} value={sub}>{sub}</option>
                             ))}
                         </select>
 
-                        <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
-                            <option value="">Any Court</option>
-                            <option>Supreme Court</option>
-                            <option>High Court</option>
-                            <option>District Court</option>
-                            <option>Tribunal</option>
-                        </select>
-
-                        <select name="experience" value={filters.experience} onChange={handleFilterChange} className={styles.filterSelect}>
-                            <option value="">Any Experience</option>
-                            <option value="0-2 Years">0-2 Years</option>
-                            <option value="2-5 Years">2-5 Years</option>
-                            <option value="5+ Years">5+ Years</option>
-                        </select>
-
                         <select name="state" value={filters.state} onChange={handleFilterChange} className={styles.filterSelect}>
-                            <option value="">Any State</option>
+                            <option value="">All States</option>
                             {Object.keys(LOCATION_DATA_RAW).sort().map(st => (
                                 <option key={st} value={st}>{st}</option>
                             ))}
                         </select>
 
                         <select name="district" value={filters.district} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.state}>
-                            <option value="">Any District</option>
+                            <option value="">All Districts</option>
                             {availableDistricts.sort().map(dist => (
                                 <option key={dist} value={dist}>{dist}</option>
                             ))}
                         </select>
 
                         <select name="city" value={filters.city} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.district}>
-                            <option value="">Any City</option>
+                            <option value="">All Cities</option>
                             {availableCities.sort().map(city => (
                                 <option key={city} value={city}>{city}</option>
                             ))}
                         </select>
 
-                        <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ height: '100%' }}>
-                            Apply Filters
+                        <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ height: '100%', minHeight: '45px' }}>
+                            Search
                         </button>
                     </div>
                 </div>

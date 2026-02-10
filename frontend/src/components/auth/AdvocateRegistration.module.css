@@ -16,7 +16,9 @@
     width: 100%;
     max-width: 1000px;
     border-radius: 12px;
-    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     position: relative;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     height: 90vh;
@@ -30,6 +32,7 @@
     align-items: flex-start;
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .titleGroup {
@@ -78,6 +81,7 @@
     background: #1a1a2e;
     padding: 30px;
     position: relative;
+    flex-shrink: 0;
 }
 
 .progressBar {
@@ -152,8 +156,10 @@
 /* Content Area */
 .content {
     padding: 20px;
-    /* min-height: 40px; */
+    flex: 1;
+    overflow-y: auto;
     overflow-x: hidden;
+    min-height: 0;
 }
 
 .sectionHeader {

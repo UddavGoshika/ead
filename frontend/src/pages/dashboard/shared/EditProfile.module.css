@@ -411,3 +411,100 @@
     width: 100%;
   }
 }
+
+/* Settings Wrapper in Modal */
+.settingsWrapper {
+  min-height: 200px;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
+}
+
+.settingItem {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.settingItem:hover {
+  background: rgba(250, 204, 21, 0.08);
+  border-color: #facc15;
+  transform: translateY(-5px);
+}
+
+.settingItem span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.sIcon {
+  color: #facc15;
+}
+
+.settingsSubView {
+  animation: slideInSub 0.3s ease-out;
+}
+
+@keyframes slideInSub {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.backToGrid {
+  background: none;
+  border: none;
+  color: #facc15;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.toggleList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalToggle {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 15px 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalToggle span {
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.modalToggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #facc15;
+  cursor: pointer;
+}

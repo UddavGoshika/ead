@@ -77,34 +77,72 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             // 2. Get Active Conversations (from Messages)
             const convs = await interactionService.getConversations(myId);
 
-            // Filter for Sent Tab: Things I sent that aren't accepted yet
-            // Includes both Interests and those I've messaged but aren't accepted
-            const sent = activities.filter((a: any) =>
+            // Helper to merge activities by partner
+            const mergeActivities = (list: any[]) => {
+                const map = new Map();
+                list.forEach(item => {
+                    const partnerId = item.isSender ? item.receiver : item.sender;
+                    const key = partnerId;
+
+                    if (!map.has(key)) {
+                        map.set(key, { ...item, _mergedTypes: [item.type], _msgs: [] });
+                    }
+
+                    const existing = map.get(key);
+                    // Update timestamp to latest
+                    if (new Date(item.timestamp) > new Date(existing.timestamp)) {
+                        existing.timestamp = item.timestamp;
+                    }
+                    if (!existing._mergedTypes.includes(item.type)) {
+                        existing._mergedTypes.push(item.type);
+                    }
+
+                    // If this item has message text (assuming 'details' or 'text' or it's a chat type)
+                    // For now assuming 'chat' type items have the text in 'details' or 'message' property from backend
+                    // If not, we might need to rely on what keys are available. 
+                    // Based on interactionService, sendMessage returns 'text'. 
+                    // Let's look for 'text', 'details', 'message'.
+                    const text = item.text || item.details || item.message;
+                    if (text && item.type === 'chat') {
+                        existing._msgs.push({ text, ts: item.timestamp });
+                    }
+                });
+
+                return Array.from(map.values()).map((item: any) => {
+                    // Determine dominant type
+                    let finalType = 'chat';
+                    if (item._mergedTypes.includes('superInterest')) finalType = 'super-interest';
+                    else if (item._mergedTypes.includes('super-interest')) finalType = 'super-interest'; // handle both casing
+                    else if (item._mergedTypes.includes('interest')) finalType = 'interest';
+
+                    // Determine display message
+                    // Sort msgs by timestamp desc
+                    item._msgs.sort((a: any, b: any) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+                    const displayMsg = item._msgs.length > 0 ? item._msgs[0].text : (finalType !== 'chat' ? `${finalType === 'super-interest' ? 'Super Interest' : 'Interest'} Initiated` : 'Message sent');
+
+                    return {
+                        ...item,
+                        type: finalType,
+                        lastMessage: { text: displayMsg }
+                    };
+                });
+            };
+
+            // Filter for Sent Tab
+            const rawSent = activities.filter((a: any) =>
                 a.isSender &&
                 a.status === 'pending' &&
-                ['interest', 'superInterest', 'chat'].includes(a.type)
+                ['interest', 'superInterest', 'super-interest', 'chat'].includes(a.type)
             );
-            setSentInterests(sent);
+            setSentInterests(mergeActivities(rawSent));
 
-            // Filter for Received Tab: Things I received that aren't accepted/declined yet
+            // Filter for Received Tab
             const rawReceived = activities.filter((a: any) =>
                 !a.isSender &&
                 a.status === 'pending' &&
-                ['interest', 'superInterest'].includes(a.type)
+                ['interest', 'superInterest', 'super-interest', 'chat'].includes(a.type)
             );
-
-            // Client-side cleanup: Deduplicate multiple pending requests from same person
-            // This handles "ghosts" where older duplicates might still exist in DB
-            const uniqueReceivedMap = new Map();
-            rawReceived.forEach((item: any) => {
-                // Key by sender ID + type to ensure unique card
-                const key = `${item.sender}-${item.type}`;
-                // We keep the LATEST one (assuming sorted by timestamp desc)
-                if (!uniqueReceivedMap.has(key)) {
-                    uniqueReceivedMap.set(key, item);
-                }
-            });
-            setReceivedInterests(Array.from(uniqueReceivedMap.values()));
+            setReceivedInterests(mergeActivities(rawReceived));
 
 
             // 3. Accepted Conversations: Only those where status is 'accepted'
@@ -155,17 +193,33 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
     const handleDeleteActivity = async (activityId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!window.confirm("Delete this interaction?")) return;
+        if (!activityId || activityId === 'undefined') {
+            console.error("Cannot delete: Invalid Activity ID");
+            return;
+        }
+
+        if (!window.confirm("Are you sure you want to remove this interaction?")) return;
+
+        // Optimistic update
+        setReceivedInterests(prev => prev.filter(item => (item._id || item.id) !== activityId));
+
         try {
             await interactionService.deleteActivity(activityId);
             fetchData();
         } catch (error) {
             console.error("Failed to delete activity:", error);
+            alert("Failed to delete interaction.");
+            fetchData(); // Rollback
         }
     };
 
     const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (!activityId || activityId === 'undefined') {
+            alert("Error: Invalid interaction ID. Please refresh.");
+            return;
+        }
 
         if (user?.status === 'Pending') {
             alert("Your profile is still under verification. You can respond to requests once approved.");
@@ -173,15 +227,14 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
         }
 
         // Optimistic Update: Immediately remove from list
-        setReceivedInterests(prev => prev.filter(item => item._id !== activityId));
+        setReceivedInterests(prev => prev.filter(item => (item._id || item.id) !== activityId));
 
         try {
             console.log(`Responding to ${activityId} with ${status}`);
             await interactionService.respondToActivity(activityId, status);
-            // If accepted, maybe send a greeting? (Optional)
-            fetchData(); // Refresh lists to move to accepted tab
+            fetchData(); // Refresh lists to move to accepted tab or ensure sync
         } catch (error: any) {
-            console.error("Failed to respond:", error);
+            console.error("Failed to respond to activity:", error);
             alert(`Failed to update status: ${error.message || 'Server Error'}`);
             fetchData(); // Revert/Refresh on error
         }
@@ -523,8 +576,15 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                 {act.partnerUniqueId}
                                             </span>
                                             <span>•</span>
-                                            <span style={{ color: '#38bdf8' }}>{act.type.toUpperCase()}</span>
+                                            <span style={{ color: act.type === 'super-interest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
+                                                {act.type === 'super-interest' ? 'SUPER INTEREST' : act.type.toUpperCase()}
+                                            </span>
                                         </div>
+                                        {act.lastMessage?.text && (
+                                            <p className={styles.lastMsg} style={{ color: '#e2e8f0', marginTop: '4px' }}>
+                                                {act.lastMessage.text}
+                                            </p>
+                                        )}
                                         <div className={styles.actButtons}>
                                             <button className={styles.acceptBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'accepted', e); }}>Accept</button>
                                             <button className={styles.declineBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'declined', e); }}>Ignore</button>
@@ -654,6 +714,23 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     isModal={true}
                     onClose={() => setSelectedProfileId(null)}
                     backToProfiles={() => setSelectedProfileId(null)}
+                    items={activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : undefined}
+                    currentIndex={(() => {
+                        const list = activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : [];
+                        if (!list.length) return undefined;
+                        return list.findIndex(item => {
+                            const pid = activeTab === 'received' ? (item.clientId || item.sender) : (item.advocateId || item.receiver);
+                            return String(pid) === String(selectedProfileId);
+                        });
+                    })()}
+                    onNavigate={(idx) => {
+                        const list = activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : [];
+                        if (list && list[idx]) {
+                            const item = list[idx];
+                            const pid = activeTab === 'received' ? (item.clientId || item.sender) : (item.advocateId || item.receiver);
+                            if (pid) setSelectedProfileId(String(pid));
+                        }
+                    }}
                 />
             )}
 

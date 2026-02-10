@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import styles from './SafetyCenter.module.css'; // Reusing the dark/gold theme
 import { ArrowLeft, MessageSquare, Mail, Phone, HelpCircle, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
@@ -69,21 +68,24 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
         setIsSubmitting(true);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const api = (await import('../../../services/api')).default;
 
-            await axios.post(`${apiUrl}/contact`, {
+            await api.post('/contact', {
                 name: user?.name || 'Dashboard User',
                 email: user?.email || 'user@eadvocate.com',
                 phone: user?.phone || 'N/A',
+                userId: user?.id || (user as any)?._id,
+                subject: formData.subject,
+                category: formData.category,
                 message: `[${formData.category}] ${formData.message}`,
                 source: 'Dashboard Help & Support'
             });
 
-            if (showToast) showToast('Query submitted successfully! We will contact you soon.');
+            if (showToast) showToast('Ticket submitted successfully! Please wait 12-24 hours for our team to respond.');
             setFormData({ subject: '', message: '', category: 'General Inquiry' });
         } catch (error) {
             console.error('Submission error:', error);
-            if (showToast) showToast('Failed to submit query. Please try again.');
+            if (showToast) showToast('Failed to submit ticket. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

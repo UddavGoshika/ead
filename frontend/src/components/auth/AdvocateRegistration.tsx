@@ -133,6 +133,14 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         captchaVerified: false,
     });
 
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
+        }
+    }, [currentStep]);
+
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
 
@@ -366,7 +374,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 </div>
 
                 {/* Main Content Area */}
-                <div className={styles.content}>
+                {/* Main Content Area - Scrollable */}
+                <div className={styles.content} ref={contentRef}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}

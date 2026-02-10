@@ -118,14 +118,7 @@ const AuthModal: React.FC = () => {
             }
         } catch (err: any) {
             console.error('Auth Error:', err);
-            if (err.response?.status === 403 && err.response.data.error === 'ACCOUNT_PENDING') {
-                setAccountStatusWarning({
-                    message: err.response.data.message || 'Your account is pending verification.',
-                    reason: err.response.data.rejectionReason
-                });
-            } else {
-                setError(err.response?.data?.error || err.message || 'Authentication error.');
-            }
+            setError(err.response?.data?.error || err.message || 'Authentication error.');
         } finally {
             setLoading(false);
         }

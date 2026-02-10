@@ -101,6 +101,7 @@ export interface Advocate {
         mobile: string;
         whatsapp?: string;
     };
+    shares?: number;
 }
 
 export interface Client {
@@ -120,6 +121,7 @@ export interface Client {
         mobile: string;
         whatsapp?: string;
     };
+    shares?: number;
 }
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 

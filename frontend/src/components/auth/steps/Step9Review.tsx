@@ -214,7 +214,7 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, 
                             professional information.</p>
 
                         <h5>6. Data Verification</h5>
-                        <p>You authorize us to verify all submitted documents and information through appropriate legal
+                        <p>You authorize us to verify all submitted documents and information through appropriate
                             channels.</p>
 
                         <h5>7. Account Security</h5>

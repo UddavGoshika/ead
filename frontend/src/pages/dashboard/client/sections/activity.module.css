@@ -84,6 +84,52 @@
 .sectionContainer {
     display: flex;
     flex-direction: column;
+    padding: 30px;
+    border-radius: 24px;
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
+}
+
+.sectionContainer:hover {
+    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Specific Section Themes */
+.interests {
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #facc15;
+}
+
+.shortlisted {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #8b5cf6;
+}
+
+.declined {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #f43f5e;
+}
+
+.blocked {
+    background: linear-gradient(135deg, rgba(100, 116, 139, 0.08) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #64748b;
+}
+
+.ignored {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #94a3b8;
+}
+
+.accepted {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #3b82f6;
+}
+
+.visits {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(30, 41, 59, 0.3) 100%);
+    border-left: 4px solid #38bdf8;
 }
 
 .sectionHeader {

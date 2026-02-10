@@ -31,6 +31,7 @@ import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
 import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
+import PendingPopup from '../../../components/dashboard/shared/PendingPopup';
 interface Notification {
     id: string;
     message: string;
@@ -51,6 +52,7 @@ const ClientDashboard: React.FC = () => {
     const [activeChatAdvocate, setActiveChatAdvocate] = useState<Advocate | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showTryonModal, setShowTryonModal] = useState(false);
+    const [showPendingPopup, setShowPendingPopup] = useState(false);
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
@@ -62,6 +64,15 @@ const ClientDashboard: React.FC = () => {
             if (!hasSeen) {
                 setShowTryonModal(true);
                 sessionStorage.setItem('hasSeenTryon', 'true');
+            }
+        }
+
+        // Show pending popup if user is unverified
+        if (user && (user.status === 'Pending' || user.status === 'Reverify')) {
+            const hasSeenPending = sessionStorage.getItem('hasSeenPendingPopup');
+            if (!hasSeenPending) {
+                setShowPendingPopup(true);
+                sessionStorage.setItem('hasSeenPendingPopup', 'true');
             }
         }
     }, [user]);
@@ -176,7 +187,7 @@ const ClientDashboard: React.FC = () => {
                         }
                     }} />;
             case 'detailed-profile-view':
-                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} />;
+                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} onSelectForChat={handleSelectForChat} />;
             case 'edit-profile':
                 return <EditProfile backToHome={backtohome} showToast={showToast} />;
             case 'search-preferences':
@@ -192,12 +203,12 @@ const ClientDashboard: React.FC = () => {
             case 'safety-center':
                 return <SafetyCenter backToHome={backtohome} showToast={showToast} />;
             case 'help-support':
-                return <HelpSupport backToHome={backtohome} />;
+                return <HelpSupport backToHome={backtohome} showToast={showToast} />;
             case 'blogs':
                 return <BlogFeed />;
 
             case 'activity':
-                return <Activity />;
+                return <Activity onSelectForChat={handleSelectForChat} />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
@@ -237,7 +248,7 @@ const ClientDashboard: React.FC = () => {
 
     const getPageTitle = () => {
         if (currentPage === 'featured-profiles') return 'Featured Experts';
-        if (currentPage === 'normalfccards') return 'All Advocates';
+        if (currentPage === 'normalfccards') return 'Profiles';
         return getPageTitleBase(currentPage);
     };
 
@@ -251,10 +262,11 @@ const ClientDashboard: React.FC = () => {
             case 'credits': return 'My Credits';
             case 'safety-center': return 'Safety Center';
             case 'help-support': return 'Help & Support';
-            case 'blogs': return 'Legal Blogs';
+            case 'blogs': return 'Blogs';
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
+            case 'my-cases': return 'My Cases';
             case 'new-case-info': return 'New Case Information';
             case 'Promocodes': return 'Special Promocodes';
             case 'legal-documentation': return 'Legal Documentation';
@@ -415,6 +427,13 @@ const ClientDashboard: React.FC = () => {
             )}
             {showTryonModal && (
                 <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
+            )}
+            {showPendingPopup && user && (
+                <PendingPopup
+                    status={user.status || 'Pending'}
+                    rejectionReason={user.rejectionReason}
+                    onClose={() => setShowPendingPopup(false)}
+                />
             )}
             <SupportHub />
         </div>

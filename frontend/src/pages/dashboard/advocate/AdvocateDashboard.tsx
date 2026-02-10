@@ -32,6 +32,7 @@ import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
 import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
+import PendingPopup from '../../../components/dashboard/shared/PendingPopup';
 
 interface Notification {
     id: string;
@@ -53,6 +54,7 @@ const AdvocateDashboard: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
     const [showTryonModal, setShowTryonModal] = useState(false);
+    const [showPendingPopup, setShowPendingPopup] = useState(false);
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
@@ -64,6 +66,15 @@ const AdvocateDashboard: React.FC = () => {
             if (!hasSeen) {
                 setShowTryonModal(true);
                 sessionStorage.setItem('hasSeenTryon', 'true');
+            }
+        }
+
+        // Show pending popup if user is unverified
+        if (user && (user.status === 'Pending' || user.status === 'Reverify')) {
+            const hasSeenPending = sessionStorage.getItem('hasSeenPendingPopup');
+            if (!hasSeenPending) {
+                setShowPendingPopup(true);
+                sessionStorage.setItem('hasSeenPendingPopup', 'true');
             }
         }
     }, [user]);
@@ -200,7 +211,7 @@ const AdvocateDashboard: React.FC = () => {
             case 'blogs':
                 return <BlogFeed />;
             case 'activity':
-                return <Activity />;
+                return <Activity onSelectForChat={handleSelectForChat} />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
@@ -310,6 +321,23 @@ const AdvocateDashboard: React.FC = () => {
 
                     <div className={styles.topBarRight}>
                         <div className={styles.statusGroup} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {/* Premium Plan Display */}
+                            <div className={styles.planBadge} style={{
+                                background: 'rgba(250, 204, 21, 0.1)',
+                                border: '1px solid rgba(250, 204, 21, 0.3)',
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                color: '#facc15',
+                                fontWeight: 700,
+                                fontSize: '0.9rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                marginRight: '10px'
+                            }}>
+                                <Zap size={16} fill="#facc15" />
+                                <span style={{ textTransform: 'capitalize' }}>{plan} Plan</span>
+                            </div>
                         </div>
 
                         {/* Special Action: Write Blog (Only if Premium & on Blog Page) */}
@@ -383,13 +411,13 @@ const AdvocateDashboard: React.FC = () => {
                     {user?.status === 'Pending' && <VerificationBanner />}
                     {currentPage === 'my-cases' && (
                         <div className={styles.caseActions}>
-                            <button className={styles.topBtn} onClick={() => setCurrentPage('my-cases')}>
+                            <button className={styles.topBtn} onClick={() => window.open('https://ecourts.gov.in/ecourts_home/', '_blank')}>
                                 <FileText size={18} />
                                 Case Status
                             </button>
-                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('initiate-case')}>
+                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('fileacase')}>
                                 <PlusSquare size={18} />
-                                New Case
+                                Initiate New Case
                             </button>
                         </div>
                     )}
@@ -420,6 +448,13 @@ const AdvocateDashboard: React.FC = () => {
             )}
             {showTryonModal && (
                 <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
+            )}
+            {showPendingPopup && user && (
+                <PendingPopup
+                    status={user.status || 'Pending'}
+                    rejectionReason={user.rejectionReason}
+                    onClose={() => setShowPendingPopup(false)}
+                />
             )}
             <SupportHub />
         </div>

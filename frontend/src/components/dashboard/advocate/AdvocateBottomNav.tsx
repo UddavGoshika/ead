@@ -9,7 +9,7 @@ interface Props {
 
 const AdvocateBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => {
     const items = [
-        { id: 'featured-profiles', label: 'Clients', icon: Users },
+        { id: 'featured-profiles', label: 'Profiles', icon: Users },
         { id: 'messenger', label: 'Messenger', icon: MessageSquare },
         { id: 'activity', label: 'Activity', icon: Clock },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },

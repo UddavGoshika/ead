@@ -6,10 +6,18 @@ import {
     Handshake,
     Star,
     CheckCircle2,
+    Check,
     Send,
     X,
-    Zap
+    Zap,
+    User,
+    MapPin,
+    Briefcase,
+    Scale,
+    Share2,
+    Link2
 } from 'lucide-react';
+import { FaWhatsapp, FaFacebook, FaLinkedin } from "react-icons/fa";
 import styles from './AdvocateCard.module.css'; // Reuse advocate card styles for consistency
 import type { Client } from '../../types';
 import { formatImageUrl } from '../../utils/imageHelper';
@@ -26,6 +34,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
     const [popupType, setPopupType] = useState<'none' | 'interest_upgrade' | 'super_interest_confirm' | 'chat_confirm' | 'need_interest'>('none');
     const [interestSent, setInterestSent] = useState(false);
     const [message, setMessage] = useState('');
+    const [shareCount, setShareCount] = useState(client.shares || 0);
+    const [showShareMenu, setShowShareMenu] = useState(false);
 
     const IS_MASKED = !isPremium;
 
@@ -87,6 +97,29 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
         setInteractionStage('none');
     };
 
+    const handleShareOptionClick = async (platform: string) => {
+        try {
+            const url = window.location.origin + `/detailed-profile/${client.id}`;
+            const text = `Check out this requirement on e-Advocate: ${clientName}`;
+
+            if (platform === 'whatsapp') {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+            } else if (platform === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+            } else if (platform === 'linkedin') {
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+            } else if (platform === 'copy') {
+                navigator.clipboard.writeText(url);
+                alert('Profile link copied to clipboard!');
+            }
+
+            setShareCount(prev => prev + 1);
+            setShowShareMenu(false);
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
+    };
+
     const handleUpgradeToSuper = (e: React.MouseEvent) => {
         e.stopPropagation();
         setPopupType('none');
@@ -101,6 +134,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
 
     return (
         <div className={cardClass}>
+            {shareCount > 0 && (
+                <div className={styles.topShareBadge}>
+                    <Share2 size={10} />
+                    <span>{shareCount} Shares</span>
+                </div>
+            )}
             {/* Unified Popups */}
             {popupType !== 'none' && (
                 <div className={styles.popupOverlay} onClick={() => setPopupType('none')}>
@@ -160,11 +199,17 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                 </div>
             )}
 
+            {variant === 'featured' && (
+                <div className={styles.featuredStarBadge}>
+                    <Star size={18} fill="#facc15" color="#facc15" className={styles.glossyStar} />
+                </div>
+            )}
+
             <div className={styles.avatarSection}>
                 <div className={styles.imageContainer}>
-                    {client.image_url ? (
+                    {(client.image_url || (client as any).img) ? (
                         <img
-                            src={formatImageUrl(client.image_url)}
+                            src={formatImageUrl(client.image_url || (client as any).img)}
                             alt={clientName}
                             className={`${styles.advocateImg} ${shouldBlur ? styles.blurredImage : ''}`}
                             onError={(e) => {
@@ -180,22 +225,55 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
                         <span className={styles.topIdText}>{maskId(client.unique_id)}</span>
-                        <div className={styles.badgeDivider}></div>
-                        <CheckCircle2 size={16} fill="#22c55e" color="white" />
+                        {/* Remove green verified button , replace with meta badge for featured */}
+                        {variant === 'featured' && (
+                            <div className={styles.metaBadgeContainer}>
+                                <div className={styles.metaBadge}>
+                                    <Check size={16} color="white" strokeWidth={4} />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className={`${styles.profileTextOverlay} ${shouldBlur ? styles.blurredText : ''}`}>
-                    <h3 className={styles.overlayName}>{maskName(clientName)}</h3>
-                    <div className={styles.overlayDetails}>
-                        <p>{(client.location?.city && client.location?.state) ? `${client.location.city}, ${client.location.state}` : (client.location?.state || 'N/A')}</p>
-                        <p>{client.legalHelp?.category || 'Seeking Legal Help'}</p>
+                    <h3 className={styles.overlayName} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <User size={20} className="text-yellow-400" fill="#facc15" stroke="none" />
+                        {maskName(clientName)}
+                    </h3>
+                    <div className={styles.overlayDetails} style={{ marginTop: '4px' }}>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <MapPin size={14} color="#38bdf8" />
+                            {
+                                // Handle location as object or string
+                                (typeof client.location === 'object' && client.location !== null)
+                                    // @ts-ignore
+                                    ? `${client.location.city || ''}, ${client.location.state || ''}`
+                                    : (client.location || 'India')
+                            }
+                        </p>
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Briefcase size={14} color="#4ade80" />
+                            {
+                                // Handle legal help category - support nested or flat structure
+                                client.legalHelp?.category
+                                || (typeof client.legalHelp === 'string' ? client.legalHelp : undefined)
+                                // @ts-ignore
+                                || client.category
+                                || 'Seeking Legal Help'
+                            }
+                        </p>
                     </div>
                 </div>
 
                 <div className={styles.rightBadgeStack}>
                     <div className={styles.overlayDepartmentBadge}>
-                        {client.legalHelp?.specialization || 'General'}
+                        {
+                            client.legalHelp?.specialization
+                            // @ts-ignore
+                            || client.specialization
+                            || 'General'
+                        }
                     </div>
                 </div>
             </div>
@@ -241,6 +319,31 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                             <MessageCircle size={22} />
                             <span>Chat</span>
                         </button>
+                        {/* <div style={{ position: 'relative', display: 'flex' }}>
+                            <button
+                                className={styles.actionBtn}
+                                onClick={(e) => { e.stopPropagation(); setShowShareMenu(!showShareMenu); }}
+                                style={{ padding: '8px 12px' }}
+                            >
+                                <Share2 size={22} />
+                            </button>
+                            {showShareMenu && (
+                                <div className={styles.shareMenu}>
+                                    <div className={`${styles.shareOption} ${styles.whatsapp}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('whatsapp'); }}>
+                                        <FaWhatsapp size={18} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.facebook}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('facebook'); }}>
+                                        <FaFacebook size={18} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.linkedin}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('linkedin'); }}>
+                                        <FaLinkedin size={18} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.copyLink}`} onClick={(e) => { e.stopPropagation(); handleShareOptionClick('copy'); }}>
+                                        <Link2 size={18} />
+                                    </div>
+                                </div>
+                            )}
+                        </div> */}
                     </div>
                 )}
             </div>

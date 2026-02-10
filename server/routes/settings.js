@@ -42,7 +42,9 @@ router.get('/', auth, async (req, res) => {
 
         res.json({
             success: true,
-            privacy: user.privacySettings,
+            privacy: user.privacySettings || { showProfile: true, showContact: false, showEmail: false },
+            notificationSettings: user.notificationSettings || { email: true, push: true, sms: false, activityAlerts: true },
+            messageSettings: user.messageSettings || { allowDirectMessages: true, readReceipts: true, filterSpam: true },
             presets: user.searchPresets,
             status: user.status
         });
@@ -88,6 +90,30 @@ router.post('/delete', auth, async (req, res) => {
         user.status = 'Deleted'; // Soft delete
         await user.save();
         res.json({ success: true, message: 'Account marked for deletion' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// UPDATE NOTIFICATIONS
+router.put('/notifications', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.notificationSettings = { ...user.notificationSettings, ...req.body };
+        await user.save();
+        res.json({ success: true, notificationSettings: user.notificationSettings });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// UPDATE MESSAGING
+router.put('/messaging', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.messageSettings = { ...user.messageSettings, ...req.body };
+        await user.save();
+        res.json({ success: true, messageSettings: user.messageSettings });
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
     }

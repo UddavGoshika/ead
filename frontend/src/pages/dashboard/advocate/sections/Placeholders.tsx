@@ -7,6 +7,8 @@ import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
 import ClientCard from '../../../../components/dashboard/ClientCard';
 import { interactionService } from '../../../../services/interactionService';
 import styles from '../AdvocateList.module.css';
+import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
+import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
 
 interface Props {
     title: string;
@@ -40,11 +42,18 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
-        specialization: 'Department',
-        court: 'Select Court',
-        location: 'Location',
-        experience: 'Experience'
+        specialization: '',
+        subDepartment: '',
+        court: '',
+        state: '',
+        district: '',
+        city: '',
+        experience: ''
     });
+
+    const availableDistricts = filters.state && LOCATION_DATA_RAW[filters.state] ? Object.keys(LOCATION_DATA_RAW[filters.state]) : [];
+    const availableCities = filters.state && filters.district && LOCATION_DATA_RAW[filters.state][filters.district] ? LOCATION_DATA_RAW[filters.state][filters.district] : [];
+    const availableSubDepartments = filters.specialization && LEGAL_DOMAINS[filters.specialization] ? LEGAL_DOMAINS[filters.specialization] : [];
 
     const fetchProfiles = async () => {
         setLoading(true);
@@ -52,10 +61,13 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
             const params: any = {};
             params.category = 'normal';
             if (filters.search) params.search = filters.search;
-            if (filters.specialization !== 'Department') params.specialization = filters.specialization;
-            if (filters.court !== 'Select Court') params.court = filters.court;
-            if (filters.location !== 'Location') params.city = filters.location;
-            if (filters.experience !== 'Experience') params.experience = filters.experience;
+            if (filters.specialization) params.specialization = filters.specialization;
+            if (filters.subDepartment) params.subSpecialization = filters.subDepartment;
+            if (filters.court) params.court = filters.court;
+            if (filters.state) params.state = filters.state;
+            if (filters.district) params.district = filters.district;
+            if (filters.city) params.city = filters.city;
+            if (filters.experience) params.experience = filters.experience;
 
             if (isAdvocate) {
                 const response = await clientService.getClients(params);
@@ -77,7 +89,18 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        let newFilters = { ...filters, [name]: value };
+
+        if (name === 'state') {
+            newFilters.district = '';
+            newFilters.city = '';
+        } else if (name === 'district') {
+            newFilters.city = '';
+        } else if (name === 'specialization') {
+            newFilters.subDepartment = '';
+        }
+        setFilters(newFilters);
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
@@ -97,40 +120,63 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                 </button>
             </div>
 
-            <div className={styles.searchSection}>
-                <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
+            <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
+                {/* Unified Search & Filter Grid */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '12px',
+                    width: '100%'
+                }}>
                     <input
                         type="text"
                         name="search"
                         value={filters.search}
                         onChange={handleFilterChange}
-                        placeholder={`Search by ${isAdvocate ? "Client's" : "Advocate's"} ID or Name...`}
+                        placeholder="Search Name or ID..."
                         className={styles.dashboardSearchInput}
+                        style={{ paddingRight: '20px' }}
                     />
-                    <button type="submit" className={styles.searchBtnInside}>Search</button>
-                </form>
 
-                <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Department</option>
-                    <option>Criminal Law</option>
-                    <option>Civil Law</option>
-                    <option>Family Law</option>
-                    <option>Corporate Law</option>
-                </select>
-                <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Select Court</option>
-                    <option>Supreme Court</option>
-                    <option>High Court</option>
-                    <option>District Court</option>
-                </select>
-                <select name="location" value={filters.location} onChange={handleFilterChange} className={styles.filterSelect}>
-                    <option>Location</option>
-                    <option>Delhi</option>
-                    <option>Mumbai</option>
-                    <option>Bangalore</option>
-                </select>
+                    <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All Departments</option>
+                        {Object.keys(LEGAL_DOMAINS).map(dept => (
+                            <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                    </select>
 
-                <button className={styles.submitBtnDashboard} onClick={fetchProfiles}>Submit</button>
+                    <select name="subDepartment" value={filters.subDepartment} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.specialization}>
+                        <option value="">All Sub-Departments</option>
+                        {availableSubDepartments.map(sub => (
+                            <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                    </select>
+
+                    <select name="state" value={filters.state} onChange={handleFilterChange} className={styles.filterSelect}>
+                        <option value="">All States</option>
+                        {Object.keys(LOCATION_DATA_RAW).sort().map(st => (
+                            <option key={st} value={st}>{st}</option>
+                        ))}
+                    </select>
+
+                    <select name="district" value={filters.district} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.state}>
+                        <option value="">All Districts</option>
+                        {availableDistricts.sort().map(dist => (
+                            <option key={dist} value={dist}>{dist}</option>
+                        ))}
+                    </select>
+
+                    <select name="city" value={filters.city} onChange={handleFilterChange} className={styles.filterSelect} disabled={!filters.district}>
+                        <option value="">All Cities</option>
+                        {availableCities.sort().map(city => (
+                            <option key={city} value={city}>{city}</option>
+                        ))}
+                    </select>
+
+                    <button className={styles.submitBtnDashboard} onClick={fetchProfiles} style={{ height: '100%', minHeight: '45px' }}>
+                        Search
+                    </button>
+                </div>
             </div>
 
             {loading ? (

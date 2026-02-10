@@ -7,6 +7,7 @@ const Message = require('../models/Message');
 const Activity = require('../models/Activity');
 const mongoose = require('mongoose');
 const { upload } = require('../config/cloudinary');
+const { createNotification } = require('../utils/notif');
 
 // GET ACTIVITY STATS
 router.get('/stats/:userId', async (req, res) => {
@@ -287,9 +288,16 @@ router.post('/:targetRole/:targetId/:action', async (req, res) => {
         await newActivity.save();
 
         if (action === 'view_contact') {
-            const contactEmail = target.email || (target.userId && target.userId.email) || 'N/A';
-            const contactPhone = target.mobile || target.phone || target.contact || (target.userId && target.userId.phone) || 'N/A';
-            const whatsapp = target.whatsapp || contactPhone; // Use mobile as fallback for WhatsApp
+            const privacy = target.userId?.privacySettings || { showContact: true, showEmail: true };
+            const isOwner = userId && userId.toString() === target.userId?._id?.toString();
+
+            let contactEmail = target.email || (target.userId && target.userId.email) || 'N/A';
+            let contactPhone = target.mobile || target.phone || target.contact || (target.userId && target.userId.phone) || 'N/A';
+
+            if (!privacy.showContact && !isOwner) contactPhone = 'Hidden by User';
+            if (!privacy.showEmail && !isOwner) contactEmail = 'Hidden by User';
+
+            const whatsapp = (privacy.showContact || isOwner) ? (target.whatsapp || contactPhone) : 'Hidden by User';
 
             return res.json({
                 success: true,
@@ -452,11 +460,18 @@ router.post('/messages', async (req, res) => {
         // If a free user receives a message: hide content
         const targetUser = await User.findById(receiver);
         if (targetUser) {
+            // PRIVACY CHECK: Allow Direct Messages
+            const msgSettings = targetUser.messageSettings || { allowDirectMessages: true };
+            if (!msgSettings.allowDirectMessages) {
+                return res.status(403).json({
+                    error: 'MESSAGING_DISABLED',
+                    message: 'This user has disabled direct messaging.'
+                });
+            }
+
             const targetPlan = (targetUser.plan || 'Free').toLowerCase();
             const targetIsPremium = targetUser.isPremium || !targetPlan.includes('free');
-
-            // Note: Content is stored normally in DB, but filtered on retrieval
-            // or we could mark the message as "locked" if sent to a free user.
+            // ... (rest of logic)
         }
 
         const newMessage = new Message({

@@ -724,4 +724,124 @@ router.post('/withdraw', authenticate, async (req, res) => {
     }
 });
 
+// BANK ACCOUNTS
+router.get('/bank-accounts', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json({ success: true, bankAccounts: user.bankAccounts || [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.post('/bank-accounts', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const { bankName, accountNumber, ifsc, holderName, isPrimary } = req.body;
+
+        if (isPrimary) {
+            user.bankAccounts.forEach(b => b.isPrimary = false);
+        }
+
+        user.bankAccounts.push({ bankName, accountNumber, ifsc, holderName, isPrimary });
+        await user.save();
+        res.json({ success: true, bankAccounts: user.bankAccounts });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.delete('/bank-accounts/:id', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.bankAccounts = user.bankAccounts.filter(b => b._id.toString() !== req.params.id);
+        await user.save();
+        res.json({ success: true, bankAccounts: user.bankAccounts });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// SAVED CARDS
+router.get('/cards', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json({ success: true, cards: user.savedCards || [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.post('/cards', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const { cardNum, cardType, expiry, holderName } = req.body;
+        // Mask the card number for security
+        const masked = cardNum.replace(/\d(?=\d{4})/g, "*");
+        user.savedCards.push({ cardNum: masked, cardType, expiry, holderName });
+        await user.save();
+        res.json({ success: true, cards: user.savedCards });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+router.delete('/cards/:id', authenticate, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.savedCards = user.savedCards.filter(c => c._id.toString() !== req.params.id);
+        await user.save();
+        res.json({ success: true, cards: user.savedCards });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// REDEEM PROMO
+router.post('/redeem-promo', authenticate, async (req, res) => {
+    const { code } = req.body;
+    try {
+        const user = await User.findById(req.user.id);
+
+        // Simple mock promo logic
+        let bonusCoins = 0;
+        let bonusBalance = 0;
+        let message = "";
+
+        if (code === 'WELCOME50') {
+            bonusCoins = 50;
+            message = "Welcome bonus! 50 Coins added.";
+        } else if (code === 'CASH100') {
+            bonusBalance = 100;
+            message = "Promotional credit! ₹100 added to wallet.";
+        } else if (code === 'SUPREME') {
+            bonusCoins = 500;
+            message = "Supreme Advocate bonus! 500 Coins added.";
+        } else {
+            return res.status(400).json({ success: false, message: "Invalid or expired promo code." });
+        }
+
+        user.coins = (user.coins || 0) + bonusCoins;
+        user.walletBalance = (user.walletBalance || 0) + bonusBalance;
+        await user.save();
+
+        // Create transaction record for audit
+        const transaction = new Transaction({
+            userId: user._id,
+            orderId: `PRM-${Date.now()}`,
+            amount: bonusBalance || bonusCoins,
+            currency: bonusBalance ? 'INR' : 'COINS',
+            gateway: 'Promo Engine',
+            status: 'completed',
+            packageId: 'PROMO_CODE',
+            metadata: { code, bonusCoins, bonusBalance }
+        });
+        await transaction.save();
+
+        res.json({ success: true, message, coins: user.coins, balance: user.walletBalance });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;

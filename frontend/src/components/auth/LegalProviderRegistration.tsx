@@ -141,6 +141,14 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
 
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
+        }
+    }, [currentStep]);
+
     const updateFormData = (newData: any) => {
         setErrors({}); // Clear errors on change
         setFormData((prev: any) => ({ ...prev, ...newData }));
@@ -340,7 +348,7 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                     </div>
                 </div>
 
-                <div className={styles.content}>
+                <div className={styles.content} ref={contentRef}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}

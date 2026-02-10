@@ -108,21 +108,23 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
             </div>
 
             <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
-                <form className={styles.searchContainer} onSubmit={handleSearchSubmit} style={{ width: '100%' }}>
+                {/* Unified Search & Filter Grid */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '12px',
+                    width: '100%'
+                }}>
                     <input
                         type="text"
                         name="search"
                         value={filters.search}
                         onChange={handleFilterChange}
-                        placeholder="Search by Advocate's ID or Name......"
+                        placeholder="Search Name or ID..."
                         className={styles.dashboardSearchInput}
+                        style={{ paddingRight: '20px' }}
                     />
-                    <button type="submit" className={styles.searchBtnInside}>Search</button>
-                </form>
 
-                {/* 4x2 Grid Layout for Filters */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', width: '100%' }}>
-                    {/* Row 1 */}
                     <select name="specialization" value={filters.specialization} onChange={handleFilterChange} className={styles.filterSelect}>
                         <option value="">All Departments</option>
                         {Object.keys(LEGAL_DOMAINS).map(dept => (
@@ -137,26 +139,6 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                         ))}
                     </select>
 
-                    <select name="court" value={filters.court} onChange={handleFilterChange} className={styles.filterSelect}>
-                        <option value="">All Courts</option>
-                        <option>Supreme Court</option>
-                        <option>High Court</option>
-                        <option>District Court</option>
-                        <option>Session Court</option>
-                        <option>Family Court</option>
-                        <option>Consumer Forum</option>
-                        <option>Tribunal</option>
-                    </select>
-
-                    <select name="experience" value={filters.experience} onChange={handleFilterChange} className={styles.filterSelect}>
-                        <option value="">All Experience</option>
-                        <option value="0-2 Years">0-2 Years</option>
-                        <option value="2-5 Years">2-5 Years</option>
-                        <option value="5-10 Years">5-10 Years</option>
-                        <option value="10+ Years">10+ Years</option>
-                    </select>
-
-                    {/* Row 2 */}
                     <select name="state" value={filters.state} onChange={handleFilterChange} className={styles.filterSelect}>
                         <option value="">All States</option>
                         {Object.keys(LOCATION_DATA_RAW).sort().map(st => (
@@ -178,7 +160,9 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                         ))}
                     </select>
 
-                    <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ width: '100%', height: '100%' }}>Apply Filters</button>
+                    <button className={styles.submitBtnDashboard} onClick={fetchAdvocates} style={{ height: '100%', minHeight: '45px' }}>
+                        Search
+                    </button>
                 </div>
             </div>
 

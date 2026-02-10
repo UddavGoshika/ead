@@ -48,7 +48,6 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         documentType: '',
         document: null,
         profilePic: null,
-        legalCategory: 'Criminal',
         specialization: '',
         subDepartment: '',
         consultationMode: 'Online',
@@ -63,6 +62,14 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         mobileVerified: true,
         captchaVerified: false
     });
+
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
+        }
+    }, [currentStep]);
 
     const [otpSending, setOtpSending] = useState(false);
     const [otpVerifying, setOtpVerifying] = useState(false);
@@ -103,7 +110,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                 if (!permanentAddress.pincode) newErrors['permPincode'] = true;
             }
         } else if (stepId === 4) {
-            ['category', 'specialization', 'subDepartment', 'mode', 'advocateType', 'languages', 'issueDescription'].forEach(field => {
+            ['mode', 'advocateType', 'languages', 'issueDescription'].forEach(field => {
                 if (!formData[field]) newErrors[field] = true;
             });
         }
@@ -286,7 +293,6 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             submissionData.append('email', formData.email);
             submissionData.append('password', formData.password);
             submissionData.append('documentType', formData.documentType);
-            submissionData.append('category', formData.category);
             submissionData.append('specialization', formData.specialization);
             submissionData.append('subDepartment', formData.subDepartment);
             submissionData.append('mode', formData.mode);
@@ -810,21 +816,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                     <div className={styles.stepContent}>
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
-                                <label>Category *</label>
-                                <select
-                                    value={formData.category || ''}
-                                    onChange={(e) => updateFormData('category', e.target.value)}
-                                    className={errors.category ? styles.inputError : ''}
-                                >
-                                    <option value="">Select Category</option>
-                                    {getOptions('specialization').map(opt => (
-                                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label>Specialization *</label>
+                                <label>Specialization</label>
                                 <select
                                     value={formData.specialization || ''}
                                     className={errors.specialization ? styles.inputError : ''}
@@ -833,7 +825,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         updateFormData('subDepartment', ''); // Reset sub-dept on change
                                     }}
                                 >
-                                    <option value="">Select Specialization</option>
+                                    <option value="">Select Specialization (Optional)</option>
                                     {getOptions('specialization').map(opt => (
                                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                                     ))}
@@ -841,13 +833,13 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Sub Department *</label>
+                                <label>Sub Department</label>
                                 <select
                                     value={formData.subDepartment || ''}
                                     onChange={(e) => updateFormData('subDepartment', e.target.value)}
                                     className={errors.subDepartment ? styles.inputError : ''}
                                 >
-                                    <option value="">Select Sub Department</option>
+                                    <option value="">Select Sub Department (Optional)</option>
                                     {(getOptions('sub_department') as any[])
                                         .filter(opt => !formData.specialization || opt.parent === formData.specialization)
                                         .map(opt => (
@@ -1009,8 +1001,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 <h4>Consent to Share Profile</h4>
                                 <p>
                                     I hereby provide my explicit consent to share my profile information
-                                    with relevant advocates, legal professionals, and authorized
-                                    entities for the purpose of obtaining legal assistance.
+                                    with relevant advocates,  professionals, and authorized
+                                    entities for the purpose of obtaining  assistance.
                                 </p>
                             </div>
 
@@ -1137,7 +1129,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         if (canvas) {
                                             const ctx = canvas.getContext('2d');
                                             if (ctx) {
-                                                ctx.fillStyle = '#ffffff';
+                                                ctx.fillStyle = '#050404ff';
                                                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                                                 updateFormData('signatureData', null);
                                             }
@@ -1268,10 +1260,6 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
                             <div className={styles.reviewGrid}>
                                 <div className={styles.reviewItem}>
-                                    <span className={styles.reviewLabel}>Category</span>
-                                    <span className={styles.reviewValue}>{formData.category || 'N/A'}</span>
-                                </div>
-                                <div className={styles.reviewItem}>
                                     <span className={styles.reviewLabel}>Specialization</span>
                                     <span className={styles.reviewValue}>{formData.specialization || 'N/A'}</span>
                                 </div>
@@ -1306,12 +1294,12 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                         {formData.emailVerified ? 'Verified' : 'Pending'}
                                     </span>
                                 </div>
-                                <div className={styles.statusCard}>
+                                {/* <div className={styles.statusCard}>
                                     <span className={styles.reviewLabel}>Mobile Verification</span>
                                     <span className={`${styles.badge} ${formData.mobileVerified ? styles.badgeSuccess : styles.badgeError}`}>
                                         {formData.mobileVerified ? 'Verified' : 'Pending'}
                                     </span>
-                                </div>
+                                </div> */}
                                 <div className={styles.statusCard}>
                                     <span className={styles.reviewLabel}>Captcha Status</span>
                                     <span className={`${styles.badge} ${formData.captchaVerified ? styles.badgeSuccess : styles.badgeError}`}>
@@ -1385,7 +1373,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                 </div>
 
                 {/* Main Content Area */}
-                <div className={styles.content}>
+                {/* Main Content Area - Scrollable */}
+                <div className={styles.content} ref={contentRef}>
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}

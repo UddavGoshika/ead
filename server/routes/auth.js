@@ -86,13 +86,13 @@ router.post('/login', async (req, res) => {
                 });
             }
 
-            if (['Pending', 'Reverify'].includes(user.status)) {
-                return res.status(403).json({
-                    error: 'ACCOUNT_PENDING',
-                    message: `Your account is pending verification. Please check back later.`,
-                    rejectionReason: rejectionReason
-                });
-            }
+            // if (['Pending', 'Reverify'].includes(user.status)) {
+            //     return res.status(403).json({
+            //         error: 'ACCOUNT_PENDING',
+            //         message: `Your account is pending verification. Please check back later.`,
+            //         rejectionReason: rejectionReason
+            //     });
+            // }
 
             return res.json({
                 token: 'user-token-' + user._id,

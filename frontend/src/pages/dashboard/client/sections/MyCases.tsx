@@ -169,39 +169,57 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.searchSection}>
-                <div className={styles.searchContainer}>
+            <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '12px',
+                    width: '100%'
+                }}>
                     <input
                         type="text"
-                        placeholder="Search by Case ID or Title..."
+                        placeholder="Search Case ID or Title..."
                         className={styles.dashboardSearchInput}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        style={{ paddingRight: '20px' }}
                     />
-                    <button className={styles.searchBtnInside} onClick={fetchCases}>Search</button>
-                </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', width: '100%' }}>
                     <select className={styles.filterSelect} value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option>Status</option>
+                        <option>All Status</option>
                         <option>Case Request Received</option>
                         <option>Client Approved</option>
                         <option>In Progress</option>
                         <option>Closed</option>
                     </select>
 
-                    <select className={styles.filterSelect} value={selectedState} onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); setSelectedCity(''); }}>
-                        <option value="">Select State</option>
-                        {states.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-
                     <select className={styles.filterSelect} value={selectedDept} onChange={(e) => { setSelectedDept(e.target.value); setSelectedSubDept('All'); }}>
-                        <option value="All">Department</option>
+                        <option value="All">All Departments</option>
                         {Object.keys(LEGAL_DOMAINS).map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
 
-                    <button className={styles.submitBtnDashboard} onClick={fetchCases}>
-                        <Filter size={16} /> Apply
+                    <select className={styles.filterSelect} value={selectedSubDept} onChange={(e) => setSelectedSubDept(e.target.value)} disabled={selectedDept === 'All'}>
+                        <option value="All">All Sub-Depts</option>
+                        {(LEGAL_DOMAINS[selectedDept] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedState} onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); setSelectedCity(''); }}>
+                        <option value="">All States</option>
+                        {states.sort().map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedDistrict} onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedCity(''); }} disabled={!selectedState}>
+                        <option value="">All Districts</option>
+                        {districts.sort().map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+
+                    <select className={styles.filterSelect} value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} disabled={!selectedDistrict}>
+                        <option value="">All Cities</option>
+                        {cities.sort().map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+
+                    <button className={styles.searchBtnInside} onClick={fetchCases} style={{ height: '100%', minHeight: '45px', position: 'static', borderRadius: '12px' }}>
+                        Search
                     </button>
                 </div>
             </div>

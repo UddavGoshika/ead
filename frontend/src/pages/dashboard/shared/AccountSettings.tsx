@@ -155,7 +155,9 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
   const { user, logout } = useAuth();
 
   // Settings State
-  const [privacy, setPrivacy] = useState({ showProfile: true, showContact: false, showEmail: false });
+  const [privacy, setPrivacy] = useState<any>({ showProfile: true, showContact: false, showEmail: false });
+  const [notifications, setNotifications] = useState<any>({ email: true, push: true, sms: false, activityAlerts: true });
+  const [messaging, setMessaging] = useState<any>({ allowDirectMessages: true, readReceipts: true, filterSpam: true });
   const [passData, setPassData] = useState({ current: '', new: '', confirm: '' });
 
   useEffect(() => {
@@ -171,6 +173,8 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
           const res = await settingsService.getSettings();
           if (res.data.success) {
             setPrivacy(res.data.privacy || { showProfile: true, showContact: false, showEmail: false });
+            setNotifications((res.data as any).notificationSettings || { email: true, push: true, sms: false, activityAlerts: true });
+            setMessaging((res.data as any).messageSettings || { allowDirectMessages: true, readReceipts: true, filterSpam: true });
           }
         } catch (e) { console.error("Failed to load settings", e); }
       }
@@ -198,14 +202,40 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
 
   const handlePrivacyToggle = async (key: string, val: boolean) => {
     const newPrivacy = { ...privacy, [key]: val };
-    setPrivacy(newPrivacy); // Optimistic
+    setPrivacy(newPrivacy);
     try {
       const { settingsService } = await import('../../../services/api');
       await settingsService.updatePrivacy(newPrivacy);
       showToast?.('Privacy settings saved');
     } catch (err) {
       showToast?.('Failed to save privacy settings');
-      setPrivacy(privacy); // Revert
+      setPrivacy(privacy);
+    }
+  };
+
+  const handleNotificationToggle = async (key: string, val: boolean) => {
+    const newNotifs = { ...notifications, [key]: val };
+    setNotifications(newNotifs);
+    try {
+      const { settingsService } = await import('../../../services/api');
+      await settingsService.updateNotifications(newNotifs);
+      showToast?.('Notification settings saved');
+    } catch (err) {
+      showToast?.('Failed to save notification settings');
+      setNotifications(notifications);
+    }
+  };
+
+  const handleMessagingToggle = async (key: string, val: boolean) => {
+    const newMsg = { ...messaging, [key]: val };
+    setMessaging(newMsg);
+    try {
+      const { settingsService } = await import('../../../services/api');
+      await settingsService.updateMessaging(newMsg);
+      showToast?.('Messaging settings saved');
+    } catch (err) {
+      showToast?.('Failed to save messaging settings');
+      setMessaging(messaging);
     }
   };
 
@@ -275,17 +305,21 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
           <Item label="Notification Settings" onClick={() => setPage('notifications')} />
         </Section>
 
-        <Section title="For Advocates">
-          <Item label="Join Platform" onClick={() => setPage('join')} />
-          <Item label="Find Clients" onClick={() => setPage('find-clients')} />
-          <Item label="Pricing" onClick={() => setPage('pricing')} />
-        </Section>
+        {user?.role === 'advocate' && (
+          <Section title="For Advocates">
+            <Item label="Join Platform" onClick={() => setPage('join')} />
+            <Item label="Find Clients" onClick={() => setPage('find-clients')} />
+            <Item label="Pricing" onClick={() => setPage('pricing')} />
+          </Section>
+        )}
 
-        <Section title="For Clients">
-          <Item label="Find Advocates" onClick={() => setPage('find-advocates')} />
-          <Item label="Legal Resources" onClick={() => setPage('resources')} />
-          <Item label="How It Works" onClick={() => setPage('how-it-works')} />
-        </Section>
+        {user?.role === 'client' && (
+          <Section title="For Clients">
+            <Item label="Find Advocates" onClick={() => setPage('find-advocates')} />
+            <Item label="Legal Resources" onClick={() => setPage('resources')} />
+            <Item label="How It Works" onClick={() => setPage('how-it-works')} />
+          </Section>
+        )}
 
         <button className={styles.logout} onClick={() => logout()}>
           <LogOut /> Logout
@@ -337,6 +371,61 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
     );
   }
 
+  /* ================= MESSAGES ================= */
+  if (page === 'messages') {
+    return (
+      <div className={styles.page}>
+        <BackHeader title="Messaging Settings" />
+        <Toggle
+          label="Allow direct messages from anyone"
+          checked={messaging.allowDirectMessages}
+          onChange={(val: boolean) => handleMessagingToggle('allowDirectMessages', val)}
+        />
+        <Toggle
+          label="Show read receipts"
+          checked={messaging.readReceipts}
+          onChange={(val: boolean) => handleMessagingToggle('readReceipts', val)}
+        />
+        <Toggle
+          label="Automatically filter spam / suspicious messages"
+          checked={messaging.filterSpam}
+          onChange={(val: boolean) => handleMessagingToggle('filterSpam', val)}
+        />
+        <div style={{ padding: '20px', color: '#94a3b8', fontSize: '13px' }}>These settings help you control who can contact you.</div>
+      </div>
+    );
+  }
+
+  /* ================= NOTIFICATIONS ================= */
+  if (page === 'notifications') {
+    return (
+      <div className={styles.page}>
+        <BackHeader title="Notification Settings" />
+        <Toggle
+          label="Email Notifications"
+          checked={notifications.email}
+          onChange={(val: boolean) => handleNotificationToggle('email', val)}
+        />
+        <Toggle
+          label="Push Notifications"
+          checked={notifications.push}
+          onChange={(val: boolean) => handleNotificationToggle('push', val)}
+        />
+        <Toggle
+          label="SMS Notifications"
+          checked={notifications.sms}
+          onChange={(val: boolean) => handleNotificationToggle('sms', val)}
+        />
+        <Toggle
+          label="Real-time Activity Alerts"
+          checked={notifications.activityAlerts}
+          onChange={(val: boolean) => handleNotificationToggle('activityAlerts', val)}
+        />
+        <div style={{ padding: '20px', color: '#94a3b8', fontSize: '13px' }}>Stay updated with your case progress and new messages.</div>
+      </div>
+    );
+  }
+
   /* ================= PASSWORD ================= */
   if (page === 'password') {
     return (
@@ -384,6 +473,48 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
           button="Delete Permanently"
           onClick={() => { if (window.confirm("CRITICAL: Are you absolutely sure?")) handleDeactivate(); }} // Reusing logic for now
         />
+      </div>
+    );
+  }
+
+  /* ================= RESOURCES ================= */
+  if (page === 'resources') {
+    return (
+      <div className={styles.page}>
+        <BackHeader title="Legal Resources" />
+        <div style={{ padding: '20px' }}>
+          <Section title="Quick Guides">
+            <Item label="How to File a Case" onClick={() => window.open('https://filing.ecourts.gov.in/', '_blank')} />
+            <Item label="Understanding IPC Sections" />
+            <Item label="Legal Documentation Checklist" />
+          </Section>
+          <Section title="External Links">
+            <Item label="eCourts Services" onClick={() => window.open('https://services.ecourts.gov.in/', '_blank')} />
+            <Item label="Bar Council of India" onClick={() => window.open('http://www.barcouncilofindia.org/', '_blank')} />
+          </Section>
+        </div>
+      </div>
+    );
+  }
+
+  /* ================= HOW IT WORKS ================= */
+  if (page === 'how-it-works') {
+    return (
+      <div className={styles.page}>
+        <BackHeader title="How It Works" />
+        <div style={{ padding: '20px', color: '#e2e8f0', lineHeight: '1.6' }}>
+          <h3>1. Search for Experts</h3>
+          <p>Browse through thousands of verified advocates based on your specific legal needs and location.</p>
+
+          <h3>2. Send Interest</h3>
+          <p>Click 'Send Interest' to let an advocate know you'd like to consult. They will accept or decline based on availability.</p>
+
+          <h3>3. Secure Consultation</h3>
+          <p>Once accepted, you can chat, call, or video consult in a private, encrypted environment.</p>
+
+          <h3>4. Document Management</h3>
+          <p>Use our portal to safely share and manage legal documents required for your case.</p>
+        </div>
       </div>
     );
   }
@@ -522,6 +653,13 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
       </div>
     );
   }
+
+  // Fallback for join, find-clients, find-advocates (redirect to relevant dashboard pages)
+  if (['join', 'find-clients', 'find-advocates'].includes(page)) {
+    if (backToHome) backToHome();
+    return null;
+  }
+
   return (
     <div className={styles.page}>
       <BackHeader title={page.replace('-', ' ')} />

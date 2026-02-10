@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, Link2, X } from 'lucide-react';
+import { FaWhatsapp, FaFacebook, FaLinkedin } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import styles from './BlogCard.module.css';
@@ -39,6 +40,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [localComments, setLocalComments] = useState<any[]>(post.comments || []);
+    const [showShareMenu, setShowShareMenu] = useState(false);
 
     const handleLike = async () => {
         if (!isLoggedIn) {
@@ -71,19 +73,32 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
         }
     };
 
-    const handleShare = async () => {
+    const handleShareInit = async () => {
+        setShowShareMenu(!showShareMenu);
+    };
+
+    const handleShareOptionClick = async (platform: string) => {
         try {
             const res = await blogService.shareBlog(post.id);
             if (res.data.success) {
                 setShareCount(res.data.shares);
                 const url = window.location.origin + `/blogs?id=${post.id}`;
-                navigator.clipboard.writeText(url);
-                alert('Link copied to clipboard and share counted!');
+                const text = `Check out this blog: ${post.title}`;
+
+                if (platform === 'whatsapp') {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+                } else if (platform === 'facebook') {
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+                } else if (platform === 'linkedin') {
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+                } else if (platform === 'copy') {
+                    navigator.clipboard.writeText(url);
+                    alert('Link copied to clipboard!');
+                }
+                setShowShareMenu(false);
             }
         } catch (err: any) {
             console.error('Share failed:', err);
-            const msg = err.response?.data?.error || err.message || "Unknown error";
-            alert(`Share failed: ${msg}`);
         }
     };
 
@@ -117,6 +132,12 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
         >
+            {shareCount > 0 && (
+                <div className={styles.topShareBadge}>
+                    <Share2 size={12} />
+                    <span>{shareCount} Shares</span>
+                </div>
+            )}
             <div className={styles.container}>
                 <div className={styles.leftContent}>
                     {/* Author Info */}
@@ -169,10 +190,27 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
                                 <span className={styles.count}>{localComments.length}</span>
                             </button>
                         </div>
-                        <button className={styles.shareBtn} onClick={handleShare}>
-                            <Share2 size={28} />
-                            {shareCount > 0 && <span className={styles.shareBadge}>{shareCount}</span>}
-                        </button>
+                        <div style={{ position: 'relative' }}>
+                            <button className={styles.shareBtn} onClick={handleShareInit}>
+                                {showShareMenu ? <X size={24} /> : <Share2 size={28} />}
+                            </button>
+                            {showShareMenu && (
+                                <div className={styles.shareMenu}>
+                                    <div className={`${styles.shareOption} ${styles.whatsapp}`} onClick={() => handleShareOptionClick('whatsapp')}>
+                                        <FaWhatsapp size={24} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.facebook}`} onClick={() => handleShareOptionClick('facebook')}>
+                                        <FaFacebook size={24} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.linkedin}`} onClick={() => handleShareOptionClick('linkedin')}>
+                                        <FaLinkedin size={24} />
+                                    </div>
+                                    <div className={`${styles.shareOption} ${styles.copyLink}`} onClick={() => handleShareOptionClick('copy')}>
+                                        <Link2 size={24} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

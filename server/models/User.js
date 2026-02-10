@@ -45,7 +45,32 @@ const UserSchema = new mongoose.Schema({
         showProfile: { type: Boolean, default: true },
         showContact: { type: Boolean, default: false },
         showEmail: { type: Boolean, default: false }
-    }
+    },
+    notificationSettings: {
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: true },
+        sms: { type: Boolean, default: false },
+        activityAlerts: { type: Boolean, default: true }
+    },
+    messageSettings: {
+        allowDirectMessages: { type: Boolean, default: true },
+        readReceipts: { type: Boolean, default: true },
+        filterSpam: { type: Boolean, default: true }
+    },
+    // Wallet & Payments
+    bankAccounts: [{
+        bankName: String,
+        accountNumber: String,
+        ifsc: String,
+        holderName: String,
+        isPrimary: { type: Boolean, default: false }
+    }],
+    savedCards: [{
+        cardNum: String, // Masked or partial
+        cardType: String, // VISA, Mastercard, etc.
+        expiry: String,
+        holderName: String
+    }]
 });
 
 UserSchema.pre('save', function (next) {

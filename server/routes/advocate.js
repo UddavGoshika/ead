@@ -249,7 +249,13 @@ router.get('/', async (req, res) => {
 
         if (conditions.length > 0) query.$and = conditions;
 
-        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone');
+        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings');
+
+        // Filter out private profiles
+        dbAdvocates = dbAdvocates.filter(adv => {
+            const privacy = adv.userId?.privacySettings || { showProfile: true };
+            return privacy.showProfile !== false;
+        });
 
         // Helper: Strict Plan Weight Hierarchy (Rule 4)
         const getPlanWeight = (user) => {
@@ -347,7 +353,7 @@ router.get('/me', async (req, res) => {
         }
 
         const userId = token.replace('user-token-', '');
-        const advocate = await Advocate.findOne({ userId });
+        const advocate = await Advocate.findOne({ userId }).populate('userId', 'privacySettings notificationSettings messageSettings');
 
         if (!advocate) {
             return res.status(404).json({ success: false, error: 'Advocate profile not found' });
@@ -389,7 +395,7 @@ router.get('/:uniqueId', async (req, res) => {
             query = { unique_id: uniqueId };
         }
 
-        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium email phone');
+        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings notificationSettings messageSettings');
 
         if (!advocate) {
             return res.status(404).json({ success: false, error: 'Advocate not found' });
@@ -437,8 +443,16 @@ router.get('/:uniqueId', async (req, res) => {
             }
         }
 
-        // MASKING
-        const shouldMask = !viewerIsPremium; // Strictly mask for ALL profiles if viewer is Free
+        // OWNER PRIVACY OVERRIDES
+        const privacy = advocate.userId?.privacySettings || { showProfile: true, showContact: true, showEmail: true };
+        const msgSettings = advocate.userId?.messageSettings || { allowDirectMessages: true };
+
+        // 1. If showProfile is false, most info should be masked even for premium, unless it's the owner themselves
+        const isOwner = viewerId && viewerId.toString() === advocate.userId?._id?.toString();
+        const profileHidden = !privacy.showProfile && !isOwner;
+
+        // 2. MASKING
+        const shouldMask = !viewerIsPremium || profileHidden;
 
         let displayName = advocate.name || `${advocate.firstName} ${advocate.lastName}`;
         let displayId = advocate.unique_id;
@@ -448,31 +462,40 @@ router.get('/:uniqueId', async (req, res) => {
         if (shouldMask) {
             displayName = displayName.substring(0, 2) + '...';
             displayId = displayId.substring(0, 2) + '...';
-            bio = ''; // Hide Bio
-            // Image blurring handled by frontend isMasked flag
+            bio = (profileHidden) ? 'This profile is private.' : '';
+        }
+
+        // Contact Info Overrides
+        if (contactInfo) {
+            if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
+            if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
         }
 
         const formattedAdvocate = {
             id: advocate._id,
             role: 'advocate',
             userId: advocate.userId?._id || advocate.userId,
-            unique_id: advocate.unique_id, // RULE FIX: Never mask routing ID
+            unique_id: advocate.unique_id,
             name: displayName,
             display_id: displayId,
             firstName: shouldMask ? displayName : advocate.firstName,
-            lastName: shouldMask ? '' : advocate.lastName, // Hide full last name
+            lastName: shouldMask ? '' : advocate.lastName,
             gender: advocate.gender,
             location: advocate.location?.city ? `${advocate.location.city}, ${advocate.location.state}` : (advocate.location?.state || 'Unknown'),
             experience: advocate.practice?.experience || '0 Years',
             specialties: advocate.practice?.specialization ? [advocate.practice.specialization] : [],
             bio: bio,
-            education: shouldMask ? null : advocate.education, // Hide details
-            practice: shouldMask ? null : advocate.practice, // Hide details
-            availability: shouldMask ? null : advocate.availability, // Hide details
+            education: (shouldMask || profileHidden) ? null : advocate.education,
+            practice: (shouldMask || profileHidden) ? null : advocate.practice,
+            availability: (shouldMask || profileHidden) ? null : advocate.availability,
             image_url: displayImage,
             isFeatured: isFeatured,
             isMasked: shouldMask,
-            contactInfo: contactInfo
+            contactInfo: contactInfo,
+            allowChat: msgSettings.allowDirectMessages,
+            privacySettings: privacy,
+            notificationSettings: advocate.userId?.notificationSettings,
+            messageSettings: msgSettings
         };
 
         res.json({ success: true, advocate: formattedAdvocate });

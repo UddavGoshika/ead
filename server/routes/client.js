@@ -194,7 +194,13 @@ router.get('/', async (req, res) => {
         }
 
         console.log('[BACKEND DEBUG] Client Query:', JSON.stringify(query));
-        let dbClients = await Client.find(query).populate('userId', 'plan isPremium email phone');
+        let dbClients = await Client.find(query).populate('userId', 'plan isPremium email phone privacySettings');
+
+        // Filter out private profiles
+        dbClients = dbClients.filter(client => {
+            const privacy = client.userId?.privacySettings || { showProfile: true };
+            return privacy.showProfile !== false;
+        });
         console.log(`[BACKEND DEBUG] Total DB Clients Found: ${dbClients.length}`);
 
         // Helper: Plan Weight Hierarchy
@@ -380,6 +386,17 @@ router.get('/:userId', async (req, res) => {
             }
         }
 
+        // OWNER PRIVACY OVERRIDES
+        const privacy = client.userId?.privacySettings || { showProfile: true, showContact: true, showEmail: true };
+        const msgSettings = client.userId?.messageSettings || { allowDirectMessages: true };
+        const isOwner = viewerId && viewerId.toString() === client.userId?._id?.toString();
+
+        // Contact Info Overrides
+        if (contactInfo) {
+            if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
+            if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+        }
+
         const formattedClient = {
             id: client._id,
             role: 'client',
@@ -388,14 +405,18 @@ router.get('/:userId', async (req, res) => {
             name: `${client.firstName} ${client.lastName}`.trim(),
             firstName: client.firstName,
             lastName: client.lastName,
-            email: client.email,
-            mobile: client.mobile,
+            email: privacy.showEmail || isOwner ? client.email : 'Hidden',
+            mobile: privacy.showContact || isOwner ? client.mobile : 'Hidden',
             location: client.address,
             legalHelp: client.legalHelp,
             img: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             image_url: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             profilePicPath: client.profilePicPath,
-            contactInfo: contactInfo
+            contactInfo: contactInfo,
+            privacySettings: privacy,
+            notificationSettings: client.userId?.notificationSettings,
+            messageSettings: msgSettings,
+            allowChat: msgSettings.allowDirectMessages
         };
 
         res.json({ success: true, client: formattedClient });
