@@ -29,6 +29,7 @@ interface Member {
     signaturePath?: string;
     rejectionReason?: string;
     image?: string; // Add image property from parent
+    profile?: any;
 }
 
 interface Props {
@@ -103,7 +104,7 @@ const MemberDetailModal: React.FC<Props> = ({ member, onClose }) => {
                             <h3>Personal Information</h3>
                             <div className={styles.infoRow}>
                                 <label>Full Name</label>
-                                <span>{member.name || (member as any).firstName + ' ' + (member as any).lastName}</span>
+                                <span>{member.name || member.profile?.name || (member as any).firstName + ' ' + (member as any).lastName || member.profile?.firstName + ' ' + member.profile?.lastName}</span>
                             </div>
                             <div className={styles.infoRow}>
                                 <label>Email</label>

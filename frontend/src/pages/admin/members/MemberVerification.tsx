@@ -90,6 +90,7 @@ interface PendingMember {
     superInterests?: string[];
 
     documents: { name: string, path: string }[];
+    unique_id?: string;
 }
 
 
@@ -214,6 +215,8 @@ const MemberVerification: React.FC = () => {
                     ...(apiData.profile || {}),
                     documents: apiData.documents || [],
                     id: apiData.user?._id || id,
+                    unique_id: apiData.unique_id || apiData.user?.unique_id || apiData.user?.code || apiData.profile?.unique_id || apiData.code || "TP-EAD-PENDING",
+                    name: apiData.user?.name || apiData.name || apiData.profile?.name || `${apiData.profile?.firstName || apiData.firstName || apiData.user?.firstName || ''} ${apiData.profile?.lastName || apiData.lastName || apiData.user?.lastName || ''}`.trim() || "Anonymous Member",
                     regDate: apiData.user?.createdAt || new Date().toISOString(),
                     role: apiData.user?.role || "Advocate",
                     image: apiData.profile?.profilePicPath || apiData.user?.avatar
@@ -460,14 +463,9 @@ const MemberVerification: React.FC = () => {
                                     <h1>{selectedMember.name}</h1>
                                     <div className={styles.badgeRow}>
                                         <span className={styles.roleBadge}>{selectedMember.role}</span>
-                                        <span className={styles.idBadge}>ID: {selectedMember.id}</span>
+                                        <span className={styles.idBadge}>ID: {selectedMember.unique_id || selectedMember.id}</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div className={styles.headerActions}>
-                                <button className={styles.externalLinkBtn} title="View Public Profile">
-                                    <ExternalLink size={18} />
-                                </button>
                             </div>
                         </div>
 
@@ -604,11 +602,18 @@ const MemberVerification: React.FC = () => {
                                 </div>
                                 <div className={styles.fileGrid}>
                                     {selectedMember.documents?.map((doc, idx) => {
-                                        const isImage = /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(doc.path) ||
-                                            doc.path.toLowerCase().endsWith('-blob') ||
-                                            doc.name?.toLowerCase().includes('signature') ||
-                                            doc.name?.toLowerCase().includes('photo') ||
-                                            doc.name?.toLowerCase().includes('id proof');
+                                        const lowerPath = (doc.path || "").toLowerCase();
+                                        const isPdf = /\.pdf($|\?|#)/i.test(doc.path) || lowerPath.includes('/raw/');
+                                        const isDoc = /\.(doc|docx)($|\?|#)/i.test(doc.path);
+
+                                        const isImage = !isPdf && !isDoc && (
+                                            /\.(jpg|jpeg|png|webp|gif|bmp|svg)($|\?|#)/i.test(doc.path) ||
+                                            lowerPath.endsWith('-blob') ||
+                                            lowerPath.includes('signature') ||
+                                            lowerPath.includes('photo') ||
+                                            doc.path?.startsWith('data:')
+                                        );
+
                                         return (
                                             <div key={idx} className={styles.docCard}>
                                                 <div className={styles.docIcon}>
@@ -619,6 +624,12 @@ const MemberVerification: React.FC = () => {
                                                             className={styles.docThumbnail}
                                                             onClick={() => setPreviewFile(doc)}
                                                             style={{ cursor: 'pointer' }}
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = "/file_placeholder.png"; // Use generic icon on error
+                                                                e.currentTarget.style.display = 'none'; // Or hide and show icon parent
+                                                                // Better: replace parent innerHTML logic in complex app, but here fallback src is okay if we had one.
+                                                                // Since we don't have a guaranteed placeholder image, let's rely on strict type checking above.
+                                                            }}
                                                         />
                                                     ) : (
                                                         <FileText size={20} />
@@ -782,31 +793,87 @@ const MemberVerification: React.FC = () => {
             </div>
 
             {/* Media Preview Modal */}
+            {/* Media Preview Modal - 100% Robust Solution */}
             {previewFile && (
                 <div className={styles.modalOverlay} onClick={() => setPreviewFile(null)}>
                     <div className={styles.previewModal} onClick={e => e.stopPropagation()}>
                         <div className={styles.previewHeader}>
-                            <h3>{previewFile.name}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                                <h3 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+                                    {previewFile.name}
+                                </h3>
+                                <a
+                                    href={getMediaUrl(previewFile.path)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={styles.downloadAllBtn}
+                                    style={{ padding: '6px 16px', fontSize: '0.8rem', textDecoration: 'none', background: '#3b82f6', color: 'white', border: 'none' }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink size={16} /> Open / Download Original
+                                </a>
+                            </div>
                             <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} /></button>
                         </div>
-                        <div className={styles.previewBody}>
-                            {previewFile.path.toLowerCase().endsWith('.pdf') ? (
-                                <iframe
-                                    src={getMediaUrl(previewFile.path)}
-                                    className={styles.pdfViewer}
-                                    title="PDF Preview"
-                                />
-                            ) : (
-                                <img
-                                    src={getMediaUrl(previewFile.path)}
-                                    alt="Document Preview"
-                                    className={styles.previewImg}
-                                    onError={(e) => {
-                                        e.currentTarget.src = "https://via.placeholder.com/400x300?text=Preview+Not+Available";
-                                        console.error('Failed to load preview:', previewFile.path);
-                                    }}
-                                />
-                            )}
+                        <div className={styles.previewBody} style={{ background: '#1e293b', position: 'relative' }}>
+                            {/* LOADER / FALLBACK TEXT BEHIND IFRAME */}
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 0, color: '#94a3b8', textAlign: 'center' }}>
+                                <p>Loading Preview...</p>
+                                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>If it doesn't load, use the "Open / Download" button above.</span>
+                            </div>
+
+                            {/* LOGIC FOR DIFFERENT FILE TYPES */}
+                            {(() => {
+                                const url = getMediaUrl(previewFile.path);
+                                const lowerPath = (previewFile.path || "").toLowerCase();
+                                const isPdf = /\.pdf($|\?|#)/i.test(lowerPath) || lowerPath.includes('/raw/');
+                                const isOffice = /\.(doc|docx|ppt|pptx|xls|xlsx)($|\?|#)/i.test(lowerPath);
+                                const isTxt = /\.txt($|\?|#)/i.test(lowerPath);
+
+                                if (isPdf) {
+                                    /* Google Docs Viewer is the most robust web-based PDF viewer (no plugin needed) */
+                                    return (
+                                        <iframe
+                                            src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
+                                            className={styles.pdfViewer}
+                                            title="PDF Preview"
+                                            style={{ width: '100%', height: '100%', border: 'none', position: 'relative', zIndex: 1, background: '#fff' }}
+                                        />
+                                    );
+                                } else if (isOffice) {
+                                    /* Microsoft Office Online Viewer is best for Word/Excel/PPT */
+                                    return (
+                                        <iframe
+                                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
+                                            className={styles.pdfViewer}
+                                            title="Office Doc Preview"
+                                            style={{ width: '100%', height: '100%', border: 'none', position: 'relative', zIndex: 1, background: '#fff' }}
+                                        />
+                                    );
+                                } else if (isTxt) {
+                                    return (
+                                        <iframe
+                                            src={url}
+                                            className={styles.pdfViewer}
+                                            style={{ width: '100%', height: '100%', border: 'none', background: '#fff', padding: '20px', color: '#000' }}
+                                        />
+                                    );
+                                } else {
+                                    /* Default to Image */
+                                    return (
+                                        <img
+                                            src={url}
+                                            alt="Preview"
+                                            className={styles.previewImg}
+                                            style={{ position: 'relative', zIndex: 1, maxWidth: '100%', maxHeight: '100%' }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                alert("Could not load image preview. Please download the file.");
+                                            }}
+                                        />
+                                    );
+                                }
+                            })()}
                         </div>
                     </div>
                 </div>

@@ -137,10 +137,14 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
         if (!path) return null;
 
         const lowerPath = path.toLowerCase();
-        const isPdf = /\.pdf($|\?|#)/i.test(path) || lowerPath.includes('resource_type/raw');
+        // Check for PDF extension or Cloudinary 'raw' resource type (which might include PDFs)
+        const isPdf = /\.pdf($|\?|#)/i.test(path) || lowerPath.includes('/raw/');
 
-        const isImage = !isPdf && (
-            /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(path) ||
+        // Check for Word documents
+        const isDoc = /\.(doc|docx)($|\?|#)/i.test(path);
+
+        const isImage = !isPdf && !isDoc && (
+            /\.(jpg|jpeg|png|webp|gif|bmp|svg)($|\?|#)/i.test(path) ||
             lowerPath.endsWith('-blob') ||
             lowerPath.includes('signature') ||
             lowerPath.includes('photo') ||
@@ -151,10 +155,15 @@ const MemberVerificationModal: React.FC<Props> = ({ member, onClose, onVerify, i
 
         const fileName = fullPath.split('/').pop() || 'document.pdf';
         const lowerFileName = fileName.toLowerCase();
-        const isImageFinal = (isImage ||
-            (/\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(fileName)) ||
-            lowerFileName.includes('avatar') ||
-            lowerFileName.includes('profile')) && !isPdf && !lowerFileName.endsWith('.pdf');
+
+        // Strict image check: 
+        // 1. Must satisfy isImage OR be a known image extension matching the filename
+        // 2. OR contain 'avatar'/'profile' BUT ONLY IF it doesn't look like a document (pdf/doc)
+        const isImageFinal = (
+            isImage ||
+            /\.(jpg|jpeg|png|webp|gif|bmp|svg)($|\?|#)/i.test(fileName) ||
+            ((lowerFileName.includes('avatar') || lowerFileName.includes('profile')) && !isPdf && !isDoc && !lowerFileName.includes('.pdf') && !lowerFileName.includes('.doc'))
+        ) && !isPdf && !isDoc;
 
         return (
             <div className={styles.docItem}>

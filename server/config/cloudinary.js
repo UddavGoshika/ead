@@ -16,7 +16,7 @@ const cloudStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'eadvocate_uploads', // Folder name in Cloudinary
-        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf'],
+        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
         resource_type: 'auto', // Allow images and PDFs (raw)
     },
 });
