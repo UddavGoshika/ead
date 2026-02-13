@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './CallWindow.module.css';
 import { useCall } from '../../context/CallContext';
-import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize, Minimize, X, Volume2, VolumeX, Star, Lock } from 'lucide-react';
+import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Maximize, Minimize, X, Volume2, VolumeX, Star, Lock, Play, Pause } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PremiumTryonModal from '../../pages/dashboard/shared/PremiumTryonModal';
 import { formatImageUrl } from '../../utils/imageHelper';
@@ -18,8 +18,10 @@ const CallWindow: React.FC = () => {
         remoteStream,
         toggleAudio,
         toggleVideo,
+        toggleHold,
         isAudioMuted,
         isVideoMuted,
+        isOnHold,
         callStatus,
         callDuration
     } = useCall();
@@ -55,14 +57,9 @@ const CallWindow: React.FC = () => {
     useEffect(() => {
         if (remoteVideoRef.current && remoteStream) {
             remoteVideoRef.current.srcObject = remoteStream;
-            // Force mute if not premium (Feature Teasing)
-            if (!isPremium) {
-                remoteVideoRef.current.muted = true;
-            } else {
-                remoteVideoRef.current.muted = !isSpeakerOn;
-            }
+            remoteVideoRef.current.muted = !isSpeakerOn;
         }
-    }, [remoteStream, callStatus, isPremium, isSpeakerOn]);
+    }, [remoteStream, callStatus, isSpeakerOn]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -248,12 +245,20 @@ const CallWindow: React.FC = () => {
                 </button>
 
                 <button
-                    className={`${styles.controlBtn} ${!isSpeakerOn || !isPremium ? styles.muted : ''}`}
-                    onClick={() => isPremium && setIsSpeakerOn(!isSpeakerOn)}
-                    disabled={!isPremium}
-                    title={!isPremium ? "Premium feature" : (isSpeakerOn ? "Speaker Off" : "Speaker On")}
+                    className={`${styles.controlBtn} ${!isSpeakerOn ? styles.muted : ''}`}
+                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+                    title={isSpeakerOn ? "Speaker Off" : "Speaker On"}
                 >
-                    {!isPremium ? <VolumeX size={24} /> : (isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />)}
+                    {isSpeakerOn ? <Volume2 size={24} /> : <VolumeX size={24} />}
+                </button>
+
+                <button
+                    className={`${styles.controlBtn} ${isOnHold ? styles.muted : ''}`}
+                    onClick={toggleHold}
+                    title={isOnHold ? "Resume Call" : "Hold Call"}
+                    style={{ background: isOnHold ? '#facc15' : undefined, color: isOnHold ? '#000' : undefined }}
+                >
+                    {isOnHold ? <Play size={24} fill="currentColor" /> : <Pause size={24} />}
                 </button>
 
                 <button className={styles.hangupBtn} onClick={endCall} title="End Call">

@@ -84,6 +84,23 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
+    const [captchaCode, setCaptchaCode] = useState('');
+
+    /* ================= CAPTCHA ================= */
+    const generateCaptcha = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 1, 0
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setCaptchaCode(result);
+        updateFormData('captchaVerified', false); // Reset verification on refresh
+    };
+
+    React.useEffect(() => {
+        generateCaptcha();
+    }, []);
+
 
     const validateStep = (stepId: number) => {
         const newErrors: Record<string, boolean> = {};
@@ -1154,33 +1171,70 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         {/* CAPTCHA VERIFICATION */}
                         <div className={styles.formGroup} style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
                             <label style={{ fontSize: '16px', color: '#daa520', marginBottom: '15px', display: 'block' }}>🛡️ Security Verification</label>
-                            <div className={styles.captchaContainer}>
-                                <div className={styles.captchaBox}>
-                                    <span className={styles.captchaText}>LEX-CLIENT-88</span>
+                            <div className={styles.captchaContainer} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <div className={styles.captchaBox} style={{
+                                    background: 'linear-gradient(45deg, #111, #222)',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    fontFamily: 'monospace',
+                                    fontSize: '26px',
+                                    letterSpacing: '6px',
+                                    fontWeight: 'bold',
+                                    color: '#fbbf24',
+                                    userSelect: 'none',
+                                    border: '1px dashed #444',
+                                    minWidth: '160px',
+                                    textAlign: 'center'
+                                }}>
+                                    <span className={styles.captchaText}>{captchaCode}</span>
                                 </div>
-                                <div className={styles.captchaInputGroup}>
+
+                                <button
+                                    type="button"
+                                    onClick={generateCaptcha}
+                                    style={{
+                                        background: '#333',
+                                        border: '1px solid #444',
+                                        borderRadius: '50%',
+                                        width: '40px',
+                                        height: '40px',
+                                        cursor: 'pointer',
+                                        color: '#fbbf24',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    className={styles.refreshBtn}
+                                    title="Refresh Captcha"
+                                >
+                                    <RefreshCcw size={18} />
+                                </button>
+
+                                <div className={styles.captchaInputGroup} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <input
                                         type="text"
-                                        placeholder="Type Code Above"
+                                        placeholder="Enter Code"
                                         className={`${styles.captchaInput} ${errors.captchaVerified ? styles.inputError : ''}`}
                                         style={{
                                             backgroundColor: '#1a1a1aff',
-                                            border: '1px solid #333',
+                                            border: `1px solid ${errors.captchaVerified ? '#ef4444' : '#333'}`,
                                             color: '#fff',
                                             padding: '12px',
                                             borderRadius: '8px',
                                             fontSize: '16px',
-                                            width: '200px'
+                                            width: '100%',
+                                            maxWidth: '180px'
                                         }}
                                         onChange={(e) => {
-                                            if (e.target.value.toUpperCase() === 'LEX-CLIENT-88') {
+                                            if (e.target.value.toUpperCase() === captchaCode) {
                                                 updateFormData('captchaVerified', true);
                                             } else {
                                                 updateFormData('captchaVerified', false);
                                             }
                                         }}
                                     />
-                                    {formData.captchaVerified && <span style={{ color: '#10b981', fontWeight: 'bold' }}>✔ Verified</span>}
+                                    {formData.captchaVerified && <span style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}><CheckCircle size={18} /> Verified</span>}
                                 </div>
                             </div>
                         </div>

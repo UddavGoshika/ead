@@ -26,7 +26,7 @@
 
 .popup {
     width: 100%;
-    max-width: 500px;
+    max-width: 1200px;
     height: 90vh;
     background: linear-gradient(180deg, #0b122f, #070b1d);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -77,6 +77,25 @@
 
 .backBtn:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.profileClickArea {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.profileClickArea:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.profileClickArea:hover .avatar {
+    transform: scale(1.05);
 }
 
 .avatar {
@@ -156,11 +175,73 @@
     background: rgba(0, 0, 0, 0.2);
 }
 
+.detailsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.midActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.headerInterestBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.headerInterestBtn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.headerInterestBtn svg {
+    color: #3b82f6;
+    width: 14px !important;
+    height: 14px !important;
+    display: block;
+    flex-shrink: 0;
+}
+
+.headerSuper {
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.2);
+    color: #facc15;
+}
+
+.headerSuper svg {
+    color: #facc15;
+    width: 14px !important;
+    height: 14px !important;
+    display: block;
+    flex-shrink: 0;
+}
+
+.headerSuper:hover {
+    background: rgba(250, 204, 21, 0.15);
+    border-color: rgba(250, 204, 21, 0.3);
+}
+
 .detailsList {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 20px;
+    flex: 1;
 }
 
 .detailItem {
@@ -170,6 +251,48 @@
     padding: 4px 10px;
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mapPinIcon {
+    margin-right: 4px;
+}
+
+.headerCallActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.miniCallBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.miniCallBtn svg {
+    width: 14px !important;
+    height: 14px !important;
+    display: block;
+    flex-shrink: 0;
+}
+
+.miniCallBtn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.miniCallBtn svg {
+    color: #22c55e;
 }
 
 .quickActionsRow {
@@ -198,6 +321,20 @@
 .sendInterestBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
+}
+
+.sendInterestBtn.super {
+    background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+    color: #0c142d;
+    box-shadow: 0 10px 20px rgba(234, 179, 8, 0.2);
+}
+
+.sendInterestBtn.super:hover {
+    box-shadow: 0 15px 30px rgba(234, 179, 8, 0.3);
+}
+
+.sendInterestBtn.super svg {
+    color: #0c142d;
 }
 
 .callOptionBtn {

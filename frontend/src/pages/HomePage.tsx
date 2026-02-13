@@ -20,15 +20,16 @@ const HomePage: React.FC = () => {
     useEffect(() => {
         if (isLoggedIn && user) {
             const role = (user.role || '').toLowerCase();
+            const id = user.unique_id || user.id;
 
             if (role === 'admin' || role === 'super_admin') {
                 navigate('/admin/dashboard');
             } else if (role === 'advocate') {
-                navigate('/dashboard/advocate');
+                navigate(`/dashboard/advocate/${id}`);
             } else if (role === 'client') {
-                navigate('/dashboard/client');
+                navigate(`/dashboard/client/${id}`);
             } else if (role === 'legal_provider') {
-                navigate('/dashboard/advisor');
+                navigate(`/dashboard/advisor/${id}`);
             } else if (role === 'verifier') {
                 navigate('/dashboard/verifier');
             } else if (role === 'finance') {
@@ -36,14 +37,14 @@ const HomePage: React.FC = () => {
             } else if ([
                 'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
                 'chat_support', 'live_chat', 'call_support', 'data_entry',
-                'personal_assistant', 'personal_agent', 'influencer', 'marketer'
+                'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
             ].includes(role)) {
                 navigate('/staff/portal');
             } else if (role === 'user') {
-                navigate('/dashboard/user');
+                navigate(`/dashboard/user/${id}`);
             } else {
                 // Default fallback
-                navigate('/dashboard/client');
+                navigate(`/dashboard/client/${id}`);
             }
         }
     }, [isLoggedIn, user, navigate]);

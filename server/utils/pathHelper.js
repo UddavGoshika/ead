@@ -1,4 +1,5 @@
 const path = require('path');
+const { cloudinary } = require('../config/cloudinary');
 
 /**
  * Normalizes a file path to be used as a public URL.
@@ -9,13 +10,45 @@ const path = require('path');
 const getImageUrl = (filePath) => {
     if (!filePath) return null;
 
+    let finalPath = filePath;
+
+    // FIX: Sanitize existing Cloudinary URLs for PDFs
+    // If we have a PDF pointing to 'image/upload', it often fails (401/404) if the asset is actually 'raw'.
+    // We force 'raw/upload' for PDFs to ensure delivery.
+    if (finalPath.includes('cloudinary.com') && finalPath.toLowerCase().endsWith('.pdf')) {
+        // Replace /image/upload/ with /raw/upload/
+        if (finalPath.includes('/image/upload/')) {
+            finalPath = finalPath.replace('/image/upload/', '/raw/upload/');
+        }
+        return finalPath;
+    }
+
     // Check if it is already a full URL or a Data URL (base64)
-    if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('data:')) {
-        return filePath;
+    if (finalPath.startsWith('http://') || finalPath.startsWith('https://') || finalPath.startsWith('data:')) {
+        return finalPath;
     }
 
     // Convert Windows backslashes to forward slashes
-    let cleanPath = filePath.replace(/\\/g, '/');
+    let cleanPath = finalPath.replace(/\\/g, '/');
+
+    // DETECT CLOUDINARY PUBLIC ID (Bare filename OR Folder/Filename)
+    // If it doesn't look like a local 'uploads/' path and Cloudinary is ON
+    if (!cleanPath.includes('uploads/') && !cleanPath.startsWith('/') && process.env.CLOUDINARY_CLOUD_NAME) {
+        try {
+            // Determine resource type based on extension
+            const isPdf = cleanPath.toLowerCase().endsWith('.pdf');
+            const resourceType = isPdf ? 'raw' : 'image';
+
+            // Construct URL using Cloudinary SDK
+            return cloudinary.url(cleanPath, {
+                secure: true,
+                resource_type: resourceType
+            });
+        } catch (e) {
+            console.error("Cloudinary URL generation failed:", e);
+            // Fallback to local logic
+        }
+    }
 
     // Ensure it starts with /uploads/
     // If it already has uploads/, make sure it starts with /

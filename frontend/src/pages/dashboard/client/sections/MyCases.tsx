@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from "./mycases.module.css";
-import { caseService } from "../../../../services/api";
+import { caseService, advocateService } from "../../../../services/api";
 import { useAuth } from "../../../../context/AuthContext";
 import { Loader2, MessageSquare, Phone, Briefcase, Filter, FileText, CheckCircle, Clock, Info, X, Upload, Shield } from "lucide-react";
 import { useCall } from "../../../../context/CallContext";
@@ -24,6 +24,18 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
     const [selectedCase, setSelectedCase] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
     const [showTrialModal, setShowTrialModal] = useState(false);
+
+    // New Case Modal States
+    const [showNewCaseModal, setShowNewCaseModal] = useState(false);
+    const [allAdvocates, setAllAdvocates] = useState<any[]>([]);
+    const [newCaseData, setNewCaseData] = useState({
+        title: '',
+        description: '',
+        advocateId: '',
+        category: 'Corporate Law',
+        documents: [] as any[]
+    });
+    const [creatingCase, setCreatingCase] = useState(false);
 
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
@@ -65,6 +77,44 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
     useEffect(() => {
         fetchCases();
     }, []);
+
+    useEffect(() => {
+        if (showNewCaseModal) {
+            const fetchAdvocates = async () => {
+                try {
+                    const res = await advocateService.getAdvocates();
+                    if (res.data.success) {
+                        setAllAdvocates(res.data.advocates);
+                    }
+                } catch (err) {
+                    console.error("Error fetching advocates", err);
+                }
+            };
+            fetchAdvocates();
+        }
+    }, [showNewCaseModal]);
+
+    const handleCreateCase = async () => {
+        if (!newCaseData.title || !newCaseData.advocateId || !newCaseData.description) {
+            alert("Please fill all required fields");
+            return;
+        }
+        setCreatingCase(true);
+        try {
+            const res = await caseService.fileCase(newCaseData);
+            if (res.data.success) {
+                alert("Case created successfully!");
+                setShowNewCaseModal(false);
+                setNewCaseData({ title: '', description: '', advocateId: '', category: 'Corporate Law', documents: [] });
+                fetchCases();
+            }
+        } catch (err) {
+            console.error("Create case error", err);
+            alert("Failed to create case");
+        } finally {
+            setCreatingCase(false);
+        }
+    };
 
     const handleChat = (item: any) => {
         if (!item.advocateId) {
@@ -169,6 +219,17 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
 
     return (
         <div className={styles.container}>
+            <div className={styles.caseActionsTop}>
+                <button className={styles.topBtnYellow} onClick={() => setShowNewCaseModal(true)}>
+                    <Briefcase size={18} />
+                    + New Case
+                </button>
+                <button className={styles.topBtnPrimary} onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank')}>
+                    <FileText size={18} />
+                    Case Status
+                </button>
+            </div>
+
             <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
                 <div style={{
                     display: 'grid',
@@ -218,7 +279,23 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
                         {cities.sort().map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
 
-                    <button className={styles.searchBtnInside} onClick={fetchCases} style={{ height: '100%', minHeight: '45px', position: 'static', borderRadius: '12px' }}>
+                    <button
+                        className={styles.searchBtnInside}
+                        onClick={fetchCases}
+                        style={{
+                            height: '100%',
+                            minHeight: '45px',
+                            position: 'static',
+                            borderRadius: '12px',
+                            background: '#facc15',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                        }}
+                    >
                         Search
                     </button>
                 </div>
@@ -372,6 +449,80 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
 
             {showTrialModal && (
                 <PremiumTryonModal onClose={() => setShowTrialModal(false)} />
+            )}
+
+            {/* NEW CASE MODAL */}
+            {showNewCaseModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowNewCaseModal(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className={styles.modalHeader}>
+                            <h2>File New Case</h2>
+                            <button className={styles.closeBtn} onClick={() => setShowNewCaseModal(false)}><X /></button>
+                        </div>
+                        <div className={styles.reviewBody} style={{ padding: '20px', gap: '20px', display: 'flex', flexDirection: 'column' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Case Title</label>
+                                <input
+                                    type="text"
+                                    className={styles.dashboardSearchInput}
+                                    placeholder="e.g. Property Dispute in Delhi"
+                                    value={newCaseData.title}
+                                    onChange={e => setNewCaseData({ ...newCaseData, title: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Select Advocate</label>
+                                <select
+                                    className={styles.filterSelect}
+                                    style={{ width: '100%' }}
+                                    value={newCaseData.advocateId}
+                                    onChange={e => setNewCaseData({ ...newCaseData, advocateId: e.target.value })}
+                                >
+                                    <option value="">-- Choose Advocate --</option>
+                                    {allAdvocates.map((adv: any) => (
+                                        <option key={adv._id} value={typeof adv.userId === 'object' ? adv.userId._id : adv.userId}>
+                                            {adv.name} ({adv.specialization || 'General'})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Category</label>
+                                <select
+                                    className={styles.filterSelect}
+                                    style={{ width: '100%' }}
+                                    value={newCaseData.category}
+                                    onChange={e => setNewCaseData({ ...newCaseData, category: e.target.value })}
+                                >
+                                    {Object.keys(LEGAL_DOMAINS).map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Description</label>
+                                <textarea
+                                    className={styles.dashboardSearchInput}
+                                    placeholder="Describe your case details..."
+                                    rows={5}
+                                    style={{ height: 'auto' }}
+                                    value={newCaseData.description}
+                                    onChange={e => setNewCaseData({ ...newCaseData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <button
+                                className={styles.approveBtn}
+                                onClick={handleCreateCase}
+                                disabled={creatingCase}
+                                style={{ marginTop: '10px' }}
+                            >
+                                {creatingCase ? 'Creating...' : 'Submit Case File'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

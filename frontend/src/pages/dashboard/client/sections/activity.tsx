@@ -3,10 +3,15 @@ import styles from "./activity.module.css";
 import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, Bookmark, Zap, Trash2, X, ThumbsDown, Ban, ChevronRight, Octagon } from "lucide-react";
-import DetailedProfile from "../../shared/DetailedProfile";
+import DetailedProfileEnhanced from "../../shared/DetailedProfileEnhanced";
+import { useRelationshipStore } from "../../../../store/useRelationshipStore";
 
-const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => void }) => {
+const Activity = ({ onSelectForChat, showToast }: { onSelectForChat?: (partner: any) => void, showToast?: (msg: string) => void }) => {
     const { user } = useAuth();
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const shouldMask = !isPremium;
+
     const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -34,16 +39,147 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
         }
     }, [user]);
 
-    // Categorize Activities
-    const sentInterests = activities.filter(a => ['interest', 'superInterest'].includes(a.type) && a.isSender);
-    const receivedInterests = activities.filter(a => ['interest', 'superInterest'].includes(a.type) && !a.isSender);
-    const shortlisted = activities.filter(a => a.type === 'shortlist' && a.isSender);
-    const declined = activities.filter(a => a.status === 'declined');
-    const blocked = activities.filter(a => a.status === 'blocked');
-    const ignored = activities.filter(a => a.status === 'ignored');
-    const acceptedInterests = activities.filter(a => a.status === 'accepted');
 
-    // For "This might interest you" - using Visits
+    const relationships = useRelationshipStore((state: any) => state.relationships);
+
+    // Priority: Accepted > Received > Sent > Shortlisted > Declined > Blocked > Ignored
+    const deduplicateActivities = (allActivities: any[]) => {
+        const profileMap = new Map<string, { activity: any; priority: number; category: string }>();
+
+        const getPriorityFromStatus = (status: string, isSender: boolean): { priority: number; category: string } => {
+            const s = status.toLowerCase();
+            if (s === 'accepted' || s === 'super_accepted') return { priority: 1, category: 'accepted' };
+            if (s === 'interest_received' || s === 'super_interest_received') return { priority: 2, category: 'received' };
+            if (s === 'interest_sent' || s === 'super_interest_sent' || s === 'interest' || s === 'superinterest') return { priority: 3, category: 'sent' };
+            if (s === 'shortlist' || s === 'shortlisted' || s === 'shortlisted_sent') return { priority: 4, category: 'shortlisted' };
+            if (s === 'shortlisted_received') return { priority: 999, category: 'removed' }; // Hide from receiver
+            if (s === 'declined') return { priority: 5, category: 'declined' };
+            if (s === 'blocked') return { priority: 6, category: 'blocked' };
+            if (s === 'ignored') return { priority: 7, category: 'ignored' };
+            if (['removed', 'cancelled', 'shortlist_removed', 'unblocked'].includes(s)) return { priority: 999, category: 'removed' };
+            return { priority: 999, category: 'other' };
+        };
+
+        // 1. First, populate from relationship store (High Priority - local state)
+        Object.keys(relationships).forEach(pid => {
+            const relData = relationships[pid];
+            const status = typeof relData === 'string' ? relData : relData.state;
+            const isSender = typeof relData === 'string' ? true : relData.role === 'sender';
+
+            const { priority, category } = getPriorityFromStatus(status, isSender);
+            if (priority < 999) {
+                // Find existing activity or create a minimal placeholder
+                const existingActivity = allActivities.find(a =>
+                    a.partnerUserId === pid || (a.isSender ? a.receiver : a.sender) === pid
+                );
+
+                profileMap.set(pid, {
+                    activity: existingActivity || {
+                        partnerId: pid,
+                        partnerUserId: pid,
+                        partnerUniqueId: `TP-EAD-${pid.slice(-6).toUpperCase()}`,
+                        type: status.toLowerCase(),
+                        status: status.toLowerCase(),
+                        isSender: isSender,
+                        partnerName: 'User Profile',
+                        partnerImg: '',
+                    },
+                    priority,
+                    category
+                });
+            }
+        });
+
+        // 2. Then, fill in/override from backend activities if higher priority
+        allActivities.forEach(activity => {
+            const partnerId = activity.partnerUserId || (activity.isSender ? activity.receiver : activity.sender);
+
+            if (!partnerId) return;
+
+            const existing = profileMap.get(partnerId);
+            const { priority, category } = getPriorityFromStatus(activity.status || activity.type, activity.isSender);
+
+            if (!existing || priority < existing.priority) {
+                profileMap.set(partnerId, { activity, priority, category });
+            } else if (existing && !existing.activity.partnerImg && activity.partnerImg) {
+                // Supplement with metadata
+                profileMap.set(partnerId, {
+                    activity: { ...activity, status: existing.activity.status, type: existing.activity.type },
+                    priority: existing.priority,
+                    category: existing.category
+                });
+            }
+        });
+
+        return profileMap;
+    };
+
+    // Apply deduplication
+    const deduplicatedMap = deduplicateActivities(activities);
+
+    // Categorize Activities (deduplicated)
+    const acceptedInterests = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'accepted')
+        .map(item => item.activity);
+
+    const receivedInterests = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'received')
+        .map(item => item.activity);
+
+    const sentInterests = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'sent')
+        .map(item => item.activity);
+
+    // Non-exclusive Shortlist: Show anyone who is shortlisted, even if they have other activities
+    const shortlistedRaw = Array.from(new Set([
+        ...Array.from(deduplicatedMap.values()).filter(i => i.category === 'shortlisted').map(i => i.activity),
+        ...activities.filter(a => a.type === 'shortlist' || a.status === 'shortlisted')
+    ]));
+
+    // De-dupe shortlisted by partnerUserId
+    const shortlistedMap = new Map();
+    shortlistedRaw.forEach(act => {
+        const pid = act.partnerUserId || (act.isSender ? act.receiver : act.sender);
+        // Check if locally updated to NONE (unshortlisted)
+        const localRel = relationships[pid];
+        const localState = (typeof localRel === 'string' ? localRel : localRel?.state);
+        // If explicitly NONE, skip adding to map
+        if (localState === 'NONE') return;
+
+        if (pid) shortlistedMap.set(pid, act);
+    });
+    // Add people who are shortlisted in the local relationship store but might not have a backend activity yet
+    Object.keys(relationships).forEach(pid => {
+        const rel = relationships[pid];
+        const state = (typeof rel === 'string' ? rel : rel.state || '').toUpperCase();
+        if ((state === 'SHORTLISTED' || state === 'SHORTLISTED_SENT') && !shortlistedMap.has(pid)) {
+            const existingActivity = activities.find(a => (a.partnerUserId || (a.isSender ? a.receiver : a.sender)) === pid);
+            shortlistedMap.set(pid, existingActivity || {
+                partnerUserId: pid,
+                partnerUniqueId: `TP-EAD-${pid.slice(-6).toUpperCase()}`,
+                type: 'shortlist',
+                status: 'shortlisted',
+                isSender: true,
+                partnerName: 'User Profile'
+            });
+        }
+    });
+
+    const shortlisted = Array.from(shortlistedMap.values());
+
+    const declined = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'declined')
+        .map(item => item.activity);
+
+    const blocked = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'blocked')
+        .map(item => item.activity);
+
+    const ignored = Array.from(deduplicatedMap.values())
+        .filter(item => item.category === 'ignored')
+        .map(item => item.activity);
+
+    // For "This might interest you" - using Visits (not deduplicated)
     const visits = activities.filter(a => a.type === 'visit');
 
     // Expandable State for Visits
@@ -53,7 +189,7 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
     const getTabCounts = (category: string) => {
         if (category === 'Interests') return { sent: sentInterests.length, received: receivedInterests.length };
         if (category === 'Declined') return { sent: declined.filter(a => a.isSender).length, received: declined.filter(a => !a.isSender).length };
-        if (category === 'Shortlisted') return { sent: shortlisted.length, received: 0 }; // Usually no received shortlisted
+        if (category === 'Shortlisted') return { sent: shortlisted.length, received: 0 };
         if (category === 'Blocked') return { sent: blocked.length, received: 0 };
         if (category === 'Ignored') return { sent: ignored.length, received: 0 };
         return { sent: 0, received: 0 };
@@ -122,6 +258,15 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
         const age = act.partnerAge || '28';
         const activityId = act._id || act.id;
 
+        const maskString = (str: string) => {
+            if (!str || !shouldMask) return str;
+            if (str.includes('*****')) return str;
+            return str.substring(0, 2) + "*****";
+        };
+
+        const maskedName = maskString(partnerName);
+        const maskedId = maskString(partnerId);
+
         return (
             <div
                 key={activityId || idx}
@@ -129,7 +274,7 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                 onClick={() => openCategory(category, tab, idx)}
             >
                 <div className={styles.cardHeader}>
-                    <img src={partnerImg} alt={partnerName} className={styles.cardAvatar} />
+                    <img src={partnerImg} alt={partnerName} className={`${styles.cardAvatar} ${(act.isBlur || shouldMask) ? styles.blurred : ''}`} />
                     <button
                         className={styles.cardMenuBtn}
                         onClick={(e) => handleDeleteActivity(activityId, e)}
@@ -139,8 +284,8 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                     </button>
                 </div>
                 <div className={styles.cardInfo}>
-                    <h4 className={styles.cardName}>{partnerName}, {age}</h4>
-                    <span className={styles.cardId}>ID - {partnerId}</span>
+                    <h4 className={styles.cardName}>{maskedName}, {age}</h4>
+                    <span className={styles.cardId}>ID - {maskedId}</span>
                     <span className={styles.cardLocation}>{act.partnerLocation || 'Agartala, India'}</span>
                 </div>
             </div>
@@ -148,7 +293,6 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
     };
 
     const renderSection = (title: string, category: string, tab: 'sent' | 'received', items: any[]) => {
-        if (items.length === 0) return null;
         const categoryClass = category.toLowerCase().replace(' ', '');
         return (
             <div className={`${styles.sectionContainer} ${styles[categoryClass]}`}>
@@ -156,9 +300,15 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                     <h3>{title}{<span className={styles.countBadge}> ({items.length})</span>}</h3>
                     <ChevronRight size={20} className={styles.arrowIcon} />
                 </div>
-                <div className={styles.carouselContainer}>
-                    {items.map((item, idx) => renderProfileCard(item, idx, category, tab))}
-                </div>
+                {items.length > 0 ? (
+                    <div className={styles.sectionGrid}>
+                        {items.map((item, idx) => renderProfileCard(item, idx, category, tab))}
+                    </div>
+                ) : (
+                    <div className={styles.emptyGridState}>
+                        No profiles found in this category
+                    </div>
+                )}
             </div>
         );
     };
@@ -278,7 +428,7 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                                     >
                                         <div className={styles.visitAvatars}>
                                             {visits.slice(0, 3).map((v, i) => (
-                                                <img key={i} src={v.partnerImg || 'https://via.placeholder.com/40'} className={styles.miniAvatar} />
+                                                <img key={i} src={v.partnerImg || 'https://via.placeholder.com/40'} className={`${styles.miniAvatar} ${(v.isBlur || shouldMask) ? styles.blurred : ''}`} />
                                             ))}
                                         </div>
                                         <div className={styles.visitText}>
@@ -288,15 +438,17 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                                     </div>
                                 </div>
                             ) : (
-                                <div className={styles.carouselContainer} style={{ animation: 'fadeIn 0.3s' }}>
+                                <div className={styles.sectionGrid} style={{ animation: 'fadeIn 0.3s' }}>
                                     {visits.map((item, idx) => renderProfileCard(item, idx, 'Visits', 'sent'))}
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {renderSection("Interests Sent", 'Interests', 'sent', sentInterests)}
+                    {/* 7 Main Sections - Ordered by Priority */}
+                    {renderSection("Accepted Interests", 'Accepted', 'sent', acceptedInterests)}
                     {renderSection("Interests Received", 'Interests', 'received', receivedInterests)}
+                    {renderSection("Interests Sent", 'Interests', 'sent', sentInterests)}
                     {renderSection("Shortlisted Profiles", 'Shortlisted', 'sent', shortlisted)}
                     {renderSection("Declined Profiles", 'Declined', 'sent', declined)}
                     {renderSection("Blocked Profiles", 'Blocked', 'sent', blocked)}
@@ -305,7 +457,7 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
             )}
 
             {modalState && (
-                <DetailedProfile
+                <DetailedProfileEnhanced
                     key={(() => {
                         const items = getModalItems();
                         const act = items[modalState.currentIndex];
@@ -317,18 +469,29 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                         const act = items[modalState.currentIndex];
                         if (!act) return null;
 
-                        // Prioritize partnerUniqueId as it's best for fetching
-                        if (act.partnerUniqueId && act.partnerUniqueId !== 'N/A' && act.partnerUniqueId !== 'null') {
-                            return String(act.partnerUniqueId);
+                        // 1. Prioritize partnerUserId (the MongoDB hex ID) - Most reliable for fetching
+                        if (act.partnerUserId) {
+                            console.log('[Activity] Using partnerUserId:', act.partnerUserId);
+                            return String(act.partnerUserId);
                         }
 
-                        // Fallback to specific IDs if available (unlocked by services)
+                        // 2. Fallback to partnerUniqueId (e.g., TP-EAD-XXXXXX)
+                        if (act.partnerUniqueId && act.partnerUniqueId !== 'N/A' && act.partnerUniqueId !== 'null') {
+                            // Check if it's the hex fallback from frontend dummy activity
+                            if (act.partnerUniqueId.startsWith('TP-EAD-') || act.partnerUniqueId.length < 20) {
+                                console.log('[Activity] Using partnerUniqueId:', act.partnerUniqueId);
+                                return String(act.partnerUniqueId);
+                            }
+                        }
+
+                        // 3. Fallback to specific IDs if available
                         if (act.advocateId) return String(act.advocateId);
                         if (act.clientId) return String(act.clientId);
 
-                        // Final fallback: use the partner's User ID
+                        // 4. Final fallback: use the partner's User ID from sender/receiver fields
                         const pid = act.isSender ? act.receiver : act.sender;
                         if (!pid || typeof pid === 'object') return null;
+                        console.log('[Activity] Using absolute fallback ID (sender/receiver):', pid);
                         return String(pid);
                     })()}
                     isModal={true}
@@ -336,8 +499,9 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                     backToProfiles={() => setModalState(null)}
                     items={getModalItems()}
                     currentIndex={modalState.currentIndex}
-                    onNavigate={(newIndex) => setModalState({ ...modalState, currentIndex: newIndex })}
+                    onNavigate={(newIndex: number) => setModalState({ ...modalState, currentIndex: newIndex })}
                     listTitle={modalState.category}
+                    showToast={showToast}
                     tabs={['Interests', 'Declined', 'Shortlisted', 'Blocked', 'Ignored'].includes(modalState.category) ? [
                         {
                             label: modalState.category === 'Interests' ? 'Interested In Me' :
@@ -361,6 +525,11 @@ const Activity = ({ onSelectForChat }: { onSelectForChat?: (partner: any) => voi
                         }
                     ] : undefined}
                     onSelectForChat={onSelectForChat}
+                    partnerRole={(() => {
+                        const items = getModalItems();
+                        const act = items[modalState.currentIndex];
+                        return act?.partnerRole;
+                    })()}
                 />
             )}
         </div>

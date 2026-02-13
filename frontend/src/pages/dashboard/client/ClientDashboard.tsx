@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import styles from './ClientDashboard.module.css';
 import ClientSidebar from '../../../components/dashboard/client/ClientSidebar';
@@ -8,7 +8,7 @@ import EditProfile from '../shared/EditProfile';
 import SearchPreferences from '../shared/SearchPreferences';
 import AccountSettings from '../shared/AccountSettings';
 import SafetyCenter from '../shared/SafetyCenter';
-import DetailedProfile from '../shared/DetailedProfile';
+import DetailedProfile from '../shared/DetailedProfileEnhanced';
 import HelpSupport from '../shared/HelpSupport';
 import AdvocateList from './AdvocateList';
 import Preservices from '../../../components/footerpages/premiumservices';
@@ -30,8 +30,11 @@ import type { Advocate } from '../../../types';
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
-import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
 import PendingPopup from '../../../components/dashboard/shared/PendingPopup';
+import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
+import { useRelationshipStore } from '../../../store/useRelationshipStore';
+import { interactionService } from '../../../services/interactionService';
+import { useToast } from '../../../context/ToastContext';
 interface Notification {
     id: string;
     message: string;
@@ -41,6 +44,26 @@ interface Notification {
 
 const ClientDashboard: React.FC = () => {
     const { user } = useAuth();
+    const { showToast: centralShowToast } = useToast();
+    const setRelationships = useRelationshipStore((state: any) => state.setRelationships);
+
+    useEffect(() => {
+        if (user?.id) {
+            const loadRelationships = async () => {
+                try {
+                    const rels = await interactionService.getRelationships();
+                    const formattedRels: Record<string, any> = {};
+                    rels.forEach((rel: any) => {
+                        formattedRels[rel.partnerId] = { state: rel.state, role: rel.my_role };
+                    });
+                    setRelationships(formattedRels);
+                } catch (err) {
+                    console.error('Failed to load relationships', err);
+                }
+            };
+            loadRelationships();
+        }
+    }, [user?.id, setRelationships]);
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
     const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
@@ -123,7 +146,7 @@ const ClientDashboard: React.FC = () => {
 
     const showDetailedProfile = (id: string) => {
         setDetailedProfileId(id);
-        setCurrentPage('detailed-profile-view');
+        // We no longer switch currentPage, we'll show it as a modal
     };
 
     const handleSelectForChat = (adv: Advocate) => {
@@ -154,30 +177,20 @@ const ClientDashboard: React.FC = () => {
         setNotifications([]);
     };
 
-    const showToast = (msg: string) => {
-        const toast = document.createElement('div');
-        toast.className = styles.toast;
-        toast.innerText = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-
+    const showToast = useCallback((msg: string) => {
+        centralShowToast(msg);
         // Add to notification center
         addNotification(msg, 'info');
-    };
+    }, [centralShowToast]);
 
     const renderPage = () => {
         switch (currentPage) {
-            case 'featured-profiles':
-                return <FeaturedProfiles
-                    showDetailedProfile={showDetailedProfile}
-                    showToast={showToast}
-                    showsidePage={showsidePage}
-                    onSelectForChat={handleSelectForChat}
-                />;
+            // 'featured-profiles' is handled persistently below
             case 'normalfccards':
                 return <AdvocateList
                     showDetailedProfile={showDetailedProfile}
-                    onAction={(action, adv) => {
+                    showToast={showToast}
+                    onAction={(action: string, adv: Advocate) => {
                         if (action === 'openFullChatPage') {
                             handleSelectForChat(adv);
                         } else if (action === 'openUpgradePage') {
@@ -186,8 +199,6 @@ const ClientDashboard: React.FC = () => {
                             showsidePage('featured-profiles');
                         }
                     }} />;
-            case 'detailed-profile-view':
-                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} onSelectForChat={handleSelectForChat} />;
             case 'edit-profile':
                 return <EditProfile backToHome={backtohome} showToast={showToast} />;
             case 'search-preferences':
@@ -208,7 +219,7 @@ const ClientDashboard: React.FC = () => {
                 return <BlogFeed />;
 
             case 'activity':
-                return <Activity onSelectForChat={handleSelectForChat} />;
+                return <Activity onSelectForChat={handleSelectForChat} showToast={showToast} />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
@@ -234,15 +245,7 @@ const ClientDashboard: React.FC = () => {
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
             default:
-                return (
-                    <FeaturedProfiles
-                        showDetailedProfile={showDetailedProfile}
-                        showToast={showToast}
-                        showsidePage={showsidePage}
-                        onSelectForChat={handleSelectForChat}
-                    />
-                );
-
+                return null;
         }
     };
 
@@ -287,6 +290,8 @@ const ClientDashboard: React.FC = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    const activePageContent = renderPage();
 
     return (
         <div className={styles.clientdashboard}>
@@ -399,19 +404,19 @@ const ClientDashboard: React.FC = () => {
 
                 <div className={styles.contentBody}>
                     {user?.status === 'Pending' && <VerificationBanner />}
-                    {currentPage === 'my-cases' && (
-                        <div className={styles.caseActions}>
-                            <button className={styles.topBtn} onClick={() => window.open('https://filing.ecourts.gov.in/', '_blank')}>
-                                <Briefcase size={18} />
-                                File a case
-                            </button>
-                            <button className={styles.topBtnPrimary} onClick={() => window.open('https://services.ecourts.gov.in/ecourtindia_v6/', '_blank')}>
-                                <FileText size={18} />
-                                Case Status
-                            </button>
-                        </div>
-                    )}
-                    {renderPage()}
+
+                    {/* PERSISTENT FEATURED PROFILES (Keep-Alive) */}
+                    <div style={{ display: !activePageContent ? 'block' : 'none' }}>
+                        <FeaturedProfiles
+                            showDetailedProfile={showDetailedProfile}
+                            showToast={showToast}
+                            showsidePage={showsidePage}
+                            onSelectForChat={handleSelectForChat}
+                        />
+                    </div>
+
+                    {/* DYNAMIC PAGES */}
+                    {activePageContent}
                 </div>
             </main>
 
@@ -419,8 +424,21 @@ const ClientDashboard: React.FC = () => {
 
             {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
 
+            {detailedProfileId && (
+                <DetailedProfile
+                    key={detailedProfileId}
+                    profileId={detailedProfileId}
+                    isModal={true}
+                    onClose={() => setDetailedProfileId(null)}
+                    backToProfiles={() => setDetailedProfileId(null)}
+                    onSelectForChat={handleSelectForChat}
+                    showToast={showToast}
+                />
+            )}
+
             {activeChatAdvocate && (
                 <ChatPopup
+                    key={(activeChatAdvocate as any).unique_id || (activeChatAdvocate as any).partnerUserId || (activeChatAdvocate as any).userId?._id || (activeChatAdvocate as any).userId || (activeChatAdvocate as any)._id || activeChatAdvocate.id}
                     advocate={activeChatAdvocate}
                     onClose={() => setActiveChatAdvocate(null)}
                 />

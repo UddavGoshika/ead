@@ -1,26 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { advocateService } from '../../../services/api';
 import type { Advocate } from '../../../types';
+import { LEGAL_DOMAINS } from '../../../data/legalDomainData';
+import { useRelationshipStore } from '../../../store/useRelationshipStore';
 import AdvocateCard from '../../../components/dashboard/AdvocateCard';
+import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
 import { Search, SlidersHorizontal, Loader2, Star, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
 import styles from './AdvocateList.module.css';
 import { LOCATION_DATA_RAW } from '../../../components/layout/statesdis';
-import { LEGAL_DOMAINS } from '../../../data/legalDomainData';
-import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { useInteractions } from '../../../hooks/useInteractions';
 
 interface AdvocateListProps {
     onAction?: (action: string, adv: Advocate) => void;
     showDetailedProfile?: (id: string) => void;
+    showToast?: (msg: string) => void;
 }
 
-const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfile }) => {
+const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfile, showToast }) => {
     const { user, refreshUser } = useAuth();
+    const queryClient = useQueryClient();
     const [showTopup, setShowTopup] = useState(false);
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // removedProfileIds removed, using global store now
     const [filters, setFilters] = useState({
         search: '',
         specialization: '',
@@ -73,9 +80,42 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
         }
     };
 
+    const { relationships } = useRelationshipStore();
+    const interactedIds = useRelationshipStore((state: any) => state.interactedIds); // Reactive skipped/interacted set
+    const { handleInteraction } = useInteractions();
+
     useEffect(() => {
         fetchAdvocates();
-    }, [isPremium]);
+    }, [isPremium]); // Removed manual event listener
+
+    const filteredAdvocates = advocates.filter(adv => {
+        // Robust ID extraction handling both string IDs and populated objects
+        const partnerId = String(
+            (adv.userId && (adv.userId as any)._id)
+                ? (adv.userId as any)._id
+                : (adv.userId || adv.id || (adv as any)._id)
+        );
+
+        // Filter out if in global interactedIds, UNLESS it is shortlisted
+        if (interactedIds.has(partnerId)) {
+            const rel = relationships[partnerId];
+            const state = typeof rel === 'string' ? rel : rel?.state;
+
+            // KEEP shortlisted profiles visible
+            if (state === 'SHORTLISTED') return true;
+
+            return false;
+        }
+
+        // Also check relationship state if needed
+        const rel = relationships[partnerId];
+        if (rel?.state && ['ACCEPTED', 'BLOCKED'].includes(rel.state)) {
+            // Only hide ACCEPTED or BLOCKED
+            return false;
+        }
+
+        return true;
+    });
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -98,53 +138,50 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
         fetchAdvocates();
     };
 
-    const handleAction = async (adv: Advocate, action: string, data?: string) => {
+    const handleAction = async (adv: Advocate, action: string, data?: any) => {
         if (!user) return;
         if (user.status === 'Pending') {
-            alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
+            alert("Your profile is under verification. You can perform interactions once approved.");
             return;
         }
-        if (onAction) onAction(action, adv);
 
-        const targetId = String(adv.id);
-        const userId = String(user.id);
+        // Handle navigation actions purely locally/parent
+        if (action === 'openFullChatPage') {
+            // We still record 'chat' activity if needed, or just open?
+            // Usually 'chat' activity is recorded when actual message sent, or specifically requested.
+            // Let's rely on onAction for navigation. 
+            // If the parent wants to record 'chat' access, it can. But typically we just open.
+            // However, existing code called interactionService.recordActivity('chat').
+            // We can use handleInteraction for that if supported, or just keep it simple.
+            // 'chat' isn't really a state changing interaction in useInteractions yet, unless we add it.
+            // For now, let's just call onAction directly as it likely just sets state in parent.
+            if (onAction) onAction('openFullChatPage', adv);
+            return;
+        }
+        if (action === 'openUpgradePage') {
+            if (onAction) onAction('openUpgradePage', adv);
+            return;
+        }
+
+        // Handle standard interactions via hook
+        const partnerId = String(adv.userId || adv.id);
+        const partner = { id: partnerId, role: 'advocate', name: adv.name }; // AdvocateList shows advocates
 
         try {
-            let res;
-            if (action === 'interest') {
-                res = await interactionService.recordActivity('advocate', targetId, 'interest', userId);
-            } else if (action === 'superInterest') {
-                res = await interactionService.recordActivity('advocate', targetId, 'superInterest', userId);
-            } else if (action === 'shortlist') {
-                res = await interactionService.recordActivity('advocate', targetId, 'shortlist', userId);
-            } else if (action === 'openFullChatPage') {
-                res = await interactionService.recordActivity('advocate', targetId, 'chat', userId);
-                onAction?.('openFullChatPage', adv);
-            } else if (action === 'message_sent' && data) {
-                await interactionService.sendMessage(userId, targetId, data);
-            }
+            await handleInteraction(partner, action, data);
 
-            if (res && res.coins !== undefined) {
-                refreshUser({
-                    coins: res.coins,
-                    coinsUsed: res.coinsUsed
-                });
+            // Post-interaction navigation if needed
+            if (action === 'message_sent' && onAction) {
+                // Should we navigate? Maybe not if it's a quick message.
+                // But existing code didn't navigate.
             }
-        } catch (err: any) {
-            console.error('Action failed', err);
-            const errorData = err.response?.data;
-            const msg = errorData?.message || 'Operation failed. Please try again.';
-            const errorCode = errorData?.error;
-
-            if (errorCode === 'INTERACTION_LIMIT') {
-                alert("You’ve reached the interaction limit for this profile (Max 3)");
-            } else if (errorCode === 'ZERO_COINS' || errorCode === 'INSUFFICIENT_COINS') {
+        } catch (err) {
+            console.error("Interaction failed in AdvocateList", err);
+            // Error handled by hook (toast)
+            if ((err as any)?.error === 'UPGRADE_REQUIRED') {
+                if (onAction) onAction('openUpgradePage', adv);
+            } else if ((err as any)?.error === 'ZERO_COINS' || (err as any)?.error === 'INSUFFICIENT_COINS') {
                 setShowTopup(true);
-            } else if (errorCode === 'UPGRADE_REQUIRED') {
-                alert("Upgrade to premium to perform this action.");
-                onAction?.('openUpgradePage', adv);
-            } else {
-                alert(msg);
             }
         }
     };
@@ -255,8 +292,8 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {advocates.length > 0 ? (
-                        advocates.map(advocate => (
+                    {filteredAdvocates.length > 0 ? (
+                        filteredAdvocates.map(advocate => (
                             <div
                                 key={advocate.id}
                                 onClick={() => showDetailedProfile && showDetailedProfile(advocate.unique_id)}
@@ -266,7 +303,13 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
                                     advocate={advocate}
                                     variant={advocate.isFeatured ? 'featured' : 'normal'}
                                     isPremium={isPremium}
-                                    onAction={(action, data) => handleAction(advocate, action, data)}
+                                    onAction={(action, data) => {
+                                        if (action === 'view_profile') {
+                                            if (showDetailedProfile) showDetailedProfile(advocate.unique_id);
+                                            return;
+                                        }
+                                        handleAction(advocate, action, data);
+                                    }}
                                 />
                             </div>
                         ))

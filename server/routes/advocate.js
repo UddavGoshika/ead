@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Advocate = require('../models/Advocate');
 const Otp = require('../models/Otp');
+const UnlockedContact = require('../models/UnlockedContact');
+const Relationship = require('../models/Relationship');
 const { createNotification } = require('../utils/notif');
 const { getImageUrl } = require('../utils/pathHelper');
 
@@ -23,14 +25,16 @@ const advUpload = upload.fields([
 async function generateAdvocateId(role = 'advocate') {
     let id;
     let exists = true;
-    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAS-' : 'TP-EAD-ADV-';
+    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAS' : 'TP-EAD-ADV';
 
     while (exists) {
-        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
-        id = `${prefix}${randomStr}`;
+        // Generate exactly 4 random digits (1000-9999)
+        const digits = Math.floor(1000 + Math.random() * 9000).toString();
+        id = `${prefix}${digits}`;
         const existing = await Advocate.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
+    console.log(`[ID GEN] Generated UNIQUE ${role} ID: ${id}`);
     return id;
 }
 
@@ -191,13 +195,14 @@ router.get('/', async (req, res) => {
 
         // 1. Detect Viewer Plan (Auth Optional)
         let viewerIsPremium = false;
+        let viewerId = null;
         const authHeader = req.headers.authorization;
         if (authHeader) {
             const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
             if (token && token.startsWith('user-token-')) {
-                const userId = token.replace('user-token-', '');
-                if (require('mongoose').Types.ObjectId.isValid(userId)) {
-                    const viewer = await User.findById(userId);
+                viewerId = token.replace('user-token-', '');
+                if (require('mongoose').Types.ObjectId.isValid(viewerId)) {
+                    const viewer = await User.findById(viewerId);
                     if (viewer) {
                         const planStr = (viewer.plan || '').toLowerCase();
                         if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
@@ -249,11 +254,31 @@ router.get('/', async (req, res) => {
 
         if (conditions.length > 0) query.$and = conditions;
 
-        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings');
+        // SERVER-DRIVEN FILTERING: Exclude Interacted Profiles
+        if (viewerId) {
+            const relationships = await Relationship.find({
+                $or: [{ user1: viewerId }, { user2: viewerId }],
+                state: { $nin: ['NONE', 'SHORTLISTED'] }
+            });
+            const excludedUserIds = relationships.map(rel =>
+                rel.user1.toString() === viewerId.toString() ? rel.user2 : rel.user1
+            );
 
-        // Filter out private profiles
+            // Push exclusion filters to query if not already there
+            if (!query.$and) query.$and = [];
+            query.$and.push({ userId: { $ne: viewerId } }); // Don't show self
+            if (excludedUserIds.length > 0) {
+                query.$and.push({ userId: { $nin: excludedUserIds } });
+            }
+        }
+
+        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings status');
+
+        // Filter out private profiles and deleted users
         dbAdvocates = dbAdvocates.filter(adv => {
-            const privacy = adv.userId?.privacySettings || { showProfile: true };
+            if (!adv.userId) return false;
+            if (adv.userId.status === 'Deleted') return false;
+            const privacy = adv.userId.privacySettings || { showProfile: true };
             return privacy.showProfile !== false;
         });
 
@@ -307,12 +332,10 @@ router.get('/', async (req, res) => {
 
             // Mask details if viewer is Free
             if (shouldMask) {
-                // Name: first 2 chars
-                displayName = displayName.substring(0, 2) + '...';
-                displayId = displayId.substring(0, 2) + '...';
-                // Image: We send a flag or the frontend blurs it. 
-                // Spec say "Profile image: blurred".
-                // We'll add a flag `isBlurred: true` so frontend applies CSS filter.
+                // Name: first 2 chars + stars
+                displayName = displayName.substring(0, 2) + '*****';
+                displayId = displayId.substring(0, 2) + '*****';
+                // Image: flag for frontend
             }
 
             return {
@@ -376,29 +399,23 @@ router.get('/me', async (req, res) => {
 router.get('/:uniqueId', async (req, res) => {
     try {
         const { uniqueId } = req.params;
-        let query = { unique_id: uniqueId };
-
-        // Check if input is a valid MongoDB ObjectId
-        if (require('mongoose').Types.ObjectId.isValid(uniqueId)) {
-            query = { _id: uniqueId };
-        }
-
-        // If query failed with _id, try unique_id fallback?
-        // Actually, if it looks like an ObjectId, we search by _id. 
-        // If nothing found, it returns null. 
-        // But some unique_ids might be coincidental hex? Unlikely (TP-EAD...).
-        // A robust way: $or: [{unique_id: uniqueId}, {_id: ...}] if valid.
-
-        if (require('mongoose').Types.ObjectId.isValid(uniqueId)) {
-            query = { $or: [{ _id: uniqueId }, { unique_id: uniqueId }, { userId: uniqueId }] };
-        } else {
+        let query = {};
+        if (uniqueId.startsWith('TP-EAD-') || uniqueId.startsWith('ADV-')) {
+            // Strict Unique ID lookup
             query = { unique_id: uniqueId };
+            console.log(`[STRICT] Fetching by Unique ID: ${uniqueId}`);
+        } else if (require('mongoose').Types.ObjectId.isValid(uniqueId)) {
+            // Strict User/Object ID lookup
+            query = { $or: [{ _id: uniqueId }, { userId: uniqueId }] };
+            console.log(`[STRICT] Fetching by Object ID: ${uniqueId}`);
+        } else {
+            return res.status(400).json({ success: false, error: 'Invalid ID format' });
         }
 
-        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings notificationSettings messageSettings');
+        const advocate = await Advocate.findOne(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings notificationSettings messageSettings status');
 
-        if (!advocate) {
-            return res.status(404).json({ success: false, error: 'Advocate not found' });
+        if (!advocate || (advocate.userId && advocate.userId.status === 'Deleted')) {
+            return res.status(404).json({ success: false, error: 'Advocate not found or deleted' });
         }
 
         // 1. Detect Viewer Plan
@@ -425,21 +442,41 @@ router.get('/:uniqueId', async (req, res) => {
         const plan = advocate.userId?.plan || 'Free';
         const isFeatured = advocate.userId?.isPremium || false;
 
-        // CHECK IF CONTACT ALREADY UNLOCKED
+        // CHECK IF CONTACT ALREADY UNLOCKED (Permanent record)
         let contactInfo = null;
         if (viewerId) {
-            const Activity = require('../models/Activity');
-            const unlocked = await Activity.findOne({
-                sender: viewerId,
-                receiver: advocate.userId?._id || advocate.userId,
-                type: 'view_contact'
+            const unlocked = await UnlockedContact.findOne({
+                viewer_user_id: viewerId,
+                profile_user_id: advocate.userId?._id || advocate.userId
             });
+            if (unlocked || viewerIsPremium === 'override_logic_below') {
+                // We only set contactInfo if it's found in UnlockedContact
+            }
             if (unlocked) {
                 contactInfo = {
                     email: advocate.email || (advocate.userId && advocate.userId.email) || 'N/A',
                     mobile: advocate.mobile || advocate.phone || (advocate.userId && advocate.userId.phone) || 'N/A',
                     whatsapp: advocate.whatsapp || advocate.mobile || 'N/A'
                 };
+            }
+        }
+
+        // FETCH RELATIONSHIP STATUS
+        let relationshipState = 'NONE';
+        if (viewerId && advocate.userId) {
+            const advUserId = advocate.userId._id || advocate.userId;
+            const u1 = viewerId.toString() < advUserId.toString() ? viewerId.toString() : advUserId.toString();
+            const u2 = viewerId.toString() < advUserId.toString() ? advUserId.toString() : viewerId.toString();
+
+            const rel = await Relationship.findOne({ user1: u1, user2: u2 });
+            if (rel) {
+                relationshipState = rel.state;
+                // Refine state based on who initiated
+                if (rel.state === 'INTEREST') {
+                    relationshipState = rel.requester.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
+                } else if (rel.state === 'SUPER_INTEREST') {
+                    relationshipState = rel.requester.toString() === viewerId.toString() ? 'SUPER_INTEREST_SENT' : 'SUPER_INTEREST_RECEIVED';
+                }
             }
         }
 
@@ -459,16 +496,18 @@ router.get('/:uniqueId', async (req, res) => {
         let displayImage = getImageUrl(advocate.profilePicPath) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
         let bio = advocate.career?.bio || '';
 
-        if (shouldMask) {
-            displayName = displayName.substring(0, 2) + '...';
-            displayId = displayId.substring(0, 2) + '...';
+        if (shouldMask && !isOwner) {
+            // Masking Name: Pr*****
+            displayName = displayName.substring(0, 2) + '*****';
+            // ID: first 2 chars + stars
+            displayId = displayId.substring(0, 2) + '*****';
             bio = (profileHidden) ? 'This profile is private.' : '';
         }
 
-        // Contact Info Overrides
+        // Contact Info Overrides - If UNLOCKED (Paid), show it regardless of public privacy
         if (contactInfo) {
-            if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
-            if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+            // if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
+            // if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
         }
 
         const formattedAdvocate = {
@@ -489,13 +528,19 @@ router.get('/:uniqueId', async (req, res) => {
             practice: (shouldMask || profileHidden) ? null : advocate.practice,
             availability: (shouldMask || profileHidden) ? null : advocate.availability,
             image_url: displayImage,
+            isBlur: shouldMask,
             isFeatured: isFeatured,
             isMasked: shouldMask,
             contactInfo: contactInfo,
             allowChat: msgSettings.allowDirectMessages,
+            allowCall: viewerIsPremium,
+            allowVideo: viewerIsPremium,
+            allowMeet: viewerIsPremium,
+            licenseId: advocate.education?.enrollmentNo || 'N/A',
             privacySettings: privacy,
             notificationSettings: advocate.userId?.notificationSettings,
-            messageSettings: msgSettings
+            messageSettings: msgSettings,
+            relationship_state: relationshipState
         };
 
         res.json({ success: true, advocate: formattedAdvocate });

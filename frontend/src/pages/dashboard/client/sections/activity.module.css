@@ -171,6 +171,26 @@
     color: #facc15;
 }
 
+/* Grid Layout for Sections */
+.sectionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    padding: 10px 4px 28px 4px;
+}
+
+.emptyGridState {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 500;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.01);
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
 /* Carousel */
 .carouselContainer {
     display: flex;
@@ -267,7 +287,11 @@
     border: 3px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     margin-bottom: 20px;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.blurred {
+    filter: blur(10px) brightness(0.8);
 }
 
 .profileCard:hover .cardAvatar {

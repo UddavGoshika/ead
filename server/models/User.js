@@ -32,6 +32,9 @@ const UserSchema = new mongoose.Schema({
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    subscription_state: { type: String, enum: ['FREE', 'PREMIUM'], default: 'FREE' },
+    connection_id: { type: String },
+    last_state_updated_at: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
     searchPresets: [{
         id: String,
@@ -90,6 +93,9 @@ UserSchema.pre('save', function (next) {
             this.isPremium = false;
         }
     }
+
+    this.subscription_state = this.isPremium ? 'PREMIUM' : 'FREE';
+    this.last_state_updated_at = Date.now();
 
     // Forced Rule: FREE users have 0 coins
     if (!this.isPremium) {

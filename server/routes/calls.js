@@ -42,6 +42,10 @@ router.post('/', async (req, res) => {
     try {
         const { callerId, receiverId, type } = req.body;
 
+        if (!mongoose.Types.ObjectId.isValid(callerId) || !mongoose.Types.ObjectId.isValid(receiverId)) {
+            return res.status(400).json({ success: false, error: 'Invalid Caller or Receiver ID format' });
+        }
+
         // Generate a unique room name
         const roomName = `eadvocate_${callerId}_${receiverId}_${Date.now()}`;
 
@@ -73,6 +77,10 @@ router.post('/', async (req, res) => {
 router.get('/active/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.json({ success: true, incomingCall: null, outgoingCall: null });
+        }
 
         // Find if someone is calling this user
         const incomingCallRaw = await Call.findOne({
@@ -150,6 +158,10 @@ router.get('/history/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         const { type } = req.query; // optional filter: 'audio' or 'video'
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.json({ success: true, history: [] });
+        }
 
         const filter = {
             $or: [{ caller: userId }, { receiver: userId }]

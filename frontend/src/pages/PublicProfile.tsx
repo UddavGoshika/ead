@@ -40,7 +40,7 @@ const PublicProfile: React.FC = () => {
                 let response;
                 // Determine type based on ID prefix or try both
                 if (uniqueId?.toLowerCase().startsWith('cli')) {
-                    response = await axios.get(`/api/clients/${uniqueId}`);
+                    response = await axios.get(`/api/client/${uniqueId}`);
                     if (response.data.success) {
                         setProfile({ ...response.data.client, role: 'client' });
                     }

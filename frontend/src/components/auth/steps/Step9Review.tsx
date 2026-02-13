@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ClipboardList, PenTool } from 'lucide-react';
+import { ClipboardList, PenTool, RefreshCcw } from 'lucide-react';
 import styles from '../AdvocateRegistration.module.css';
 
 interface StepProps {
@@ -20,6 +20,23 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [drawing, setDrawing] = useState(false);
     const [termsUnlocked, setTermsUnlocked] = useState(false);
+    const [captchaCode, setCaptchaCode] = useState('');
+
+    /* ================= CAPTCHA ================= */
+    const generateCaptcha = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 1, 0
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setCaptchaCode(result);
+        updateFormData({ captchaVerified: false }); // Reset verification on refresh
+    };
+
+    useEffect(() => {
+        generateCaptcha();
+    }, []);
+
 
     /* ================= SIGNATURE ================= */
     useEffect(() => {
@@ -267,24 +284,60 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, 
             {/* ========== CAPTCHA VERIFICATION ========= */}
             <div className={styles.signatureSection}>
                 <h4>🛡️ Security Verification</h4>
-                <div className={styles.captchaContainer}>
-                    <div className={styles.captchaBox}>
-                        <span className={styles.captchaText}>LEX-7A9B2</span>
+                <div className={styles.captchaContainer} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div className={styles.captchaBox} style={{
+                        background: 'linear-gradient(45deg, #222, #333)',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        fontFamily: 'monospace',
+                        fontSize: '24px',
+                        letterSpacing: '5px',
+                        color: '#fbbf24',
+                        userSelect: 'none',
+                        border: '1px dashed #555'
+                    }}>
+                        <span className={styles.captchaText}>{captchaCode}</span>
                     </div>
+                    <button
+                        type="button"
+                        onClick={generateCaptcha}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#fbbf24',
+                            padding: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        title="Refresh Captcha"
+                    >
+                        <RefreshCcw size={20} />
+                    </button>
+
                     <div className={styles.captchaInputGroup}>
                         <input
                             type="text"
-                            placeholder="Type Code Above"
+                            placeholder="Type Code"
                             className={`${styles.captchaInput} ${errors?.captchaVerified ? styles.inputError : ''}`}
                             onChange={(e) => {
-                                if (e.target.value.toUpperCase() === 'LEX-7A9B2') {
+                                if (e.target.value.toUpperCase() === captchaCode) {
                                     updateFormData({ captchaVerified: true });
                                 } else {
                                     updateFormData({ captchaVerified: false });
                                 }
                             }}
+                            style={{
+                                padding: '10px',
+                                borderRadius: '6px',
+                                border: `1px solid ${errors?.captchaVerified ? '#ef4444' : '#444'}`,
+                                backgroundColor: '#1a1a1a',
+                                color: '#fff',
+                                width: '150px'
+                            }}
                         />
-                        {formData.captchaVerified && <span className={styles.verifySuccess}>✔ Verified</span>}
+                        {formData.captchaVerified && <span className={styles.verifySuccess} style={{ color: '#10b981', marginLeft: '10px' }}>✔ Verified</span>}
                     </div>
                 </div>
             </div>

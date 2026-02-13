@@ -365,7 +365,7 @@ const SearchPreferences: React.FC<Props> = ({ backToHome, showToast, showDetaile
                                         } else if (action === 'openFullChatPage') {
                                             await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
                                             if (onSelectForChat) onSelectForChat(adv);
-                                        } else if (action === 'message_sent' && data) {
+                                        } else if (action === 'message_sent' && typeof data === 'string') {
                                             await interactionService.sendMessage(userId, targetId, data);
                                             if (showToast) showToast(`Message sent to ${adv.name}`);
                                         }

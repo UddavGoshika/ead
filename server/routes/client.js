@@ -6,8 +6,10 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Client = require('../models/Client');
 const Otp = require('../models/Otp');
+const UnlockedContact = require('../models/UnlockedContact');
 const { createNotification } = require('../utils/notif');
 const { getImageUrl, getFullImageUrl } = require('../utils/pathHelper');
+const Relationship = require('../models/Relationship');
 
 // Storage config
 const { upload } = require('../config/cloudinary');
@@ -25,12 +27,13 @@ async function generateClientId() {
     const prefix = 'TP-EAD-CLI';
 
     while (exists) {
-        // Generate exactly 4 random digits (0000-9999)
-        const digits = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        // Generate exactly 6 random digits (000000-999999)
+        const digits = Math.floor(100000 + Math.random() * 900000).toString();
         id = `${prefix}${digits}`;
         const existing = await Client.findOne({ unique_id: id });
         if (!existing) exists = false;
     }
+    console.log(`[ID GEN] Generated UNIQUE Client ID: ${id}`);
     return id;
 }
 
@@ -189,90 +192,16 @@ router.get('/', async (req, res) => {
         const langCond = buildCondition('legalHelp.languages', languages);
         if (langCond) conditions.push(langCond);
 
-        if (conditions.length > 0) {
-            query.$and = conditions;
-        }
-
-        console.log('[BACKEND DEBUG] Client Query:', JSON.stringify(query));
-        let dbClients = await Client.find(query).populate('userId', 'plan isPremium email phone privacySettings');
-
-        // Filter out private profiles
-        dbClients = dbClients.filter(client => {
-            const privacy = client.userId?.privacySettings || { showProfile: true };
-            return privacy.showProfile !== false;
-        });
-        console.log(`[BACKEND DEBUG] Total DB Clients Found: ${dbClients.length}`);
-
-        // Helper: Plan Weight Hierarchy
-        const getPlanWeight = (userIdObj) => {
-            if (!userIdObj) return 0;
-
-            const plan = (userIdObj.plan || '').toLowerCase();
-            const type = (userIdObj.planType || '').toLowerCase();
-            const tier = (userIdObj.planTier || '').toLowerCase();
-            const isPremium = userIdObj.isPremium;
-
-            if (!isPremium && plan !== 'free') {
-                // Double check if plan name implies premium
-                if (plan.includes('pro') || plan.includes('platinum') || plan.includes('gold') || plan.includes('silver')) {
-                    // Treat as premium for weighting if it has these keywords
-                } else if (plan !== 'free' && plan !== '') {
-                    // Other plans might be premium too
-                } else {
-                    return 0; // Truly Free
-                }
-            }
-
-            if (plan === 'free') return 0;
-
-            let score = 0;
-            // Hierarchy: Pro > Pro Lite > Free
-            // Tiers: Platinum > Gold > Silver
-
-            if (plan.includes('pro') && !plan.includes('lite')) score += 2000;
-            else if (plan.includes('pro lite')) score += 1000;
-
-            if (plan.includes('platinum')) score += 300;
-            else if (plan.includes('gold')) score += 200;
-            else if (plan.includes('silver')) score += 100;
-
-            // Fallback to searching in type/tier fields if plan string doesn't have it
-            if (score === 0) {
-                if (type.includes('pro') && !type.includes('lite')) score += 2000;
-                else if (type.includes('pro lite')) score += 1000;
-
-                if (tier.includes('platinum')) score += 300;
-                else if (tier.includes('gold')) score += 200;
-                else if (tier.includes('silver')) score += 100;
-            }
-
-            return score;
-        };
-
-        // Handle category logic (Plan based filtering and sorting)
-        if (category === 'featured') {
-            // "Higher-paid premium plans must always appear at the top. Profile visibility should decrease as the plan level goes down."
-            // We include everyone but sort them.
-            dbClients.sort((a, b) => getPlanWeight(b.userId) - getPlanWeight(a.userId));
-        } else if (category === 'normal') {
-            // "In the Normal Profiles section, show only Free registered clients. never show premium client in normal profiles"
-            dbClients = dbClients.filter(c => {
-                const weight = getPlanWeight(c.userId);
-                const isPremium = c.userId?.isPremium;
-                const plan = (c.userId?.plan || '').toLowerCase();
-                return !isPremium && weight === 0 && (plan === 'free' || plan === '');
-            });
-        }
-
         // 1. Detect Viewer Plan (Auth Optional)
         let viewerIsPremium = false;
+        let viewerId = null;
         const authHeader = req.headers.authorization;
         if (authHeader) {
             const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
             if (token && token.startsWith('user-token-')) {
-                const userId = token.replace('user-token-', '');
-                if (require('mongoose').Types.ObjectId.isValid(userId)) {
-                    const viewer = await User.findById(userId);
+                viewerId = token.replace('user-token-', '');
+                if (require('mongoose').Types.ObjectId.isValid(viewerId)) {
+                    const viewer = await User.findById(viewerId);
                     if (viewer) {
                         const planStr = (viewer.plan || '').toLowerCase();
                         if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
@@ -285,14 +214,73 @@ router.get('/', async (req, res) => {
         // Admin Override
         if (authHeader && (authHeader.includes('admin') || authHeader.includes('mock'))) viewerIsPremium = true;
 
+        if (conditions.length > 0) {
+            query.$and = conditions;
+        }
+
+        // SERVER-DRIVEN FILTERING: Exclude Interacted Profiles
+        if (viewerId) {
+            const relationships = await Relationship.find({
+                $or: [{ user1: viewerId }, { user2: viewerId }],
+                state: { $nin: ['NONE', 'SHORTLISTED'] }
+            });
+            const excludedUserIds = relationships.map(rel =>
+                rel.user1.toString() === viewerId.toString() ? rel.user2 : rel.user1
+            );
+
+            if (!query.$and) query.$and = [];
+            query.$and.push({ userId: { $ne: viewerId } }); // Don't show self
+            if (excludedUserIds.length > 0) {
+                query.$and.push({ userId: { $nin: excludedUserIds } });
+            }
+        }
+
+        console.log('[BACKEND DEBUG] Client Query:', JSON.stringify(query));
+        let dbClients = await Client.find(query).populate('userId', 'plan isPremium email phone privacySettings status');
+
+        // Filter out private profiles and deleted users
+        dbClients = dbClients.filter(client => {
+            if (!client.userId) return false;
+            if (client.userId.status === 'Deleted') return false;
+            const privacy = client.userId.privacySettings || { showProfile: true };
+            return privacy.showProfile !== false;
+        });
+        console.log(`[BACKEND DEBUG] Total DB Clients Found: ${dbClients.length}`);
+
+        // Helper: Plan Weight Hierarchy
+        const getPlanWeight = (userIdObj) => {
+            if (!userIdObj) return 0;
+            const plan = (userIdObj.plan || '').toLowerCase();
+            if (plan === 'free') return 0;
+            let score = 0;
+            if (plan.includes('pro') && !plan.includes('lite')) score += 2000;
+            else if (plan.includes('pro lite')) score += 1000;
+            if (plan.includes('platinum')) score += 300;
+            else if (plan.includes('gold')) score += 200;
+            else if (plan.includes('silver')) score += 100;
+            return score;
+        };
+
+        // Handle category logic
+        if (category === 'featured') {
+            dbClients.sort((a, b) => getPlanWeight(b.userId) - getPlanWeight(a.userId));
+        } else if (category === 'normal') {
+            dbClients = dbClients.filter(c => {
+                const weight = getPlanWeight(c.userId);
+                const isPremium = c.userId?.isPremium;
+                const plan = (c.userId?.plan || '').toLowerCase();
+                return !isPremium && weight === 0 && (plan === 'free' || plan === '');
+            });
+        }
+
         const formattedClients = dbClients.map(client => {
             const shouldMask = !viewerIsPremium;
             let displayName = `${client.firstName} ${client.lastName}`;
             let displayId = client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`;
 
             if (shouldMask) {
-                displayName = displayName.substring(0, 2) + '...';
-                displayId = displayId.substring(0, 2) + '...';
+                displayName = displayName.substring(0, 2) + '*****';
+                displayId = displayId.substring(0, 2) + '*****';
             }
 
             return {
@@ -327,13 +315,22 @@ router.get('/', async (req, res) => {
 router.get('/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        let client = await Client.findOne({
-            $or: [
-                { userId: mongoose.isValidObjectId(userId) ? userId : null },
-                { _id: mongoose.isValidObjectId(userId) ? userId : null },
-                { unique_id: userId }
-            ]
-        }).populate('userId');
+        let query = {};
+        if (userId.startsWith('TP-EAD-CLI')) {
+            query = { unique_id: userId };
+            console.log(`[STRICT] Fetching Client by Unique ID: ${userId}`);
+        } else if (mongoose.isValidObjectId(userId)) {
+            query = { $or: [{ userId: userId }, { _id: userId }] };
+            console.log(`[STRICT] Fetching Client by Object ID: ${userId}`);
+        } else {
+            return res.status(400).json({ success: false, error: 'Invalid Client ID format' });
+        }
+
+        let client = await Client.findOne(query).populate('userId');
+
+        if (!client || (client.userId && client.userId.status === 'Deleted')) {
+            return res.status(404).json({ success: false, error: 'Client profile not found or deleted' });
+        }
 
         if (!client) {
             console.log(`[CLIENT FETCH] No Client profile found for UserID: ${userId}. Attempting auto-creation...`);
@@ -368,14 +365,19 @@ router.get('/:userId', async (req, res) => {
             }
         }
 
-        // CHECK IF CONTACT ALREADY UNLOCKED
+        // Detect Viewer Plan
+        let viewerIsPremium = false;
+        if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
+            const viewer = await User.findById(viewerId);
+            if (viewer && viewer.isPremium) viewerIsPremium = true;
+        }
+
+        // CHECK IF CONTACT ALREADY UNLOCKED (Activity or UnlockedContact)
         let contactInfo = null;
         if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
-            const Activity = require('../models/Activity');
-            const unlocked = await Activity.findOne({
-                sender: viewerId,
-                receiver: client.userId?._id || client.userId,
-                type: 'view_contact'
+            const unlocked = await UnlockedContact.findOne({
+                viewer_user_id: viewerId,
+                profile_user_id: client.userId?._id || client.userId
             });
             if (unlocked) {
                 contactInfo = {
@@ -386,6 +388,25 @@ router.get('/:userId', async (req, res) => {
             }
         }
 
+        // FETCH RELATIONSHIP STATUS
+        let relationshipState = 'NONE';
+        if (viewerId && client.userId) {
+            const clientUserId = client.userId._id || client.userId;
+            const u1 = viewerId.toString() < clientUserId.toString() ? viewerId.toString() : clientUserId.toString();
+            const u2 = viewerId.toString() < clientUserId.toString() ? clientUserId.toString() : viewerId.toString();
+
+            const rel = await Relationship.findOne({ user1: u1, user2: u2 });
+            if (rel) {
+                relationshipState = rel.state;
+                // Refine state based on who initiated
+                if (rel.state === 'INTEREST') {
+                    relationshipState = rel.requester.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
+                } else if (rel.state === 'SUPER_INTEREST') {
+                    relationshipState = rel.requester.toString() === viewerId.toString() ? 'SUPER_INTEREST_SENT' : 'SUPER_INTEREST_RECEIVED';
+                }
+            }
+        }
+
         // OWNER PRIVACY OVERRIDES
         const privacy = client.userId?.privacySettings || { showProfile: true, showContact: true, showEmail: true };
         const msgSettings = client.userId?.messageSettings || { allowDirectMessages: true };
@@ -393,8 +414,19 @@ router.get('/:userId', async (req, res) => {
 
         // Contact Info Overrides
         if (contactInfo) {
-            if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
-            if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+            // Unlocked -> Show everything
+            // if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
+            // if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+        }
+
+        const shouldMask = !viewerIsPremium && !isOwner;
+        let displayName = `${client.firstName} ${client.lastName}`.trim();
+        let displayId = client.unique_id;
+
+        if (shouldMask && !isOwner) {
+            displayName = displayName.substring(0, 2) + '*****';
+            // User requested: "in free users detailed profile the id is masked"
+            displayId = displayId.substring(0, 2) + '*****';
         }
 
         const formattedClient = {
@@ -402,21 +434,29 @@ router.get('/:userId', async (req, res) => {
             role: 'client',
             userId: client.userId?._id || client.userId,
             unique_id: client.unique_id,
-            name: `${client.firstName} ${client.lastName}`.trim(),
-            firstName: client.firstName,
-            lastName: client.lastName,
-            email: privacy.showEmail || isOwner ? client.email : 'Hidden',
-            mobile: privacy.showContact || isOwner ? client.mobile : 'Hidden',
+            display_id: displayId,
+            name: displayName,
+            firstName: shouldMask ? displayName.split(' ')[0] : client.firstName,
+            lastName: shouldMask ? '' : client.lastName,
+            email: (privacy.showEmail || isOwner || contactInfo) ? client.email : 'Hidden',
+            mobile: (privacy.showContact || isOwner || contactInfo) ? client.mobile : 'Hidden',
             location: client.address,
             legalHelp: client.legalHelp,
             img: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             image_url: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             profilePicPath: client.profilePicPath,
+            isBlur: shouldMask,
+            isMasked: shouldMask,
             contactInfo: contactInfo,
             privacySettings: privacy,
             notificationSettings: client.userId?.notificationSettings,
             messageSettings: msgSettings,
-            allowChat: msgSettings.allowDirectMessages
+            allowChat: msgSettings.allowDirectMessages,
+            allowCall: viewerIsPremium,
+            allowVideo: viewerIsPremium,
+            allowMeet: viewerIsPremium,
+            relationship_state: relationshipState,
+            isFeatured: client.userId?.isPremium || false
         };
 
         res.json({ success: true, client: formattedClient });

@@ -6,9 +6,13 @@ import type { Advocate, Client } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
 import ClientCard from '../../../../components/dashboard/ClientCard';
 import { interactionService } from '../../../../services/interactionService';
+import { useInteractions } from '../../../../hooks/useInteractions';
 import styles from '../AdvocateList.module.css';
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
+
+import { useRelationshipStore } from '../../../../store/useRelationshipStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Props {
     title: string;
@@ -37,9 +41,15 @@ export default PlaceholderPage;
 // Export specialized placeholders
 export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }: any) => {
     const { user } = useAuth();
+    const queryClient = useQueryClient();
     const isAdvocate = user?.role.toLowerCase() === 'advocate';
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const { handleInteraction } = useInteractions();
+    const { interactedIds, relationships } = useRelationshipStore((state: any) => state);
+    // Removed manual setRelationship and removedProfileIds
+
     const [filters, setFilters] = useState({
         search: '',
         specialization: '',
@@ -86,7 +96,7 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
 
     useEffect(() => {
         fetchProfiles();
-    }, []);
+    }, []); // Removed manual event listener
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -185,37 +195,58 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {profiles.length > 0 ? (
-                        profiles.map((profile: any) => (
+                    {profiles.filter(p => {
+                        const pid = String((p.userId && (p.userId as any)._id) ? (p.userId as any)._id : (p.userId || p.id || (p as any)._id));
+                        // If not interacted, show
+                        if (!interactedIds.has(pid)) return true;
+
+                        // If shortlisted, keep showing
+                        const rel = relationships[pid];
+                        const state = typeof rel === 'string' ? rel : rel?.state;
+                        // KEEP shortlisted profiles visible
+                        if (state === 'SHORTLISTED') return true;
+
+                        return false;
+                    }).length > 0 ? (
+                        profiles.filter(p => {
+                            const pid = String((p.userId && (p.userId as any)._id) ? (p.userId as any)._id : (p.userId || p.id || (p as any)._id));
+                            if (!interactedIds.has(pid)) return true;
+                            const rel = relationships[pid];
+                            const state = typeof rel === 'string' ? rel : rel?.state;
+                            if (state === 'SHORTLISTED') return true;
+                            return false;
+                        }).map((profile: any) => (
                             <div key={profile.id} onClick={() => showDetailedProfile(isAdvocate ? profile.id : profile.unique_id)} style={{ cursor: 'pointer' }}>
                                 {isAdvocate ? (
                                     <ClientCard
                                         client={profile}
                                         variant="normal"
                                         isPremium={isPremium}
-                                        onAction={async (action: string, data?: string) => {
+                                        onAction={async (action: string, data?: any) => {
                                             if (user) {
-                                                const targetId = String(profile.id);
-                                                const userId = String(user.id);
-                                                const targetRole = 'client';
+                                                const targetId = String((profile.userId && (profile.userId as any)._id) ? (profile.userId as any)._id : (profile.userId || profile.id || (profile as any)._id));
                                                 const name = profile.name || `${profile.firstName} ${profile.lastName}`;
 
-                                                if (action === 'interest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                                    showToast(`Interest sent to ${name}`);
-                                                } else if (action === 'superInterest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                                    showToast(`Super Interest sent to ${name}!`);
-                                                } else if (action === 'shortlist') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                                    showToast(`${name} added to shortlist`);
-                                                } else if (action === 'openFullChatPage') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                if (action === 'openFullChatPage') {
                                                     onSelectForChat(profile);
-                                                } else if (action === 'message_sent' && data) {
-                                                    const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
-                                                    await interactionService.sendMessage(userId, partnerUserId, data);
-                                                    showToast(`Message sent to ${name}`);
+                                                    return;
+                                                }
+
+                                                if (action === 'view_profile') {
+                                                    showDetailedProfile(isAdvocate ? profile.id : profile.unique_id);
+                                                    return;
+                                                }
+
+                                                try {
+                                                    await handleInteraction({
+                                                        id: targetId, // Pass User ID to interaction service
+                                                        role: 'client',
+                                                        name: name,
+                                                        // Pass full profile for context if needed
+                                                        ...profile
+                                                    }, action, data);
+                                                } catch (err) {
+                                                    console.error("Interaction failed", err);
                                                 }
                                             }
                                         }}
@@ -225,28 +256,29 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                                         advocate={profile}
                                         variant="normal"
                                         isPremium={isPremium}
-                                        onAction={async (action: string, data?: string) => {
+                                        onAction={async (action: string, data?: any) => {
                                             if (user) {
-                                                const targetId = String(profile.id);
-                                                const userId = String(user.id);
-                                                const targetRole = 'advocate';
+                                                const targetId = String((profile.userId && (profile.userId as any)._id) ? (profile.userId as any)._id : (profile.userId || profile.id || (profile as any)._id));
 
-                                                if (action === 'interest_initiated' || action === 'interest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                                    showToast(`Interest sent to ${profile.name}`);
-                                                } else if (action === 'super_interest_sent' || action === 'super-interest') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                                    showToast(`Super Interest sent to ${profile.name}!`);
-                                                } else if (action === 'shortlisted') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                                    showToast(`${profile.name} added to shortlist`);
-                                                } else if (action === 'openFullChatPage') {
-                                                    await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
+                                                if (action === 'openFullChatPage') {
                                                     onSelectForChat(profile);
-                                                } else if (action === 'message_sent' && data) {
-                                                    const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
-                                                    await interactionService.sendMessage(userId, partnerUserId, data);
-                                                    showToast(`Message sent to ${profile.name}`);
+                                                    return;
+                                                }
+
+                                                if (action === 'view_profile') {
+                                                    showDetailedProfile(profile.unique_id || targetId);
+                                                    return;
+                                                }
+
+                                                try {
+                                                    await handleInteraction({
+                                                        id: targetId,
+                                                        role: 'advocate',
+                                                        name: profile.name,
+                                                        ...profile
+                                                    }, action, data);
+                                                } catch (err) {
+                                                    console.error("Interaction failed", err);
                                                 }
                                             }
                                         }}

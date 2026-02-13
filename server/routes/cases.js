@@ -4,6 +4,7 @@ const Case = require('../models/Case');
 const Client = require('../models/Client');
 const Advocate = require('../models/Advocate');
 const auth = require('../middleware/auth');
+const { createNotification } = require('../utils/notif');
 
 // GET all cases for the logged-in user (client)
 router.get('/', auth, async (req, res) => {
@@ -96,10 +97,15 @@ router.post('/', auth, async (req, res) => {
             subDepartment,
             requestedDocuments,
             advocateNotes,
-            status: req.user.role.toLowerCase() === 'advocate' ? 'Case Request Received' : 'Open'
+            status: (req.user.role.toLowerCase() === 'client' && advocateId) ? 'Case Request Received' : (req.user.role.toLowerCase() === 'advocate' ? 'Case Request Received' : 'Open')
         });
 
         await newCase.save();
+
+        if (advocateId && advocateId.toString() !== req.user.id) {
+            // Notification logic removed to prevent errors
+        }
+
         res.status(201).json({ success: true, case: newCase });
     } catch (err) {
         console.error("Backend Case Creation Error:", err);

@@ -10,6 +10,9 @@ import styles from '../AdvocateList.module.css';
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
 import TokenTopupModal from '../../../../components/dashboard/shared/TokenTopupModal';
+import { useRelationshipStore } from '../../../../store/useRelationshipStore';
+import { useQueryClient } from '@tanstack/react-query';
+import { useInteractions } from '../../../../hooks/useInteractions';
 
 interface Props {
     showDetailedProfile: (id: string) => void;
@@ -20,10 +23,13 @@ interface Props {
 
 const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }) => {
     const { user, refreshUser } = useAuth();
+    const queryClient = useQueryClient();
     const isAdvocate = user?.role.toLowerCase() === 'advocate';
     const [showTopup, setShowTopup] = useState(false);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { handleInteraction } = useInteractions(showToast);
+    const { interactedIds, relationships } = useRelationshipStore(state => state);
     const [filters, setFilters] = useState({
         search: '',
         specialization: '',
@@ -102,63 +108,21 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
-    // Centralized Interaction Handler
-    const handleInteraction = async (profile: any, action: string, data?: any) => {
-        if (!user) return;
-        if (user.status === 'Pending') {
-            alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
-            return;
-        }
+    const filteredProfiles = profiles.filter(p => {
+        const partnerId = String(p.userId?._id || p.userId || p.id || p._id);
 
-        const targetId = String(profile.id);
-        const userId = String(user.id);
-        const targetRole = isAdvocate ? 'client' : 'advocate';
-        const profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
+        // If not interacted at all, definitely show
+        if (!interactedIds.has(partnerId)) return true;
 
-        try {
-            let res;
-            if (action === 'interest') {
-                res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                showToast(`Interest sent to ${profileName}`);
-            } else if (action === 'superInterest') {
-                res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                showToast(`Super Interest sent to ${profileName}!`);
-            } else if (action === 'shortlist') {
-                res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                showToast(`${profileName} added to shortlist`);
-            } else if (action === 'openFullChatPage') {
-                res = await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                onSelectForChat(profile);
-            } else if (action === 'message_sent' && data) {
-                const partnerUserId = typeof profile.userId === 'object' ? String((profile.userId as any)._id) : String(profile.userId || profile.id);
-                await interactionService.sendMessage(userId, partnerUserId, data);
-                showToast(`Message sent to ${profileName}`);
-            }
+        // If interacted, check status. User explicitly wants SHORTLISTED to remain visible.
+        const rel = relationships[partnerId];
+        const state = typeof rel === 'string' ? rel : rel?.state;
 
-            // Update coins if spent
-            if (res && res.coins !== undefined) {
-                refreshUser({
-                    coins: res.coins,
-                    coinsUsed: res.coinsUsed
-                });
-            }
-        } catch (err: any) {
-            const errorData = err.response?.data;
-            const msg = errorData?.message || 'Action failed';
-            const errorCode = errorData?.error;
+        if (state === 'SHORTLISTED') return true;
 
-            if (errorCode === 'INTERACTION_LIMIT') {
-                showToast("You’ve reached the interaction limit for this profile (Max 3)");
-            } else if (errorCode === 'ZERO_COINS' || errorCode === 'INSUFFICIENT_COINS') {
-                setShowTopup(true);
-            } else if (errorCode === 'UPGRADE_REQUIRED') {
-                showToast("Upgrade to premium to perform this action.");
-                showsidePage('upgrade');
-            } else {
-                showToast(msg);
-            }
-        }
-    };
+        // Hide others (Interest Sent, Blocked, etc.)
+        return false;
+    });
 
     return (
         <div className={styles.page}>
@@ -263,8 +227,8 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 </div>
             ) : (
                 <div className={styles.grid}>
-                    {profiles.length > 0 ? (
-                        profiles.map(profile => (
+                    {filteredProfiles.length > 0 ? (
+                        filteredProfiles.map(profile => (
                             <div key={profile.id} onClick={() => showDetailedProfile(isAdvocate ? profile.id : profile.unique_id)} style={{ cursor: 'pointer' }}>
                                 {isAdvocate ? (
                                     <ClientCard

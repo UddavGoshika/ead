@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, Link2, X } from 'lucide-react';
-import { FaWhatsapp, FaFacebook, FaLinkedin } from 'react-icons/fa';
+import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import styles from './BlogCard.module.css';
 import { blogService } from '../../services/api';
+import SocialShareModal from '../shared/SocialShareModal';
 
 interface BlogCardProps {
     post: {
@@ -40,7 +40,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [localComments, setLocalComments] = useState<any[]>(post.comments || []);
-    const [showShareMenu, setShowShareMenu] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     const handleLike = async () => {
         if (!isLoggedIn) {
@@ -70,35 +70,6 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
             }
         } catch (err) {
             console.error('Save failed:', err);
-        }
-    };
-
-    const handleShareInit = async () => {
-        setShowShareMenu(!showShareMenu);
-    };
-
-    const handleShareOptionClick = async (platform: string) => {
-        try {
-            const res = await blogService.shareBlog(post.id);
-            if (res.data.success) {
-                setShareCount(res.data.shares);
-                const url = window.location.origin + `/blogs?id=${post.id}`;
-                const text = `Check out this blog: ${post.title}`;
-
-                if (platform === 'whatsapp') {
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-                } else if (platform === 'facebook') {
-                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-                } else if (platform === 'linkedin') {
-                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
-                } else if (platform === 'copy') {
-                    navigator.clipboard.writeText(url);
-                    alert('Link copied to clipboard!');
-                }
-                setShowShareMenu(false);
-            }
-        } catch (err: any) {
-            console.error('Share failed:', err);
         }
     };
 
@@ -191,25 +162,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
                             </button>
                         </div>
                         <div style={{ position: 'relative' }}>
-                            <button className={styles.shareBtn} onClick={handleShareInit}>
-                                {showShareMenu ? <X size={24} /> : <Share2 size={28} />}
+                            <button className={styles.shareBtn} onClick={() => setShowShareModal(true)}>
+                                <Share2 size={28} />
                             </button>
-                            {showShareMenu && (
-                                <div className={styles.shareMenu}>
-                                    <div className={`${styles.shareOption} ${styles.whatsapp}`} onClick={() => handleShareOptionClick('whatsapp')}>
-                                        <FaWhatsapp size={24} />
-                                    </div>
-                                    <div className={`${styles.shareOption} ${styles.facebook}`} onClick={() => handleShareOptionClick('facebook')}>
-                                        <FaFacebook size={24} />
-                                    </div>
-                                    <div className={`${styles.shareOption} ${styles.linkedin}`} onClick={() => handleShareOptionClick('linkedin')}>
-                                        <FaLinkedin size={24} />
-                                    </div>
-                                    <div className={`${styles.shareOption} ${styles.copyLink}`} onClick={() => handleShareOptionClick('copy')}>
-                                        <Link2 size={24} />
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -227,6 +182,13 @@ const BlogCard: React.FC<BlogCardProps> = ({ post }) => {
                     />
                 </div>
             </div>
+
+            <SocialShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                url={window.location.origin + `/blogs?id=${post.id}`}
+                title={`Check out this blog: ${post.title}`}
+            />
 
             {/* Comment Section */}
             <AnimatePresence>

@@ -14,10 +14,25 @@ cloudinary.config({
 // Cloudinary Storage Engine
 const cloudStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params: {
-        folder: 'eadvocate_uploads', // Folder name in Cloudinary
-        allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
-        resource_type: 'auto', // Allow images and PDFs (raw)
+    params: async (req, file) => {
+        // Determine resource type based on file mimetype
+        const isRaw = file.mimetype === 'application/pdf' ||
+            file.mimetype === 'application/msword' ||
+            file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+        return {
+            folder: 'eadvocate_uploads',
+            // CRITICAL: Force 'raw' for PDFs/Docs so they are not treated as images
+            resource_type: isRaw ? 'raw' : 'image',
+            // Ensure public access
+            access_mode: 'public',
+            // Keep original name helps with downloading (optional, but good for PDFs)
+            use_filename: true,
+            unique_filename: true,
+            // Allowed formats (Multer-Storage-Cloudinary might ignore this if resource_type is raw, but good to have)
+            allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx'],
+            // format: isRaw && file.mimetype === 'application/pdf' ? 'pdf' : undefined, // For raw, format is part of filename usually
+        };
     },
 });
 

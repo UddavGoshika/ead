@@ -24,6 +24,45 @@
     /* Allow wrapper to scroll if needed on small screens */
 }
 
+/* Error & Loading Containers */
+.loadingBox,
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    background: #0f172a;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    min-width: 300px;
+}
+
+.errorContainer p {
+    font-size: 18px;
+    margin-bottom: 24px;
+    color: #f87171;
+}
+
+.backButton {
+    background: #facc15;
+    color: #000;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.backButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);
+}
+
 /* Modal Content - The Main Card */
 .modalContent {
     width: 95vw;
@@ -85,7 +124,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.7s ease;
+    transition: transform 0.7s ease, filter 0.5s ease;
+}
+
+.blurredImage {
+    filter: blur(15px) brightness(0.7);
 }
 
 .heroSection:hover .coverImage {
@@ -121,6 +164,39 @@
 .backBtn:hover {
     background: #facc15;
     color: #000;
+}
+
+.unlockSmallBtn {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+
+.unlockSmallBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(250, 204, 21, 0.4);
+}
+
+.maskedValue {
+    color: #475569;
+    letter-spacing: 2px;
+    font-size: 14px;
+}
+
+.blurText {
+    filter: blur(5px);
+    user-select: none;
+    pointer-events: none;
 }
 
 /* Profile Identify Info */
@@ -706,6 +782,12 @@
     color: #fff;
 }
 
+.quickActionItem.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .quickActionItem:hover .quickActionIcon {
     color: #facc15;
     background: rgba(250, 204, 21, 0.1);
@@ -814,6 +896,27 @@
     flex-shrink: 0;
 }
 
+.contactInfo {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.contactLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contactValue {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f8fafc;
+    position: relative;
+}
+
 .contactDetail {
     flex-grow: 1;
     display: flex;
@@ -894,4 +997,140 @@
     display: flex;
     align-items: center;
     gap: 3px;
+}
+
+/* Navigation Arrows - Floating on Sides */
+.navArrowLeft,
+.navArrowRight {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100000;
+    backdrop-filter: blur(10px);
+}
+
+.navArrowLeft {
+    left: 40px;
+}
+
+.navArrowRight {
+    right: 40px;
+}
+
+.navArrowLeft:hover,
+.navArrowRight:hover {
+    background: #facc15;
+    color: #000;
+    border-color: #facc15;
+    box-shadow: 0 0 30px rgba(250, 204, 21, 0.4);
+}
+
+.navArrowLeft:hover {
+    transform: translateY(-50%) translateX(-5px);
+}
+
+.navArrowRight:hover {
+    transform: translateY(-50%) translateX(5px);
+}
+
+/* Profile Counter Top Right */
+.profileCounter {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f6f7f9;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 10;
+}
+
+.counterCurrent {
+    color: #facc15;
+}
+
+/* Dynamic Action Button Colors */
+.quickActionItem.accept {
+    color: #10b981;
+}
+
+.quickActionItem.accept .quickActionIcon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.quickActionItem.accept:hover .quickActionIcon {
+    background: #10b981;
+    color: #fff;
+}
+
+.quickActionItem.decline {
+    color: #f43f5e;
+}
+
+.quickActionItem.decline .quickActionIcon {
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+}
+
+.quickActionItem.decline:hover .quickActionIcon {
+    background: #f43f5e;
+    color: #fff;
+}
+
+.quickActionItem.block {
+    color: #94a3b8;
+}
+
+.quickActionItem.block .quickActionIcon {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+}
+
+.quickActionItem.block:hover .quickActionIcon {
+    background: #64748b;
+    color: #fff;
+}
+
+.quickActionItem.chat {
+    color: #3b82f6;
+}
+
+.quickActionItem.chat .quickActionIcon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.quickActionItem.chat:hover .quickActionIcon {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.quickActionItem.active {
+    color: #facc15;
+}
+
+.quickActionItem.active .quickActionIcon {
+    background: rgba(250, 204, 21, 0.2);
+    color: #facc15;
+}
+
+.quickActionItem.active:hover .quickActionIcon {
+    background: #facc15;
+    color: #000;
 }

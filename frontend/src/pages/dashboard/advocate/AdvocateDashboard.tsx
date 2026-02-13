@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import styles from './AdvocateDashboard.module.css';
 import AdvocateSidebar from '../../../components/dashboard/advocate/AdvocateSidebar';
@@ -8,7 +8,7 @@ import EditProfile from '../shared/EditProfile';
 import AccountSettings from '../shared/AccountSettings';
 import SearchPreferences from '../shared/SearchPreferences';
 import SafetyCenter from '../shared/SafetyCenter';
-import DetailedProfile from '../shared/DetailedProfile';
+import DetailedProfile from '../shared/DetailedProfileEnhanced';
 import HelpSupport from '../shared/HelpSupport';
 import {
     NormalProfiles
@@ -33,6 +33,9 @@ import PlanOverview from '../../../components/dashboard/shared/PlanOverview';
 import SupportHub from '../shared/SupportHub';
 import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner';
 import PendingPopup from '../../../components/dashboard/shared/PendingPopup';
+import { useRelationshipStore } from '../../../store/useRelationshipStore';
+import { interactionService } from '../../../services/interactionService';
+import { useToast } from '../../../context/ToastContext';
 
 interface Notification {
     id: string;
@@ -43,6 +46,26 @@ interface Notification {
 
 const AdvocateDashboard: React.FC = () => {
     const { user } = useAuth();
+    const { showToast: centralShowToast } = useToast();
+    const setRelationships = useRelationshipStore((state: any) => state.setRelationships);
+
+    useEffect(() => {
+        if (user?.id) {
+            const loadRelationships = async () => {
+                try {
+                    const rels = await interactionService.getRelationships();
+                    const formattedRels: Record<string, any> = {};
+                    rels.forEach((rel: any) => {
+                        formattedRels[rel.partnerId] = { state: rel.state, role: rel.my_role };
+                    });
+                    setRelationships(formattedRels);
+                } catch (err) {
+                    console.error('Failed to load relationships', err);
+                }
+            };
+            loadRelationships();
+        }
+    }, [user?.id, setRelationships]);
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
     const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
@@ -139,7 +162,7 @@ const AdvocateDashboard: React.FC = () => {
 
     const showDetailedProfile = (id: string) => {
         setDetailedProfileId(id);
-        setCurrentPage('detailed-profile-view');
+        // We no longer switch currentPage, we'll show it as a modal
     };
 
     const bottomNavClick = (page: string) => setCurrentPage(page);
@@ -163,16 +186,11 @@ const AdvocateDashboard: React.FC = () => {
         setNotifications([]);
     };
 
-    const showToast = (msg: string) => {
-        const toast = document.createElement('div');
-        toast.className = styles.toast;
-        toast.innerText = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-
+    const showToast = useCallback((msg: string) => {
+        centralShowToast(msg);
         // Add to notification center
         addNotification(msg, 'info');
-    };
+    }, [centralShowToast]);
 
     const renderPage = () => {
         switch (currentPage) {
@@ -190,8 +208,6 @@ const AdvocateDashboard: React.FC = () => {
                     showsidePage={showsidePage}
                     onSelectForChat={handleSelectForChat}
                 />;
-            case 'detailed-profile-view':
-                return <DetailedProfile profileId={detailedProfileId} backToProfiles={backtohome} onSelectForChat={handleSelectForChat} />;
             case 'edit-profile':
                 return <EditProfile backToHome={backtohome} />;
             case 'search-preferences':
@@ -211,7 +227,7 @@ const AdvocateDashboard: React.FC = () => {
             case 'blogs':
                 return <BlogFeed />;
             case 'activity':
-                return <Activity onSelectForChat={handleSelectForChat} />;
+                return <Activity onSelectForChat={handleSelectForChat} showToast={showToast} />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
@@ -429,6 +445,18 @@ const AdvocateDashboard: React.FC = () => {
 
             {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
 
+            {detailedProfileId && (
+                <DetailedProfile
+                    key={detailedProfileId}
+                    profileId={detailedProfileId}
+                    isModal={true}
+                    onClose={() => setDetailedProfileId(null)}
+                    backToProfiles={() => setDetailedProfileId(null)}
+                    onSelectForChat={handleSelectForChat}
+                    showToast={showToast}
+                />
+            )}
+
             {showCreateBlog && (
                 <div className={styles.modalOverlay}>
                     <CreateBlog
@@ -442,6 +470,7 @@ const AdvocateDashboard: React.FC = () => {
 
             {activeChatAdvocate && (
                 <ChatPopup
+                    key={(activeChatAdvocate as any).unique_id || (activeChatAdvocate as any).partnerUserId || (activeChatAdvocate as any).userId?._id || (activeChatAdvocate as any).userId || (activeChatAdvocate as any)._id || activeChatAdvocate.id}
                     advocate={activeChatAdvocate}
                     onClose={() => setActiveChatAdvocate(null)}
                 />

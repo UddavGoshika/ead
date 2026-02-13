@@ -8,6 +8,8 @@ import { useAuth } from '../../../../context/AuthContext';
 import styles from '../AdvocateList.module.css';
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
+import { useRelationshipStore } from '../../../../store/useRelationshipStore';
+import { useInteractions } from '../../../../hooks/useInteractions';
 
 interface Props {
     showDetailedProfile: (id: string) => void;
@@ -17,7 +19,7 @@ interface Props {
 }
 
 const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, showsidePage, onSelectForChat }) => {
-    const { user, refreshUser } = useAuth();
+    const { user } = useAuth();
     const [advocates, setAdvocates] = useState<Advocate[]>([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
@@ -38,6 +40,9 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
 
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
+    const { handleInteraction } = useInteractions(showToast);
+    const interactedIds = useRelationshipStore(state => state.interactedIds);
 
     const fetchAdvocates = async () => {
         setLoading(true);
@@ -66,6 +71,16 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     useEffect(() => {
         fetchAdvocates();
     }, []);
+
+    const filteredAdvocates = advocates.filter(adv => {
+        // Robust ID extraction handling both string IDs and populated objects
+        const partnerId = String(
+            (adv.userId && (adv.userId as any)._id)
+                ? (adv.userId as any)._id
+                : (adv.userId || adv.id || (adv as any)._id)
+        );
+        return !interactedIds.has(partnerId);
+    });
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -173,61 +188,18 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
             ) : (
                 <div className={styles.gridContainer}>
                     <div className={styles.grid}>
-                        {advocates.map(adv => (
+                        {filteredAdvocates.map(adv => (
                             <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
                                 <AdvocateCard
                                     advocate={adv}
                                     variant="featured"
                                     isPremium={isPremium}
                                     onAction={async (action, data) => {
-                                        if (user) {
-                                            if (user.status === 'Pending') {
-                                                alert("Your profile is under verification. You can perform interactions once approved (usually in 12-24 hours).");
-                                                return;
-                                            }
-
-                                            const targetId = String(adv.id);
-                                            const userId = String(user.id);
-                                            const targetRole = 'advocate';
-
-                                            try {
-                                                if (action === 'interest') {
-                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
-                                                    showToast(`Interest sent to ${adv.name}`);
-                                                } else if (action === 'superInterest') {
-                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
-                                                    showToast(`Super Interest sent to ${adv.name}!`);
-                                                } else if (action === 'shortlist') {
-                                                    const res = await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                                    if (res && res.coins !== undefined) refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
-                                                    showToast(`${adv.name} added to shortlist`);
-                                                } else if (action === 'openFullChatPage') {
-                                                    onSelectForChat(adv);
-                                                } else if (action === 'message_sent' && data) {
-                                                    await interactionService.sendMessage(userId, targetId, data);
-                                                    showToast(`Message sent to ${adv.name}`);
-                                                }
-                                            } catch (err: any) {
-                                                console.error('Action failed', err);
-                                                const errorMsg = err.response?.data?.message || 'Operation failed. Please try again.';
-                                                showToast(errorMsg);
-
-                                                const errorCode = err.response?.data?.error;
-                                                const redirectErrors = [
-                                                    'FEATURED_INTERACTION_LIMIT',
-                                                    'FEATURED_CHAT_LIMIT',
-                                                    'MESSAGE_COUNT_LIMIT',
-                                                    'ACTION_LIMIT_REACHED',
-                                                    'INSUFFICIENT_COINS'
-                                                ];
-
-                                                if (redirectErrors.includes(errorCode)) {
-                                                    setTimeout(() => showsidePage('upgrade'), 2000);
-                                                }
-                                            }
+                                        if (action === 'view_profile') {
+                                            showDetailedProfile(adv.unique_id);
+                                            return;
                                         }
+                                        handleInteraction(adv, action, data);
                                     }}
                                 />
                             </div>

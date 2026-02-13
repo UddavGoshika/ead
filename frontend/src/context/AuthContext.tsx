@@ -4,6 +4,7 @@ import { authService } from '../services/api';
 import type { User } from '../types';
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useSocketStore } from '../store/useSocketStore';
 
 interface AuthContextType {
     user: User | null;
@@ -138,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = () => {
+        const disconnectSocket = useSocketStore.getState().disconnect;
+        disconnectSocket();
         setUser(null);
         setIsLoggedIn(false);
         localStorage.removeItem('user');
@@ -147,6 +150,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthLoading(false); // Set loading to false on logout
         window.location.href = '/';
     };
+
+    // Socket.io Initialization
+    const initializeSocket = useSocketStore(s => s.initialize);
+    useEffect(() => {
+        if (isLoggedIn && user?.id) {
+            initializeSocket(String(user.id));
+        }
+    }, [isLoggedIn, user?.id, initializeSocket]);
 
     const openAuthModal = (tab: 'login' | 'register' = 'login') => {
         setAuthTab(tab);
@@ -203,15 +214,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(impersonatedUser);
                 setIsImpersonating(true);
 
-                // Redirect based on role
-                const role = impersonatedUser.role.toLowerCase();
-                if (role === 'advocate') window.location.href = '/dashboard/advocate';
-                else if (role === 'client') window.location.href = '/dashboard/client';
-                else if (role === 'legal_provider') window.location.href = '/dashboard/advisor';
-                else if (['manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care', 'chat_support', 'live_chat', 'call_support', 'data_entry'].includes(role)) {
-                    window.location.href = '/staff/portal';
-                }
-                else window.location.href = '/dashboard/user';
+                // Redirect to universal dashboard route
+                window.location.href = '/dashboard';
             } else {
                 alert(res.data.error || 'Failed to impersonate member');
             }

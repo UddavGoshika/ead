@@ -831,14 +831,18 @@ const MemberVerification: React.FC = () => {
                                 const isTxt = /\.txt($|\?|#)/i.test(lowerPath);
 
                                 if (isPdf) {
-                                    /* Google Docs Viewer is the most robust web-based PDF viewer (no plugin needed) */
+                                    /* Use Native Browser PDF Viewer (embed) first - it's the most reliable for direct URLs */
                                     return (
-                                        <iframe
-                                            src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
-                                            className={styles.pdfViewer}
-                                            title="PDF Preview"
-                                            style={{ width: '100%', height: '100%', border: 'none', position: 'relative', zIndex: 1, background: '#fff' }}
-                                        />
+                                        <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 1, background: '#fff' }}>
+                                            <object data={url} type="application/pdf" width="100%" height="100%">
+                                                <div style={{ padding: '20px', textAlign: 'center', color: '#333' }}>
+                                                    <p>Preview not supported directly.</p>
+                                                    <a href={url} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline' }}>
+                                                        Click here to view PDF
+                                                    </a>
+                                                </div>
+                                            </object>
+                                        </div>
                                     );
                                 } else if (isOffice) {
                                     /* Microsoft Office Online Viewer is best for Word/Excel/PPT */

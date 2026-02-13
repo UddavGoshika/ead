@@ -7,6 +7,10 @@ import api from "../../../../services/api";
 
 const AdvisorActivity = () => {
     const { user } = useAuth();
+    const plan = user?.plan || 'Free';
+    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const shouldMask = !isPremium;
+
     const [stats, setStats] = useState({
         visits: 0,
         sent: 0,
@@ -126,17 +130,23 @@ const AdvisorActivity = () => {
                                     <img
                                         src={act.partnerImg}
                                         alt={act.partnerName}
-                                        className={styles.activityAvatar}
+                                        className={`${styles.activityAvatar} ${(act.isBlur || shouldMask) ? styles.blurred : ''}`}
                                     />
                                     <div className={styles.activityContent}>
                                         <div className={styles.activityHeader}>
-                                            <span className={styles.activityName}>{act.partnerName}</span>
+                                            <span className={styles.activityName}>
+                                                {shouldMask && act.partnerName ? act.partnerName.substring(0, 2) + "*****" : act.partnerName}
+                                            </span>
                                             <span className={styles.activityDate}>
                                                 {new Date(act.timestamp).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                             </span>
                                         </div>
                                         <div className={styles.activitySub}>
-                                            <span>{act.partnerUniqueId || 'ID: N/A'}</span>
+                                            <span>
+                                                {shouldMask && (act.partnerUniqueId || act.partnerId)
+                                                    ? (act.partnerUniqueId || act.partnerId || '').substring(0, 2) + "*****"
+                                                    : (act.partnerUniqueId || 'ID: N/A')}
+                                            </span>
                                             {act.partnerLocation && act.partnerLocation !== 'N/A' && (
                                                 <>
                                                     <span>•</span>
@@ -194,10 +204,14 @@ const AdvisorActivity = () => {
                         </div>
                         <div className={styles.modalBody}>
                             <div className={styles.profileHeader}>
-                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={styles.avatar} />
+                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={`${styles.avatar} ${(selectedClient.isBlur || shouldMask) ? styles.blurred : ''}`} />
                                 <div>
-                                    <h4>{selectedClient.firstName} {selectedClient.lastName}</h4>
-                                    <p className={styles.uid}>{selectedClient.unique_id}</p>
+                                    <h4>
+                                        {shouldMask ? selectedClient.firstName.substring(0, 2) + "*****" : `${selectedClient.firstName} ${selectedClient.lastName}`}
+                                    </h4>
+                                    <p className={styles.uid}>
+                                        {shouldMask ? (selectedClient.unique_id || '').substring(0, 2) + "*****" : selectedClient.unique_id}
+                                    </p>
                                 </div>
                             </div>
 

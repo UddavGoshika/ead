@@ -170,6 +170,55 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+// GET REVENUE CHART DATA (Current Year: Jan - Dec)
+router.get('/revenue-chart', async (req, res) => {
+    try {
+        const Transaction = require('../models/Transaction');
+
+        // Calculate date: Start of Current Year (Jan 1)
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const startOfYear = new Date(currentYear, 0, 1); // Jan 1st, 00:00:00
+        const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59); // Dec 31st
+
+        const revenueData = await Transaction.aggregate([
+            {
+                $match: {
+                    status: { $in: ['success', 'completed'] },
+                    createdAt: { $gte: startOfYear, $lte: endOfYear }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        month: { $month: "$createdAt" }
+                    },
+                    // Divide by 100 assuming amount is in paise/cents
+                    revenue: { $sum: { $divide: ["$amount", 100] } }
+                }
+            },
+            { $sort: { "_id.month": 1 } }
+        ]);
+
+        // Format for frontend (Jan, Feb, ... Dec)
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        // Prepare full year array initialized to 0
+        const formattedData = monthNames.map((name, index) => {
+            const found = revenueData.find(r => r._id.month === (index + 1));
+            return {
+                month: name,
+                revenue: found ? Math.round(found.revenue) : 0
+            };
+        });
+
+        res.json({ success: true, data: formattedData });
+    } catch (err) {
+        console.error('Revenue chart error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // GET ALL MEMBERS (Strict Filtered)
 router.get('/members', async (req, res) => {
     try {
@@ -182,7 +231,8 @@ router.get('/members', async (req, res) => {
         if (search) {
             query.$or = [
                 { email: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } }
+                { name: { $regex: search, $options: 'i' } },
+                { unique_id: { $regex: search, $options: 'i' } } // Look in User model if it exists there (unlikely but safe)
             ];
         }
 
@@ -196,14 +246,14 @@ router.get('/members', async (req, res) => {
         } else if (context === 'deactivated') {
             query.status = 'Deactivated';
         } else if (context === 'deleted') {
-            query.status = 'Deleted'; // Assuming you have soft delete status
+            query.status = 'Deleted';
         } else if (context === 'pending') {
             query.status = { $in: ['Pending', 'Active', 'Reverify'] };
         } else if (context === 'reverify') {
             query.status = 'Reverify';
         }
 
-        // 2b. Default status filter (Exclude Deleted by default if not strictly requested)
+        // 2. Default status filter (Exclude Deleted by default if not strictly requested)
         if (!query.status && !context) {
             query.status = { $ne: 'Deleted' };
         }
@@ -213,12 +263,28 @@ router.get('/members', async (req, res) => {
         const members = await Promise.all(users.map(async (u) => {
             let profile = null;
             if (u.role.toLowerCase() === 'advocate' || u.role.toLowerCase() === 'legal_provider') {
-                profile = await Advocate.findOne({ userId: u._id }).lean();
+                profile = await Advocate.findOne({
+                    $or: [
+                        { userId: u._id },
+                        { unique_id: search && search.includes('-') ? search : null } // Fallback for ID search
+                    ]
+                }).lean();
             } else if (u.role.toLowerCase() === 'client') {
-                profile = await Client.findOne({ userId: u._id }).lean();
+                profile = await Client.findOne({
+                    $or: [
+                        { userId: u._id },
+                        { unique_id: search && search.includes('-') ? search : null }
+                    ]
+                }).lean();
             } else {
-                // Check if it's a staff role
                 profile = await StaffProfile.findOne({ userId: u._id }).lean();
+            }
+
+            // If we found a profile via ID search that doesn't match the current user, skip it in this map (it will be found via its own User record)
+            if (profile && profile.userId && profile.userId.toString() !== u._id.toString()) {
+                // This shouldn't happen often if IDs are unique across users, but let's be safe.
+                // We'll just fetch based on userId normally to keep it simple.
+                profile = await (u.role.toLowerCase() === 'client' ? Client : Advocate).findOne({ userId: u._id }).lean();
             }
 
             let location = 'N/A';

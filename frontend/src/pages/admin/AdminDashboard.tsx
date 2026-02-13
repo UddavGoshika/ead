@@ -43,17 +43,20 @@ const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [revenueData, setRevenueData] = useState([]); // Store chart data
 
     const fetchAllData = async () => {
         try {
             setLoading(true);
-            const [statsRes, membersRes] = await Promise.all([
+            const [statsRes, membersRes, revenueRes] = await Promise.all([
                 axios.get('/api/admin/stats'),
-                axios.get('/api/admin/members')
+                axios.get('/api/admin/members'),
+                axios.get('/api/admin/revenue-chart')
             ]);
 
             if (statsRes.data.success) setStats(statsRes.data.stats);
             if (membersRes.data.success) setMembers(membersRes.data.members);
+            if (revenueRes.data.success) setRevenueData(revenueRes.data.data);
         } catch (err) {
             console.error("Error fetching admin data:", err);
         } finally {
@@ -103,7 +106,7 @@ const AdminDashboard: React.FC = () => {
             {/* ================= TOP SECTION ================= */}
             <section className={styles.topSection}>
                 <div className={styles.graphCard}>
-                    <RevenueChart />
+                    <RevenueChart data={revenueData} />
                 </div>
 
                 <div className={styles.rightStats}>

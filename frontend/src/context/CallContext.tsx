@@ -15,8 +15,10 @@ interface CallContextType {
     endCall: () => Promise<void>;
     toggleAudio: () => void;
     toggleVideo: () => void;
+    toggleHold: () => void;
     isAudioMuted: boolean;
     isVideoMuted: boolean;
+    isOnHold: boolean;
     callDuration: number;
     callStatus: 'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed';
 }
@@ -374,11 +376,51 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const [isOnHold, setIsOnHold] = useState(false);
+    const preHoldState = useRef({ audio: false, video: false });
+
+    const toggleHold = () => {
+        if (!activeCall) return;
+
+        setIsOnHold(prev => {
+            const newHoldState = !prev;
+
+            if (newHoldState) {
+                // ENTERING HOLD: Save state and mute everything
+                preHoldState.current = { audio: isAudioMuted, video: isVideoMuted };
+
+                // Mute Audio
+                if (localStream) localStream.getAudioTracks().forEach(t => { t.enabled = false; });
+                setIsAudioMuted(true);
+
+                // Mute Video
+                if (localStream) localStream.getVideoTracks().forEach(t => { t.enabled = false; });
+                setIsVideoMuted(true);
+            } else {
+                // EXITING HOLD: Restore state
+                const { audio, video } = preHoldState.current;
+
+                // Restore Audio
+                if (!audio && localStream) { // If it was NOT muted
+                    localStream.getAudioTracks().forEach(t => { t.enabled = true; });
+                    setIsAudioMuted(false);
+                }
+
+                // Restore Video
+                if (!video && localStream) { // If it was NOT muted
+                    localStream.getVideoTracks().forEach(t => { t.enabled = true; });
+                    setIsVideoMuted(false);
+                }
+            }
+            return newHoldState;
+        });
+    };
+
     return (
         <CallContext.Provider value={{
             activeCall, incomingCall, initiateCall, acceptCall, rejectCall, endCall,
-            isCalling, localStream, remoteStream, toggleAudio, toggleVideo,
-            isAudioMuted, isVideoMuted, callDuration, callStatus
+            isCalling, localStream, remoteStream, toggleAudio, toggleVideo, toggleHold,
+            isAudioMuted, isVideoMuted, isOnHold, callDuration, callStatus
         }}>
             {children}
         </CallContext.Provider>

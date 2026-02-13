@@ -9,29 +9,24 @@ import {
 } from "recharts";
 import styles from "./revenue.module.css";
 
-const data = [
-    { month: "Jan", revenue: 4200 },
-    { month: "Feb", revenue: 3800 },
-    { month: "Mar", revenue: 5100 },
-    { month: "Apr", revenue: 4700 },
-    { month: "May", revenue: 6200 },
-    { month: "Jun", revenue: 5800 },
-    { month: "Jul", revenue: 6900 },
-    { month: "Aug", revenue: 6400 },
-    { month: "Sep", revenue: 7200 },
-    { month: "Oct", revenue: 7600 },
-    { month: "Nov", revenue: 8100 },
-    { month: "Dec", revenue: 9000 },
-];
+// Hardcoded fallback removed
+interface ChartData {
+    month: string;
+    revenue: number;
+}
 
-const RevenueChart = () => {
+interface Props {
+    data?: ChartData[];
+}
+
+const RevenueChart: React.FC<Props> = ({ data = [] }) => {
     return (
         <div className={styles.graphCard}>
-            <h2>Revenue (Last 12 Months)</h2>
+            <h2>Revenue (Current Year)</h2>
 
             <div className={styles.chartWrapper}>
                 <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={data}>
+                    <AreaChart data={data && data.length > 0 ? data : []}>
                         <defs>
                             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
@@ -50,8 +45,8 @@ const RevenueChart = () => {
                                 color: "#fff",
                             }}
                             formatter={(value) => {
-                                if (value === undefined) return ["$0", "Revenue"];
-                                return [`$${value}`, "Revenue"];
+                                if (value === undefined) return ["₹0", "Revenue"];
+                                return [`₹${value}`, "Revenue"];
                             }}
                         />
 

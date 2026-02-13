@@ -12,17 +12,23 @@ import {
     PhoneIncoming,
     PhoneOutgoing,
     History,
-    Info
+    Info,
+    MoreVertical,
+    Star,
+    Mail,
+    Bookmark
 } from "lucide-react";
 import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 import { useCall } from "../../../context/CallContext";
+import { useInteractions } from "../../../hooks/useInteractions";
 import { interactionService } from "../../../services/interactionService";
 import { callService } from "../../../services/callService";
 import type { Message, Conversation } from "../../../services/interactionService";
 import type { Advocate } from "../../../types";
-import DetailedProfile from "./DetailedProfile";
+import DetailedProfileEnhanced from "./DetailedProfileEnhanced";
 import { formatImageUrl } from "../../../utils/imageHelper";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface MessengerProps {
     view?: 'list' | 'chat';
@@ -33,163 +39,154 @@ interface MessengerProps {
 
 const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, onBack, onSelectForChat }) => {
     const { user } = useAuth();
+    const queryClient = useQueryClient();
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [messageText, setMessageText] = useState("");
-    const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeTab, setActiveTab] = useState<'accepted' | 'sent' | 'received' | 'calls'>('accepted');
-    const [callHistory, setCallHistory] = useState<any[]>([]);
-    const [callsSubTab, setCallsSubTab] = useState<'sent' | 'received'>('received');
+    const [callsSubTab, setCallsSubTab] = useState<'sent' | 'received' | 'all'>('received');
     const [callsFilter, setCallsFilter] = useState<'all' | 'audio' | 'video'>('all');
+    const [receivedFilter, setReceivedFilter] = useState<'all' | 'message' | 'chats'>('all');
     const [messages, setMessages] = useState<Message[]>([]);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const { initiateCall } = useCall();
 
-    const [allActivities, setAllActivities] = useState<any[]>([]);
-    const [selectedClient, setSelectedClient] = useState<any>(null);
     const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+    const [isMoreOpen, setIsMoreOpen] = useState(false);
+    const [showDetailedProfile, setShowDetailedProfile] = useState(false);
     const [selectedCallPartnerId, setSelectedCallPartnerId] = useState<string | null>(null);
     const [partnerCallHistory, setPartnerCallHistory] = useState<any[]>([]);
     const [popupLoading, setPopupLoading] = useState(false);
 
-    // Filtered lists for tabs
-    const [sentInterests, setSentInterests] = useState<any[]>([]);
-    const [receivedInterests, setReceivedInterests] = useState<any[]>([]);
+    // Queries
+    const { data: allActivities = [], isLoading: isLoadingActivities } = useQuery({
+        queryKey: ['activities', user?.id],
+        queryFn: () => interactionService.getAllActivities(String(user?.id)),
+        enabled: !!user?.id
+    });
 
-    // If an advocate is passed (e.g. from FeaturedProfiles), set it as selected
-    useEffect(() => {
-        if (selectedAdvocate) {
-            setSelectedConversation({
-                advocate: selectedAdvocate,
-                lastMessage: undefined,
-                unreadCount: 0
-            });
-        }
-    }, [selectedAdvocate]);
+    const { data: conversations = [], isLoading: isLoadingConversations } = useQuery({
+        queryKey: ['conversations', user?.id],
+        queryFn: () => interactionService.getConversations(String(user?.id)),
+        enabled: !!user?.id
+    });
 
-    const fetchData = async () => {
-        if (!user) return;
-        try {
-            const myId = String(user.id);
-            // 1. Get All Activities (Interests/Requests/Chats)
-            const activities = await interactionService.getAllActivities(myId);
-            setAllActivities(activities);
+    const { data: callHistory = [], isLoading: isLoadingCalls } = useQuery({
+        queryKey: ['callHistory', user?.id],
+        queryFn: () => callService.getCallHistory(String(user?.id)),
+        enabled: !!user?.id
+    });
 
-            // 2. Get Active Conversations (from Messages)
-            const convs = await interactionService.getConversations(myId);
+    // Merge logic (helper for filtering)
+    const mergeActivities = (list: any[]) => {
+        const map = new Map();
+        list.forEach(item => {
+            const partnerId = item.isSender ? item.receiver : item.sender;
+            const key = partnerId;
 
-            // Helper to merge activities by partner
-            const mergeActivities = (list: any[]) => {
-                const map = new Map();
-                list.forEach(item => {
-                    const partnerId = item.isSender ? item.receiver : item.sender;
-                    const key = partnerId;
+            if (!map.has(key)) {
+                map.set(key, { ...item, _mergedTypes: [item.type], _msgs: [] });
+            }
 
-                    if (!map.has(key)) {
-                        map.set(key, { ...item, _mergedTypes: [item.type], _msgs: [] });
-                    }
+            const existing = map.get(key);
+            if (new Date(item.timestamp) > new Date(existing.timestamp)) {
+                existing.timestamp = item.timestamp;
+            }
+            if (!existing._mergedTypes.includes(item.type)) {
+                existing._mergedTypes.push(item.type);
+            }
+            const text = item.text || item.details || item.message;
+            if (text && item.type === 'chat') {
+                existing._msgs.push({ text, ts: item.timestamp });
+            }
+        });
 
-                    const existing = map.get(key);
-                    // Update timestamp to latest
-                    if (new Date(item.timestamp) > new Date(existing.timestamp)) {
-                        existing.timestamp = item.timestamp;
-                    }
-                    if (!existing._mergedTypes.includes(item.type)) {
-                        existing._mergedTypes.push(item.type);
-                    }
+        return Array.from(map.values()).map((item: any) => {
+            let finalType = 'chat';
+            if (item._mergedTypes.includes('superInterest')) finalType = 'superInterest';
+            else if (item._mergedTypes.includes('super-interest')) finalType = 'superInterest';
+            else if (item._mergedTypes.includes('interest')) finalType = 'interest';
 
-                    // If this item has message text (assuming 'details' or 'text' or it's a chat type)
-                    // For now assuming 'chat' type items have the text in 'details' or 'message' property from backend
-                    // If not, we might need to rely on what keys are available. 
-                    // Based on interactionService, sendMessage returns 'text'. 
-                    // Let's look for 'text', 'details', 'message'.
-                    const text = item.text || item.details || item.message;
-                    if (text && item.type === 'chat') {
-                        existing._msgs.push({ text, ts: item.timestamp });
-                    }
-                });
+            item._msgs.sort((a: any, b: any) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+            const displayMsg = item._msgs.length > 0 ? item._msgs[0].text : (finalType !== 'chat' ? `${finalType === 'superInterest' ? 'Super Interest' : 'Interest'} Sent` : 'Message sent');
 
-                return Array.from(map.values()).map((item: any) => {
-                    // Determine dominant type
-                    let finalType = 'chat';
-                    if (item._mergedTypes.includes('superInterest')) finalType = 'super-interest';
-                    else if (item._mergedTypes.includes('super-interest')) finalType = 'super-interest'; // handle both casing
-                    else if (item._mergedTypes.includes('interest')) finalType = 'interest';
-
-                    // Determine display message
-                    // Sort msgs by timestamp desc
-                    item._msgs.sort((a: any, b: any) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
-                    const displayMsg = item._msgs.length > 0 ? item._msgs[0].text : (finalType !== 'chat' ? `${finalType === 'super-interest' ? 'Super Interest' : 'Interest'} Initiated` : 'Message sent');
-
-                    return {
-                        ...item,
-                        type: finalType,
-                        lastMessage: { text: displayMsg }
-                    };
-                });
+            return {
+                ...item,
+                type: finalType,
+                lastMessage: { text: displayMsg }
             };
-
-            // Filter for Sent Tab
-            const rawSent = activities.filter((a: any) =>
-                a.isSender &&
-                a.status === 'pending' &&
-                ['interest', 'superInterest', 'super-interest', 'chat'].includes(a.type)
-            );
-            setSentInterests(mergeActivities(rawSent));
-
-            // Filter for Received Tab
-            const rawReceived = activities.filter((a: any) =>
-                !a.isSender &&
-                a.status === 'pending' &&
-                ['interest', 'superInterest', 'super-interest', 'chat'].includes(a.type)
-            );
-            setReceivedInterests(mergeActivities(rawReceived));
-
-
-            // 3. Accepted Conversations: Only those where status is 'accepted'
-            const acceptedPartners = new Set(activities.filter((a: any) => a.status === 'accepted').map((a: any) => a.isSender ? String(a.receiver) : String(a.sender)));
-
-            const acceptedConvs = convs.filter(c => acceptedPartners.has(String(c.advocate.id)));
-
-            // Also add partners who are accepted but we haven't messaged yet
-            activities.filter((a: any) => a.status === 'accepted').forEach((act: any) => {
-                const partnerId = act.isSender ? String(act.receiver) : String(act.sender);
-                if (!acceptedConvs.some(c => String(c.advocate.id) === partnerId)) {
-                    acceptedConvs.push({
-                        advocate: {
-                            id: partnerId,
-                            unique_id: act.partnerUniqueId,
-                            name: act.partnerName,
-                            profilePic: act.partnerImg,
-                            location: act.partnerLocation
-                        } as any,
-                        lastMessage: {
-                            id: `act-${act._id}`,
-                            senderId: act.sender,
-                            receiverId: act.receiver,
-                            text: 'Request accepted. Start chatting!',
-                            timestamp: act.timestamp
-                        },
-                        unreadCount: 0
-                    });
-                }
-            });
-
-            setConversations(acceptedConvs);
-
-            // 4. Get Call History
-            const calls = await callService.getCallHistory(myId);
-            setCallHistory(calls);
-
-        } catch (error) {
-            console.error("Error fetching messenger data:", error);
-        }
+        });
     };
 
-    useEffect(() => {
-        fetchData();
-        const interval = setInterval(fetchData, 10000); // 10s is safer for performance
-        return () => clearInterval(interval);
-    }, [user]);
+    const sentInterests = React.useMemo(() => {
+        // Partners who have a pending interest OR just a chat activity sent to them
+        const activePartnerIds = new Set(allActivities
+            .filter((a: any) => a.isSender && (a.status === 'pending' || a.type === 'chat'))
+            .map((a: any) => String(a.receiver))
+        );
+
+        // Partners who are already accepted (should not show in Sent tab anymore)
+        const acceptedPartnerIds = new Set(allActivities
+            .filter((a: any) => a.status === 'accepted')
+            .map((a: any) => a.isSender ? String(a.receiver) : String(a.sender))
+        );
+
+        return mergeActivities(allActivities.filter((a: any) =>
+            a.isSender &&
+            activePartnerIds.has(String(a.receiver)) &&
+            !acceptedPartnerIds.has(String(a.receiver)) &&
+            ['interest', 'superInterest', 'chat'].includes(a.type)
+        ));
+    }, [allActivities]);
+
+    const receivedInterests = React.useMemo(() => {
+        // Partners who have sent a pending interest OR a chat message to me
+        const activePartnerIds = new Set(allActivities
+            .filter((a: any) => !a.isSender && (a.status === 'pending' || a.type === 'chat'))
+            .map((a: any) => String(a.sender))
+        );
+
+        // Partners who are already accepted (should not show in Received tab anymore)
+        const acceptedPartnerIds = new Set(allActivities
+            .filter((a: any) => a.status === 'accepted')
+            .map((a: any) => a.isSender ? String(a.receiver) : String(a.sender))
+        );
+
+        return mergeActivities(allActivities.filter((a: any) =>
+            !a.isSender &&
+            activePartnerIds.has(String(a.sender)) &&
+            !acceptedPartnerIds.has(String(a.sender)) &&
+            ['interest', 'superInterest', 'chat'].includes(a.type)
+        ));
+    }, [allActivities]);
+
+    const acceptedConversations = React.useMemo(() => {
+        const acceptedPartners = new Set(allActivities.filter((a: any) => a.status === 'accepted').map((a: any) => a.isSender ? String(a.receiver) : String(a.sender)));
+        const list = conversations.filter((c: Conversation) => acceptedPartners.has(String(c.advocate.id)));
+
+        allActivities.filter((a: any) => a.status === 'accepted').forEach((act: any) => {
+            const partnerId = act.isSender ? String(act.receiver) : String(act.sender);
+            if (!list.some(c => String(c.advocate.id) === partnerId)) {
+                list.push({
+                    advocate: {
+                        id: partnerId,
+                        unique_id: act.partnerUniqueId,
+                        name: act.partnerName,
+                        profilePic: act.partnerImg,
+                        location: act.partnerLocation
+                    } as any,
+                    lastMessage: {
+                        id: `act-${act._id}`,
+                        senderId: act.sender,
+                        receiverId: act.receiver,
+                        text: 'Request accepted. Start chatting!',
+                        timestamp: act.timestamp
+                    },
+                    unreadCount: 0
+                });
+            }
+        });
+        return list;
+    }, [allActivities, conversations]);
 
     const handleDeleteActivity = async (activityId: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -200,18 +197,16 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
         if (!window.confirm("Are you sure you want to remove this interaction?")) return;
 
-        // Optimistic update
-        setReceivedInterests(prev => prev.filter(item => (item._id || item.id) !== activityId));
-
         try {
             await interactionService.deleteActivity(activityId);
-            fetchData();
+            queryClient.invalidateQueries({ queryKey: ['activities'] });
         } catch (error) {
             console.error("Failed to delete activity:", error);
             alert("Failed to delete interaction.");
-            fetchData(); // Rollback
         }
     };
+
+    const { handleInteraction } = useInteractions(); // Toast handled by hook
 
     const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
         e.stopPropagation();
@@ -221,22 +216,23 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             return;
         }
 
-        if (user?.status === 'Pending') {
-            alert("Your profile is still under verification. You can respond to requests once approved.");
+        const activity = allActivities.find((a: any) => (a._id || a.id) === activityId);
+        if (!activity) {
+            console.error("Activity not found locally", activityId);
             return;
         }
 
-        // Optimistic Update: Immediately remove from list
-        setReceivedInterests(prev => prev.filter(item => (item._id || item.id) !== activityId));
+        const partnerId = String(activity.clientId || activity.sender);
+        const partnerRole = activity.partnerRole || 'client'; // Fallback, but should be there
+        const partner = { id: partnerId, role: partnerRole, name: activity.partnerName };
 
         try {
-            console.log(`Responding to ${activityId} with ${status}`);
-            await interactionService.respondToActivity(activityId, status);
-            fetchData(); // Refresh lists to move to accepted tab or ensure sync
+            console.log(`Responding to ${activityId} via hook with ${status}`);
+            await handleInteraction(partner, status === 'accepted' ? 'accept' : 'decline');
+            // Queries invalidated by hook
         } catch (error: any) {
-            console.error("Failed to respond to activity:", error);
-            alert(`Failed to update status: ${error.message || 'Server Error'}`);
-            fetchData(); // Revert/Refresh on error
+            console.error("Failed to respond via hook:", error);
+            // Alert handled optionally by hook if toast provided, otherwise we might see console error
         }
     };
 
@@ -246,7 +242,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             const partnerId = String(selectedConversation?.advocate.id || selectedAdvocate?.id);
 
             const fetchMsgs = async () => {
-                const msgs = await interactionService.getConversationMessages(currentUserId, partnerId);
+                const msgs = await interactionService.getConversationMessages(currentUserId, partnerId, currentUserId);
                 setMessages(msgs);
                 chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             };
@@ -262,6 +258,8 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             return;
         }
 
+        // ... existing send message logic ... 
+        // We keep this manual for now to get the returned message object for optimistic UI
         const currentUserId = String(user?.id);
         const partnerId = String(selectedConversation?.advocate.id || selectedAdvocate?.id);
 
@@ -270,6 +268,9 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
         const sentMsg = await interactionService.sendMessage(currentUserId, partnerId, messageText);
         setMessages(prev => [...prev, sentMsg]);
         setMessageText("");
+
+        queryClient.invalidateQueries({ queryKey: ['activities', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
     };
 
     const handleBack = () => {
@@ -320,7 +321,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
         const conv: Conversation = {
             advocate: {
-                id: partner.id || partner._id || partner.partnerId,
+                id: String(partner.id || partner._id || partner.partnerId || partner.receiver || partner.sender),
                 unique_id: partner.unique_id || partner.partnerUniqueId,
                 name: partner.name || partner.partnerName,
                 profilePic: partner.profilePic || partner.img || partner.partnerImg
@@ -328,6 +329,45 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             unreadCount: 0
         };
         setSelectedConversation(conv);
+    };
+
+    const handleBlock = async (partnerId: string, displayName: string) => {
+        if (!confirm(`Block ${displayName}? They will no longer be able to contact you.`)) return;
+        try {
+            const partner = { id: partnerId, role: (selectedConversation?.advocate as any)?.role || 'advocate', name: displayName };
+            await handleInteraction(partner, 'block');
+            setSelectedConversation(null);
+            // queries invalidated by hook
+        } catch (e) {
+            // error handled
+        }
+    };
+
+    const handleReport = async (partnerId: string) => {
+        const reason = prompt("Please provide a reason for reporting this user:");
+        if (!reason) return;
+        try {
+            const partner = { id: partnerId, role: (selectedConversation?.advocate as any)?.role || 'advocate' };
+            await handleInteraction(partner, 'report', { reason });
+            setIsMoreOpen(false);
+        } catch (e) {
+            // error handled
+        }
+    };
+
+    const handleAddContact = async (partnerId: string, displayName: string) => {
+        try {
+            const partner = { id: partnerId, role: (selectedConversation?.advocate as any)?.role || 'advocate', name: displayName };
+            await handleInteraction(partner, 'shortlist');
+        } catch (e) {
+            // error handled
+        }
+    };
+
+    const handleDeleteChat = async () => {
+        if (!confirm("Remove this conversation from your list? This won't delete it for the other person.")) return;
+        // Logic to clear conversation locally or via activity
+        setSelectedConversation(null);
     };
 
     const handleViewCallHistory = async (partnerId: string) => {
@@ -338,7 +378,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             // Better: Filter existing callHistory if it's already there or fetch specifically for this relationship
             // For now, let's assume getCallHistory(myId) was already called, but we want partner specific.
             // Let's refine the API or filter here.
-            const partnerHistory = callHistory.filter(c =>
+            const partnerHistory = callHistory.filter((c: any) =>
                 (String(c.caller) === String(user?.id) && String(c.receiver) === String(partnerId)) ||
                 (String(c.receiver) === String(user?.id) && String(c.caller) === String(partnerId))
             );
@@ -393,18 +433,49 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
         const displayId = activeConv?.advocate.unique_id || selectedAdvocate?.unique_id || '---';
 
         return (
-            <div className={styles.fullChatContainer} style={{ background: 'rgba(30, 41, 59, 0.4)' }}>
+            <div className={styles.fullChatContainer}>
                 <header className={styles.chatHeader}>
                     <div className={styles.headerLeft}>
                         <button className={styles.backBtn} onClick={handleBack}>
                             <ArrowLeft size={20} />
                         </button>
-                        <div className={styles.avatarMini}>
-                            {displayName.charAt(0)}
+                        <div className={styles.profileClickArea} onClick={() => setSelectedProfileId(String(activeConv?.advocate.id || selectedAdvocate?.id))}>
+                            <div className={styles.avatarMini}>
+                                {displayName.charAt(0)}
+                            </div>
+                            <div className={styles.headerInfo}>
+                                <h3>{displayName}</h3>
+                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>ID: {displayId}</span>
+                            </div>
                         </div>
-                        <div className={styles.headerInfo}>
-                            <h3>{displayName}</h3>
-                            <span style={{ fontSize: '11px', color: '#94a3b8' }}>ID: {displayId}</span>
+                    </div>
+
+                    <div className={styles.headerActions}>
+                        <button className={styles.headerActionBtn} onClick={() => handleCall(String(activeConv?.advocate.id || selectedAdvocate?.id), 'audio')} title="Voice Call">
+                            <Phone size={18} />
+                        </button>
+                        <button className={styles.headerActionBtn} onClick={() => handleCall(String(activeConv?.advocate.id || selectedAdvocate?.id), 'video')} title="Video Call">
+                            <Video size={18} />
+                        </button>
+
+                        <div className={styles.moreWrapper}>
+                            <button className={styles.headerActionBtn} onClick={() => setIsMoreOpen(!isMoreOpen)}>
+                                <MoreVertical size={18} />
+                            </button>
+
+                            {isMoreOpen && (
+                                <div className={styles.dropdown}>
+                                    <button onClick={() => {
+                                        navigator.clipboard.writeText(window.location.href);
+                                        alert('Profile link copied!');
+                                        setIsMoreOpen(false);
+                                    }}>Share Profile</button>
+                                    <button onClick={() => handleAddContact(String(activeConv?.advocate.id || selectedAdvocate?.id), displayName)}>Add to Contacts</button>
+                                    <button onClick={handleDeleteChat}>Delete Chat</button>
+                                    <button onClick={() => handleBlock(String(activeConv?.advocate.id || selectedAdvocate?.id), displayName)} className={styles.blockBtn}>Block User</button>
+                                    <button onClick={() => handleReport(String(activeConv?.advocate.id || selectedAdvocate?.id))}>Report User</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -445,7 +516,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
     const renderList = () => {
         switch (activeTab) {
             case 'accepted':
-                return conversations.length === 0 ? (
+                return acceptedConversations.length === 0 ? (
                     <div className={styles.emptyState}>
                         <MessageSquare size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
                         <h3>No active chats</h3>
@@ -453,7 +524,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     </div>
                 ) : (
                     <div className={styles.conversationList}>
-                        {conversations.map(conv => (
+                        {acceptedConversations.map(conv => (
                             <div
                                 key={conv.advocate.unique_id}
                                 className={styles.convItem}
@@ -462,7 +533,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 <img
                                     src={formatImageUrl((conv.advocate as any).profilePic || (conv.advocate as any).img)}
                                     alt={conv.advocate.name}
-                                    className={styles.convAvatar}
+                                    className={`${styles.convAvatar} ${conv.advocate.isBlur ? styles.blurredAvatar : ''}`}
                                 />
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
@@ -508,7 +579,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                             })}>
                                 <img
                                     src={formatImageUrl(act.partnerImg)}
-                                    className={styles.convAvatar}
+                                    className={`${styles.convAvatar} ${act.isBlur ? styles.blurredAvatar : ''}`}
                                     alt={act.partnerName}
                                 />
                                 <div className={styles.convDetails}>
@@ -523,9 +594,15 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                             {act.partnerUniqueId}
                                         </span>
                                         <span>•</span>
-                                        <span style={{ color: '#facc15', fontWeight: 'bold' }}>PENDING</span>
+                                        <span style={{ color: act.type === 'superInterest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
+                                            {act.type === 'superInterest' ? 'SUPER INTEREST' : act.type.toUpperCase()}
+                                        </span>
                                     </div>
-                                    <p className={styles.lastMsg}>Interaction: {act.type}</p>
+                                    {act.lastMessage?.text && (
+                                        <p className={styles.lastMsg} style={{ color: '#e2e8f0', marginTop: '4px' }}>
+                                            {act.lastMessage.text}
+                                        </p>
+                                    )}
                                 </div>
                                 <button className={styles.deleteBtn} onClick={(e) => handleDeleteActivity(act._id, e)}>
                                     <Trash2 size={18} />
@@ -535,69 +612,148 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     </div>
                 );
             case 'received':
-                return receivedInterests.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <MessageSquare size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
-                        <h3>No received interests</h3>
-                        <p>Requests from others will appear here for your response.</p>
-                    </div>
-                ) : (
-                    <div className={styles.conversationList}>
-                        {receivedInterests.map(act => {
-                            const actId = String(act._id || act.id);
-                            if (!actId || actId === 'undefined') return null;
+                let listToRender: any[] = [];
+                let isRequestList = true;
 
-                            return (
-                                <div key={actId} className={styles.convItem} onClick={() => handleOpenChat({
-                                    id: act.clientId || act.sender,
-                                    unique_id: act.partnerUniqueId,
-                                    name: act.partnerName,
-                                    img: act.partnerImg
-                                })}>
-                                    <img
-                                        src={formatImageUrl(act.partnerImg)}
-                                        className={styles.convAvatar}
-                                        alt={act.partnerName}
-                                    />
-                                    <div className={styles.convDetails}>
-                                        <div className={styles.convTitleRow}>
-                                            <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
-                                                {act.partnerName}
-                                            </h4>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
-                                                <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(actId, e); }}>
-                                                    <Trash2 size={14} />
-                                                </button>
+                if (receivedFilter === 'chats') {
+                    listToRender = acceptedConversations;
+                    isRequestList = false;
+                } else {
+                    // Show all pending requests for 'All' or 'Interest with Message'
+                    // This fixes the issue where items were disappearing due to missing message bubbles
+                    listToRender = receivedInterests;
+                }
+
+                return (
+                    <div className={styles.receivedSection}>
+                        <div className={styles.filterBarRow}>
+                            <div className={styles.controlGroup}>
+                                <button
+                                    className={`${styles.filterBtn} ${receivedFilter === 'all' ? styles.filterBtnActive : ''}`}
+                                    onClick={() => setReceivedFilter('all')}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    className={`${styles.filterBtn} ${receivedFilter === 'message' ? styles.filterBtnActive : ''}`}
+                                    onClick={() => setReceivedFilter('message')}
+                                >
+                                    Interest with Message
+                                </button>
+                                <button
+                                    className={`${styles.filterBtn} ${receivedFilter === 'chats' ? styles.filterBtnActive : ''}`}
+                                    onClick={() => setReceivedFilter('chats')}
+                                >
+                                    Chats
+                                </button>
+                            </div>
+                        </div>
+
+                        {listToRender.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                <MessageSquare size={48} color="#facc15" style={{ marginBottom: '20px', opacity: 0.5 }} />
+                                <h3>No matching {receivedFilter === 'chats' ? 'chats' : 'requests'}</h3>
+                                <p>{receivedFilter === 'chats' ? 'Accepted chats will appear here.' : 'Try changing your filter settings.'}</p>
+                            </div>
+                        ) : (
+                            <div className={styles.conversationList}>
+                                {listToRender.map((item: any) => {
+                                    if (receivedFilter === 'chats') {
+                                        // Render like Accepted Chat
+                                        const conv = item as Conversation;
+                                        const partnerId = String(conv.advocate.id || (conv.advocate as any)._id);
+                                        return (
+                                            <div
+                                                key={conv.advocate.unique_id || partnerId}
+                                                className={styles.convItem}
+                                                onClick={() => handleSelectConversation(conv)}
+                                            >
+                                                <img
+                                                    src={formatImageUrl((conv.advocate as any).profilePic || (conv.advocate as any).img)}
+                                                    alt={conv.advocate.name}
+                                                    className={`${styles.convAvatar} ${conv.advocate.isBlur ? styles.blurredAvatar : ''}`}
+                                                />
+                                                <div className={styles.convDetails}>
+                                                    <div className={styles.convTitleRow}>
+                                                        <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(partnerId, e); }} style={{ cursor: 'pointer' }}>
+                                                            {conv.advocate.name}
+                                                        </h4>
+                                                        <span className={styles.convTime}>
+                                                            {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                        </span>
+                                                    </div>
+                                                    <div className={styles.convSub}>
+                                                        <span onClick={(e) => { e.stopPropagation(); handleClientClick(partnerId, e); }} style={{ cursor: 'pointer' }}>
+                                                            {conv.advocate.unique_id || 'ID: N/A'}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span style={{ color: '#22c55e', fontWeight: 'bold' }}>ACCEPTED CHAT</span>
+                                                    </div>
+                                                    <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className={styles.convSub}>
-                                            <span onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
-                                                {act.partnerUniqueId}
-                                            </span>
-                                            <span>•</span>
-                                            <span style={{ color: act.type === 'super-interest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
-                                                {act.type === 'super-interest' ? 'SUPER INTEREST' : act.type.toUpperCase()}
-                                            </span>
-                                        </div>
-                                        {act.lastMessage?.text && (
-                                            <p className={styles.lastMsg} style={{ color: '#e2e8f0', marginTop: '4px' }}>
-                                                {act.lastMessage.text}
-                                            </p>
-                                        )}
-                                        <div className={styles.actButtons}>
-                                            <button className={styles.acceptBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'accepted', e); }}>Accept</button>
-                                            <button className={styles.declineBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'declined', e); }}>Ignore</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                        );
+                                    } else {
+                                        // Render like Pending Request
+                                        const act = item;
+                                        const actId = String(act._id || act.id);
+                                        if (!actId || actId === 'undefined') return null;
+
+                                        return (
+                                            <div key={actId} className={styles.convItem} onClick={() => handleOpenChat({
+                                                id: act.clientId || act.sender,
+                                                unique_id: act.partnerUniqueId,
+                                                name: act.partnerName,
+                                                img: act.partnerImg,
+                                                role: act.partnerRole
+                                            })}>
+                                                <img
+                                                    src={formatImageUrl(act.partnerImg)}
+                                                    className={`${styles.convAvatar} ${act.isBlur ? styles.blurredAvatar : ''}`}
+                                                    alt={act.partnerName}
+                                                />
+                                                <div className={styles.convDetails}>
+                                                    <div className={styles.convTitleRow}>
+                                                        <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
+                                                            {act.partnerName}
+                                                        </h4>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                                                            <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); handleDeleteActivity(actId, e); }}>
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.convSub}>
+                                                        <span onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
+                                                            {act.partnerUniqueId}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span style={{ color: act.type === 'super-interest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
+                                                            {act.type === 'super-interest' ? 'SUPER INTEREST' : act.type.toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                    {act.lastMessage?.text && (
+                                                        <p className={styles.lastMsg} style={{ color: '#e2e8f0', marginTop: '4px' }}>
+                                                            {act.lastMessage.text}
+                                                        </p>
+                                                    )}
+                                                    <div className={styles.actButtons}>
+                                                        <button className={styles.acceptBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'accepted', e); }}>Accept</button>
+                                                        <button className={styles.declineBtn} onClick={(e) => { e.stopPropagation(); handleResponse(actId, 'declined', e); }}>Ignore</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                })}
+                            </div>
+                        )}
                     </div>
                 );
             case 'calls':
-                const filteredCalls = callHistory.filter(call => {
-                    const matchesTab = callsSubTab === 'sent' ? call.isSender : !call.isSender;
+                const filteredCalls = callHistory.filter((call: any) => {
+                    const matchesTab = callsSubTab === 'all' ? true : (callsSubTab === 'sent' ? call.isSender : !call.isSender);
                     const matchesFilter = callsFilter === 'all' || call.type === callsFilter;
                     return matchesTab && matchesFilter;
                 });
@@ -606,6 +762,12 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                     <div className={styles.callsSection}>
                         <div className={styles.callsControlsRow}>
                             <div className={styles.controlGroup}>
+                                <button
+                                    className={`${styles.subTab} ${callsSubTab === 'all' ? styles.subTabActive : ''}`}
+                                    onClick={() => setCallsSubTab('all')}
+                                >
+                                    All
+                                </button>
                                 <button
                                     className={`${styles.subTab} ${callsSubTab === 'received' ? styles.subTabActive : ''}`}
                                     onClick={() => setCallsSubTab('received')}
@@ -638,7 +800,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                             </div>
                         ) : (
                             <div className={styles.conversationList}>
-                                {filteredCalls.map(call => (
+                                {filteredCalls.map((call: any) => (
                                     <div key={call._id} className={styles.convItem}>
                                         <img
                                             src={formatImageUrl(call.partnerDetails.image_url)}
@@ -709,25 +871,40 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
             {/* Full Depth Detailed Profile Popup */}
             {selectedProfileId && (
-                <DetailedProfile
+                <DetailedProfileEnhanced
                     profileId={selectedProfileId}
-                    isModal={true}
                     onClose={() => setSelectedProfileId(null)}
                     backToProfiles={() => setSelectedProfileId(null)}
-                    items={activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : undefined}
+                    items={(() => {
+                        if (activeTab === 'sent') return sentInterests;
+                        if (activeTab === 'received') {
+                            return receivedFilter === 'chats' ? acceptedConversations : receivedInterests;
+                        }
+                        return activeTab === 'accepted' ? acceptedConversations : undefined;
+                    })()}
                     currentIndex={(() => {
-                        const list = activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : [];
+                        let list: any[] = [];
+                        if (activeTab === 'sent') list = sentInterests;
+                        else if (activeTab === 'received') list = receivedFilter === 'chats' ? acceptedConversations : receivedInterests;
+                        else if (activeTab === 'accepted') list = acceptedConversations;
+
                         if (!list.length) return undefined;
                         return list.findIndex(item => {
-                            const pid = activeTab === 'received' ? (item.clientId || item.sender) : (item.advocateId || item.receiver);
+                            // Unified ID check
+                            const pid = item.advocate ? String(item.advocate.id) : (item.clientId || item.sender || item.advocateId || item.receiver);
                             return String(pid) === String(selectedProfileId);
                         });
                     })()}
                     onNavigate={(idx) => {
-                        const list = activeTab === 'received' ? receivedInterests : activeTab === 'sent' ? sentInterests : [];
+                        let list: any[] = [];
+                        if (activeTab === 'sent') list = sentInterests;
+                        else if (activeTab === 'received') list = receivedFilter === 'chats' ? acceptedConversations : receivedInterests;
+                        else if (activeTab === 'accepted') list = acceptedConversations;
+
                         if (list && list[idx]) {
                             const item = list[idx];
-                            const pid = activeTab === 'received' ? (item.clientId || item.sender) : (item.advocateId || item.receiver);
+                            // Unified ID extraction
+                            const pid = item.advocate ? String(item.advocate.id) : (item.clientId || item.sender || item.advocateId || item.receiver);
                             if (pid) setSelectedProfileId(String(pid));
                         }
                     }}
@@ -769,7 +946,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 </div>
                             ) : (
                                 <div className={styles.historyTimeline}>
-                                    {partnerCallHistory.map((call, idx) => (
+                                    {partnerCallHistory.map((call: any, idx: number) => (
                                         <div key={call._id || idx} className={styles.timelineItem}>
                                             <div className={styles.timelineIcon} style={{ background: call.isSender ? 'rgba(59, 130, 246, 0.1)' : 'rgba(34, 197, 94, 0.1)' }}>
                                                 {call.isSender ?

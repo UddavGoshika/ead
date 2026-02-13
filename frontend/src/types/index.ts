@@ -24,6 +24,8 @@ export interface User {
     coinsReceived?: number;
     coinsUsed?: number;
     rejectionReason?: string;
+    relationship_state?: string;
+    subscription_state?: 'FREE' | 'PREMIUM';
 }
 
 export interface AuthResponse {
@@ -70,6 +72,7 @@ export interface Advocate {
     specialties: string[];
     rating: number;
     image_url: string;
+    profileImage?: string;
     profilePicPath?: string;
     cases_handled: number;
     age?: number;
@@ -96,12 +99,26 @@ export interface Advocate {
     maritalStatus?: string;
     bar_council_id?: string;
     isMasked?: boolean;
+    isBlur?: boolean;
     contactInfo?: {
         email: string;
         mobile: string;
         whatsapp?: string;
     };
+    allowChat?: boolean;
+    allowCall?: boolean;
+    allowVideo?: boolean;
+    allowMeet?: boolean;
     shares?: number;
+    relationship_state?: string;
+    // Additional properties for detailed profile
+    specialization?: string;
+    subSpecialization?: string;
+    phone?: string;
+    email?: string;
+    licenseId?: string;
+    city?: string;
+    state?: string;
 }
 
 export interface Client {
@@ -121,7 +138,15 @@ export interface Client {
         mobile: string;
         whatsapp?: string;
     };
+    display_id?: string;
+    isBlur?: boolean;
+    isMasked?: boolean;
+    allowChat?: boolean;
+    allowCall?: boolean;
+    allowVideo?: boolean;
+    allowMeet?: boolean;
     shares?: number;
+    relationship_state?: string;
 }
 export type MemberStatus = "Active" | "Deactivated" | "Blocked" | "Pending" | "Deleted";
 

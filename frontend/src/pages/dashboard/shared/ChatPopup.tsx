@@ -11,18 +11,21 @@ import {
     X,
     Shield,
     MapPin,
-    Lock,
-    Star
+    Lock
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { advocateService, clientService } from '../../../services/api'; // Added this line
 import { interactionService } from '../../../services/interactionService';
 import { useCall } from '../../../context/CallContext';
+import { useInteractions } from '../../../hooks/useInteractions';
 import type { Message } from '../../../services/interactionService';
 import type { Advocate } from '../../../types';
 
 import PremiumTryonModal from './PremiumTryonModal';
+import DetailedProfileEnhanced from './DetailedProfileEnhanced';
 import { formatImageUrl } from '../../../utils/imageHelper';
+
+import SocialShareModal from '../../../components/shared/SocialShareModal';
 
 interface ChatPopupProps {
     advocate: any; // Relaxed type to handle both Advocate and Client profiles efficiently
@@ -34,7 +37,17 @@ interface ChatPopupProps {
 const resolveUserId = (entity: any) => {
     if (!entity) return null;
     if (typeof entity === 'string') return entity;
-    const uid = entity.userId?._id || entity.userId || entity._id || entity.id;
+
+    // Ordered by reliability for these partial activity/messenger objects
+    const uid =
+        entity.partnerUserId ||
+        entity.userId?._id ||
+        entity.userId ||
+        entity.partnerId ||
+        entity._id ||
+        entity.id;
+
+    if (!uid || String(uid) === 'undefined' || String(uid) === 'null') return null;
     return String(uid);
 };
 
@@ -43,11 +56,22 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     const [messages, setMessages] = useState<Message[]>([]);
     const [advocate, setAdvocate] = useState<any>(initialAdvocate);
     const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+    // Sync state with props if they change (e.g. if key remount failed or wasn't used)
+    useEffect(() => {
+        if (initialAdvocate) {
+            setAdvocate(initialAdvocate);
+        }
+    }, [initialAdvocate]);
+
     const [showTrialModal, setShowTrialModal] = useState(false);
     const [interactionStatus, setInteractionStatus] = useState<'none' | 'interest' | 'superInterest'>('none');
     const [activeActivityId, setActiveActivityId] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
     const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
+    const [showDetailedProfile, setShowDetailedProfile] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
     const { user, refreshUser } = useAuth();
@@ -64,28 +88,60 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     // Fetch Full Profile if missing data (like exp or if it's a placeholder)
     useEffect(() => {
         const fetchFullProfile = async () => {
-            if (!partnerUserId) return;
+            if (!partnerUserId || partnerUserId === 'undefined' || partnerUserId === 'null') {
+                console.warn('[ChatPopup] Cannot fetch: Invalid partnerUserId', partnerUserId);
+                return;
+            }
 
             // If it looks like a placeholder ID or is missing experience/location, fetch full
             const needsFetch = !advocate.experience || !advocate.location || advocate.unique_id === 'ADV-100001';
 
             if (needsFetch && !isLoadingProfile) {
+                console.log('[ChatPopup] Triggering full profile fetch for:', partnerUserId);
                 setIsLoadingProfile(true);
                 try {
-                    console.log('[ChatPopup] Fetching full profile for:', partnerUserId);
-                    // Try advocate first
-                    const res = await advocateService.getAdvocateById(partnerUserId);
-                    if (res.data.success && res.data.advocate) {
-                        setAdvocate(res.data.advocate);
-                    } else {
-                        // Try client
-                        const cRes = await clientService.getClientById(partnerUserId);
-                        if (cRes.data.success && cRes.data.client) {
-                            setAdvocate({ ...cRes.data.client, role: 'client' });
+                    let foundData = null;
+                    setProfileError(null);
+
+                    // 1. Try advocate first
+                    try {
+                        const res = await advocateService.getAdvocateById(partnerUserId);
+                        if (res.data.success && res.data.advocate) {
+                            foundData = res.data.advocate;
+                        }
+                    } catch (e) {
+                        console.log('[ChatPopup] Advocate record not found, trying client...', partnerUserId);
+                    }
+
+                    // 2. Try client if advocate failed
+                    if (!foundData) {
+                        try {
+                            const cRes = await clientService.getClientById(partnerUserId);
+                            if (cRes.data.success && cRes.data.client) {
+                                foundData = { ...cRes.data.client, role: 'client' };
+                            }
+                        } catch (e) {
+                            console.log('[ChatPopup] Client record not found either', partnerUserId);
                         }
                     }
+
+                    // 3. Final Verification and State Update
+                    if (foundData) {
+                        const verifiedId = resolveUserId(foundData);
+                        if (verifiedId === partnerUserId) {
+                            console.log('[ChatPopup] Successfully fetched and verified profile:', foundData.name);
+                            setAdvocate(foundData);
+                        } else {
+                            console.error('[ChatPopup] ID Mismatch in fetched data! Intended:', partnerUserId, 'Fetched:', verifiedId);
+                            setProfileError('Security mismatch: Profile ID does not match request');
+                        }
+                    } else {
+                        console.warn('[ChatPopup] No profile found for ID in either collection');
+                        setProfileError('User profile details not found in system');
+                    }
                 } catch (e) {
-                    console.error('[ChatPopup] Profile fetch failed', e);
+                    console.error('[ChatPopup] Global Profile fetch crash', e);
+                    setProfileError('System error loading profile details');
                 } finally {
                     setIsLoadingProfile(false);
                 }
@@ -125,6 +181,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                 setActiveActivityId(act._id || act.id);
                 if (act.type.includes('super')) setInteractionStatus('superInterest');
                 else if (act.type === 'interest') setInteractionStatus('interest');
+                else setInteractionStatus('interest'); // Treat chat/other as 'active' to hide buttons
             } else {
                 setInteractionStatus('none');
             }
@@ -180,37 +237,32 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
         }
     };
 
-    const handleSendInterest = async () => {
-        const action = interactionStatus === 'interest' ? 'superInterest' : 'interest';
-        const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
-        const targetProfileId = String(advocate.id || advocate._id);
 
-        try {
-            const res = await interactionService.recordActivity(targetRole, targetProfileId, action, currentUserId);
-            if (res) {
-                if (res.coins !== undefined) {
-                    refreshUser({ coins: res.coins, coinsUsed: res.coinsUsed, coinsReceived: res.coinsReceived });
-                }
-                setInteractionStatus(action);
-                fetchStatus(); // Refresh to get the activity ID
-                alert(`${action === 'superInterest' ? 'Super Interest' : 'Interest'} sent successfully!`);
-            }
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Operation failed');
-        }
-    };
+    const { handleInteraction } = useInteractions(); // Toast handled by hook if passed, but here we might want custom alerts?
+    // ChatPopup uses alerts mostly. useInteractions uses showToast if provided.
+    // Let's pass a wrapper for alert? or just use hook's toast if we can get it?
+    // ChatPopup doesn't receive showToast prop.
+    // We can use a local wrapper or just rely on the hook's return and alert locally?
+    // The hook swallows errors if showToast is NOT provided? No, it re-throws.
+    // Let's pass a dummy toast that logs or alerts?
+    // Better: Refactor ChatPopup to use a toast context if available, or just alert.
+    // For now, let's pass a simple alert wrapper to useInteractions.
+
+    const showToastWrapper = (msg: string) => alert(msg);
+    const { handleInteraction: performInteraction } = useInteractions(showToastWrapper);
 
     const handleWithdrawInterest = async () => {
-        if (!activeActivityId) return;
+        if (!partnerUserId) return;
         if (!confirm("Are you sure you want to withdraw or delete this interest?")) return;
 
         try {
-            await interactionService.deleteActivity(activeActivityId);
+            // Ensure role is present
+            const profileWithRole = { ...advocate, id: partnerUserId };
+            await performInteraction(profileWithRole, 'withdraw');
             setInteractionStatus('none');
             setActiveActivityId(null);
-            alert("Interaction removed."); // Changed alert message
         } catch (e) {
-            alert("Failed to remove interaction."); // Changed alert message
+            // Alert handled by hook wrapper
         }
     };
 
@@ -226,13 +278,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     const handleBlock = async () => {
         if (!confirm(`Block ${displayName}? They will no longer be able to contact you.`)) return;
         try {
-            const targetProfileId = String(advocate.id || advocate._id);
-            const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
-            await interactionService.recordActivity(targetRole, targetProfileId, 'block', currentUserId);
-            alert("User blocked successfully."); // Changed alert message
+            const profileWithRole = { ...advocate, id: partnerUserId };
+            await performInteraction(profileWithRole, 'block');
             onClose();
         } catch (e) {
-            alert("Block failed. Please try again."); // Changed alert message
+            // Alert handled by hook wrapper
         }
     };
 
@@ -240,30 +290,25 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
         const reason = prompt("Please provide a reason for reporting this user:");
         if (!reason) return;
         try {
-            const targetProfileId = String(advocate.id || advocate._id);
-            const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
-            await interactionService.recordActivity(targetRole, targetProfileId, 'report', currentUserId);
-            alert("User reported. Our team will investigate.");
+            const profileWithRole = { ...advocate, id: partnerUserId };
+            await performInteraction(profileWithRole, 'report', { reason });
             setIsMoreOpen(false);
         } catch (e) {
-            alert("Report failed.");
+            // Alert handled by hook wrapper
         }
     };
 
     const handleAddContact = async () => {
         try {
-            const targetProfileId = String(advocate.id || advocate._id);
-            const targetRole = advocate.role === 'client' ? 'client' : 'advocate';
-            await interactionService.recordActivity(targetRole, targetProfileId, 'shortlist', currentUserId);
-            alert(`${displayName} added to your contacts/shortlist.`);
+            const profileWithRole = { ...advocate, id: partnerUserId };
+            await performInteraction(profileWithRole, 'shortlist');
         } catch (e) {
-            alert("Failed to add contact.");
+            // Alert handled by hook wrapper
         }
     };
 
     const handleDeleteChat = async () => {
         if (!confirm("Remove this conversation from your list? This won't delete it for the other person.")) return;
-        // Currently we delete the 'chat' activity if it exists
         if (activeActivityId) {
             try {
                 await interactionService.deleteActivity(activeActivityId);
@@ -296,17 +341,21 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                     <button className={styles.backBtn} onClick={onClose}>
                         <ChevronLeft size={24} />
                     </button>
-                    <img
-                        src={formatImageUrl(displayImage)}
-                        alt={displayName}
-                        className={`${styles.avatar} ${!isPremium ? styles.blurredAvatar : ''}`}
-                        onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}
-                    />
-                    <div className={styles.titleInfo}>
-                        <h3 title={displayName}>{displayName}</h3>
-                        <div className={styles.idStatusRow}>
-                            <span className={`${styles.uniqueId} ${!isPremium ? styles.blurredText : ''}`}>{displayId}</span>
-                            <span className={styles.status} style={{ color: '#10b981' }}>• Online</span>
+                    <div className={styles.profileClickArea} onClick={() => setShowDetailedProfile(true)}>
+                        <img
+                            src={formatImageUrl(displayImage)}
+                            alt={displayName}
+                            className={`${styles.avatar} ${!isPremium ? styles.blurredAvatar : ''}`}
+                            onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}
+                        />
+                        <div className={styles.titleInfo}>
+                            <h3 title={displayName}>{displayName}</h3>
+                            <div className={styles.idStatusRow}>
+                                <span className={`${styles.uniqueId} ${!isPremium ? styles.blurredText : ''}`}>{displayId}</span>
+                                <span className={styles.status} style={{ color: profileError ? '#ef4444' : '#10b981' }}>
+                                    • {profileError || 'Online'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div className={styles.headerActions}>
@@ -320,51 +369,47 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                             {isMoreOpen && (
                                 <div className={styles.dropdown}>
                                     <button onClick={() => {
-                                        navigator.clipboard.writeText(window.location.href);
-                                        alert('Profile link copied!');
+                                        setShowShareModal(true);
                                         setIsMoreOpen(false);
                                     }}>Share Profile</button>
-                                    <button onClick={handleDeleteChat}>Delete Chat</button>
+                                    {/* <button onClick={handleDeleteChat}>Delete Chat</button> */}
                                     <button onClick={handleBlock} className={styles.blockBtn}>Block User</button>
-                                    <button onClick={handleReport}>Report User</button>
+                                    {/* <button onClick={handleReport}>Report User</button> */}
                                 </div>
                             )}
                         </div>
                     </div>
                 </header>
 
+                <SocialShareModal
+                    isOpen={showShareModal}
+                    onClose={() => setShowShareModal(false)}
+                    url={window.location.host + '/profile/' + displayId} // Construct a shareable profile URL
+                    title={`Check out ${displayName}'s profile on e-Advocate`}
+                />
+
                 <div className={styles.detailsSection}>
-                    <div className={styles.detailsList}>
-                        {expStr && <div className={styles.detailItem}>{expStr} Exp</div>}
-                        <div className={styles.detailItem}>{specStr}</div>
-                        <div className={styles.detailItem}>
-                            <MapPin size={10} style={{ marginRight: 4 }} />
-                            {locationStr}
+                    <div className={styles.detailsRow}>
+                        <div className={styles.detailsList}>
+                            {expStr && <div className={styles.detailItem}>{expStr} Exp</div>}
+                            <div className={styles.detailItem}>{specStr}</div>
+                            <div className={styles.detailItem}>
+                                <MapPin size={10} className={styles.mapPinIcon} />
+                                {locationStr}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className={styles.quickActionsRow}>
-                        {interactionStatus !== 'superInterest' ? (
-                            <button className={styles.sendInterestBtn} onClick={handleSendInterest}>
-                                <Mail size={18} />
-                                {interactionStatus === 'none' ? 'Send Interest' : 'Send Super Interest'}
+
+                        <div className={styles.headerCallActions}>
+                            <button className={styles.miniCallBtn} onClick={() => handleCall('audio')} title="Audio Call">
+                                <Phone size={14} />
+                                <span>Audio</span>
                             </button>
-                        ) : (
-                            <button className={styles.sendInterestBtn} style={{ background: '#ef4444' }} onClick={handleWithdrawInterest}>
-                                <X size={18} />
-                                Delete Interest
+                            <button className={styles.miniCallBtn} onClick={() => handleCall('video')} title="Video Call">
+                                <Video size={14} />
+                                <span>Video</span>
                             </button>
-                        )}
-
-                        <button className={styles.callOptionBtn} onClick={() => handleCall('audio')}>
-                            <Phone size={18} />
-                            <span>Audio</span>
-                        </button>
-
-                        <button className={styles.callOptionBtn} onClick={() => handleCall('video')}>
-                            <Video size={18} />
-                            <span>Video</span>
-                        </button>
+                        </div>
                     </div>
                 </div>
 
@@ -403,12 +448,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                 </div>
 
                 <div className={styles.inputArea}>
-                    {!advocate.allowChat && !isOwner ? (
-                        <div className={styles.upgradeNotice} style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-                            <Lock size={16} color="#ef4444" />
-                            <p style={{ color: '#ef4444' }}>Messaging has been disabled by this user.</p>
-                        </div>
-                    ) : isPremium ? (
+                    {isPremium ? (
                         <>
                             <p className={styles.tipText}>Secure, end-to-end encrypted messaging.</p>
                             <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
@@ -435,6 +475,14 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
             </div >
             {showTrialModal && (
                 <PremiumTryonModal onClose={() => setShowTrialModal(false)} />
+            )}
+            {showDetailedProfile && (
+                <DetailedProfileEnhanced
+                    profileId={partnerUserId}
+                    backToProfiles={() => setShowDetailedProfile(false)}
+                    onClose={() => setShowDetailedProfile(false)}
+                    listTitle="Messenger"
+                />
             )}
         </div >
     );

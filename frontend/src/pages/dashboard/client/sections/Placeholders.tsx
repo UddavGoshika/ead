@@ -3,6 +3,8 @@ import { ArrowLeft, Construction, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../../context/AuthContext';
 import { advocateService } from '../../../../services/api';
 import { interactionService } from '../../../../services/interactionService';
+import { useInteractions } from '../../../../hooks/useInteractions';
+import { useRelationshipStore } from '../../../../store/useRelationshipStore';
 import type { Advocate } from '../../../../types';
 import AdvocateCard from '../../../../components/dashboard/AdvocateCard';
 import styles from '../AdvocateList.module.css';
@@ -43,6 +45,10 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
         location: 'Location',
         experience: 'Experience'
     });
+
+    // NEW: Use hook
+    const { handleInteraction } = useInteractions();
+    const interactedIds = useRelationshipStore((state: any) => state.interactedIds);
 
     const fetchAdvocates = async () => {
         setLoading(true);
@@ -129,41 +135,42 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                         const plan = user?.plan || 'Free';
                         const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
-                        return advocates.map(adv => (
-                            <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
-                                <AdvocateCard
-                                    advocate={adv}
-                                    variant="normal"
-                                    isPremium={isPremium}
-                                    onAction={async (action: string, data?: string) => {
-                                        if (user) {
-                                            const targetId = String(adv.id);
-                                            const userId = String(user.id);
-                                            const targetRole = 'advocate';
+                        return advocates
+                            .filter(adv => !interactedIds.has(String(adv.id))) // Filter using hook state
+                            .map(adv => (
+                                <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
+                                    <AdvocateCard
+                                        advocate={adv}
+                                        variant="normal"
+                                        isPremium={isPremium}
+                                        onAction={async (action: string, data?: any) => {
+                                            if (user) {
+                                                const targetId = String(adv.id);
+                                                // Handle specific navigation actions
+                                                if (action === 'openFullChatPage') {
+                                                    // onAction usually passed from parent, but here we have prop
+                                                    // interactionService.recordActivity('chat') is not strictly needed for navigation
+                                                    // but we can preserve it if we want.
+                                                    // Let's just navigate.
+                                                    onSelectForChat(adv);
+                                                    return;
+                                                }
 
-                                            if (action === 'interest_initiated' || action === 'interest') {
-                                                await interactionService.recordActivity(targetRole, targetId, 'interest', userId);
-                                                showToast(`Interest sent to ${adv.name}`);
-                                            } else if (action === 'super_interest_sent' || action === 'super-interest') {
-                                                await interactionService.recordActivity(targetRole, targetId, 'superInterest', userId);
-                                                showToast(`Super Interest sent to ${adv.name}!`);
-                                            } else if (action === 'shortlisted') {
-                                                await interactionService.recordActivity(targetRole, targetId, 'shortlist', userId);
-                                                showToast(`${adv.name} added to shortlist`);
-                                            } else if (action === 'openFullChatPage') {
-                                                await interactionService.recordActivity(targetRole, targetId, 'chat', userId);
-                                                onSelectForChat(adv);
-                                            } else if (action === 'message_sent' && data) {
-                                                await interactionService.sendMessage(userId, targetId, data);
-                                                showToast(`Message sent to ${adv.name}`);
-                                            } else {
-                                                showToast(`Advocate ${adv.name}: ${action}`);
+                                                // Delegate to hook
+                                                try {
+                                                    await handleInteraction({
+                                                        id: targetId,
+                                                        role: 'advocate',
+                                                        name: adv.name
+                                                    }, action, data);
+                                                } catch (err) {
+                                                    console.error("Interaction failed", err);
+                                                }
                                             }
-                                        }
-                                    }}
-                                />
-                            </div>
-                        ));
+                                        }}
+                                    />
+                                </div>
+                            ));
                     })()}
                 </div>
             )}
