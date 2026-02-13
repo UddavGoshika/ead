@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, RefreshCcw, User, MapPin, Briefcase, ShieldCheck, Mail, Phone, Calendar, Globe, Clock, Layout, FileText } from 'lucide-react';
+import { X, CheckCircle, RefreshCcw, User, MapPin, Briefcase, ShieldCheck, Mail, Phone, Calendar, Globe, Clock, Layout, FileText, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './ClientRegistration.module.css';
@@ -45,6 +45,9 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         mobile: '',
         email: '',
         password: '',
+        confirmPassword: '',
+        showPassword: false,
+        showConfirmPassword: false,
         documentType: '',
         document: null,
         profilePic: null,
@@ -106,9 +109,13 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         const newErrors: Record<string, boolean> = {};
 
         if (stepId === 1) {
-            ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'password', 'documentType'].forEach(field => {
+            ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'password', 'confirmPassword', 'documentType'].forEach(field => {
                 if (!formData[field]) newErrors[field] = true;
             });
+            if (formData.password !== formData.confirmPassword) {
+                newErrors['confirmPassword'] = true;
+                // You might want to show a specific error message here but for now just marking the field
+            }
             if (!formData.document) newErrors['document'] = true;
             if (!formData.profilePic) newErrors['profilePic'] = true;
         } else if (stepId === 2) {
@@ -403,7 +410,63 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Password *</label>
-                                <input type="password" value={formData.password || ''} onChange={(e) => updateFormData('password', e.target.value)} className={errors.password ? styles.inputError : ''} />
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={formData.showPassword ? "text" : "password"}
+                                        value={formData.password || ''}
+                                        onChange={(e) => updateFormData('password', e.target.value)}
+                                        className={errors.password ? styles.inputError : ''}
+                                        placeholder="Min 6 characters"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => updateFormData('showPassword', !formData.showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '10px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#64748b'
+                                        }}
+                                    >
+                                        {formData.showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label>Confirm Password *</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={formData.showConfirmPassword ? "text" : "password"}
+                                        value={formData.confirmPassword || ''}
+                                        onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+                                        className={errors.confirmPassword ? styles.inputError : ''}
+                                        placeholder="Re-enter password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => updateFormData('showConfirmPassword', !formData.showConfirmPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '10px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#64748b'
+                                        }}
+                                    >
+                                        {formData.showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                                {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                                    <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>Passwords do not match</p>
+                                )}
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Document Type *</label>
