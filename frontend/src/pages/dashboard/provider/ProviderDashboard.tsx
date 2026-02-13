@@ -6,7 +6,7 @@ import FeaturedProfiles from '../advocate/sections/FeaturedProfiles';
 import EditProfile from '../shared/EditProfile';
 import SearchPreferences from '../shared/SearchPreferences';
 import SafetyCenter from '../shared/SafetyCenter';
-import DetailedProfile from '../shared/DetailedProfile';
+import DetailedProfile from '../shared/DetailedProfileEnhanced';
 import {
     NormalProfiles, HelpSupport
 } from '../advocate/sections/Placeholders';
