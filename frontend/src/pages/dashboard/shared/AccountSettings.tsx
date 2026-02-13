@@ -607,6 +607,12 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
                   disabled={!selectedGateway || isProcessing}
                   onClick={async () => {
                     if (!selectedGateway) return;
+
+                    if (user?.status === 'Pending' || user?.status === 'Reverify') {
+                      alert("You are under verification, can't checkout");
+                      return;
+                    }
+
                     setIsProcessing(true);
                     try {
                       const result = await PaymentManager.getInstance().processPayment(

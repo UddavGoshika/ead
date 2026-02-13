@@ -87,6 +87,10 @@ const PlanOverview: React.FC = () => {
     ];
 
     const handleActivateDemo = async () => {
+        if (user?.status === 'Pending' || user?.status === 'Reverify') {
+            alert("You are under verification, can't activate trial.");
+            return;
+        }
         try {
             const response = await fetch('/api/auth/activate-demo', {
                 method: 'POST',
@@ -121,7 +125,16 @@ const PlanOverview: React.FC = () => {
                         <span>Activate 1-Day Trial</span>
                     </button>
                 )}
-                <button className={styles.upgradeBtn}>
+                <button
+                    className={styles.upgradeBtn}
+                    onClick={() => {
+                        if (user?.status === 'Pending' || user?.status === 'Reverify') {
+                            alert("You are under verification, can't upgrade.");
+                        } else {
+                            window.location.href = '/premium-services';
+                        }
+                    }}
+                >
                     <ArrowUpRight size={18} />
                     <span>Upgrade Plan</span>
                 </button>

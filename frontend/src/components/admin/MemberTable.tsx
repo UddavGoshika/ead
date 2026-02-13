@@ -345,13 +345,22 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
 
     const handleBulkDelete = async () => {
         if (selectedIds.length === 0) return;
-        if (window.confirm(`Are you sure you want to delete ${selectedIds.length} selected members?`)) {
+
+        const isPermanent = context === 'deleted';
+        const confirmMsg = isPermanent
+            ? `CRITICAL: Are you sure you want to PERMANENTLY DELETE ${selectedIds.length} members? This cannot be undone.`
+            : `Are you sure you want to delete ${selectedIds.length} selected members?`;
+
+        if (window.confirm(confirmMsg)) {
             try {
-                const res = await axios.post('/api/admin/members/bulk-delete', { ids: selectedIds });
+                const res = await axios.post('/api/admin/members/bulk-delete', {
+                    ids: selectedIds,
+                    permanent: isPermanent
+                });
                 if (res.data.success) {
                     setMembers(prev => prev.filter(m => !selectedIds.includes(m.id)));
                     setSelectedIds([]);
-                    alert("Bulk delete successful");
+                    alert(res.data.message || "Bulk delete successful");
                 }
             } catch (err) {
                 alert("Error in bulk delete");

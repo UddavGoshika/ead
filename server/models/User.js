@@ -77,6 +77,13 @@ const UserSchema = new mongoose.Schema({
 });
 
 UserSchema.pre('save', function (next) {
+    // ENFORCEMENT: Pending/Reverify users MUST be on Free plan
+    if (this.status === 'Pending' || this.status === 'Reverify') {
+        this.plan = 'Free';
+        this.planType = 'Free';
+        this.planTier = null;
+    }
+
     const planStr = (this.plan || '').toLowerCase();
     const typeStr = (this.planType || '').toLowerCase();
 
@@ -88,7 +95,12 @@ UserSchema.pre('save', function (next) {
     } else {
         // Fallback or explicit check for demo trial
         if (this.demoUsed && this.demoExpiry > Date.now()) {
-            this.isPremium = true;
+            // Force disable demo benefit if pending
+            if (this.status === 'Pending' || this.status === 'Reverify') {
+                this.isPremium = false;
+            } else {
+                this.isPremium = true;
+            }
         } else {
             this.isPremium = false;
         }

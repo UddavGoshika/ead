@@ -749,13 +749,34 @@ router.patch('/members/:id/wallet', async (req, res) => {
 // BULK DELETE MEMBERS
 router.post('/members/bulk-delete', async (req, res) => {
     try {
-        const { ids } = req.body;
+        const { ids, permanent } = req.body;
         if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
 
-        // Soft Delete Users by updating status
-        await User.updateMany({ _id: { $in: ids } }, { status: 'Deleted' });
+        if (permanent) {
+            // Permanent Delete Logic
+            // 1. Get users to find their roles (to delete profiles)
+            const users = await User.find({ _id: { $in: ids } });
 
-        res.json({ success: true, message: `Moved ${ids.length} members to deleted list successfully` });
+            for (const user of users) {
+                const role = (user.role || '').toLowerCase();
+                if (role === 'advocate' || role === 'legal_provider') {
+                    await Advocate.deleteOne({ userId: user._id });
+                } else if (role === 'client') {
+                    await Client.deleteOne({ userId: user._id });
+                } else {
+                    await StaffProfile.deleteOne({ userId: user._id });
+                }
+            }
+
+            await User.deleteMany({ _id: { $in: ids } });
+            return res.json({ success: true, message: `Permanently deleted ${ids.length} members` });
+
+        } else {
+            // Soft Delete Users by updating status
+            await User.updateMany({ _id: { $in: ids } }, { status: 'Deleted' });
+            return res.json({ success: true, message: `Moved ${ids.length} members to deleted list successfully` });
+        }
+
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

@@ -230,6 +230,11 @@ const Preservices: React.FC = () => {
         if (activeCategory === "free") { alert("Free plan is already available."); return; }
         if (!selectedGateway) { alert("Please select a payment method."); return; }
 
+        if (user?.status === 'Pending' || user?.status === 'Reverify') {
+            alert("You are under verification, can't checkout");
+            return;
+        }
+
         setIsProcessing(true);
         try {
             const currentPkg = getCurrentPackage();
@@ -606,6 +611,11 @@ const Preservices: React.FC = () => {
                                         if (!selectedTier) { alert("Please select a tier."); return; }
                                         if (activeCategory === "free") { alert("Free plan is already available."); return; }
                                         if (!selectedGateway) { alert("Please select a payment method."); return; }
+
+                                        if (user?.status === 'Pending' || user?.status === 'Reverify') {
+                                            alert("You are under verification, can't checkout");
+                                            return;
+                                        }
 
                                         setIsProcessing(true);
                                         try {

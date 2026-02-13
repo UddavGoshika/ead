@@ -325,6 +325,81 @@ const AppContent: React.FC = () => {
           <Route path="members/deactivated" element={<DeactivatedMembers />} />
           <Route path="members/deleted" element={<DeletedMembers />} />
           <Route path="members/login-details" element={<LoginMemberDetails />} />
+
+          <Route path="members/bulk-add" element={<BulkMemberAdd />} />
+          <Route path="members/attributes" element={<Navigate to="attributes/practice-areas" replace />} />
+          <Route path="attributes/practice-areas" element={<PracticeAreas />} />
+          <Route path="attributes/courts" element={<Courts />} />
+          <Route path="attributes/specializations" element={<Specializations />} />
+          <Route path="attributes/case-types" element={<CaseTypes />} />
+          <Route path="attributes/language" element={<MemberLanguage />} />
+          <Route path="attributes/country" element={<Country />} />
+          <Route path="attributes/state" element={<State />} />
+          <Route path="attributes/city" element={<City />} />
+          <Route path="attributes/id-proof" element={<IdProofTypes />} />
+          <Route path="attributes/experience" element={<ExperienceLevels />} />
+          <Route path="members/profile-sections" element={<ProfileSections />} />
+
+          <Route path="premium-packages" element={<PremiumPackages />} />
+          <Route path="package-payments" element={<PackagePayments />} />
+
+          <Route path="legal-docs/providers" element={<DocumentationProviders />} />
+          <Route path="legal-docs/agreements" element={<AgreementsList />} />
+          <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
+          <Route path="legal-docs/notices" element={<NoticesList />} />
+          <Route path="legal-docs/services" element={<LegalDocumentServices />} />
+
+          <Route path="wallet/history" element={<WalletHistory />} />
+          <Route path="wallet/recharge" element={<WalletRecharge />} />
+
+          <Route path="blog/posts" element={<AllPosts />} />
+          <Route path="blog/categories" element={<BlogCategories />} />
+
+          <Route path="marketing/newsletter" element={<Newsletter />} />
+          <Route path="contact-queries" element={<ContactQueries />} />
+
+          <Route path="referral/commission" element={<ReferralCommission />} />
+          <Route path="referral/users" element={<ReferralUsers />} />
+          <Route path="referral/earnings" element={<ReferralEarnings />} />
+          <Route path="referral/withdraw" element={<WalletWithdraw />} />
+
+          <Route path="support/active" element={<ActiveTickets />} />
+          <Route path="support/settings/category" element={<SupportCategory />} />
+          <Route path="support/settings/agent" element={<AssignedAgent />} />
+
+          <Route path="otp/templates" element={<SmsTemplates />} />
+          <Route path="otp/credentials" element={<OtpCredentials />} />
+          <Route path="otp/send" element={<SendSms />} />
+
+          <Route path="offline-payments/manual" element={<ManualPayments />} />
+          <Route path="uploaded-files" element={<UploadedFiles />} />
+
+          <Route path="setup/header" element={<HeaderSetup />} />
+          <Route path="setup/footer" element={<FooterSetup />} />
+          <Route path="setup/pages" element={<PagesSetup />} />
+          <Route path="setup/appearance" element={<AppearanceSetup />} />
+          <Route path="setup/ecosystem" element={<EcosystemSetup />} />
+
+          <Route path="settings/general" element={<GeneralSettings />} />
+          <Route path="settings/language" element={<LanguageSettings />} />
+          <Route path="settings/currency" element={<CurrencySettings />} />
+          <Route path="settings/payments" element={<PaymentMethods />} />
+          <Route path="settings/smtp" element={<SmtpSettings />} />
+          <Route path="settings/email-templates" element={<EmailTemplates />} />
+          <Route path="settings/third-party" element={<ThirdPartySettings />} />
+          <Route path="settings/social-login" element={<SocialLogin />} />
+          <Route path="settings/push-notification" element={<PushNotification />} />
+
+          <Route path="staffs/all" element={<AllStaffs />} />
+          <Route path="staffs/roles" element={<StaffRoles />} />
+          <Route path="staffs/outsourced" element={<Outsourcing />} />
+          <Route path="staffs/registration" element={<SuperRegistration />} />
+
+          <Route path="system/update" element={<SystemUpdate />} />
+          <Route path="system/status" element={<ServerStatus />} />
+
+          <Route path="manager-permissions" element={<ManagerPermissions />} />
+          <Route path="addon-manager" element={<AddonManager />} />
         </Route>
 
         {/* CATCH ALL */}
