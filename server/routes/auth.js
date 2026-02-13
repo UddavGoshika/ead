@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
             }
 
             // CHECK STATUS AFTER PROFILE FETCH TO INCLUDE REASON
-            if (['Blocked', 'Deactivated', 'Deleted'].includes(user.status)) {
+            if (user.role !== 'admin' && ['Blocked', 'Deactivated', 'Deleted'].includes(user.status)) {
                 return res.status(403).json({
                     error: 'ACCOUNT_RESTRICTED',
                     message: `Your account is ${user.status}. Please contact support.`,
