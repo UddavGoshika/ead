@@ -284,39 +284,26 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, 
             {/* ========== CAPTCHA VERIFICATION ========= */}
             <div className={styles.signatureSection}>
                 <h4>🛡️ Security Verification</h4>
-                <div className={styles.captchaContainer} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div className={styles.captchaBox} style={{
-                        background: 'linear-gradient(45deg, #222, #333)',
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        fontFamily: 'monospace',
-                        fontSize: '24px',
-                        letterSpacing: '5px',
-                        color: '#fbbf24',
-                        userSelect: 'none',
-                        border: '1px dashed #555'
-                    }}>
-                        <span className={styles.captchaText}>{captchaCode}</span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={generateCaptcha}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
+                <div className={styles.captchaContainer} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '15px' }}>
+                    <div className={styles.captchaRow} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div className={styles.captchaBox} style={{
+                            background: 'linear-gradient(45deg, #222, #333)',
+                            padding: '10px 20px',
+                            borderRadius: '8px',
+                            fontFamily: 'monospace',
+                            fontSize: '24px',
+                            letterSpacing: '5px',
                             color: '#fbbf24',
-                            padding: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        title="Refresh Captcha"
-                    >
-                        <RefreshCcw size={20} />
-                    </button>
+                            userSelect: 'none',
+                            border: '1px dashed #555',
+                            minWidth: '160px',
+                            textAlign: 'center'
+                        }}>
+                            <span className={styles.captchaText}>{captchaCode}</span>
+                        </div>
+                    </div>
 
-                    <div className={styles.captchaInputGroup}>
+                    <div className={styles.captchaInputGroup} style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '180px' }}>
                         <input
                             type="text"
                             placeholder="Type Code"
@@ -334,11 +321,29 @@ const Step9Review: React.FC<StepProps> = ({ formData, updateFormData, onSubmit, 
                                 border: `1px solid ${errors?.captchaVerified ? '#ef4444' : '#444'}`,
                                 backgroundColor: '#1a1a1a',
                                 color: '#fff',
-                                width: '150px'
+                                width: '100%'
                             }}
                         />
-                        {formData.captchaVerified && <span className={styles.verifySuccess} style={{ color: '#10b981', marginLeft: '10px' }}>✔ Verified</span>}
+                        <button
+                            type="button"
+                            onClick={generateCaptcha}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#fbbf24',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                padding: '0'
+                            }}
+                            className={styles.refreshBtn}
+                        >
+                            <RefreshCcw size={14} /> Refresh Captcha
+                        </button>
                     </div>
+                    {formData.captchaVerified && <span className={styles.verifySuccess} style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px' }}>✔ Verified</span>}
                 </div>
             </div>
 

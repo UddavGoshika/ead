@@ -115,15 +115,13 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
                 <div>
                     {/* Contact Channels Grid */}
                     {/* Contact Channels Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <a href="tel:+9118004567890" style={{ textDecoration: 'none' }}>
                             <div className={styles.card} style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '10px' }}>
                                 <div className={styles.iconBox}><Phone size={24} /></div>
                                 <div>
                                     <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>Call Us</h4>
-                                    <p style={{ fontSize: '12px', color: '#facc15' }}>+91 70937 04706
-
-                                    </p>
+                                    <p style={{ fontSize: '10px', color: '#facc15' }}>+91 70937 04706</p>
                                 </div>
                             </div>
                         </a>
@@ -132,11 +130,27 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
                                 <div className={styles.iconBox}><Mail size={24} /></div>
                                 <div>
                                     <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>Email Us</h4>
-                                    <p style={{ fontSize: '12px', color: '#facc15' }}>info.eadvocateservices@gmail.com
-                                    </p>
+                                    <p style={{ fontSize: '10px', color: '#facc15' }}>info.eadvocateservices@gmail.com</p>
                                 </div>
                             </div>
                         </a>
+                    </div>
+
+                    <div
+                        className={styles.card}
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-support-hub'))}
+                        style={{
+                            marginBottom: '30px',
+                            cursor: 'pointer',
+                            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.2))',
+                            border: '1px solid rgba(59, 130, 246, 0.3)'
+                        }}
+                    >
+                        <div className={styles.iconBox} style={{ background: '#3b82f6' }}><MessageSquare size={24} /></div>
+                        <div>
+                            <h4 style={{ color: '#fff', margin: '0 0 5px 0' }}>Live Instant Support</h4>
+                            <p style={{ fontSize: '13px', color: '#3b82f6' }}>Connect with an official support agent right now.</p>
+                        </div>
                     </div>
 
                     <h3 style={{ color: '#facc15', margin: '0 0 20px 0', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>

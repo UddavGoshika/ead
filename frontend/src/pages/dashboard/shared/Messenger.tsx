@@ -94,7 +94,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
             if (!existing._mergedTypes.includes(item.type)) {
                 existing._mergedTypes.push(item.type);
             }
-            const text = item.text || item.details || item.message;
+            const text = item.text || item.details || item.message || item.metadata?.text;
             if (text && item.type === 'chat') {
                 existing._msgs.push({ text, ts: item.timestamp });
             }
@@ -245,10 +245,60 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                 const msgs = await interactionService.getConversationMessages(currentUserId, partnerId, currentUserId);
                 setMessages(msgs);
                 chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+                // Mark as read
+                await interactionService.markAsRead(currentUserId, partnerId);
+                // Refresh conversations to clear unread count badge
+                queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
             };
             fetchMsgs();
         }
     }, [user, selectedConversation, selectedAdvocate]);
+
+    // REAL-TIME SOCKET LISTENER
+    useEffect(() => {
+        const handleSocketMessage = (e: any) => {
+            const data = e.detail;
+            const currentUserId = String(user?.id);
+            const partnerId = String(selectedConversation?.advocate.id || selectedAdvocate?.id);
+
+            console.log('[Messenger] Socket event received:', {
+                currentUserId,
+                partnerId,
+                senderId: data.senderId,
+                msgSender: data.message?.sender
+            });
+
+            // 1. If we are in the chat with this person, add message to UI
+            if (partnerId !== "undefined" && (String(data.senderId) === partnerId || (String(data.message.sender) === partnerId))) {
+                console.log('[Messenger] Updating current chat thread');
+                const newMsg = {
+                    id: data.message._id || data.message.id,
+                    senderId: String(data.message.sender),
+                    receiverId: String(data.message.receiver),
+                    text: data.message.text,
+                    timestamp: new Date(data.message.timestamp).getTime()
+                };
+
+                setMessages(prev => {
+                    if (prev.some(m => m.id === newMsg.id)) return prev;
+                    return [...prev, newMsg];
+                });
+
+                if (String(data.message.receiver) === currentUserId) {
+                    interactionService.markAsRead(currentUserId, partnerId);
+                }
+            }
+
+            // 2. Refresh lists regardless to update "latest message" and unread counts
+            console.log('[Messenger] Invalidating conversations query');
+            queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['activities', user?.id] });
+        };
+
+        window.addEventListener('socket-message', handleSocketMessage);
+        return () => window.removeEventListener('socket-message', handleSocketMessage);
+    }, [user?.id, selectedConversation, selectedAdvocate]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -555,7 +605,14 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                             </>
                                         )}
                                     </div>
-                                    <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
+                                    <div className={styles.convMsgRow}>
+                                        <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
+                                        {conv.unreadCount > 0 && (
+                                            <div className={styles.unreadBadge}>
+                                                {conv.unreadCount}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -689,7 +746,14 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                         <span>•</span>
                                                         <span style={{ color: '#22c55e', fontWeight: 'bold' }}>ACCEPTED CHAT</span>
                                                     </div>
-                                                    <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
+                                                    <div className={styles.convMsgRow}>
+                                                        <p className={styles.lastMsg}>{conv.lastMessage?.text || 'Chat active'}</p>
+                                                        {conv.unreadCount > 0 && (
+                                                            <div className={styles.unreadBadge}>
+                                                                {conv.unreadCount}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

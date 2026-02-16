@@ -20,6 +20,10 @@ const PremiumTryonModal: React.FC<PremiumTryonModalProps> = ({ onClose }) => {
 
     const handleActivate = async () => {
         if (!user?.id) return;
+        if (user?.status === 'Pending' || user?.status === 'Reverify') {
+            alert("Your account is under verification. Premium trial cannot be activated yet.");
+            return;
+        }
         setIsLoading(true);
         try {
             const res = await axios.post('/api/auth/activate-demo', { userId: user.id });

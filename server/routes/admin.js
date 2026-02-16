@@ -133,13 +133,18 @@ router.delete('/packages/:id', async (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         const stats = {
-            totalUsers: await User.countDocuments(),
-            totalAdvocates: await User.countDocuments({ role: 'advocate' }),
-            totalClients: await User.countDocuments({ role: 'client' }),
-            totalManagers: await User.countDocuments({ role: { $in: ['manager', 'MANAGER'] } }),
-            totalTeamLeads: await User.countDocuments({ role: { $in: ['teamlead', 'TEAMLEAD'] } }),
+            totalUsers: await User.countDocuments({
+                role: { $in: ['client', 'advocate', 'legal_provider'] },
+                status: { $ne: 'Deleted' }
+            }),
+            totalAdvocates: await User.countDocuments({ role: 'advocate', status: { $ne: 'Deleted' } }),
+            totalClients: await User.countDocuments({ role: 'client', status: { $ne: 'Deleted' } }),
+            totalLegalAdvisors: await User.countDocuments({ role: 'legal_provider', status: { $ne: 'Deleted' } }),
+            totalManagers: await User.countDocuments({ role: { $in: ['manager', 'MANAGER'] }, status: { $ne: 'Deleted' } }),
+            totalTeamLeads: await User.countDocuments({ role: { $in: ['teamlead', 'TEAMLEAD'] }, status: { $ne: 'Deleted' } }),
             totalStaff: await User.countDocuments({
-                role: { $nin: ['client', 'advocate', 'admin'], $exists: true }
+                role: { $nin: ['client', 'advocate', 'legal_provider', 'admin'], $exists: true },
+                status: { $ne: 'Deleted' }
             }),
             hrMetrics: {
                 attritionRate: 2.1,
@@ -148,8 +153,18 @@ router.get('/stats', async (req, res) => {
                 hiringPipeline: 14,
                 headcountTrend: [120, 125, 128, 132, 138, 142]
             },
-            verifiedAdvocates: await Advocate.countDocuments({ verified: true }),
-            pendingAdvocates: await Advocate.countDocuments({ verified: false }),
+            verifiedAdvocates: (await Advocate.aggregate([
+                { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+                { $unwind: '$user' },
+                { $match: { 'user.status': { $ne: 'Deleted' }, verified: true } },
+                { $count: 'count' }
+            ]))[0]?.count || 0,
+            pendingAdvocates: (await Advocate.aggregate([
+                { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+                { $unwind: '$user' },
+                { $match: { 'user.status': { $ne: 'Deleted' }, verified: false } },
+                { $count: 'count' }
+            ]))[0]?.count || 0,
             activeUnits: await User.countDocuments({ status: 'Active' }),
             blockedUnits: await User.countDocuments({ status: 'Blocked' }),
             deactivatedUnits: await User.countDocuments({ status: 'Deactivated' }),
@@ -390,6 +405,13 @@ router.patch('/members/:id/status', async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         createNotification('profileUpdate', `Member status updated to ${status} for ${user.email}`, 'Admin', null, { userId: user._id, status });
+
+        // Push update if it's a staff member
+        if (user.role !== 'client' && user.role !== 'advocate') {
+            const io = req.app.get('io');
+            if (io) io.emit('staff:updated');
+        }
+
         res.json({ success: true, user });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
@@ -495,6 +517,11 @@ router.patch('/members/:id/verify', async (req, res) => {
             }
 
             createNotification('profileUpdate', `Your staff profile was ${verified ? 'verified' : 'unverified'}`, 'Admin', user._id);
+
+            // Push update for staff
+            const io = req.app.get('io');
+            if (io) io.emit('staff:updated');
+
             res.json({ success: true, message: `Staff ${verified ? 'verified' : 'unverified'} successfully` });
         }
     } catch (err) {
@@ -551,6 +578,12 @@ router.patch('/members/:id/reject-inform', async (req, res) => {
         const emailText = `Hello ${profileName},\n\nThank you for your interest in E-Advocate.\n\nWe've reviewed your registration documents, and unfortunately, we couldn't verify your profile at this time for the following reason:\n\n**Reason for Rejection:**\n${remarks}\n\n**Solution & Next Steps:**\nTo get your profile approved, please:\n1. Log in to your dashboard here: ${req.protocol}://${req.get('host')}/login\n2. Navigate to the profile or document section.\n3. Correct the issues mentioned above (e.g., upload a clearer ID proof, correct your name, etc.).\n4. Resubmit your profile for verification.\n\nOur team will review your updated information within 12-24 hours.\n\nThank you,\nE-Advocate Team`;
 
         await sendEmail(user.email, emailSubject, emailText);
+
+        // Push update if it's a staff member
+        if (user.role !== 'client' && user.role !== 'advocate') {
+            const io = req.app.get('io');
+            if (io) io.emit('staff:updated');
+        }
 
         res.json({ success: true, message: 'Member rejected and informed via email' });
     } catch (err) {
@@ -799,19 +832,25 @@ router.delete('/members/:id', async (req, res) => {
 });
 
 // PERMANENT DELETE MEMBER
+// PERMANENT DELETE MEMBER
 router.delete('/members/:id/permanent', async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        if (user.role.toLowerCase() === 'advocate') {
+        const role = (user.role || '').toLowerCase();
+
+        if (role === 'advocate' || role === 'legal_provider') {
             await Advocate.deleteOne({ userId: user._id });
-        } else if (user.role.toLowerCase() === 'client') {
+        } else if (role === 'client') {
             await Client.deleteOne({ userId: user._id });
+        } else {
+            // Staff or other roles
+            await StaffProfile.deleteOne({ userId: user._id });
         }
 
         await User.findByIdAndDelete(user._id);
-        res.json({ success: true, message: 'Member deleted permanently from database' });
+        res.json({ success: true, message: 'Member and related profiles deleted permanently from database' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -954,7 +993,7 @@ router.delete('/blogs/:id', async (req, res) => {
 // ONBOARD STAFF MEMBER
 router.post('/onboard-staff', async (req, res) => {
     try {
-        const { email, fullName, loginId, tempPassword, role, department, vendor, level } = req.body;
+        const { email, fullName, phone, loginId, tempPassword, role, department, vendor, level } = req.body;
 
         if (!email || !fullName || !loginId || !tempPassword || !role) {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -971,9 +1010,9 @@ router.post('/onboard-staff', async (req, res) => {
         const newUser = await User.create({
             email,
             password: hashedPassword,
-
+            name: fullName,
+            phone: phone,
             plainPassword: tempPassword,
-
             role: role.toLowerCase(), // Changed from toUpperCase() to match Mongoose enum
             status: 'Active',
             coins: 0
@@ -1004,6 +1043,12 @@ router.post('/onboard-staff', async (req, res) => {
 
         await sendEmail(email, emailSubject, emailHTML.replace(/<[^>]*>?/gm, ''), emailHTML);
 
+        // Server Push for real-time dashboard updates
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('staff:updated');
+        }
+
         res.json({
             success: true,
             message: 'Staff onboarded successfully',
@@ -1019,24 +1064,36 @@ router.post('/onboard-staff', async (req, res) => {
 // GET ALL STAFF WITH PROFILES
 router.get('/staff', async (req, res) => {
     try {
-        // Fetch all users EXCEPT 'client' and 'advocate' to include all staff roles
         const users = await User.find({
             role: { $nin: ['client', 'advocate'], $exists: true }
         });
 
         const staffList = await Promise.all(users.map(async (u) => {
-            const profile = await StaffProfile.findOne({ userId: u._id });
+            const profile = await StaffProfile.findOne({ userId: u._id }).lean();
             return {
                 id: u._id,
                 email: u.email,
+                name: u.name,
                 role: u.role,
-                status: u.status,
+                status: u.status || 'Active',
                 createdAt: u.createdAt,
                 profile: profile || {}
             };
         }));
 
-        res.json({ success: true, staff: staffList });
+        // Server-side Role Distribution
+        const roleDistribution = staffList.reduce((acc, curr) => {
+            const r = curr.role || 'unknown';
+            acc[r] = (acc[r] || 0) + 1;
+            return acc;
+        }, {});
+
+        res.json({
+            success: true,
+            total: staffList.length,
+            staff: staffList,
+            roleStats: roleDistribution
+        });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

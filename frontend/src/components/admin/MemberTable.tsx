@@ -97,8 +97,9 @@ const MemberActions: React.FC<{
     onPackage: (member: Member) => void,
     onWallet: (member: Member) => void,
     onImpersonate: (member: Member) => void,
-    context?: MemberContext
-}> = ({ member, onDelete, onStatusUpdate, onView, onEdit, onVerify, onPackage, onWallet, onImpersonate, context = 'all' }) => {
+    context?: MemberContext,
+    isAdmin?: boolean
+}> = ({ member, onDelete, onStatusUpdate, onView, onEdit, onVerify, onPackage, onWallet, onImpersonate, context = 'all', isAdmin = false }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -171,56 +172,60 @@ const MemberActions: React.FC<{
                 <div className={styles.menu}>
                     <button onClick={() => { setOpen(false); onView(member); }}>View Profile</button>
 
-                    {/* Primary Context Actions */}
-                    {context === 'blocked' && (
-                        <button className={styles.primaryAction} onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Unblock Member</button>
-                    )}
-                    {context === 'free' && (
-                        <button className={styles.primaryAction} onClick={() => { setOpen(false); onPackage(member); }}>Upgrade to Pro</button>
-                    )}
-                    {member.status === 'Pending' && (
-                        <button className={styles.primaryAction} onClick={() => {
-                            if (window.confirm(`Quick approve ${member.name}?`)) {
-                                setOpen(false);
-                                onVerify(member); // Opens modal, or I could call a separate fast-verify
-                            }
-                        }}>Quick Review & Approve</button>
-                    )}
-                    <button onClick={() => { setOpen(false); onVerify(member); }}>Review Full Verification</button>
-                    {context === 'deactivated' && (
-                        <button className={styles.primaryAction} onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
-                    )}
-                    {context === 'reported' && (
-                        <button className={styles.primaryAction} onClick={() => { setOpen(false); onView(member); }}>Review Reports</button>
-                    )}
-
-                    <div className={styles.divider}></div>
-
-                    <button onClick={() => { setOpen(false); onEdit(member); }}>Edit Details</button>
-
-                    {member.status === 'Blocked' ? (
-                        <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Unblock Member</button>
-                    ) : (
-                        <button onClick={() => { setOpen(false); handleUpdateStatus("Blocked"); }}>Block Member</button>
-                    )}
-
-                    {member.status === 'Deactivated' ? (
-                        <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
-                    ) : (
-                        <button onClick={() => { setOpen(false); handleUpdateStatus("Deactivated"); }}>Deactivate Account</button>
-                    )}
-
-                    <button onClick={() => { setOpen(false); onPackage(member); }}>Manage Package</button>
-                    <button onClick={() => { setOpen(false); onWallet(member); }}>Wallet Balance</button>
-                    <button onClick={() => { setOpen(false); onImpersonate(member); }}>Log in as Member</button>
-
-                    {member.status === 'Deleted' ? (
+                    {isAdmin && (
                         <>
-                            <button className={styles.primaryAction} style={{ color: '#10b981' }} onClick={() => { setOpen(false); handleRestore(); }}>Restore Member</button>
-                            <button className={styles.delete} onClick={() => { setOpen(false); handlePermanentDelete(); }}>Delete Permanently</button>
+                            {/* Primary Context Actions */}
+                            {context === 'blocked' && (
+                                <button className={styles.primaryAction} onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Unblock Member</button>
+                            )}
+                            {context === 'free' && (
+                                <button className={styles.primaryAction} onClick={() => { setOpen(false); onPackage(member); }}>Upgrade to Pro</button>
+                            )}
+                            {member.status === 'Pending' && (
+                                <button className={styles.primaryAction} onClick={() => {
+                                    if (window.confirm(`Quick approve ${member.name}?`)) {
+                                        setOpen(false);
+                                        onVerify(member); // Opens modal, or I could call a separate fast-verify
+                                    }
+                                }}>Quick Review & Approve</button>
+                            )}
+                            <button onClick={() => { setOpen(false); onVerify(member); }}>Review Full Verification</button>
+                            {context === 'deactivated' && (
+                                <button className={styles.primaryAction} onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
+                            )}
+                            {context === 'reported' && (
+                                <button className={styles.primaryAction} onClick={() => { setOpen(false); onView(member); }}>Review Reports</button>
+                            )}
+
+                            <div className={styles.divider}></div>
+
+                            <button onClick={() => { setOpen(false); onEdit(member); }}>Edit Details</button>
+
+                            {member.status === 'Blocked' ? (
+                                <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Unblock Member</button>
+                            ) : (
+                                <button onClick={() => { setOpen(false); handleUpdateStatus("Blocked"); }}>Block Member</button>
+                            )}
+
+                            {member.status === 'Deactivated' ? (
+                                <button onClick={() => { setOpen(false); handleUpdateStatus("Active"); }}>Activate Account</button>
+                            ) : (
+                                <button onClick={() => { setOpen(false); handleUpdateStatus("Deactivated"); }}>Deactivate Account</button>
+                            )}
+
+                            <button onClick={() => { setOpen(false); onPackage(member); }}>Manage Package</button>
+                            <button onClick={() => { setOpen(false); onWallet(member); }}>Wallet Balance</button>
+                            <button onClick={() => { setOpen(false); onImpersonate(member); }}>Log in as Member</button>
+
+                            {member.status === 'Deleted' ? (
+                                <>
+                                    <button className={styles.primaryAction} style={{ color: '#10b981' }} onClick={() => { setOpen(false); handleRestore(); }}>Restore Member</button>
+                                    <button className={styles.delete} onClick={() => { setOpen(false); handlePermanentDelete(); }}>Delete Permanently</button>
+                                </>
+                            ) : (
+                                <button className={styles.delete} onClick={() => { setOpen(false); handleDelete(); }}>Delete Member</button>
+                            )}
                         </>
-                    ) : (
-                        <button className={styles.delete} onClick={() => { setOpen(false); handleDelete(); }}>Delete Member</button>
                     )}
                 </div>
             )}
@@ -229,7 +234,8 @@ const MemberActions: React.FC<{
 };
 
 const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaultStatus, context, initialRole, initialVerifiedFilter }) => {
-    const { openAdvocateReg, openClientReg, openLegalProviderReg, impersonate } = useAuth();
+    const { user, openAdvocateReg, openClientReg, openLegalProviderReg, impersonate } = useAuth();
+    const isAdmin = user?.role === 'admin';
     const [members, setMembers] = useState<Member[]>(initialMembers || []);
     const [loading, setLoading] = useState(!initialMembers);
     const [searchTerm, setSearchTerm] = useState("");
@@ -640,11 +646,11 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                     else if (role === 'legal_provider') mappedRole = 'Legal Provider';
                     setActiveRole(mappedRole as any);
                 }}
-                onAddClick={(role) => {
+                onAddClick={isAdmin ? (role) => {
                     if (role === 'advocate') openAdvocateReg();
                     else if (role === 'legal_provider') openLegalProviderReg();
                     else openClientReg();
-                }}
+                } : undefined}
                 placeholder="Search by name, code or phone..."
             />
 
@@ -1017,9 +1023,13 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                     ) : (
                                         <button
                                             className={styles.verifyActionBtn}
-                                            onClick={() => handleAction(m, 'verify')}
+                                            onClick={() => {
+                                                if (!isAdmin) return;
+                                                handleAction(m, 'verify');
+                                            }}
+                                            style={!isAdmin ? { cursor: 'default', opacity: 0.7 } : {}}
                                         >
-                                            Verify Member
+                                            {isAdmin ? "Verify Member" : "Action Pending"}
                                         </button>
                                     )}
                                 </td>
@@ -1086,6 +1096,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
                                         onWallet={(m) => handleAction(m, 'wallet')}
                                         onImpersonate={handleImpersonate}
                                         context={context}
+                                        isAdmin={isAdmin}
                                     />
                                 </td>
                             </tr>

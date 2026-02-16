@@ -77,9 +77,13 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     const { user, refreshUser } = useAuth();
     const { initiateCall } = useCall();
 
-    // Plan check
-    const plan = (user?.plan || 'Free').toLowerCase();
-    const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
+    // Plan check – same logic as client dashboard (Free = masked; Lite/Pro/Ultra = premium)
+    const plan = (user?.plan || 'Free');
+    const planLower = plan.toLowerCase();
+    const isPremium = !!(
+        user?.isPremium ||
+        (planLower !== 'free' && ['lite', 'pro', 'ultra'].some((p) => planLower.includes(p)))
+    );
 
     const currentUserId = String(user?.id);
     const partnerUserId = resolveUserId(advocate);
@@ -162,6 +166,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
                 }
             }
+            // Mark as read when opening
+            if (partnerUserId) {
+                interactionService.markAsRead(currentUserId, partnerUserId);
+            }
         } catch (error) {
             console.error('[ChatPopup] Error fetching messages:', error);
         }
@@ -191,15 +199,37 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     };
 
     useEffect(() => {
-        if (user && advocate) {
+        if (user && partnerUserId) {
             fetchMsgs();
             fetchStatus();
 
-            // REAL-TIME POLLING: refresh every 3 seconds
-            const interval = setInterval(() => fetchMsgs(true), 3000);
-            return () => clearInterval(interval);
+            const handleSocketMessage = (e: any) => {
+                const data = e.detail;
+                if (String(data.senderId) === partnerUserId || (String(data.message.sender) === partnerUserId)) {
+                    // Update messages instantly
+                    const newMsg = {
+                        id: data.message._id || data.message.id,
+                        senderId: String(data.message.sender),
+                        receiverId: String(data.message.receiver),
+                        text: data.message.text,
+                        timestamp: new Date(data.message.timestamp).getTime()
+                    };
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
+
+                    // Mark as read
+                    if (String(data.message.receiver) === currentUserId) {
+                        interactionService.markAsRead(currentUserId, partnerUserId);
+                    }
+                }
+            };
+
+            window.addEventListener('socket-message', handleSocketMessage);
+            return () => window.removeEventListener('socket-message', handleSocketMessage);
         }
-    }, [user, partnerUserId]); // Changed dependency from advocate to partnerUserId
+    }, [user, partnerUserId]);
 
     useEffect(() => {
         // Scroll to bottom when messages update
@@ -320,9 +350,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     };
 
     // Safe extraction of display fields
-    const displayName = advocate.name || (advocate.firstName ? `${advocate.firstName} ${advocate.lastName}` : "Member");
+    const rawName = advocate.name || (advocate.firstName ? `${advocate.firstName} ${advocate.lastName}` : "Member");
+    const rawId = advocate.unique_id || advocate.partnerUniqueId || "---";
+    const displayName = isPremium ? rawName : (rawName ? (rawName.length <= 2 ? "**" : rawName.substring(0, 2) + "*****") : "*****");
     const displayImage = advocate.image_url || advocate.profilePic || advocate.img || "/default-avatar.png";
-    const displayId = advocate.unique_id || advocate.partnerUniqueId || "---";
+    const displayId = isPremium ? rawId : (rawId ? (rawId.length <= 2 ? "**" : rawId.substring(0, 2) + "*****") : "*****");
     const isClient = advocate.role === 'client' || !!advocate.legalHelp;
 
     const locationStr = isClient
@@ -341,7 +373,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                     <button className={styles.backBtn} onClick={onClose}>
                         <ChevronLeft size={24} />
                     </button>
-                    <div className={styles.profileClickArea} onClick={() => setShowDetailedProfile(true)}>
+                    <div
+                        className={styles.profileClickArea}
+                        onClick={() => (isPremium ? setShowDetailedProfile(true) : setShowTrialModal(true))}
+                    >
                         <img
                             src={formatImageUrl(displayImage)}
                             alt={displayName}
@@ -349,7 +384,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                             onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}
                         />
                         <div className={styles.titleInfo}>
-                            <h3 title={displayName}>{displayName}</h3>
+                            <h3 title={isPremium ? displayName : undefined} className={!isPremium ? styles.blurredText : ''}>
+                                {displayName}
+                            </h3>
                             <div className={styles.idStatusRow}>
                                 <span className={`${styles.uniqueId} ${!isPremium ? styles.blurredText : ''}`}>{displayId}</span>
                                 <span className={styles.status} style={{ color: profileError ? '#ef4444' : '#10b981' }}>
@@ -390,7 +427,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
 
                 <div className={styles.detailsSection}>
                     <div className={styles.detailsRow}>
-                        <div className={styles.detailsList}>
+                        <div className={`${styles.detailsList} ${!isPremium ? styles.blurredText : ''}`}>
                             {expStr && <div className={styles.detailItem}>{expStr} Exp</div>}
                             <div className={styles.detailItem}>{specStr}</div>
                             <div className={styles.detailItem}>

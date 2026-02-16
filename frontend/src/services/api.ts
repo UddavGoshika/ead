@@ -53,6 +53,12 @@ export const authService = {
     changePassword: (data: any) => api.post<any>('/auth/change-password', data),
     getProfile: () => api.get<{ success: boolean, user: any }>('/auth/me'),
     getCurrentUser: () => api.get<any>('/auth/me'),
+    updateProfile: (data: { email?: string, name?: string, profilePic?: string, loginId?: string }) => api.put<{ success: boolean, user: any }>('/auth/profile', data),
+    uploadProfileImage: (formData: FormData) => api.post<{ success: boolean, imageUrl: string }>('/auth/profile-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    generateSuperAdminKey: () => api.post<{ success: boolean, key: string, message: string }>('/auth/generate-super-admin-key'),
+    setSuperAdminKey: (key: string) => api.post<{ success: boolean, message: string }>('/auth/set-super-admin-key', { key }),
+    loginWithKey: (data: { email: string, key: string }) => api.post<{ success: boolean, token: string, user: any }>('/auth/login-key', data),
+    toggleMaintenance: (enabled: boolean) => api.post<{ success: boolean }>('/auth/emergency/maintenance', { enabled }),
 };
 
 export const advocateService = {
@@ -113,6 +119,7 @@ export const caseService = {
 
 export const staffService = {
     getMyLeads: () => api.get<{ success: boolean; leads: any[] }>('/staff/my-leads'),
+    getAllMembers: () => api.get<{ success: boolean; members: any[] }>('/staff/all-members'),
     updateLead: (id: string, data: any) =>
         api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
     getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
@@ -140,6 +147,14 @@ export const blogService = {
     saveBlog: (id: string, userId: string) => api.post(`/blogs/${id}/save`, { userId }),
     shareBlog: (id: string) => api.post(`/blogs/${id}/share`),
     commentBlog: (id: string, data: { userId: string, userName: string, text: string }) => api.post(`/blogs/${id}/comment`, data),
+};
+
+export const supportService = {
+    getTickets: () => api.get<{ success: boolean; tickets: any[] }>('/support/tickets'),
+    reply: (ticketId: string, message: string) => api.post<{ success: boolean; message: string }>('/support/reply', { ticketId, message }),
+    broadcast: (data: { role: string; subject: string; message: string }) => api.post<{ success: boolean; sent: number; total: number }>('/support/broadcast', data),
+    getStats: () => api.get<{ success: boolean; totalUsers: number; openInquiries: number; recentLogs: any[] }>('/support/stats'),
+    sync: () => api.get<{ success: boolean; count: number; error?: string }>('/support/sync'),
 };
 
 export default api;

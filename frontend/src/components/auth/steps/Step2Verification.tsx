@@ -40,6 +40,20 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         return () => clearTimeout(timer);
     }, [mobileCountdown]);
 
+    // AUTO-SEND OTP ON MOUNT
+    React.useEffect(() => {
+        if (!formData.emailVerified && formData.email && countdown === 0 && !sending) {
+            handleSendOtp();
+        }
+    }, []); // Only on mount
+
+    const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            action();
+        }
+    };
+
     const handleSendOtp = async () => {
         if (!formData.email) {
             setEmailMessage({ text: 'Please enter email in Step 1 first.', type: 'error' });
@@ -63,8 +77,9 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         }
     };
 
-    const handleVerifyOtp = async () => {
-        if (!formData.emailOtp || formData.emailOtp.length !== 6) {
+    const handleVerifyOtp = async (code?: string) => {
+        const otpCode = code || formData.emailOtp;
+        if (!otpCode || otpCode.length !== 6) {
             setEmailMessage({ text: 'Enter 6-digit OTP.', type: 'error' });
             return;
         }
@@ -72,7 +87,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         setVerifying(true);
         setEmailMessage({ text: '', type: '' });
         try {
-            const res = await (authService as any).verifyOtp(formData.email, formData.emailOtp);
+            const res = await (authService as any).verifyOtp(formData.email, otpCode);
             if (res.data.success) {
                 setEmailMessage({ text: 'Email verified successfully!', type: 'success' });
                 updateFormData({ emailVerified: true });
@@ -163,8 +178,9 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         }
     };
 
-    const handleVerifyMobileOtp = async () => {
-        if (!formData.phoneOtp || formData.phoneOtp.length !== 6) {
+    const handleVerifyMobileOtp = async (code?: string) => {
+        const otpCode = code || formData.phoneOtp;
+        if (!otpCode || otpCode.length !== 6) {
             setMobileMessage({ text: 'Enter 6-digit OTP.', type: 'error' });
             return;
         }
@@ -176,7 +192,7 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         setMobileVerifying(true);
         setMobileMessage({ text: '', type: '' });
         try {
-            await confirmationResult.confirm(formData.phoneOtp);
+            await confirmationResult.confirm(otpCode);
             setMobileMessage({ text: 'Mobile verified successfully!', type: 'success' });
             updateFormData({ mobileVerified: true });
         } catch (err: any) {
@@ -191,6 +207,9 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         const { value } = e.target;
         if (/^\d{0,6}$/.test(value)) {
             updateFormData({ emailOtp: value });
+            if (value.length === 6) {
+                handleVerifyOtp(value);
+            }
         }
     };
 
@@ -198,6 +217,9 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
         const { value } = e.target;
         if (/^\d{0,6}$/.test(value)) {
             updateFormData({ phoneOtp: value });
+            if (value.length === 6) {
+                handleVerifyMobileOtp(value);
+            }
         }
     };
 
@@ -223,14 +245,16 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
                             placeholder="Enter 6-digit Email OTP"
                             value={formData.emailOtp || ''}
                             onChange={handleEmailOtpChange}
+                            onKeyDown={(e) => handleKeyDown(e, () => handleVerifyOtp())}
                             maxLength={6}
                             disabled={formData.emailVerified}
                             className={errors?.emailOtp ? styles.inputError : ''}
                         />
                         {!formData.emailVerified ? (
                             <button
+                                id="verify-email-otp-btn"
                                 className={styles.verifyBtn}
-                                onClick={formData.emailOtp?.length === 6 ? handleVerifyOtp : handleSendOtp}
+                                onClick={formData.emailOtp?.length === 6 ? () => handleVerifyOtp() : handleSendOtp}
                                 disabled={sending || verifying || (countdown > 0 && !formData.emailOtp)}
                             >
                                 {sending ? 'Sending...' : verifying ? 'Verifying...' : (formData.emailOtp?.length === 6 ? 'Verify OTP' : 'Send OTP')}
@@ -268,8 +292,9 @@ const Step2Verification: React.FC<StepProps> = ({ formData, updateFormData, erro
                         />
                         {!formData.mobileVerified ? (
                             <button
+                                id="verify-mobile-otp-btn"
                                 className={styles.verifyBtn}
-                                onClick={formData.phoneOtp?.length === 6 ? handleVerifyMobileOtp : handleSendMobileOtp}
+                                onClick={formData.phoneOtp?.length === 6 ? () => handleVerifyMobileOtp() : handleSendMobileOtp}
                                 disabled={mobileSending || mobileVerifying || (mobileCountdown > 0 && !formData.phoneOtp)}
                             >
                                 {mobileSending ? 'Sending...' : mobileVerifying ? 'Verifying...' : (formData.phoneOtp?.length === 6 ? 'Verify' : 'Send SMS')}

@@ -32,12 +32,12 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                 {/* Bar Registration */}
                 <div className={styles.formGroup}>
                     <label>
-                        BAR COUNCIL REG. NO. {!isOptional && <span className={styles.required}>*</span>}
+                        BAR COUNCIL REG. NO.
                     </label>
                     <input
                         type="text"
                         name="barRegNo"
-                        placeholder="Enter Registration Number"
+                        placeholder="Enter Registration Number (Optional)"
                         value={formData.barRegNo || ''}
                         onChange={handleChange}
                         className={errors?.barRegNo ? styles.inputError : ''}
@@ -47,12 +47,12 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                 {/* State Bar Council */}
                 <div className={styles.formGroup}>
                     <label>
-                        STATE BAR COUNCIL {!isOptional && <span className={styles.required}>*</span>}
+                        STATE BAR COUNCIL
                     </label>
                     <input
                         type="text"
                         name="stateBar"
-                        placeholder="Enter State Bar Council"
+                        placeholder="Enter State Bar Council (Optional)"
                         value={formData.stateBar || ''}
                         onChange={handleChange}
                         className={errors?.stateBar ? styles.inputError : ''}
@@ -98,39 +98,75 @@ const Step5Practice: React.FC<StepProps> = ({ formData, updateFormData, isOption
                 {/* Primary Specialization - Dynamic */}
                 <div className={styles.formGroup}>
                     <label>
-                        PRIMARY SPECIALIZATION {!isOptional && <span className={styles.required}>*</span>}
+                        PRIMARY SPECIALIZATION {!isOptional && <span className={styles.required}>*</span>} (select Multiple)
                     </label>
                     <select
                         name="specialization"
-                        value={formData.specialization || ''}
+                        value=""
                         onChange={(e) => {
-                            handleChange(e);
-                            updateFormData({ subSpecialization: '' }); // Reset sub-dept
+                            const selected = e.target.value;
+                            if (!selected) return;
+                            const current = (formData.specialization || '').split(',').filter((s: string) => s.trim());
+                            if (!current.includes(selected)) {
+                                updateFormData({ specialization: [...current, selected].join(',') });
+                            }
                         }}
                         className={errors?.specialization ? styles.inputError : ''}
                     >
-                        <option value="">Select Specialization</option>
+                        <option value="">Add Specialization</option>
                         {getOptions('specialization').map(opt => (
                             <option key={opt.id} value={opt.id}>{opt.label}</option>
                         ))}
                     </select>
+                    <div className={styles.selectedChips} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                        {(formData.specialization || '').split(',').filter((s: string) => s.trim()).map((s: string) => (
+                            <span key={s} className={styles.chip} style={{ backgroundColor: '#daa520', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {s}
+                                <span style={{ cursor: 'pointer' }} onClick={() => {
+                                    const next = (formData.specialization || '').split(',').filter((i: string) => i.trim() !== s).join(',');
+                                    updateFormData({ specialization: next });
+                                }}>×</span>
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Sub Specialization */}
                 <div className={styles.formGroup}>
-                    <label>SUB-SPECIALIZATION</label>
+                    <label>SUB-SPECIALIZATION (select Multiple)</label>
                     <select
                         name="subSpecialization"
-                        value={formData.subSpecialization || ''}
-                        onChange={handleChange}
+                        value=""
+                        onChange={(e) => {
+                            const selected = e.target.value;
+                            if (!selected) return;
+                            const current = (formData.subSpecialization || '').split(',').filter((s: string) => s.trim());
+                            if (!current.includes(selected)) {
+                                updateFormData({ subSpecialization: [...current, selected].join(',') });
+                            }
+                        }}
                     >
-                        <option value="">Select Sub Specialization</option>
+                        <option value="">Add Sub Specialization</option>
                         {(getOptions('sub_department') as any[])
-                            .filter(opt => !formData.specialization || opt.parent === formData.specialization)
+                            .filter(opt => {
+                                const activeSpecs = (formData.specialization || '').split(',').filter((s: string) => s.trim());
+                                return !activeSpecs.length || activeSpecs.includes(opt.parent);
+                            })
                             .map(opt => (
                                 <option key={opt.id} value={opt.id}>{opt.label}</option>
                             ))}
                     </select>
+                    <div className={styles.selectedChips} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                        {(formData.subSpecialization || '').split(',').filter((s: string) => s.trim()).map((s: string) => (
+                            <span key={s} className={styles.chip} style={{ backgroundColor: '#daa520', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {s}
+                                <span style={{ cursor: 'pointer' }} onClick={() => {
+                                    const next = (formData.subSpecialization || '').split(',').filter((i: string) => i.trim() !== s).join(',');
+                                    updateFormData({ subSpecialization: next });
+                                }}>×</span>
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Bar Association */}

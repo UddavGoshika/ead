@@ -138,6 +138,7 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         captchaVerified: false,
     });
 
+    const [loading, setLoading] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
 
@@ -227,6 +228,8 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
         if (currentIndex < visibleSteps.length - 1) {
             setCurrentStep(visibleSteps[currentIndex + 1].id);
         } else {
+            if (loading) return;
+            setLoading(true);
             try {
                 const submissionData = new FormData();
                 const fileFieldsMapping: Record<string, string> = {
@@ -269,6 +272,8 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                 console.error('Registration Error:', err);
                 const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
                 alert(errorMessage);
+            } finally {
+                setLoading(false);
             }
         }
     };
@@ -348,7 +353,17 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                     </div>
                 </div>
 
-                <div className={styles.content} ref={contentRef}>
+                <div
+                    className={styles.content}
+                    ref={contentRef}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+                            if ((e.target as any).tagName !== 'TEXTAREA') {
+                                handleNext();
+                            }
+                        }
+                    }}
+                >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}
@@ -374,8 +389,8 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                         >
                             Previous
                         </button>
-                        <button className={styles.nextBtn} onClick={handleNext}>
-                            {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
+                        <button className={styles.nextBtn} onClick={handleNext} disabled={loading}>
+                            {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? (loading ? 'Submitting...' : 'Submit Application') : 'Continue'}
                         </button>
                     </div>
                 </div>

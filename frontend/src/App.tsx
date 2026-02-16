@@ -36,6 +36,8 @@ import Grievances from './components/footerpages/grivence.tsx';
 import RefundPolicy from './components/footerpages/refund.tsx';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProfile from './pages/admin/AdminProfile';
+import AdminSettings from './pages/admin/AdminSettings';
 import LegalDocumentationPage from './pages/LegalDocumentationPage';
 import ClientLegalDocumentation from './pages/dashboard/client/LegalDocumentation';
 import AdvocateLegalDocumentation from './pages/dashboard/advocate/LegalDocumentation';
@@ -88,6 +90,7 @@ import WalletRecharge from './pages/admin/wallet/WalletRecharge';
 import AllPosts from './pages/admin/blog/AllPosts';
 import BlogCategories from './pages/admin/blog/BlogCategories';
 import Newsletter from './pages/admin/marketing/Newsletter';
+import MailAgentActivity from './pages/admin/marketing/MailAgentActivity';
 import ContactQueries from './pages/admin/ContactQueries';
 
 // Admin Referral & Support
@@ -217,6 +220,7 @@ import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
 import StaffGlobalDashboard from './pages/staff/StaffGlobalDashboard';
 import CallOverlay from './components/CallOverlay';
 import RejectionOverlay from './components/auth/RejectionOverlay';
+import EmailSupport from './pages/dashboard/support/roles/EmailSupport';
 
 import { useAuth } from './context/AuthContext';
 
@@ -256,6 +260,10 @@ const DashboardRedirect: React.FC = () => {
 
   if (role === 'finance') {
     return <Navigate to="/dashboard/finance" replace />;
+  }
+
+  if (role === 'email_support') {
+    return <Navigate to={`/dashboard/email_support/${id}`} replace />;
   }
 
   // Custom mapping for role-to-path
@@ -305,6 +313,7 @@ const AppContent: React.FC = () => {
         <Route path="/dashboard/advocate/:uniqueId" element={<ProtectedRoute allowedRoles={['advocate']}><AdvocateDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/advisor/:uniqueId" element={<ProtectedRoute allowedRoles={['legal_provider']}><AdvisorDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/user/:uniqueId" element={<ProtectedRoute allowedRoles={['user']}><UserDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/email_support/:uniqueId" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupport /></ProtectedRoute>} />
         <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><AssignedVerifications /></ProtectedRoute>} />
         <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><Transactions /></ProtectedRoute>} />
 
@@ -314,6 +323,8 @@ const AppContent: React.FC = () => {
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="settings" element={<AdminSettings />} />
           <Route path="members/free" element={<FreeMembers />} />
           <Route path="members/premium" element={<PremiumMembers />} />
           <Route path="members/approved" element={<ApprovedMembers />} />
@@ -356,6 +367,7 @@ const AppContent: React.FC = () => {
           <Route path="blog/categories" element={<BlogCategories />} />
 
           <Route path="marketing/newsletter" element={<Newsletter />} />
+          <Route path="marketing/activity" element={<MailAgentActivity />} />
           <Route path="contact-queries" element={<ContactQueries />} />
 
           <Route path="referral/commission" element={<ReferralCommission />} />

@@ -40,6 +40,8 @@ const HomePage: React.FC = () => {
                 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
             ].includes(role)) {
                 navigate('/staff/portal');
+            } else if (role === 'email_support') {
+                navigate(`/dashboard/email_support/${id}`);
             } else if (role === 'user') {
                 navigate(`/dashboard/user/${id}`);
             } else {

@@ -137,4 +137,64 @@ router.get('/performance', async (req, res) => {
     }
 });
 
+// Get all members for directory (Role-based access)
+router.get('/all-members', async (req, res) => {
+    try {
+        const userRole = (req.user.role || '').toLowerCase();
+        let query = {};
+
+        // Group A: General Operations (Telecaller, Data Entry, Customer Care) -> See ALL Active Members (Clients, Advocates, Legal Advisors ONLY)
+        if (['telecaller', 'customer_care', 'data_entry', 'verifier', 'support', 'manager', 'teamlead'].includes(userRole)) {
+            query = {
+                role: { $in: ['client', 'advocate', 'legal_provider'] },
+                status: 'Active'
+            };
+        }
+        // Group B: Premium Support (Chat, Call, Agents) -> See PREMIUM Members Only (Clients, Advocates, Legal Advisors ONLY)
+        else if (['chat_support', 'call_support', 'personal_agent', 'chat_agent', 'call_agent'].includes(userRole)) {
+            query = {
+                role: { $in: ['client', 'advocate', 'legal_provider'] },
+                isPremium: true,
+                status: 'Active'
+            };
+        } else {
+            return res.json({ success: true, members: [] });
+        }
+
+        const users = await User.find(query).sort({ createdAt: -1 }).select('name email role isPremium plan status mobile').lean();
+
+        // Enrich with correct mobile/location from profiles
+        const Advocate = require('../models/Advocate');
+        const Client = require('../models/Client');
+
+        const members = await Promise.all(users.map(async (u) => {
+            let profile = null;
+            if (u.role === 'advocate') profile = await Advocate.findOne({ userId: u._id }).select('mobile location practice');
+            else if (u.role === 'client') profile = await Client.findOne({ userId: u._id }).select('mobile location');
+
+            let mobile = u.mobile || profile?.mobile || 'N/A';
+            let city = profile?.location?.city || 'N/A';
+            let category = u.role === 'advocate' ? 'Advocate' : 'Client';
+
+            return {
+                _id: u._id, // Use User ID as primary key for list
+                clientName: u.name || u.email,
+                clientMobile: mobile,
+                clientCity: city,
+                category: category,
+                leadStatus: 'Active', // Default status for directory view
+                problem: u.isPremium ? 'Premium Member' : 'Approved Member',
+                isDirectoryItem: true, // Flag for frontend
+                targetUserId: u._id
+            };
+        }));
+
+        res.json({ success: true, members });
+
+    } catch (error) {
+        console.error('Fetch members error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch members' });
+    }
+});
+
 module.exports = router;

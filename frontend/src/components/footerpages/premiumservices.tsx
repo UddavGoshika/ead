@@ -163,8 +163,12 @@ const Preservices: React.FC = () => {
 
     useEffect(() => {
         const loadGateways = async () => {
-            const gateways = await PaymentManager.getInstance().getEnabledGateways();
-            if (gateways.length > 0) setSelectedGateway(gateways[0].gateway);
+            const allGateways = await PaymentManager.getInstance().getEnabledGateways();
+            // Filter to ONLY allow Razorpay and Cashfree as per user request
+            const activeGateways = allGateways.filter(g => ['razorpay', 'cashfree'].includes(g.gateway));
+            if (activeGateways.length > 0) {
+                setSelectedGateway(activeGateways[0].gateway as PaymentGateway);
+            }
         };
         loadGateways();
     }, []);
@@ -586,7 +590,7 @@ const Preservices: React.FC = () => {
                             <div className={styles.paymentSection}>
                                 <label className={styles.sectionLabel}>Secure Gateways</label>
                                 <div className={styles.gatewayGrid}>
-                                    {['razorpay', 'paytm', 'stripe', 'upi', 'invoice', 'cashfree'].map(gw => (
+                                    {['razorpay', 'cashfree'].map(gw => (
                                         <button
                                             key={gw}
                                             className={`${styles.gwBtn} ${selectedGateway === gw ? styles.activeGw : ''}`}
@@ -594,12 +598,20 @@ const Preservices: React.FC = () => {
                                             disabled={isProcessing}
                                         >
                                             {gw === 'razorpay' && <CreditCard size={18} />}
-                                            {gw === 'paytm' && <Smartphone size={18} />}
-                                            {gw === 'stripe' && <Globe size={18} />}
-                                            {gw === 'upi' && <QrCode size={18} />}
-                                            {gw === 'invoice' && <Receipt size={18} />}
                                             {gw === 'cashfree' && <Zap size={18} />}
-                                            <span>{gw}</span>
+                                            <span style={{ textTransform: 'capitalize' }}>{gw}</span>
+                                        </button>
+                                    ))}
+                                    {/* Disabled placeholders for other gateways to show they are unavailable */}
+                                    {['paytm', 'stripe', 'upi'].map(gw => (
+                                        <button
+                                            key={gw}
+                                            className={styles.gwBtn}
+                                            disabled={true}
+                                            style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                                        >
+                                            <Lock size={14} />
+                                            <span style={{ textTransform: 'capitalize' }}>{gw}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -632,6 +644,7 @@ const Preservices: React.FC = () => {
                                                     planTitle: `${currentPkg?.title || activeCategory} (${selectedTier.toUpperCase()})`,
                                                     userName: user?.name,
                                                     userEmail: user?.email,
+                                                    userPhone: (user as any)?.phone || (user as any)?.mobile || '',
                                                     breakdown: {
                                                         base: basePrice,
                                                         discount: discountAmount,

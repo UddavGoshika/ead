@@ -123,7 +123,7 @@ export const interactionService = {
                 text: c.lastMessage,
                 timestamp: new Date(c.timestamp).getTime()
             },
-            unreadCount: 0
+            unreadCount: c.unreadCount || 0
         }));
     },
 
@@ -208,8 +208,13 @@ export const interactionService = {
         return response.data;
     },
 
-    getRelationships: async () => {
+    async getRelationships() {
         const response = await api.get('/relationships/all');
         return response.data.relationships;
+    },
+
+    async markAsRead(userId: string, partnerId: string) {
+        const response = await api.post('/interactions/messages/read', { userId, partnerId });
+        return response.data;
     }
 };

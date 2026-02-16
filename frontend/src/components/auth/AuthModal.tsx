@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/api';
-import { X, Mail, Lock, Scale, UserCheck, AlertCircle, Eye, EyeOff, Home } from 'lucide-react';
+import { X, Mail, Lock, Scale, UserCheck, AlertCircle, Eye, EyeOff, Home, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AuthModal.module.css';
 
@@ -24,7 +24,7 @@ const AuthModal: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loginType, setLoginType] = useState<'user' | 'staff'>('user');
+    const [loginType, setLoginType] = useState<'user' | 'staff' | 'emergency'>('user');
 
     React.useEffect(() => {
         setActiveTab(authTab);
@@ -109,6 +109,8 @@ const AuthModal: React.FC = () => {
                     'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
                 ].includes(role)) {
                     target = '/staff/portal';
+                } else if (role === 'email_support') {
+                    target = `/dashboard/email_support/${uid}`;
                 } else if (role === 'user') {
                     target = `/dashboard/user/${uid}`;
                 }
@@ -154,7 +156,7 @@ const AuthModal: React.FC = () => {
             });
             if (response.data.success && response.data.user) {
                 console.log('Registration successful, user:', response.data.user);
-                login(response.data.user);
+                login(response.data.user, response.data.token);
                 closeAuthModal();
 
                 const uid = response.data.user.unique_id || response.data.user.id;
@@ -188,7 +190,7 @@ const AuthModal: React.FC = () => {
 
     return (
         <>
-            <div className={styles.overlay} onClick={closeAuthModal}>
+            <div className={styles.overlay}>
                 <motion.div
                     className={`${styles.modal} ${activeTab === 'register' && regStep === 'choice' ? styles.wideModal : ''}`}
                     onClick={e => e.stopPropagation()}
@@ -341,11 +343,11 @@ const AuthModal: React.FC = () => {
                                                 <div className={styles.formGroup}>
                                                     <label>
                                                         {loginType === 'user' ? <Mail size={16} /> : <UserCheck size={16} />}
-                                                        {loginType === 'user' ? " Email Address" : " Login ID"}
+                                                        {loginType === 'user' ? " Email or Login ID" : " Login ID"}
                                                     </label>
                                                     <input
-                                                        type={loginType === 'user' ? "email" : "text"}
-                                                        placeholder={loginType === 'user' ? "name@example.com" : "EAD-XXXX-XXXX"}
+                                                        type="text"
+                                                        placeholder={loginType === 'user' ? "name@example.com or username" : "EAD-XXXX-XXXX"}
                                                         required
                                                         value={email}
                                                         onChange={e => setEmail(e.target.value)}
@@ -378,9 +380,100 @@ const AuthModal: React.FC = () => {
                                                 <button type="submit" className={styles.submitBtn} disabled={loading}>
                                                     {loading ? 'Logging in...' : 'Login to Account'}
                                                 </button>
+
+                                                {/* <div className="mt-4 text-center">
+                                                    <button
+                                                        type="button"
+                                                        className="text-xs text-red-400 hover:text-red-300 underline"
+                                                        onClick={() => setLoginType('emergency')}
+                                                    >
+                                                        Super Admin Emergency Login
+                                                    </button>
+                                                </div> */}
                                             </form>
                                         </motion.div>
                                     )
+                                ) : loginType === 'emergency' ? (
+                                    <motion.div
+                                        key="emergency"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                        className="border border-red-500/30 rounded-lg p-4 bg-red-900/10"
+                                    >
+                                        <h2 className="text-red-500 flex items-center gap-2 mb-2">
+                                            <AlertTriangle size={24} /> Emergency Access
+                                        </h2>
+                                        <p className="text-sm text-gray-400 mb-4">
+                                            Use your Super Admin Recovery Key to regain access.
+                                        </p>
+
+                                        {error && (
+                                            <div className={styles.errorBox}>
+                                                <AlertCircle size={18} />
+                                                <span>{error}</span>
+                                            </div>
+                                        )}
+
+                                        <form onSubmit={async (e) => {
+                                            e.preventDefault();
+                                            setLoading(true);
+                                            setError(null);
+                                            try {
+                                                const res = await authService.loginWithKey({ email, key: password }); // Using password field for key
+                                                if (res.data.success) {
+                                                    login(res.data.user, res.data.token);
+                                                    closeAuthModal();
+                                                    navigate('/admin/dashboard', { replace: true });
+                                                }
+                                            } catch (err: any) {
+                                                setError(err.response?.data?.error || 'Invalid Emergency Key');
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}>
+                                            <div className={styles.formGroup}>
+                                                <label className="text-red-400">Admin Email or Login ID</label>
+                                                <input
+                                                    type="text"
+                                                    value={email}
+                                                    onChange={e => setEmail(e.target.value)}
+                                                    required
+                                                    className="border-red-500/30 focus:border-red-500"
+                                                    placeholder="Enter email or custom ID"
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label className="text-red-400">Recovery Key</label>
+                                                <input
+                                                    type="password"
+                                                    value={password}
+                                                    onChange={e => setPassword(e.target.value)}
+                                                    required
+                                                    className="border-red-500/30 focus:border-red-500 font-mono"
+                                                    placeholder="Enter your saved key..."
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                className={`${styles.submitBtn} bg-red-600 hover:bg-red-700 border-red-500`}
+                                                disabled={loading}
+                                            >
+                                                {loading ? 'Verifying Key...' : 'Emergency Login'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="w-full mt-3 text-sm text-gray-400 hover:text-white"
+                                                onClick={() => {
+                                                    setLoginType('user');
+                                                    setError(null);
+                                                    setPassword('');
+                                                }}
+                                            >
+                                                Cancel Emergency Mode
+                                            </button>
+                                        </form>
+                                    </motion.div>
                                 ) : (
                                     <motion.div
                                         key="register"

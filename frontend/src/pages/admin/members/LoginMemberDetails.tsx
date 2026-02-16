@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from "react";
 import styles from "./LoginMemberDetails.module.css";
 import axios from "axios";
-import { Loader2, Search, Key, Eye, EyeOff } from "lucide-react";
+import { Loader2, Search, Key, Eye, EyeOff, UserCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { formatImageUrl } from "../../../utils/imageHelper";
+import { useAuth } from "../../../context/AuthContext";
 
 interface LoginDetail {
     id: string;
@@ -27,6 +28,7 @@ const LoginMemberDetails: React.FC = () => {
     const [members, setMembers] = useState<LoginDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const { impersonate } = useAuth();
 
     // Filters
     const [filterRole, setFilterRole] = useState("All");
@@ -85,6 +87,18 @@ const LoginMemberDetails: React.FC = () => {
         ));
     };
 
+    const handleImpersonate = (member: LoginDetail) => {
+        if (window.confirm(`You are about to log in as ${member.name}. Your admin session will be temporarily replaced. Proceed?`)) {
+            impersonate({
+                id: member.id,
+                name: member.name,
+                role: member.role as any,
+                email: member.email,
+                unique_id: member.uniqueId
+            });
+        }
+    };
+
     const filteredMembers = members.filter(m => {
         const matchesSearch =
             (m.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,6 +136,12 @@ const LoginMemberDetails: React.FC = () => {
                         <option value="All">All Roles</option>
                         <option value="advocate">Advocate</option>
                         <option value="client">Client</option>
+                        <option value="legal_provider">Legal Provider</option>
+                        <option value="manager">Manager</option>
+                        <option value="teamlead">Team Lead</option>
+                        <option value="telecaller">Telecaller</option>
+                        <option value="hr">HR</option>
+                        <option value="marketer">Marketer</option>
                     </select>
 
                     <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -221,7 +241,16 @@ const LoginMemberDetails: React.FC = () => {
                                         </div>
                                     </td>
                                     <td>
-                                        <button className={styles.actionBtn}>View Full</button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button className={styles.actionBtn}>View Full</button>
+                                            <button
+                                                className={styles.actionBtn}
+                                                style={{ background: '#facc15', color: '#000' }}
+                                                onClick={() => handleImpersonate(member)}
+                                            >
+                                                <UserCircle size={14} style={{ marginRight: '4px' }} /> Login
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

@@ -192,6 +192,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             cleanupCall();
         });
 
+        socket.current.on('new-message', (data) => {
+            console.log('[CallContext] Received real-time message:', data);
+            window.dispatchEvent(new CustomEvent('socket-message', { detail: data }));
+        });
+
         socket.current.on('new-notification', (data) => {
             console.log('[CallContext] Received real-time notification:', data);
             // Dispatch a custom event so dashboards can listen without depending on CallContext

@@ -63,10 +63,11 @@ export class PaymentManager {
     private setFallbackConfigs() {
         this.configs = [
             { gateway: 'razorpay', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'paytm', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'stripe', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'invoice', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'upi', isActive: true, mode: 'sandbox', credentials: { upiId: 'e-advocate@okaxis', payeeName: 'E-Advocate' } }
+            { gateway: 'cashfree', isActive: true, mode: 'sandbox', credentials: {} },
+            { gateway: 'paytm', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'stripe', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'invoice', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'upi', isActive: false, mode: 'sandbox', credentials: {} }
         ];
     }
 

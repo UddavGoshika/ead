@@ -54,11 +54,16 @@ router.post('/register', (req, res, next) => {
     });
 }, async (req, res) => {
     try {
-        const email = req.body.email ? req.body.email.toLowerCase() : '';
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
         const { password, firstName, lastName } = req.body;
-        const submittedOtp = req.body.otp || req.body.emailOtp;
+        // Check if user exists (Strict - One Email One Role)
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ error: 'Email already registered. You cannot create multiple accounts/roles with the same email.' });
+        }
 
         // Verify OTP was completed for this email
+        const submittedOtp = req.body.otp || req.body.emailOtp;
         const otpRecord = await Otp.findOne({ email, otp: submittedOtp });
         if (!otpRecord || !otpRecord.verified) {
             // Check if it was verified even without the specific OTP in this request (fallback)
@@ -66,12 +71,6 @@ router.post('/register', (req, res, next) => {
             if (!genericOtpRecord) {
                 return res.status(400).json({ error: 'Please verify your email with OTP first' });
             }
-        }
-
-        // Check if user exists (Strict - One Email One Role)
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ error: 'Email already registered. You cannot create multiple accounts/roles with the same email.' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -180,7 +179,7 @@ router.post('/register', (req, res, next) => {
         // Delete OTP record after successful registration
         await Otp.deleteOne({ email });
 
-        res.json({ success: true, id: newAdvocate._id, advocateId: advId });
+        res.json({ success: true, id: newAdvocate._id, advocateId: advId, token: 'user-token-' + user._id });
 
     } catch (err) {
         console.error('Advocate Registration Error:', err);
@@ -353,7 +352,8 @@ router.get('/', async (req, res) => {
                 isFeatured: isPremium,
                 isMasked: shouldMask, // Frontend uses this to apply blur/lock UI
                 specialization: adv.practice?.specialization || 'Legal Services',
-                category: adv.practice?.specialization || 'General'
+                category: adv.practice?.specialization || 'General',
+                bar_council_id: adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A'
             };
         });
 

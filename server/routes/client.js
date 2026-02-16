@@ -40,19 +40,19 @@ async function generateClientId() {
 // REGISTER CLIENT
 router.post('/register', cpUpload, async (req, res) => {
     try {
-        const email = req.body.email ? req.body.email.toLowerCase() : '';
+        const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
         const { password, firstName, lastName } = req.body;
-
-        // Verify OTP was completed for this email
-        const otpRecord = await Otp.findOne({ email });
-        if (!otpRecord || !otpRecord.verified) {
-            return res.status(400).json({ error: 'Please verify your email with OTP first' });
-        }
 
         // 1. Check if User exists (Strict - One Email One Role)
         let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ error: 'Email already registered. You cannot create multiple accounts/roles with the same email.' });
+        }
+
+        // 2. Verify OTP was completed for this email
+        const otpRecord = await Otp.findOne({ email });
+        if (!otpRecord || !otpRecord.verified) {
+            return res.status(400).json({ error: 'Please verify your email with OTP first' });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -130,7 +130,7 @@ router.post('/register', cpUpload, async (req, res) => {
         // Delete OTP record
         await Otp.deleteOne({ email });
 
-        res.json({ success: true, id: newClient._id, clientId: clientId });
+        res.json({ success: true, id: newClient._id, clientId: clientId, token: 'user-token-' + user._id });
 
     } catch (err) {
         console.error('Client Registration Error:', err);

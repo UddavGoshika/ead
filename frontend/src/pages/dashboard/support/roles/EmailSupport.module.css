@@ -1,0 +1,808 @@
+/* =========================
+   PREMIUM DASHBOARD ROOT
+========================= */
+
+.premiumDashboard {
+    display: flex;
+    min-height: 100vh;
+    background: #0b0e14;
+    color: #f8fafc;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+    width: 256px;
+    background: #11141b;
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 12px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.sidebarBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding: 0 16px;
+}
+
+.logoIcon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #0b57d0, #1d4ed8);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(11, 87, 208, 0.3);
+}
+
+.sidebarBrand h2 {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.composeNavBtn {
+    background: #ffffff !important;
+    color: #444746 !important;
+    font-weight: 600 !important;
+    justify-content: flex-start !important;
+    padding: 16px 20px !important;
+    border-radius: 16px !important;
+    margin-bottom: 24px !important;
+    margin-left: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    width: auto !important;
+    min-width: 140px;
+}
+
+.composeNavBtn:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+    background: #f8f9fa !important;
+}
+
+.sidebarNav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    color: #9ea3ae;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+}
+
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+}
+
+.navActive {
+    background: rgba(59, 130, 246, 0.08) !important;
+    color: #3b82f6 !important;
+    font-weight: 600 !important;
+}
+
+.navDivider {
+    font-size: 10px;
+    font-weight: 800;
+    color: #4b5262;
+    letter-spacing: 2px;
+    margin: 32px 0 12px 16px;
+}
+
+.sidebarFooter {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.logoutBtn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.08);
+    /* Sophisticated subtle red */
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* =========================
+   MAIN CONTAINER
+========================= */
+
+.mainContainer {
+    flex: 1;
+    padding: 32px 40px;
+    overflow-y: auto;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.pageTitle {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.topActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* =========================
+   SEGMENTED CONTROL
+========================= */
+
+.segmentedControl {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px;
+    border-radius: 12px;
+    display: flex;
+    gap: 4px;
+}
+
+.segmentedControl button {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.segmentActive {
+    background: #1e293b !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* =========================
+   SEARCH & ACTIONS
+========================= */
+
+.searchBar {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    width: 300px;
+}
+
+.searchBar input {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px;
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+}
+
+.goldActionBtn {
+    background: transparent;
+    border: 1.5px solid #fbbf24;
+    color: #fbbf24;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.goldActionBtn:hover {
+    background: #fbbf24;
+    color: #020617;
+}
+
+/* =========================
+   SECONDARY FILTER
+========================= */
+
+.secondaryFilterBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.statusPills {
+    display: flex;
+    gap: 12px;
+}
+
+.statusPill {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pillActive {
+    border-color: #3b82f6 !important;
+    color: white !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.utilityGroup {
+    display: flex;
+    gap: 10px;
+}
+
+.utilBtn {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bulkBtn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.resetBtn {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+/* =========================
+   PLAN CARDS
+========================= */
+
+.planGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.planCard {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.planCard:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: #1e293b;
+    transform: translateY(-4px);
+}
+
+.planActive {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.planHeader h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.planSub {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.tierChips {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.tierChips button {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #475569;
+    padding: 6px 4px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+}
+
+.tierActive {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: white !important;
+}
+
+/* =========================
+   GMAIL COMPOSE WINDOW
+========================= */
+
+/* =========================
+   GMAIL COMPOSE WINDOW
+========================= */
+
+.composePopup {
+    position: fixed;
+    bottom: 0;
+    right: 80px;
+    width: 600px;
+    background: #11141b;
+    /* Deep Obsidian */
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    /* Premium Shadow + Border */
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.composeHeader {
+    background: #0b0e14;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 2px solid #facc15;
+    /* Gold Accent Top */
+}
+
+.composeHeader span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.headerActions {
+    display: flex;
+    gap: 16px;
+    color: #94a3b8;
+}
+
+.headerActions svg:hover {
+    color: #facc15;
+    transform: scale(1.1);
+    transition: all 0.2s;
+}
+
+.composeBody {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: #11141b;
+}
+
+.inputField {
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 20px;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.inputField:focus {
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.inputField::placeholder {
+    color: #64748b;
+}
+
+.editorArea {
+    min-height: 350px;
+    padding: 16px;
+    background: transparent;
+    color: white;
+    font-size: 14px;
+    border: none;
+    outline: none;
+    resize: none;
+    line-height: 1.6;
+}
+
+.gmailToolbar {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #0f172a;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.gmailSendBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.gmailSendBtn:hover {
+    background: #2563eb;
+}
+
+.toolbarIcons {
+    display: flex;
+    gap: 16px;
+    color: #94a3b8;
+}
+
+.toolbarIcons svg {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.toolbarIcons svg:hover {
+    color: white;
+}
+
+.discardBtn {
+    margin-left: auto;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.discardBtn:hover {
+    color: #ef4444;
+}
+
+/* =========================
+   FULL WIDTH TABLE
+========================= */
+
+.fullWidthSection {
+    margin-top: 40px;
+    width: 100%;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sectionHeader h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.logTableContainer {
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.logTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logTable th {
+    text-align: left;
+    padding: 16px;
+    background: #1e293b;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logTable td {
+    padding: 16px;
+    font-size: 13px;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.logTable tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* =========================
+   DASHBOARD SUBPAGES
+========================= */
+
+.pageContent {
+    animation: fadeIn 0.3s ease-out;
+    margin-top: 32px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px;
+    color: #64748b;
+    gap: 16px;
+}
+
+.emptyState h3 {
+    color: white;
+}
+
+/* =========================
+   EMAILING SPLIT VIEW
+========================= */
+
+.emailingContainer {
+    display: flex;
+    height: calc(100vh - 200px);
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.emailSidebar {
+    width: 350px;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    background: #020617;
+    display: flex;
+    flex-direction: column;
+}
+
+.emailSidebarHeader {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.emailSidebarHeader h3 {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.emailList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.emailItem {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.emailItem:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.emailItemActive {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+}
+
+.emailItem h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emailItem p {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emailItemDate {
+    font-size: 10px;
+    color: #475569;
+    margin-top: 6px;
+}
+
+.emailDetail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0f172a;
+}
+
+.emailDetailHeader {
+    padding: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.emailDetailHeader h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.emailDetailMeta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.emailContent {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+.emailReplyZone {
+    padding: 24px;
+    background: #020617;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.replyCompose {
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.replyHeader {
+    padding: 12px 16px;
+    background: #1e293b;
+    font-size: 12px;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.replyEditor {
+    min-height: 150px;
+    padding: 16px;
+    background: transparent;
+    color: white;
+    border: none;
+    outline: none;
+    width: 100%;
+    resize: none;
+    font-size: 14px;
+}
+
+.replyToolbar {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e293b;
+}
+
+.replySendBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}

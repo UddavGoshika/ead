@@ -159,7 +159,210 @@ const ChatWidget: React.FC = () => {
             {
                 keys: ['case', 'file', 'issue', 'problem'],
                 reply: "Dealing with a legal issue? Register as a Client to 'File a Case' and get matched with advocates who can solve your specific problem."
+            },
+
+
+
+
+            // Platform Overview & Compliance
+            {
+                keys: ['bci', 'bar council', 'legal', 'compliant', 'norms', 'rules', 'regulation', 'guidelines', 'standard', 'professional'],
+                reply: "Our platform strictly adheres to Bar Council of India (BCI) norms. We do NOT facilitate any fee sharing on cases, nor do we provide legal services directly. We are simply a digital bridge connecting clients with independent advocates. All advocates on our platform practice independently and are solely responsible for their legal services."
+            },
+            {
+                keys: ['platform', 'website', 'about', 'what is', 'how work', 'e-advocate', 'service'],
+                reply: "E-Advocate Services is a secure digital bridge that connects clients with verified advocates. We strictly follow BCI guidelines - we don't collect fees on cases, don't share profits, and don't provide legal advice. Think of us as a sophisticated matchmaking platform for legal needs where advocates and clients can discover each other."
+            },
+
+            // Advocate Discovery & Matching
+            {
+                keys: ['find advocate', 'search lawyer', 'look for', 'need lawyer', 'hire', 'consult', 'specialist', 'expert'],
+                reply: "Finding the right advocate is easy! Use our 'Browse Profiles' or 'Search' feature to filter advocates by practice area (Divorce, Criminal, Corporate, Civil, Family, Property, etc.), location, experience level, languages spoken, and client ratings. Each profile shows their specialization, years of practice, and verification status."
+            },
+            {
+                keys: ['recommend', 'suggest', 'match', 'best fit', 'suitable'],
+                reply: "Our smart recommendation system can suggest advocates based on your case type and location. Simply describe your legal need when registering, and we'll show you profiles of advocates who specialize in that area. You're in complete control - browse, compare, and choose who you'd like to connect with."
+            },
+
+            // Registration & Account Types
+            {
+                keys: ['register', 'sign up', 'join', 'create account', 'become member'],
+                reply: "Registration is free and simple! Choose your account type: 'Advocate' if you're a legal professional looking for clients, or 'Client' if you need legal assistance. Both get you access to our secure platform where you can manage your profile, communications, and connections."
+            },
+            {
+                keys: ['advocate registration', 'lawyer join', 'legal professional', 'bar member'],
+                reply: "Advocates, welcome! During registration, you'll provide your basic info, practice areas, and contact details. To get verified, you'll need to upload your Bar Council enrollment certificate and ID proof. This helps us maintain trust and authenticity on our platform."
+            },
+            {
+                keys: ['client registration', 'user signup', 'need help'],
+                reply: "Clients can register by providing basic contact information and optionally describing their legal need. This helps us show you the most relevant advocate profiles. Registration is free - you only pay for premium features if you choose to use them."
+            },
+
+            // Verification Process
+            {
+                keys: ['verify advocate', 'verification status', 'check verification', 'authentic', 'genuine', 'real lawyer'],
+                reply: "Verification is our priority! Advocates who complete verification get a blue verified badge on their profile. We manually review their Bar Council enrollment, identity proof, and practice details. This process ensures you're connecting with genuine legal professionals who are authorized to practice."
+            },
+            {
+                keys: ['upload document', 'submit proof', 'bar id', 'enrollment number', 'sanad'],
+                reply: "To get verified, advocates should navigate to their dashboard and click on 'Verification'. Upload your Bar Council enrollment certificate (Sanad), identity proof (Aadhar/PAN), and a recent photo. Our team reviews within 2-3 business days and notifies you once verified."
+            },
+            {
+                keys: ['badge', 'verified', 'trust badge', 'blue tick'],
+                reply: "The blue verified badge indicates an advocate whose credentials have been manually verified by our team. Look for this badge when choosing an advocate - it adds an extra layer of trust to your connection."
+            },
+
+            // Wallet & Coins (Platform Features)
+            {
+                keys: ['wallet', 'coin', 'coins', 'balance', 'credit', 'virtual currency'],
+                reply: "Wallet coins are our platform's virtual currency used for premium features - like viewing contact details of highly sought-after advocates or boosting your own profile visibility. You can purchase coins securely through the platform, and your balance is visible in your dashboard."
+            },
+            {
+                keys: ['buy coin', 'purchase credit', 'add money', 'recharge'],
+                reply: "To add coins to your wallet, go to your dashboard and select 'Wallet' → 'Add Coins'. We offer secure payment options including UPI, cards, and net banking. Your wallet balance updates instantly after successful payment."
+            },
+            {
+                keys: ['spend coin', 'use coin', 'coin deduction'],
+                reply: "Coins can be used for: 1) Viewing premium advocate contact details, 2) Featuring your advocate profile in search results, 3) Unlocking advanced search filters. You'll always see the coin cost before confirming any action."
+            },
+
+            // Membership Plans
+            {
+                keys: ['membership', 'plan', 'subscription', 'premium', 'silver', 'gold', 'platinum'],
+                reply: "Our membership plans (Silver, Gold, Platinum) offer advocates enhanced visibility and features. Benefits include: profile badge, priority in searches, more wallet coins, featured listings, and analytics. Check our 'Pricing' page for detailed comparison of all plans."
+            },
+            {
+                keys: ['upgrade', 'switch plan', 'change membership'],
+                reply: "Ready to upgrade? Log in to your advocate dashboard, go to 'Settings' → 'Membership', and select your desired plan. The new benefits will be active immediately after payment confirmation."
+            },
+            {
+                keys: ['free vs paid', 'compare plans', 'benefits'],
+                reply: "Free accounts give you basic profile visibility and standard search. Premium plans (Silver/Gold/Platinum) add features like verification badges, more wallet coins, priority listing in searches, and detailed analytics. Perfect for advocates looking to grow their practice!"
+            },
+
+            // Communication & Connection
+            {
+                keys: ['connect', 'contact advocate', 'message', 'reach out', 'get in touch'],
+                reply: "Once you find an advocate you like, you can send them a connection request through the platform. Some advocates may require a small coin deduction to reveal their contact details - this ensures genuine connections and prevents spam."
+            },
+            {
+                keys: ['chat', 'messaging', 'inbox', 'conversation'],
+                reply: "Our in-platform messaging system lets you communicate securely with advocates. All messages are encrypted and private. You can access your conversations from the 'Messages' section in your dashboard."
+            },
+            {
+                keys: ['schedule', 'appointment', 'meeting', 'consult'],
+                reply: "Many advocates list their availability on their profile. You can request a consultation time that works for you. Actual legal consultations happen independently between you and the advocate - we just facilitate the initial connection."
+            },
+
+            // BCI Compliance & Ethical Practices
+            {
+                keys: ['fee sharing', 'commission', 'cut', 'percentage', 'share'],
+                reply: "IMPORTANT: We NEVER take any cut or commission from legal fees! Our platform strictly follows BCI rules prohibiting fee sharing between non-lawyers and advocates. Advocates and clients negotiate and settle fees directly. We only charge for optional platform features (like profile boosts), never for legal services."
+            },
+            {
+                keys: ['legal advice', 'consultation', 'case strategy', 'opinion'],
+                reply: "We do NOT provide any legal advice, opinions, or case strategies. All legal services are provided independently by advocates on our platform. Any legal consultation, advice, or representation happens directly between you and the advocate you choose."
+            },
+            {
+                keys: ['ethical', 'professional conduct', 'rules'],
+                reply: "All advocates on our platform are expected to follow BCI professional conduct rules. If you experience any unethical behavior, please report it through our platform and we will investigate."
+            },
+
+            // Practice Areas & Specializations
+            {
+                keys: ['divorce', 'family', 'marriage', 'matrimonial', 'child custody', 'alimony'],
+                reply: "Family law specialists handle divorce, child custody, alimony, domestic violence cases, and other family matters. Search for 'Family Law' in our directory to find experienced advocates in this field."
+            },
+            {
+                keys: ['criminal', 'police', 'bail', 'FIR', 'court case', 'offence'],
+                reply: "Criminal law advocates handle cases related to offenses, bail applications, criminal trials, and appeals. Many have experience in both trial courts and high courts. Use our search filters to find criminal law specialists."
+            },
+            {
+                keys: ['corporate', 'business', 'company', 'contract', 'commercial'],
+                reply: "Corporate lawyers assist with business registration, contracts, compliance, intellectual property, and commercial disputes. Filter by 'Corporate Law' to connect with business law experts."
+            },
+            {
+                keys: ['civil', 'property', 'land', 'dispute', 'tenant', 'owner'],
+                reply: "Civil litigation covers property disputes, land matters, recovery suits, and other non-criminal cases. Our platform has many experienced civil lawyers - search by 'Civil Law' to find them."
+            },
+            {
+                keys: ['tax', 'income tax', 'gst', 'customs', 'excise'],
+                reply: "Tax law specialists handle income tax matters, GST issues, customs, and excise cases. Find qualified tax advocates by filtering for 'Tax Law' in your search."
+            },
+            {
+                keys: ['consumer', 'complaint', 'goods', 'services', 'defect'],
+                reply: "Consumer protection lawyers help with cases against defective products, poor services, unfair trade practices, and consumer forum complaints. Search for 'Consumer Law' specialists."
+            },
+
+            // Technical Support & Issues
+            {
+                keys: ['technical issue', 'problem', 'error', 'bug', 'not working'],
+                reply: "Experiencing a technical glitch? Please describe the issue in detail and our support team will assist you. You can also use the 'Report Problem' option in your dashboard for faster resolution."
+            },
+            {
+                keys: ['forgot password', 'login issue', "can't sign in"],
+                reply: "No worries! Click on 'Forgot Password' on the login page and follow the instructions sent to your registered email. Still having trouble? Contact support with your registered email address."
+            },
+            {
+                keys: ['update profile', 'edit info', 'change details'],
+                reply: "You can update your profile information anytime from your dashboard. Advocates can edit practice areas, bio, and availability. Profile photo updates help build trust with potential clients."
+            },
+
+            // Privacy & Security
+            {
+                keys: ['privacy', 'data', 'secure', 'confidential', 'private'],
+                reply: "Your privacy matters! We use encryption for all data transmission, never share your personal information without consent, and follow strict data protection practices. Read our Privacy Policy for complete details."
+            },
+            {
+                keys: ['delete account', 'remove profile', 'close account'],
+                reply: "To delete your account, go to Settings → Account → 'Delete Account'. Please note this action is permanent and will remove your profile and data from our platform. For advocates, active connections will be notified."
+            },
+
+            // Blog & Resources
+            {
+                keys: ['blog', 'article', 'legal news', 'update', 'knowledge'],
+                reply: "Our 'Blogs' section features articles on legal awareness, rights, recent judgments, and practical legal tips. Written by legal professionals, it's a great resource for understanding basic legal concepts."
+            },
+            {
+                keys: ['FAQ', 'help center', 'guide', 'tutorial'],
+                reply: "Visit our Help Center for detailed guides, FAQs, and video tutorials on using all platform features. It's your go-to resource for getting the most out of E-Advocate Services."
+            },
+
+            // Feedback & Support
+            {
+                keys: ['feedback', 'suggestion', 'improve', 'idea'],
+                reply: "We love hearing from our users! Share your suggestions or feedback through the 'Contact Us' form. Your input helps us make the platform better for everyone."
+            },
+            {
+                keys: ['complaint', 'report', 'issue with advocate', 'unprofessional'],
+                reply: "If you experience any unprofessional behavior or have concerns about an advocate, please report it immediately through your dashboard or contact our support team. We take all complaints seriously and investigate thoroughly."
+            },
+
+            // General Greetings & Small Talk
+            {
+                keys: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
+                reply: "Hello! 👋 Welcome to E-Advocate Services. I'm your virtual assistant, here to help you navigate our platform. What can I assist you with today?"
+            },
+            {
+                keys: ['thank', 'thanks', 'appreciate'],
+                reply: "You're very welcome! 😊 Is there anything else I can help you with? Feel free to ask if you have more questions about our platform."
+            },
+            {
+                keys: ['bye', 'goodbye', 'see you', 'later'],
+                reply: "Goodbye! Thank you for visiting E-Advocate Services. If you need assistance in the future, we're just a message away. Have a great day!"
+            },
+
+            // Fallback for unknown queries
+            {
+                keys: ['default', 'fallback', 'unknown'],
+                reply: "I'm not sure I understood your question. Could you please rephrase or provide more details? I'm here to help with platform-related queries about finding advocates, registration, verification, membership plans, wallet coins, and more. You can also visit our Help Center for detailed information."
             }
+
+
+
+
+
+
         ];
 
         for (const item of knowledgeBase) {

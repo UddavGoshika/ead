@@ -30,19 +30,20 @@ export class RazorpayAdapter implements GatewayAdapter {
                     });
                 },
                 prefill: {
-                    name: order.metadata?.userName,
-                    email: order.metadata?.userEmail,
-                    contact: order.metadata?.userPhone
+                    name: order.metadata?.userName || '',
+                    email: order.metadata?.userEmail || '',
+                    contact: order.metadata?.userPhone || ''
                 },
                 theme: {
                     color: "#facc15"
                 },
                 modal: {
                     ondismiss: () => {
+                        console.log("Payment cancelled via modal dismiss");
                         resolve({
                             success: false,
                             orderId: order.orderId,
-                            error: "Payment cancelled by user"
+                            error: "Payment cancelled by user. Upgrade failed."
                         });
                     }
                 }

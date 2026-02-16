@@ -1,0 +1,588 @@
+/* GMAIL-INSPIRED PREMIUM DARK & GOLD THEME */
+
+.gmailContainer {
+    display: flex;
+    background: #0b0e14;
+    height: 100vh;
+    font-family: 'Inter', sans-serif;
+    padding: 16px;
+    gap: 16px;
+}
+
+/* SIDEBAR & TOGGLE */
+.sidebar {
+    width: 240px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #11141b;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+}
+
+.sidebarCollapsed {
+    width: 72px;
+}
+
+.sidebarCollapsed span {
+    display: none;
+}
+
+.sidebarToggle {
+    padding: 12px 14px;
+    color: #9ea3ae;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    transition: all 0.2s;
+}
+
+.sidebarToggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.composeNavBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #facc15;
+    /* Gold Accent */
+    color: #0b0e14;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+    min-height: 56px;
+    width: 100%;
+    /* Adapts to collapsed state via parent width or specific collapsed logic if needed, but flex handles content */
+}
+
+.composeNavBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(250, 204, 21, 0.4);
+    background: #eab308;
+}
+
+.sidebarCollapsed .composeNavBtn {
+    padding: 0;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    border-radius: 14px;
+    margin: 0 auto 24px auto;
+    /* Center in collapsed sidebar */
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    height: 44px;
+    border-radius: 22px;
+    color: #9ea3ae;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+.navItemActive {
+    background: rgba(250, 204, 21, 0.1) !important;
+    /* Gold Tint */
+    color: #facc15 !important;
+    /* Gold Text */
+    font-weight: 700;
+}
+
+.navItemCount {
+    margin-left: auto;
+    font-size: 12px;
+    background: #facc15;
+    color: #0b0e14;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* MAIN CONTENT AREA */
+.mainContent {
+    flex: 1;
+    background: #11141b;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+.actionBar {
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #9ea3ae;
+}
+
+.bulkActionGroup {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.actionIcon {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    color: #9ea3ae;
+}
+
+.actionIcon:hover {
+    background: rgba(250, 204, 21, 0.1);
+    color: #facc15;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0 8px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #9ea3ae;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    min-width: 160px;
+}
+
+.tab:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tabActive {
+    color: #facc15;
+}
+
+.tabActive::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 16px;
+    right: 16px;
+    height: 3px;
+    background: #facc15;
+    border-radius: 3px 3px 0 0;
+}
+
+/* EMAIL LIST */
+.emailList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.emailItem {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 52px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: transparent;
+    color: #9ea3ae;
+    gap: 16px;
+    /* Space between icons and sender */
+}
+
+.emailItemIcons {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    /* High spacing for icons */
+}
+
+.emailItem:hover {
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 2px 0 0 #facc15;
+}
+
+.unread {
+    background: rgba(250, 204, 21, 0.02);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.emailSender {
+    width: 200px;
+    padding: 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emailSubjectContainer {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.emailSubject {
+    color: #e2e8f0;
+}
+
+.emailSnippet {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.emailDate {
+    padding-left: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* EMAIL DETAIL REFINEMENT */
+.emailDetail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #11141b;
+    height: 100%;
+    /* Ensure full height */
+    overflow: hidden;
+    /* Detail container does not scroll, internal content does */
+}
+
+.detailToolbar {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 8px;
+    height: 60px;
+    width: 100%;
+    /* High-density spacing */
+}
+
+.toolbarDivider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 12px;
+}
+
+.detailContent {
+    flex: 1;
+    overflow-y: auto;
+    /* THIS ENABLES SCROLLING */
+    padding: 32px 48px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.detailContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+.detailContent::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.detailSubject {
+    font-size: 24px;
+    margin: 0 0 32px 0;
+    font-weight: 300;
+    color: #ffffff;
+}
+
+.actionIcon {
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #9ea3ae;
+    /* Default grey */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.actionIcon svg {
+    width: 24px !important;
+    /* Proper visible size */
+    height: 24px !important;
+}
+
+.actionIcon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #facc15;
+    /* Gold on hover */
+}
+
+.detailHeader {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #0b0e14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+}
+
+.headerInfo {
+    flex: 1;
+}
+
+.senderName {
+    font-weight: 700;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.senderEmail {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.detailDate {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* THREAD STYLES */
+.threadContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+}
+
+.threadMessage {
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 24px 0;
+    transition: all 0.2s;
+}
+
+.threadMessage:last-child {
+    border-bottom: none;
+}
+
+.activeMessage {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.messageBody {
+    margin-top: 16px;
+    margin-left: 64px;
+    /* Align with text after avatar */
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    max-width: 800px;
+}
+
+/* ACTIONS */
+.bottomActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 48px;
+}
+
+.actionBtn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionBtn:hover {
+    background: #facc15;
+    color: #0b0e14;
+    border-color: #facc15;
+    box-shadow: 0 4px 20px rgba(250, 204, 21, 0.3);
+}
+
+/* REPLY BOX */
+.replySection {
+    margin-top: 32px;
+    animation: fadeInTransition 0.3s ease-out;
+}
+
+.replyBox {
+    background: #11141b;
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.replyHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #9ea3ae;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.replyBox textarea {
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    width: 100%;
+    min-height: 180px;
+    font-size: 14px;
+    color: #ffffff;
+    line-height: 1.6;
+}
+
+.replyBoxActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sendBtn {
+    background: #facc15;
+    color: #0b0e14;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.sendBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+    background: #eab308;
+}
+
+.vDivider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.spin {
+    animation: gmailSpin 1s linear infinite;
+}
+
+@keyframes gmailSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeInTransition {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.moreMenu {
+    animation: menuFadeIn 0.2s ease-out;
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.emailStar svg,
+.emailImportant svg {
+    transition: all 0.2s;
+}
+
+/* UTILS */
+.emailCheckbox,
+.emailStar {
+    color: #4b5262;
+    transition: color 0.2s;
+}
+
+.emailStar:hover {
+    color: #facc15;
+}

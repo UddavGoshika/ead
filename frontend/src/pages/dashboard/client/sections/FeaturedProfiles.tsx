@@ -115,7 +115,7 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                 <button
                     className={styles.backLink}
                     onClick={() => window.open('/dashboard/legal-docs', '_blank')}
-                    style={{ marginLeft: '15px' }}
+                    style={{ marginLeft: 'auto' }}
                 >
                     <ScrollText size={18} />
                     <span>Legal Documentation</span>

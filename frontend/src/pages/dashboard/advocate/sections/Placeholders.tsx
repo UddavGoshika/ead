@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Construction, Loader2, Send } from 'lucide-react';
+import { ArrowLeft, Construction, Loader2, Send, ScrollText } from 'lucide-react';
 import { useAuth } from '../../../../context/AuthContext';
 import { advocateService, clientService } from '../../../../services/api';
 import type { Advocate, Client } from '../../../../types';
@@ -127,6 +127,14 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                 <button className={styles.backLink} onClick={() => showsidePage('featured-profiles')}>
                     <ArrowLeft size={18} />
                     <span>{isAdvocate ? 'Switch to Featured Clients' : 'Switch to Featured Profiles'}</span>
+                </button>
+                <button
+                    className={styles.backLink}
+                    onClick={() => window.open('/dashboard/legal-docs', '_blank')}
+                    style={{ marginLeft: 'auto' }}
+                >
+                    <ScrollText size={18} />
+                    <span>Legal Documentation</span>
                 </button>
             </div>
 

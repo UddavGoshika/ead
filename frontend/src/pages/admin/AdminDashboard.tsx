@@ -28,6 +28,7 @@ const premiumStatsDefault = {
     totalUsers: 0,
     totalAdvocates: 0,
     totalClients: 0,
+    totalLegalAdvisors: 0,
     verifiedAdvocates: 0,
     pendingAdvocates: 0,
     activeUnits: 0,
@@ -117,6 +118,10 @@ const AdminDashboard: React.FC = () => {
                     <div className={styles.statBox}>
                         <h4>Total Clients</h4>
                         <p>{stats.totalClients}</p>
+                    </div>
+                    <div className={styles.statBox}>
+                        <h4>Legal Advisors</h4>
+                        <p>{stats.totalLegalAdvisors}</p>
                     </div>
                     <div className={styles.statBox}>
                         <h4>Total Users</h4>

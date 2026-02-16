@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import api from '../../../../services/api';
 import styles from './SupportDashboardLayout.module.css';
 import {
     Search, Shield, Target, Activity,
@@ -108,7 +109,7 @@ const MOCK_USERS: SupportUser[] = [
 ];
 
 interface SupportDashboardLayoutProps {
-    role: 'call' | 'chat' | 'live' | 'assistant';
+    role: 'call' | 'chat' | 'live' | 'assistant' | 'email';
     title: string;
     actions?: React.ReactNode;
     specificWidgets?: React.ReactNode;
@@ -122,12 +123,16 @@ const SupportDashboardLayout: React.FC<SupportDashboardLayoutProps> = ({
     specificWidgets,
     dashboardStyles = {}
 }) => {
-    const [selectedUser, setSelectedUser] = useState<SupportUser | null>(MOCK_USERS[0]);
+    const [users, setUsers] = useState<SupportUser[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedUser, setSelectedUser] = useState<SupportUser | null>(null);
     const [activeInteraction, setActiveInteraction] = useState<'chat' | 'call' | 'mixed' | 'help' | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'all' | 'advocate' | 'client'>('all');
     const [membersHandled, setMembersHandled] = useState(0);
     const [activeTab, setActiveTab] = useState<'dossier' | 'timeline' | 'history' | 'files' | 'subscription' | 'notes'>('dossier');
+
+    // ... (other state variables)
     const [isVIP, setIsVIP] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
     const [notes, setNotes] = useState<string>('');
@@ -136,13 +141,51 @@ const SupportDashboardLayout: React.FC<SupportDashboardLayoutProps> = ({
     const [isOnHold, setIsOnHold] = useState(false);
     const [isArchiveMode] = useState(false);
 
+    useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                // Fetch only approved members as per requirement
+                const res = await api.get('/admin/members?context=approved');
+                if (res.data.success) {
+                    const mappedUsers: SupportUser[] = res.data.members.map((m: any) => ({
+                        id: m.id,
+                        name: m.name || 'Unknown',
+                        role: m.role.toLowerCase(),
+                        status: m.status === 'Active' ? 'online' : 'offline', // Simple mapping
+                        lastActivity: 'Unknown', // Not provided by API currently
+                        priority: m.verified ? 'High' : 'Medium',
+                        location: m.location || 'N/A',
+                        email: m.email,
+                        phone: m.phone || 'N/A',
+                        dob: m.dob || 'N/A',
+                        gender: m.gender || 'N/A',
+                        degree: m.education?.degree || 'N/A',
+                        university: m.education?.university || 'N/A',
+                        college: m.education?.college || 'N/A',
+                        gradYear: m.education?.year || 'N/A',
+                        image: m.image || undefined
+                    }));
+                    setUsers(mappedUsers);
+                    if (mappedUsers.length > 0 && !selectedUser) {
+                        setSelectedUser(mappedUsers[0]);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch members:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMembers();
+    }, []);
+
     const filteredUsers = useMemo(() => {
-        return MOCK_USERS.filter(u => {
+        return users.filter(u => {
             const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesFilter = filter === 'all' || u.role === filter;
             return matchesSearch && matchesFilter;
         });
-    }, [searchTerm, filter]);
+    }, [searchTerm, filter, users]);
 
     const handleSchedule = () => setOverlayType('schedule');
     const handleNotes = () => setOverlayType('notes');
@@ -427,7 +470,7 @@ const SupportDashboardLayout: React.FC<SupportDashboardLayoutProps> = ({
 
                                         {specificWidgets}
 
-                                        <SupportUserTable users={MOCK_USERS} />
+                                        <SupportUserTable users={filteredUsers} />
                                     </>
                                 )}
 
@@ -595,6 +638,8 @@ const SupportDashboardLayout: React.FC<SupportDashboardLayoutProps> = ({
                                 >
                                     {role === 'call' ? (
                                         <><Phone size={20} /> INITIATE SECURE CALL</>
+                                    ) : role === 'email' ? (
+                                        <><Mail size={20} /> COMPOSE SECURE MAIL</>
                                     ) : (
                                         <><MessageSquare size={20} /> OPEN CHAT COMMAND</>
                                     )}

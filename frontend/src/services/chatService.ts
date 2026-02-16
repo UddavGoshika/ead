@@ -29,11 +29,20 @@ export interface ChatSession {
     updatedAt: any;
     status: 'waiting' | 'active' | 'closed';
     assignedStaffId?: string;
+    metadata?: {
+        role?: string;
+        plan?: string;
+        email?: string;
+        status?: string;
+        unique_id?: string;
+        mobile?: string;
+        [key: string]: any;
+    };
 }
 
 export const chatService = {
     // Start a new chat session (Client side)
-    async startSession(clientId: string, clientName: string) {
+    async startSession(clientId: string, clientName: string, metadata?: any) {
         const sessionRef = doc(collection(db, 'chat_sessions'));
         const sessionData: ChatSession = {
             id: sessionRef.id,
@@ -41,21 +50,29 @@ export const chatService = {
             clientName,
             lastMessage: 'Started a new session',
             updatedAt: serverTimestamp(),
-            status: 'waiting'
+            status: 'waiting',
+            metadata: metadata || {}
         };
         await setDoc(sessionRef, sessionData);
         return sessionRef.id;
     },
 
-    // Get waiting sessions (Staff side)
-    listenToWaitingSessions(callback: (sessions: ChatSession[]) => void) {
+    // Get sessions for staff (Both waiting and assigned to them)
+    listenToStaffSessions(staffId: string, callback: (sessions: ChatSession[]) => void) {
         const q = query(
             collection(db, 'chat_sessions'),
-            where('status', '==', 'waiting'),
-            orderBy('updatedAt', 'desc')
+            where('status', 'in', ['waiting', 'active'])
         );
         return onSnapshot(q, (snapshot) => {
-            const sessions = snapshot.docs.map(doc => doc.data() as ChatSession);
+            const sessions = snapshot.docs
+                .map(doc => doc.data() as ChatSession)
+                .filter(s => s.status === 'waiting' || s.assignedStaffId === staffId)
+                .sort((a, b) => {
+                    // Sort by updatedAt descending
+                    const timeA = a.updatedAt?.seconds || 0;
+                    const timeB = b.updatedAt?.seconds || 0;
+                    return timeB - timeA;
+                });
             callback(sessions);
         });
     },

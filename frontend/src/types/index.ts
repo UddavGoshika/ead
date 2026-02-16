@@ -1,4 +1,4 @@
-export type UserRole = 'client' | 'advocate' | 'admin' | 'ADMIN' | 'VERIFIER' | 'FINANCE' | 'SUPPORT' | 'USER' | 'legal_provider';
+export type UserRole = 'client' | 'advocate' | 'admin' | 'ADMIN' | 'VERIFIER' | 'FINANCE' | 'SUPPORT' | 'USER' | 'legal_provider' | 'telecaller' | 'chat_agent' | 'call_agent';
 
 export interface User {
     id: number | string;
@@ -6,6 +6,7 @@ export interface User {
     unique_id: string;
     name: string;
     email: string;
+    loginId?: string;
     role: UserRole;
     phone?: string;
     isPremium?: boolean;

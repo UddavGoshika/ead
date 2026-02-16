@@ -14,26 +14,46 @@ const path = require('path');
 const fs = require('fs');
 const { upload } = require('../config/cloudinary');
 const { getImageUrl } = require('../utils/pathHelper');
+const Settings = require('../models/Settings');
 
 
 
 // LOGIN
 router.post('/login', async (req, res) => {
-    const email = req.body.email ? req.body.email.toLowerCase() : '';
-    const { password } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const password = req.body.password ? req.body.password.trim() : '';
 
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
     }
 
     try {
-        let user = await User.findOne({ email });
+        let user = await User.findOne({
+            $or: [
+                { email: email },
+                { loginId: email }
+            ]
+        });
 
-        // If not found by email, try searching by staffId in StaffProfile
+        // If not found, try searching by staffId in StaffProfile, or unique_id in Advocate/Client
         if (!user) {
             const profile = await StaffProfile.findOne({ staffId: email });
             if (profile) {
                 user = await User.findById(profile.userId);
+            }
+        }
+
+        if (!user) {
+            const advocate = await Advocate.findOne({ unique_id: email.toUpperCase() });
+            if (advocate) {
+                user = await User.findById(advocate.userId);
+            }
+        }
+
+        if (!user) {
+            const client = await Client.findOne({ unique_id: email.toUpperCase() });
+            if (client) {
+                user = await User.findById(client.userId);
             }
         }
 
@@ -282,7 +302,7 @@ router.post('/activate-demo', async (req, res) => {
 
 // SEND OTP
 router.post('/send-otp', async (req, res) => {
-    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
     const { checkUnique } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
@@ -349,7 +369,7 @@ router.post('/send-otp', async (req, res) => {
 
 // VERIFY OTP
 router.post('/verify-otp', async (req, res) => {
-    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
     const { otp } = req.body;
     if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
 
@@ -376,7 +396,7 @@ router.post('/verify-otp', async (req, res) => {
 
 // REGISTER
 router.post('/register', async (req, res) => {
-    const email = req.body.email ? req.body.email.toLowerCase() : '';
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
     const { password, role, referredBy } = req.body;
 
     try {
@@ -448,7 +468,7 @@ router.get('/validate-referral/:code', async (req, res) => {
 
 // FORGOT PASSWORD
 router.post('/forgot-password', async (req, res) => {
-    const { email } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
     try {
         const user = await User.findOne({ email });
         if (!user) {
@@ -524,7 +544,8 @@ router.post('/reset-password', async (req, res) => {
 
 // CHANGE PASSWORD (Logged In)
 router.post('/change-password', async (req, res) => {
-    const { email, currentPassword, newPassword } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const { currentPassword, newPassword } = req.body;
     try {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ error: 'User not found' });
@@ -597,5 +618,184 @@ router.post('/resubmit-profile', authMiddleware, upload.fields([
         res.status(500).json({ error: 'Server error during resubmission' });
     }
 });
+
+// UPDATE USER PROFILE (Generic)
+router.put('/profile', authMiddleware, async (req, res) => {
+    try {
+        const { email, name, profilePic, loginId } = req.body;
+        const trimmedEmail = email ? email.trim().toLowerCase() : undefined;
+        const trimmedLoginId = loginId ? loginId.trim() : undefined;
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (trimmedEmail && trimmedEmail !== user.email) {
+            const exists = await User.findOne({ email: trimmedEmail });
+            if (exists) return res.status(400).json({ error: 'Email already in use' });
+            user.email = trimmedEmail;
+        }
+
+        if (trimmedLoginId !== undefined) {
+            if (trimmedLoginId) {
+                const exists = await User.findOne({ loginId: trimmedLoginId, _id: { $ne: req.user.id } });
+                if (exists) return res.status(400).json({ error: 'Login ID already in use' });
+            }
+            user.loginId = trimmedLoginId;
+        }
+
+        if (name) user.name = name;
+        if (profilePic) user.profilePic = profilePic;
+
+        // Update name in related profile if exists
+        const role = user.role.toLowerCase();
+        if (role === 'advocate' || role === 'legal_provider') {
+            await Advocate.findOneAndUpdate({ userId: user._id }, { name }, { new: true });
+        } else if (role === 'client') {
+            const names = name ? name.split(' ') : [];
+            const firstName = names[0];
+            const lastName = names.slice(1).join(' ') || '';
+            await Client.findOneAndUpdate({ userId: user._id }, { firstName, lastName }, { new: true });
+        }
+
+        await user.save();
+        res.json({ success: true, user: { ...user.toObject(), name: user.name || user.email } });
+    } catch (err) {
+        console.error('Update Profile Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// UPLOAD PROFILE IMAGE
+router.post('/profile-image', authMiddleware, upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        user.profilePic = req.file.path; // Cloudinary URL
+        await user.save();
+
+        res.json({ success: true, imageUrl: user.profilePic });
+    } catch (err) {
+        console.error('Image Upload Error:', err);
+        res.status(500).json({ error: 'Upload failed' });
+    }
+});
+
+// SET/UPDATE SUPER ADMIN RECOVERY KEY
+router.post('/set-super-admin-key', authMiddleware, async (req, res) => {
+    try {
+        const { key } = req.body;
+        if (!key) return res.status(400).json({ error: 'Key is required' });
+
+        const user = await User.findById(req.user.id);
+        if (user.role !== 'admin' && user.role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Hash the CUSTOM key
+        const salt = await bcrypt.genSalt(10);
+        user.superAdminKey = await bcrypt.hash(key, salt);
+        user.keyGeneratedAt = new Date();
+        await user.save();
+
+        res.json({ success: true, message: 'Recovery key updated successfully' });
+    } catch (err) {
+        console.error('Key Set Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GENERATE SUPER ADMIN KEY (Legacy Support - actually just use the random gen if requested)
+router.post('/generate-super-admin-key', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (user.role !== 'admin' && user.role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Generate a random key
+        const rawKey = crypto.randomBytes(32).toString('hex').slice(0, 16); // Shorter but random
+
+        // Hash it for storage
+        const salt = await bcrypt.genSalt(10);
+        user.superAdminKey = await bcrypt.hash(rawKey, salt);
+        user.keyGeneratedAt = new Date();
+        await user.save();
+
+        // Return RAW key ONLY ONCE
+        res.json({ success: true, key: rawKey, message: 'Store this key safely. It cannot be recovered.' });
+    } catch (err) {
+        console.error('Key Gen Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// LOGIN WITH KEY (Emergency)
+router.post('/login-key', async (req, res) => {
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const key = req.body.key ? req.body.key.trim() : '';
+    try {
+        const user = await User.findOne({
+            $or: [
+                { email: email },
+                { loginId: email }
+            ]
+        });
+        if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+        if (!user.superAdminKey) return res.status(400).json({ error: 'No recovery key set' });
+
+        const isMatch = await bcrypt.compare(key, user.superAdminKey);
+        if (!isMatch) return res.status(400).json({ error: 'Invalid key' });
+
+        // Generate Token
+        const token = 'user-token-' + user._id;
+
+        // Notify
+        createNotification('system', 'Emergency login used', user.email, user._id);
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                name: user.name || user.email,
+                image_url: user.profilePic
+            }
+        });
+    } catch (err) {
+        console.error('Key Login Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// EMERGENCY ACTIONS (e.g., Maintenance Mode)
+// EMERGENCY ACTIONS (e.g., Maintenance Mode)
+router.post('/emergency/maintenance', authMiddleware, async (req, res) => {
+    try {
+        const { enabled } = req.body;
+
+        // Ensure user is admin
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        let settings = await Settings.findOne();
+        if (!settings) settings = new Settings();
+
+        settings.activations.maintenance = enabled;
+        await settings.save();
+
+        res.json({ success: true, message: `Maintenance mode ${enabled ? 'enabled' : 'disabled'}`, mode: enabled });
+    } catch (err) {
+        console.error('Maintenance Toggle Error:', err);
+        res.status(500).json({ error: 'Action failed' });
+    }
+});
+
 
 module.exports = router;

@@ -108,8 +108,15 @@
 }
 
 .blurredAvatar {
-    filter: blur(2px);
+    filter: blur(8px);
     opacity: 0.7;
+}
+
+.blurredText {
+    filter: blur(8px);
+    opacity: 0.5;
+    user-select: none;
+    pointer-events: none;
 }
 
 .titleInfo {

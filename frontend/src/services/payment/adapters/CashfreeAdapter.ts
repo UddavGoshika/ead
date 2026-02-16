@@ -51,9 +51,10 @@ export class CashfreeAdapter implements GatewayAdapter {
             });
 
             // Start checkout
+            // Start checkout with strict success requirement
             cashfree.checkout({
                 paymentSessionId: paymentSessionId,
-                returnUrl: window.location.origin + '/dashboard?status={payment_status}&order_id={order_id}', // Frontend redirect
+                returnUrl: window.location.origin + '/dashboard?status={payment_status}&order_id={order_id}', // Explicit status tracking
                 redirectTarget: "_self"
             });
 

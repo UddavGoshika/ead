@@ -1,5 +1,5 @@
 .page {
-    padding-bottom: 200px;
+    padding-bottom: 50px;
     animation: fadeIn 0.4s ease-out;
 }
 
@@ -14,18 +14,21 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #94a3b8;
+    color: #ffffff;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    transition: color 0.2s;
-    background: none;
-    border: none;
-    padding: 0;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
 }
 
 .backLink:hover {
     color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.3);
 }
 
 /* Select field (closed state) */

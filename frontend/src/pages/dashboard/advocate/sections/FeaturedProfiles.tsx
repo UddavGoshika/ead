@@ -129,12 +129,12 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
             <div className={styles.headerSection}>
                 <button className={styles.backLink} onClick={() => showsidePage('normalfccards')}>
                     <ArrowLeft size={18} />
-                    <span>{isAdvocate ? 'Browse Profiles' : 'Switch to Profiles'}</span>
+                    <span>{isAdvocate ? 'Switch to Profiles' : 'Switch to Featured Profiles'}</span>
                 </button>
                 <button
                     className={styles.backLink}
                     onClick={() => window.open('/dashboard/legal-docs', '_blank')}
-                    style={{ marginLeft: '15px' }}
+                    style={{ marginLeft: 'auto' }}
                 >
                     <ScrollText size={18} />
                     <span>Legal Documentation</span>

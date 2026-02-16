@@ -18,6 +18,7 @@ type ProfessionalRole =
     | 'Marketing Agency'
     | 'Call Support'
     | 'Chat Support'
+    | 'Email Support'
     | 'Personal Agent'
     | 'Live Chat'
     | 'Telecaller'
@@ -44,6 +45,7 @@ const ROLE_METADATA: (RoleInfo & { category: 'PRO' | 'SUPPORT' | 'LEGACY' })[] =
     // E-Advocate Packages Support Roles
     { role: 'Call Support', icon: MdCall, color: '#ef4444', description: 'Inbound technical and account assistance.', category: 'SUPPORT' },
     { role: 'Chat Support', icon: MdChat, color: '#14b8a6', description: 'Text-based premium support for package holders.', category: 'SUPPORT' },
+    { role: 'Email Support', icon: MdSupportAgent, color: '#facc15', description: 'Enterprise email auditing and communication management.', category: 'SUPPORT' },
     { role: 'Personal Agent', icon: MdPeopleOutline, color: '#f43f5e', description: 'Dedicated personal assistance for Elite members.', category: 'SUPPORT' },
     { role: 'Live Chat', icon: MdSupportAgent, color: '#6366f1', description: 'Real-time digital support and engagement.', category: 'SUPPORT' },
 
@@ -149,6 +151,7 @@ const SuperRegistration: React.FC = () => {
                 'Marketing Agency': 'marketing_agency',
                 'Call Support': 'call_support',
                 'Chat Support': 'chat_support',
+                'Email Support': 'email_support',
                 'Personal Agent': 'personal_agent',
                 'Live Chat': 'live_chat',
                 'Telecaller': 'telecaller',
@@ -486,7 +489,7 @@ const SuperRegistration: React.FC = () => {
                                         </>
                                     )}
 
-                                    {['Telecaller', 'Customer Care', 'Call Support', 'Chat Support', 'Personal Agent', 'Live Chat', 'Data Entry', 'Personal Assistant'].includes(selectedRole) && (
+                                    {['Telecaller', 'Customer Care', 'Call Support', 'Chat Support', 'Email Support', 'Personal Agent', 'Live Chat', 'Data Entry', 'Personal Assistant'].includes(selectedRole) && (
                                         <>
                                             <div className={styles.inputGroup}>
                                                 <label>Experience in {selectedRole}</label>

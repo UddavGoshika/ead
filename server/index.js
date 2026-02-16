@@ -71,7 +71,9 @@ app.use('/api/calls', callRoutes);
 app.use('/api/pages', pageRoutes);
 
 const manualPaymentRoutes = require('./routes/manualPayments');
+const supportRoutes = require('./routes/support');
 app.use('/api/manual-payments', manualPaymentRoutes);
+app.use('/api/support', supportRoutes);
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.

@@ -42,7 +42,11 @@ export class WebRTCService {
     async startLocalStream(video: boolean = true) {
         this.localStream = await navigator.mediaDevices.getUserMedia({
             video: video,
-            audio: true,
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            },
         });
         this.remoteStream = new MediaStream();
 
@@ -96,7 +100,7 @@ export class WebRTCService {
         const offer = {
             sdp: offerDescription.sdp,
             type: offerDescription.type,
-            callerId: targetUserId,
+            callerId: auth.currentUser?.uid,
             callerName: callerName,
             status: 'calling',
             callType: type,

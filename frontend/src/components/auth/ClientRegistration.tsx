@@ -85,6 +85,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     const [mobileCountdown, setMobileCountdown] = useState(0);
     const [mobileMessage, setMobileMessage] = useState({ text: '', type: '' });
     const [confirmationResult, setConfirmationResult] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
     const [captchaCode, setCaptchaCode] = useState('');
@@ -159,6 +160,62 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         return () => clearTimeout(timer);
     }, [mobileCountdown]);
 
+    // AUTO-SEND OTP ON STEP 2
+    React.useEffect(() => {
+        if (currentStep === 2 && !formData.emailVerified && formData.email && countdown === 0 && !otpSending) {
+            handleSendOtp();
+        }
+    }, [currentStep]);
+
+    const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            action();
+        }
+    };
+
+    const handleNextStep = () => {
+        const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
+        const isLastStep = currentIndex === visibleSteps.length - 1;
+
+        if (!validateStep(currentStep)) {
+            alert('Please fill all highlighted required fields.');
+            return;
+        }
+
+        // Validation Specific to Steps (by ID)
+        if (currentStep === 2) {
+            if (!formData.emailVerified) {
+                alert('Please verify your email via OTP before proceeding.');
+                return;
+            }
+            if (!formData.mobileVerified) {
+                alert('Please verify your mobile via SMS OTP before proceeding.');
+                return;
+            }
+        }
+
+        if (isLastStep) {
+            const newErrors: Record<string, boolean> = {};
+            let hasError = false;
+
+            if (!formData.captchaVerified) { newErrors['captchaVerified'] = true; hasError = true; }
+            if (!formData.declaration1) { newErrors['declaration1'] = true; hasError = true; }
+            if (!formData.declaration2) { newErrors['declaration2'] = true; hasError = true; }
+            if (!formData.declaration3) { newErrors['declaration3'] = true; hasError = true; }
+            if (!formData.signature) { newErrors['signature'] = true; hasError = true; }
+
+            if (hasError) {
+                setErrors(newErrors);
+                alert('Please agree to all declarations, provide signature, and verify captcha.');
+                return;
+            }
+            handleSubmit();
+        } else {
+            setCurrentStep(visibleSteps[currentIndex + 1].id);
+        }
+    };
+
     const handleSendOtp = async () => {
         if (!formData.email) {
             setOtpMessage({ text: 'Please enter email in Step 1 first.', type: 'error' });
@@ -182,8 +239,9 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
     };
 
-    const handleVerifyOtp = async () => {
-        if (!formData.emailOtp || formData.emailOtp.length !== 6) {
+    const handleVerifyOtp = async (code?: string) => {
+        const otpCode = code || formData.emailOtp;
+        if (!otpCode || otpCode.length !== 6) {
             setOtpMessage({ text: 'Enter 6-digit OTP.', type: 'error' });
             return;
         }
@@ -191,7 +249,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         setOtpVerifying(true);
         setOtpMessage({ text: '', type: '' });
         try {
-            const res = await (authService as any).verifyOtp(formData.email, formData.emailOtp);
+            const res = await (authService as any).verifyOtp(formData.email, otpCode);
             if (res.data.success) {
                 setOtpMessage({ text: 'Email verified successfully!', type: 'success' });
                 updateFormData('emailVerified', true);
@@ -255,8 +313,9 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         }
     };
 
-    const handleVerifyMobileOtp = async () => {
-        if (!formData.mobileOtp || formData.mobileOtp.length !== 6) {
+    const handleVerifyMobileOtp = async (code?: string) => {
+        const otpCode = code || formData.mobileOtp;
+        if (!otpCode || otpCode.length !== 6) {
             setMobileMessage({ text: 'Enter 6-digit OTP.', type: 'error' });
             return;
         }
@@ -268,7 +327,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
         setMobileOtpVerifying(true);
         setMobileMessage({ text: '', type: '' });
         try {
-            await confirmationResult.confirm(formData.mobileOtp);
+            await confirmationResult.confirm(otpCode);
             setMobileMessage({ text: 'Mobile verified successfully!', type: 'success' });
             updateFormData('mobileVerified', true);
         } catch (err: any) {
@@ -305,6 +364,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
     };
 
     const handleSubmit = async () => {
+        if (loading) return;
+        setLoading(true);
         try {
             const submissionData = new FormData();
 
@@ -363,6 +424,8 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
             console.error('Client Registration Error:', err);
             const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
             alert(errorMessage);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -603,16 +666,21 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     placeholder="Enter 6-digit OTP"
                                     value={formData.emailOtp || ''}
                                     onChange={(e) => {
-                                        if (/^\d{0,6}$/.test(e.target.value)) {
-                                            updateFormData('emailOtp', e.target.value);
+                                        const val = e.target.value;
+                                        if (/^\d{0,6}$/.test(val)) {
+                                            updateFormData('emailOtp', val);
+                                            if (val.length === 6) {
+                                                handleVerifyOtp(val);
+                                            }
                                         }
                                     }}
+                                    onKeyDown={(e) => handleKeyDown(e, () => handleVerifyOtp())}
                                     disabled={formData.emailVerified}
                                 />
                                 {!formData.emailVerified ? (
                                     <button
                                         className={styles.verifyBtn}
-                                        onClick={formData.emailOtp?.length === 6 ? handleVerifyOtp : handleSendOtp}
+                                        onClick={formData.emailOtp?.length === 6 ? () => handleVerifyOtp() : handleSendOtp}
                                         disabled={otpSending || otpVerifying || (countdown > 0 && !formData.emailOtp)}
                                     >
                                         {otpSending ? 'Sending...' : otpVerifying ? 'Verifying...' : (formData.emailOtp?.length === 6 ? 'Verify OTP' : 'Send OTP')}
@@ -646,8 +714,12 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     placeholder="Enter 6-digit OTP"
                                     value={formData.mobileOtp || ''}
                                     onChange={(e) => {
-                                        if (/^\d{0,6}$/.test(e.target.value)) {
-                                            updateFormData('mobileOtp', e.target.value);
+                                        const val = e.target.value;
+                                        if (/^\d{0,6}$/.test(val)) {
+                                            updateFormData('mobileOtp', val);
+                                            if (val.length === 6) {
+                                                handleVerifyMobileOtp(val);
+                                            }
                                         }
                                     }}
                                     disabled={formData.mobileVerified}
@@ -655,7 +727,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 {!formData.mobileVerified ? (
                                     <button
                                         className={styles.verifyBtn}
-                                        onClick={formData.mobileOtp?.length === 6 ? handleVerifyMobileOtp : handleSendMobileOtp}
+                                        onClick={formData.mobileOtp?.length === 6 ? () => handleVerifyMobileOtp() : handleSendMobileOtp}
                                         disabled={mobileOtpSending || mobileOtpVerifying || (mobileCountdown > 0 && !formData.mobileOtp)}
                                     >
                                         {mobileOtpSending ? 'Sending...' : mobileOtpVerifying ? 'Verifying...' : (formData.mobileOtp?.length === 6 ? 'Verify' : 'Send SMS')}
@@ -957,7 +1029,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label>Languages *</label>
+                                <label>Languages * (select Multiple)</label>
                                 <div className={styles.languageSelectWrapper}>
                                     <select
                                         className={styles.selectInput}
@@ -1234,47 +1306,27 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                         {/* CAPTCHA VERIFICATION */}
                         <div className={styles.formGroup} style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
                             <label style={{ fontSize: '16px', color: '#daa520', marginBottom: '15px', display: 'block' }}>🛡️ Security Verification</label>
-                            <div className={styles.captchaContainer} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <div className={styles.captchaBox} style={{
-                                    background: 'linear-gradient(45deg, #111, #222)',
-                                    padding: '12px 24px',
-                                    borderRadius: '8px',
-                                    fontFamily: 'monospace',
-                                    fontSize: '26px',
-                                    letterSpacing: '6px',
-                                    fontWeight: 'bold',
-                                    color: '#fbbf24',
-                                    userSelect: 'none',
-                                    border: '1px dashed #444',
-                                    minWidth: '160px',
-                                    textAlign: 'center'
-                                }}>
-                                    <span className={styles.captchaText}>{captchaCode}</span>
+                            <div className={styles.captchaContainer} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '15px' }}>
+                                <div className={styles.captchaRow} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div className={styles.captchaBox} style={{
+                                        background: 'linear-gradient(45deg, #111, #222)',
+                                        padding: '12px 24px',
+                                        borderRadius: '8px',
+                                        fontFamily: 'monospace',
+                                        fontSize: '26px',
+                                        letterSpacing: '6px',
+                                        fontWeight: 'bold',
+                                        color: '#fbbf24',
+                                        userSelect: 'none',
+                                        border: '1px dashed #444',
+                                        minWidth: '160px',
+                                        textAlign: 'center'
+                                    }}>
+                                        <span className={styles.captchaText}>{captchaCode}</span>
+                                    </div>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    onClick={generateCaptcha}
-                                    style={{
-                                        background: '#333',
-                                        border: '1px solid #444',
-                                        borderRadius: '50%',
-                                        width: '40px',
-                                        height: '40px',
-                                        cursor: 'pointer',
-                                        color: '#fbbf24',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                    className={styles.refreshBtn}
-                                    title="Refresh Captcha"
-                                >
-                                    <RefreshCcw size={18} />
-                                </button>
-
-                                <div className={styles.captchaInputGroup} style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div className={styles.captchaInputGroup} style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '180px' }}>
                                     <input
                                         type="text"
                                         placeholder="Enter Code"
@@ -1286,8 +1338,7 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                             padding: '12px',
                                             borderRadius: '8px',
                                             fontSize: '16px',
-                                            width: '100%',
-                                            maxWidth: '180px'
+                                            width: '100%'
                                         }}
                                         onChange={(e) => {
                                             if (e.target.value.toUpperCase() === captchaCode) {
@@ -1297,8 +1348,26 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                             }
                                         }}
                                     />
-                                    {formData.captchaVerified && <span style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}><CheckCircle size={18} /> Verified</span>}
+                                    <button
+                                        type="button"
+                                        onClick={generateCaptcha}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#fbbf24',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            cursor: 'pointer',
+                                            fontSize: '13px',
+                                            padding: '0'
+                                        }}
+                                        className={styles.refreshBtn}
+                                    >
+                                        <RefreshCcw size={14} /> Refresh Captcha
+                                    </button>
                                 </div>
+                                {formData.captchaVerified && <span style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}><CheckCircle size={18} /> Verified</span>}
                             </div>
                         </div>
 
@@ -1491,7 +1560,17 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
 
                 {/* Main Content Area */}
                 {/* Main Content Area - Scrollable */}
-                <div className={styles.content} ref={contentRef}>
+                <div
+                    className={styles.content}
+                    ref={contentRef}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+                            if ((e.target as any).tagName !== 'TEXTAREA') {
+                                handleNextStep();
+                            }
+                        }
+                    }}
+                >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}
@@ -1511,50 +1590,10 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                     </div>
                     <button
                         className={styles.nextBtn}
-                        onClick={() => {
-                            // Find current index in visible steps
-                            const currentIndex = visibleSteps.findIndex(s => s.id === currentStep);
-                            const isLastStep = currentIndex === visibleSteps.length - 1;
-
-                            if (!validateStep(currentStep)) {
-                                alert('Please fill all highlighted required fields.');
-                                return;
-                            }
-
-                            // Validation Specific to Steps (by ID)
-                            if (currentStep === 2) {
-                                if (!formData.emailVerified) {
-                                    alert('Please verify your email via OTP before proceeding.');
-                                    return;
-                                }
-                                if (!formData.mobileVerified) {
-                                    alert('Please verify your mobile via SMS OTP before proceeding.');
-                                    return;
-                                }
-                            }
-
-                            if (isLastStep) {
-                                const newErrors: Record<string, boolean> = {};
-                                let hasError = false;
-
-                                if (!formData.captchaVerified) { newErrors['captchaVerified'] = true; hasError = true; }
-                                if (!formData.declaration1) { newErrors['declaration1'] = true; hasError = true; }
-                                if (!formData.declaration2) { newErrors['declaration2'] = true; hasError = true; }
-                                if (!formData.declaration3) { newErrors['declaration3'] = true; hasError = true; }
-                                if (!formData.signature) { newErrors['signature'] = true; hasError = true; }
-
-                                if (hasError) {
-                                    setErrors(newErrors);
-                                    alert('Please agree to all declarations, provide signature, and verify captcha.');
-                                    return;
-                                }
-                                handleSubmit();
-                            } else {
-                                setCurrentStep(visibleSteps[currentIndex + 1].id);
-                            }
-                        }}
+                        disabled={loading}
+                        onClick={handleNextStep}
                     >
-                        {visibleSteps.findIndex(s => s.id === currentStep) === visibleSteps.length - 1 ? 'Submit Application' : 'Next Step'}
+                        {visibleSteps.findIndex(s => s.id === currentStep) === visibleSteps.length - 1 ? (loading ? 'Submitting...' : 'Submit Application') : 'Next Step'}
                     </button>
                 </div>
 

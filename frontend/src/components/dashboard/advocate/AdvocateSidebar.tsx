@@ -169,6 +169,17 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, o
                 </div>
 
                 <div className={styles.divider}></div>
+                <button
+                    className={styles.link}
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-support-hub'))}
+                    style={{ color: '#3b82f6' }}
+                >
+                    <div className={styles.iconWrapper}>
+                        <Shield size={22} color="#3b82f6" />
+                    </div>
+                    <span>Official Support</span>
+                </button>
+
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Logout</span>

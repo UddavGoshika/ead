@@ -216,16 +216,16 @@ router.get('/config', async (req, res) => {
         // Map DB settings or use defaults if empty
         const configs = settings.length > 0 ? settings.map(s => ({
             gateway: s.gateway,
-            isActive: s.isActive,
+            isActive: ['razorpay', 'cashfree'].includes(s.gateway) ? s.isActive : false,
             mode: s.mode,
             credentials: s.credentials
         })) : [
-            { gateway: 'razorpay', isActive: true, mode: 'sandbox', credentials: { key: 'rzp_test_YOUR_KEY' } },
-            { gateway: 'paytm', isActive: true, mode: 'sandbox', credentials: { merchantId: 'YOUR_MERCHANT_ID' } },
-            { gateway: 'stripe', isActive: true, mode: 'sandbox', credentials: { public_key: 'pk_test_YOUR_KEY' } },
-            { gateway: 'invoice', isActive: true, mode: 'sandbox', credentials: {} },
-            { gateway: 'upi', isActive: true, mode: 'sandbox', credentials: { upiId: 'e-advocate@okaxis', payeeName: 'E-Advocate Services' } },
-            { gateway: 'cashfree', isActive: false, mode: 'sandbox', credentials: { appId: '', secretKey: '' } }
+            { gateway: 'razorpay', isActive: true, mode: 'sandbox', credentials: { key: 'rzp_test_YOUR_KEY', secret: 'YOUR_SECRET' } },
+            { gateway: 'cashfree', isActive: true, mode: 'sandbox', credentials: { appId: '', secretKey: '' } },
+            { gateway: 'paytm', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'stripe', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'invoice', isActive: false, mode: 'sandbox', credentials: {} },
+            { gateway: 'upi', isActive: false, mode: 'sandbox', credentials: {} }
         ];
 
         res.json({ success: true, configs });
@@ -269,6 +269,16 @@ router.post('/create-order', authenticate, async (req, res) => {
     try {
         const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
+        // Fetch accurate mobile number from profile if not in User model
+        let mobile = req.user.mobile;
+        if (!mobile) {
+            const Advocate = require('../models/Advocate');
+            const Client = require('../models/Client');
+            const advProfile = await Advocate.findOne({ userId: req.user.id || req.user._id });
+            const cliProfile = await Client.findOne({ userId: req.user.id || req.user._id });
+            mobile = advProfile?.mobile || cliProfile?.mobile || '9999999999';
+        }
+
         const transaction = new Transaction({
             userId: req.user.id || req.user._id,
             orderId,
@@ -276,7 +286,12 @@ router.post('/create-order', authenticate, async (req, res) => {
             currency: currency || 'INR',
             gateway,
             packageId,
-            metadata,
+            metadata: {
+                ...metadata,
+                userName: req.user.name,
+                userEmail: req.user.email,
+                userPhone: mobile
+            },
             status: 'pending'
         });
 
@@ -451,7 +466,69 @@ router.post('/verify', authenticate, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        // MOCK VERIFICATION: In production, verify signature here
+        // STRICT VERIFICATION
+        if (gateway === 'razorpay') {
+            const rzpConfig = await PaymentSetting.findOne({ gateway: 'razorpay' });
+            if (rzpConfig && rzpConfig.credentials && rzpConfig.credentials.secret) {
+                const secret = rzpConfig.credentials.secret;
+                const generated_signature = crypto
+                    .createHmac('sha256', secret)
+                    .update(paymentId + "|" + signature)
+                    .digest('hex');
+
+                if (generated_signature !== signature) {
+                    transaction.status = 'failed';
+                    transaction.message = 'Signature verification failed';
+                    await transaction.save();
+                    return res.status(400).json({ success: false, message: 'Payment verification failed (Invalid Signature)' });
+                }
+            } else {
+                console.warn("[RAZORPAY] Signature verification skipped due to missing credentials (Secret).");
+            }
+        } else if (gateway === 'cashfree') {
+            const cfConfig = await PaymentSetting.findOne({ gateway: 'cashfree' });
+            if (cfConfig && cfConfig.credentials && cfConfig.credentials.appId && cfConfig.credentials.secretKey) {
+                const isSandbox = cfConfig.mode === 'sandbox';
+                const baseUrl = isSandbox ? 'https://sandbox.cashfree.com/pg' : 'https://api.cashfree.com/pg';
+                const appId = cfConfig.credentials.appId;
+                const secretKey = cfConfig.credentials.secretKey;
+
+                try {
+                    const sessionData = await new Promise((resolve, reject) => {
+                        const options = {
+                            hostname: new URL(baseUrl).hostname,
+                            port: 443,
+                            path: `/pg/orders/${orderId}`,
+                            method: 'GET',
+                            headers: {
+                                'x-api-version': '2022-09-01',
+                                'x-client-id': appId,
+                                'x-client-secret': secretKey
+                            }
+                        };
+                        const req = https.request(options, (res) => {
+                            let data = '';
+                            res.on('data', (chunk) => { data += chunk; });
+                            res.on('end', () => {
+                                try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+                            });
+                        });
+                        req.on('error', (e) => reject(e));
+                        req.end();
+                    });
+
+                    if (sessionData.order_status !== 'PAID') {
+                        transaction.status = 'failed';
+                        transaction.message = `Cashfree Payment not PAID. Current Status: ${sessionData.order_status}`;
+                        await transaction.save();
+                        return res.status(400).json({ success: false, message: `Payment not verified (${sessionData.order_status})` });
+                    }
+                } catch (e) {
+                    console.error("[CASHFREE] Verification API Call Failed:", e.message);
+                }
+            }
+        }
+
         transaction.status = 'success';
         transaction.paymentId = paymentId;
         transaction.signature = signature;

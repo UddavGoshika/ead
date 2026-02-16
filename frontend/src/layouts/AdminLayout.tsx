@@ -9,7 +9,32 @@ import LegalProviderRegistration from '../components/auth/LegalProviderRegistrat
 import { useAuth } from '../context/AuthContext';
 
 const AdminLayout: React.FC = () => {
-    const { logout, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg, isLegalProviderRegOpen, closeLegalProviderReg } = useAuth();
+    const { logout, user, isAdvocateRegOpen, closeAdvocateReg, isClientRegOpen, closeClientReg, isLegalProviderRegOpen, closeLegalProviderReg } = useAuth();
+
+    const roleToDisplay: Record<string, string> = {
+        admin: 'Super Admin',
+        super_admin: 'Super Admin',
+        manager: 'Manager',
+        teamlead: 'Team Lead',
+        hr: 'HR',
+        telecaller: 'Telecaller',
+        customer_care: 'Customer Care Support',
+        chat_support: 'Chat Support',
+        live_chat: 'Live Chat Support',
+        call_support: 'Call Support',
+        personal_assistant: 'Personal Assistant',
+        marketer: 'Marketer',
+        legal_provider: 'Legal Advisor',
+        email_support: 'Email Support'
+    };
+
+    const getRoleDisplayName = () => {
+        const r = (user?.role || '').toLowerCase().replace(/-/g, '_');
+        return roleToDisplay[r] || (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase().replace(/_/g, ' ') : 'Administrator');
+    };
+
+    const roleName = getRoleDisplayName();
+
     // Initialize collapsed state: Mobile (hidden) or Tablet (icon-only) for < 1024px
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -103,14 +128,14 @@ const AdminLayout: React.FC = () => {
                             <NotificationBell />
                         </div>
                         <div className={styles.userAvatar} onClick={toggleProfile}>
-                            A
+                            {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'A'}
                         </div>
 
                         {isProfileOpen && (
                             <div className={styles.dropdown}>
                                 <div className={styles.dropdownHeader}>
-                                    <div className={styles.userName}>Super Admin</div>
-                                    <div className={styles.userRole}>System Administrator</div>
+                                    <div className={styles.userName}>{user?.name || user?.email || 'Super Admin'}</div>
+                                    <div className={styles.userRole}>{roleName}</div>
                                 </div>
                                 <div className={styles.dropdownDivider} />
                                 <button className={styles.dropdownItem} onClick={() => { navigate('/admin/profile'); setIsProfileOpen(false); }}>

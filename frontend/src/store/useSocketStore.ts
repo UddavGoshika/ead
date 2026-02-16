@@ -24,6 +24,14 @@ export const useSocketStore = create<SocketState>((set, get) => ({
             socket.emit('register', userId);
         });
 
+        socket.on('message', (data) => {
+            window.dispatchEvent(new CustomEvent('socket-message', { detail: data }));
+        });
+
+        socket.on('support:new-email', (data) => {
+            window.dispatchEvent(new CustomEvent('support:new-email', { detail: data }));
+        });
+
         socket.on('disconnect', () => {
             console.log('Disconnected from socket server');
             set({ isConnected: false });

@@ -132,7 +132,10 @@ export const MENU_SCHEMA: MenuItem[] = [
         name: "Marketing",
         icon: MdCampaign,
         path: "/admin/marketing",
-        children: [{ id: "newsletter", name: "Newsletter", path: "/admin/marketing/newsletter" }],
+        children: [
+            { id: "newsletter", name: "Newsletter", path: "/admin/marketing/newsletter" },
+            { id: "mail-agent-activity", name: "Mail Agent Activity", path: "/admin/marketing/activity" }
+        ],
     },
     {
         id: "contact-us-queries",
@@ -346,7 +349,31 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
 
 const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) => {
     const [search, setSearch] = useState('');
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
+
+    const roleToDisplay: Record<string, string> = {
+        admin: 'Super Admin',
+        super_admin: 'Super Admin',
+        manager: 'Manager',
+        teamlead: 'Team Lead',
+        hr: 'HR',
+        telecaller: 'Telecaller',
+        customer_care: 'Customer Care Support',
+        chat_support: 'Chat Support',
+        live_chat: 'Live Chat Support',
+        call_support: 'Call Support',
+        personal_assistant: 'Personal Assistant',
+        marketer: 'Marketer',
+        legal_provider: 'Legal Advisor',
+        email_support: 'Email Support'
+    };
+
+    const getRoleDisplayName = () => {
+        const r = (user?.role || '').toLowerCase().replace(/-/g, '_');
+        return roleToDisplay[r] || (user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase().replace(/_/g, ' ') : 'Administrator');
+    };
+
+    const roleName = getRoleDisplayName();
 
     return (
         <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
@@ -354,7 +381,7 @@ const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) 
                 {!collapsed ? (
                     <>
                         <div className={styles.logo}>E-Advocate</div>
-                        <div className={styles.logoSubtitle}>SUPER ADMIN</div>
+                        <div className={styles.logoSubtitle}>{roleName.toUpperCase()} PANEL</div>
                     </>
                 ) : (
                     <div className={styles.logoCollapsed}>E</div>

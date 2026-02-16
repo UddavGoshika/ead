@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import MemberDetailModal from "../../components/admin/MemberDetailModal";
 import { useSettings } from "../../context/SettingsContext";
+import { useAuth } from "../../context/AuthContext";
 
 /* ================= TYPES ================= */
 type MemberStatus = "Active" | "Blocked" | "Deactivated" | "Deleted";
@@ -35,6 +36,7 @@ const premiumStatsDefault = {
 };
 
 const ManagerDashboard: React.FC = () => {
+    const { user } = useAuth();
     const { settings } = useSettings();
     const [stats, setStats] = useState(premiumStatsDefault);
     const [members, setMembers] = useState<Member[]>([]);
@@ -109,8 +111,8 @@ const ManagerDashboard: React.FC = () => {
         <div className={styles.dashboard}>
             <header className={styles.header}>
                 <div>
-                    <h1>Operations Overview</h1>
-                    <p>Real-time analytics and member management for Managers.</p>
+                    <h1>Welcome, {user?.name || user?.email || 'Manager'}</h1>
+                    <p>Real-time analytics and member management oversight.</p>
                 </div>
             </header>
 

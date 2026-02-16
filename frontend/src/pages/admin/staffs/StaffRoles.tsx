@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import styles from "./StaffRoles.module.css";
 import {
     Shield, Headphones, MessageSquare, PhoneCall,
@@ -8,6 +8,7 @@ import {
     Plus, Gem, Star, Info, X
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { adminService } from "../../../services/api";
 
 type StaffStatus = "Active" | "Inactive" | "On Leave" | "Suspended";
 type RoleCategory = "system" | "premium";
@@ -42,63 +43,93 @@ interface RoleGroup {
     category: RoleCategory;
 }
 
-const INITIAL_ROLE_GROUPS: RoleGroup[] = [
-    { id: "all", name: "All Roles", icon: Layers, count: 124, color: "#3b82f6", category: "system" },
-    { id: "admin", name: "Super Admin", icon: Shield, count: 1, color: "#ef4444", category: "system" },
-    { id: "manager", name: "Manager", icon: Briefcase, count: 5, color: "#f59e0b", category: "system" },
-    { id: "hr", name: "HR", icon: UserCheck, count: 3, color: "#ec4899", category: "system" },
-    { id: "teamlead", name: "Team Lead", icon: Zap, count: 12, color: "#8b5cf6", category: "system" },
-    { id: "tele", name: "Telecallers", icon: Mic, count: 25, color: "#10b981", category: "system" },
-    { id: "market", name: "Marketers", icon: Layers, count: 20, color: "#10b981", category: "system" },
-    { id: "data", name: "Data Entry", icon: MousePointer2, count: 8, color: "#6366f1", category: "system" },
-    { id: "care", name: "Customer Care", icon: Headphones, count: 15, color: "#3b82f6", category: "system" },
-
-    // PREMIUM GROUPS
-    { id: "chat", name: "Chat Support", icon: MessageSquare, count: 10, color: "#06b6d4", category: "premium" },
-    { id: "live", name: "Live Chat Support", icon: Star, count: 6, color: "#facc15", category: "premium" },
-    { id: "call", name: "Call Support", icon: PhoneCall, count: 12, color: "#f97316", category: "premium" },
-    { id: "pa", name: "Personal Agent", icon: HeartHandshake, count: 4, color: "#ec4899", category: "premium" },
+const ROLE_GROUP_TEMPLATE: RoleGroup[] = [
+    { id: "all", name: "All Roles", icon: Layers, count: 0, color: "#3b82f6", category: "system" },
+    { id: "admin", name: "Super Admin", icon: Shield, count: 0, color: "#ef4444", category: "system" },
+    { id: "manager", name: "Manager", icon: Briefcase, count: 0, color: "#f59e0b", category: "system" },
+    { id: "hr", name: "HR", icon: UserCheck, count: 0, color: "#ec4899", category: "system" },
+    { id: "teamlead", name: "Team Lead", icon: Zap, count: 0, color: "#8b5cf6", category: "system" },
+    { id: "tele", name: "Telecallers", icon: Mic, count: 0, color: "#10b981", category: "system" },
+    { id: "market", name: "Marketers", icon: Layers, count: 0, color: "#10b981", category: "system" },
+    { id: "data", name: "Data Entry", icon: MousePointer2, count: 0, color: "#6366f1", category: "system" },
+    { id: "care", name: "Customer Care", icon: Headphones, count: 0, color: "#3b82f6", category: "system" },
+    { id: "chat", name: "Chat Support", icon: MessageSquare, count: 0, color: "#06b6d4", category: "premium" },
+    { id: "live", name: "Live Chat Support", icon: Star, count: 0, color: "#facc15", category: "premium" },
+    { id: "call", name: "Call Support", icon: PhoneCall, count: 0, color: "#f97316", category: "premium" },
+    { id: "pa", name: "Personal Agent", icon: HeartHandshake, count: 0, color: "#ec4899", category: "premium" },
 ];
 
-const MOCK_STAFF: StaffMember[] = [
-    {
-        id: "1", staffId: "STF-101", name: "Amit Khanna", email: "amit.k@legal.com", mobile: "+91 98765 43210",
-        role: "Super Admin", level: "L10", status: "Active", joinedDate: "2023-01-01", lastActive: "Now",
-        assignedTasks: 120, completionRate: "98%",
-        solvedCases: 450, pendingCases: 12, successRate: "98%", grossAmount: "₹2,50,000", netAmount: "₹2,10,000"
-    },
-    {
-        id: "2", staffId: "STF-252", name: "Sneha Reddy", email: "sneha.r@support.com", mobile: "+91 87654 32109",
-        role: "Live Chat Support", level: "L3", status: "Active", joinedDate: "2023-11-15", lastActive: "2 mins ago",
-        assignedTasks: 840, completionRate: "95%",
-        solvedCases: 320, pendingCases: 8, successRate: "97%", grossAmount: "₹65,000", netAmount: "₹58,000"
-    },
-    {
-        id: "3", staffId: "STF-441", name: "Robert D'Souza", email: "robert.d@help.in", mobile: "+91 76543 21098",
-        role: "Customer Care", level: "L4", status: "Active", joinedDate: "2023-08-20", lastActive: "15 mins ago",
-        assignedTasks: 520, completionRate: "92%",
-        solvedCases: 120, pendingCases: 5, successRate: "95%", grossAmount: "₹1,20,000", netAmount: "₹1,05,000"
-    },
-    {
-        id: "4", staffId: "STF-882", name: "Priya Menon", email: "priya.m@hr.com", mobile: "+91 91111 22222",
-        role: "HR", level: "L7", status: "On Leave", joinedDate: "2023-05-10", lastActive: "Yesterday",
-        assignedTasks: 45, completionRate: "100%",
-        solvedCases: 850, pendingCases: 45, successRate: "92%", grossAmount: "₹85,000", netAmount: "₹72,000"
-    },
-    {
-        id: "5", staffId: "STF-331", name: "Vikram Malhotra", email: "vikram.m@sales.com", mobile: "+91 95555 44444",
-        role: "Telecallers", level: "L2", status: "Inactive", joinedDate: "2023-12-01", lastActive: "3 days ago",
-        assignedTasks: 1200, completionRate: "88%",
-        solvedCases: 1500, pendingCases: 120, successRate: "90%", grossAmount: "₹45,000", netAmount: "₹38,000"
-    }
-];
+const roleNameToId: Record<string, string> = {
+    "All Roles": "all", "Super Admin": "admin", "Manager": "manager", "HR": "hr", "Team Lead": "teamlead",
+    "Telecallers": "tele", "Marketers": "market", "Data Entry": "data", "Customer Care": "care", "Customer Care Support": "care",
+    "Chat Support": "chat", "Live Chat Support": "live", "Call Support": "call", "Personal Agent": "pa", "Personal Assistant Support": "pa"
+};
 
 const StaffRoles: React.FC = () => {
-    const [roleGroups, setRoleGroups] = useState<RoleGroup[]>(INITIAL_ROLE_GROUPS);
+    const [roleGroups, setRoleGroups] = useState<RoleGroup[]>(ROLE_GROUP_TEMPLATE);
+    const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedRoleId, setSelectedRoleId] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                setLoading(true);
+                const { data } = await adminService.getStaff();
+                if (!data.success || !data.staff) {
+                    setStaffMembers([]);
+                    return;
+                }
+                const roleToDisplay: Record<string, string> = {
+                    admin: 'Super Admin', manager: 'Manager', teamlead: 'Team Lead', hr: 'HR',
+                    telecaller: 'Telecallers', data_entry: 'Data Entry', customer_care: 'Customer Care',
+                    chat_support: 'Chat Support', live_chat: 'Live Chat Support', call_support: 'Call Support',
+                    personal_assistant: 'Personal Agent', marketer: 'Marketers'
+                };
+                const list: StaffMember[] = data.staff.map((s: any) => {
+                    const r = (s.role || '').toLowerCase().replace(/-/g, '_');
+                    const roleDisplay = roleToDisplay[r] || (s.role ? s.role.charAt(0).toUpperCase() + s.role.slice(1).replace(/_/g, ' ') : 'Staff');
+                    const profile = s.profile || {};
+                    const joined = profile.joinedDate || s.createdAt;
+                    return {
+                        id: String(s.id),
+                        staffId: profile.staffId || `STF-${String(s.id).slice(-4)}`,
+                        name: s.name || profile.fullName || s.email?.split('@')[0] || 'Staff',
+                        email: s.email,
+                        mobile: profile.mobile || 'N/A',
+                        role: roleDisplay,
+                        level: profile.level || 'L1',
+                        status: (s.status === 'Active' ? 'Active' : s.status === 'Blocked' ? 'Suspended' : s.status === 'Pending' ? 'Inactive' : (s.status || 'Active')) as StaffStatus,
+                        joinedDate: joined ? new Date(joined).toLocaleDateString() : 'N/A',
+                        lastActive: 'Now',
+                        assignedTasks: (profile.solvedCases || 0) + (profile.pendingCases || 0),
+                        completionRate: profile.successRate || '0%',
+                        solvedCases: profile.solvedCases || 0,
+                        pendingCases: profile.pendingCases || 0,
+                        successRate: profile.successRate || '0%',
+                        grossAmount: `₹${(profile.grossAmount || 0).toLocaleString()}`,
+                        netAmount: `₹${(profile.netAmount || 0).toLocaleString()}`
+                    };
+                });
+                setStaffMembers(list);
+                const counts: Record<string, number> = { all: list.length };
+                ROLE_GROUP_TEMPLATE.forEach(g => { if (g.id !== 'all') counts[g.id] = 0; });
+                list.forEach(m => {
+                    const id = roleNameToId[m.role];
+                    if (id && counts[id] !== undefined) counts[id]++;
+                });
+                setRoleGroups(ROLE_GROUP_TEMPLATE.map(g => ({ ...g, count: counts[g.id] ?? 0 })));
+            } catch (e) {
+                console.error('StaffRoles fetch', e);
+                setStaffMembers([]);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
 
     // Form State
     const [newRole, setNewRole] = useState({
@@ -114,19 +145,17 @@ const StaffRoles: React.FC = () => {
         [selectedRoleId, roleGroups]);
 
     const filteredMembers = useMemo(() => {
-        return MOCK_STAFF.filter(member => {
+        return staffMembers.filter(member => {
             const matchesSearch =
                 member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 member.staffId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 member.email.toLowerCase().includes(searchTerm.toLowerCase());
-
             const matchesRole =
                 selectedRoleId === "all" ||
-                member.role.toLowerCase() === activeRole?.name.toLowerCase();
-
+                (activeRole && (member.role.toLowerCase() === activeRole.name.toLowerCase() || roleNameToId[member.role] === selectedRoleId));
             return matchesSearch && matchesRole;
         });
-    }, [searchTerm, selectedRoleId, activeRole]);
+    }, [searchTerm, selectedRoleId, activeRole, staffMembers]);
 
     const handleAddRole = (e: React.FormEvent) => {
         e.preventDefault();
@@ -230,6 +259,9 @@ const StaffRoles: React.FC = () => {
                 </div>
 
                 <div className={styles.tableWrapper}>
+                    {loading ? (
+                        <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading staff...</div>
+                    ) : (
                     <table className={styles.table}>
                         <thead>
                             <tr>
@@ -311,6 +343,7 @@ const StaffRoles: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
+                    )}
                 </div>
             </div>
 

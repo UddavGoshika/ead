@@ -5,7 +5,7 @@ import { LEGAL_DOMAINS } from '../../../data/legalDomainData';
 import { useRelationshipStore } from '../../../store/useRelationshipStore';
 import AdvocateCard from '../../../components/dashboard/AdvocateCard';
 import TokenTopupModal from '../../../components/dashboard/shared/TokenTopupModal';
-import { Search, SlidersHorizontal, Loader2, Star, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, ScrollText } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { interactionService } from '../../../services/interactionService';
 import styles from './AdvocateList.module.css';
@@ -193,31 +193,22 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
     return (
         <div className={styles.page}>
             <header className={styles.header}>
-                <div className={styles.headerSection} style={{ justifyContent: 'space-between', width: '100%', marginBottom: '20px' }}>
-                    <div className={styles.titleSection} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {onAction && (
-                            <button
-                                className={styles.backLink}
-                                onClick={() => onAction('switchFeatured', {} as Advocate)}
-                                style={{
-                                    // background: 'rgba(250, 204, 21, 0.1)',
-                                    padding: '10px 20px',
-                                    borderRadius: '12px',
-                                    // border: '1px solid rgba(250, 204, 21, 0.3)',
-                                    color: '#facc15'
-                                }}
-                            >
-                                <ArrowLeft size={18} />
-
-                                {/* <Star size={18} fill="#facc15" /> */}
-                                <span style={{ fontWeight: 700 }}>Switch to Featured Profiles</span>
-                            </button>
-                        )}
-
-                        {/* <h1 style={{ color: '#facc15', fontSize: '2rem', marginBottom: '8px' }}>Profiles</h1> */}
-                        {/* <p style={{ color: '#94a3b8' }}>Connect with highly qualified legal professionals nationwide</p> */}
-                    </div>
-
+                <div className={styles.headerSection}>
+                    <button
+                        className={styles.backLink}
+                        onClick={() => onAction?.('switchFeatured', {} as Advocate)}
+                    >
+                        <ArrowLeft size={18} />
+                        <span>Switch to Featured Profiles</span>
+                    </button>
+                    <button
+                        className={styles.backLink}
+                        onClick={() => window.open('/dashboard/legal-docs', '_blank')}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        <ScrollText size={18} />
+                        <span>Legal Documentation</span>
+                    </button>
                 </div>
 
                 <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>

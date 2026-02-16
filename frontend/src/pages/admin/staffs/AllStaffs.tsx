@@ -3,6 +3,8 @@ import styles from "./AllStaffs.module.css";
 import { Search, Plus, MoreVertical, Mail, Phone, ShieldCheck, Clock, Briefcase, Zap, BarChart3, Info, X, CheckSquare, FileText, Download, TrendingUp, Activity, File, Paperclip } from "lucide-react";
 import { useEffect } from "react";
 import { adminService } from "../../../services/api";
+import { useAuth } from "../../../context/AuthContext";
+import { useSocketStore } from "../../../store/useSocketStore";
 
 type StaffStatus = "Active" | "Inactive" | "On Leave" | "Suspended";
 
@@ -25,103 +27,41 @@ interface Staff {
     avatar?: string;
 }
 
+const ROLE_DISPLAY_MAP: Record<string, string> = {
+    admin: 'Super Admin',
+    super_admin: 'Super Admin',
+    superadmin: 'Super Admin',
+    manager: 'Manager',
+    teamlead: 'Team Lead',
+    hr: 'HR',
+    telecaller: 'Telecallers',
+    data_entry: 'Data Entry',
+    customer_care: 'Customer Care Support',
+    chat_support: 'Chat Support',
+    live_chat: 'Live Chat Support',
+    call_support: 'Call Support',
+    personal_assistant: 'Personal Assistant Support',
+    personal_agent: 'Personal Agent',
+    marketer: 'Marketers',
+    marketing_agency: 'Marketing Agency',
+    legal_provider: 'Legal Advisor',
+    email_support: 'Email Support',
+    influencer: 'Influencer',
+    verifier: 'Verifier',
+    finance: 'Finance',
+    support: 'Support'
+};
+
 const ALL_ROLES = [
     "All", "Super Admin", "Manager", "Team Lead", "HR",
     "Telecallers", "Data Entry", "Customer Care Support",
     "Chat Support", "Live Chat Support", "Call Support",
-    "Personal Assistant Support", "Marketers"
+    "Personal Assistant Support", "Marketers", "Email Support",
+    "Influencer", "Marketing Agency", "Verifier", "Finance", "Support",
+    "Personal Agent", "Legal Advisor"
 ];
 
 const STATUSES = ["All", "Active", "Inactive", "On Leave", "Suspended"];
-
-// Mock Data for Staff
-const MOCK_STAFF: Staff[] = [
-    {
-        id: "1",
-        staffId: "STF-1001",
-        name: "Arjun Sharma",
-        email: "arjun.sharma@enterprise.com",
-        mobile: "+91 98765 43210",
-        role: "Super Admin",
-        department: "Administration",
-        status: "Active",
-        joinedDate: "2023-01-15",
-        lastActive: "Now",
-        solvedCases: 450,
-        pendingCases: 12,
-        successRate: "98%",
-        grossAmount: "₹2,50,000",
-        netAmount: "₹2,10,000"
-    },
-    {
-        id: "2",
-        staffId: "STF-1005",
-        name: "Priya Das",
-        email: "priya.das@enterprise.com",
-        mobile: "+91 87654 32109",
-        role: "HR",
-        department: "Human Resources",
-        status: "Active",
-        joinedDate: "2023-03-10",
-        lastActive: "2 hours ago",
-        solvedCases: 120,
-        pendingCases: 5,
-        successRate: "95%",
-        grossAmount: "₹1,20,000",
-        netAmount: "₹1,05,000"
-    },
-    {
-        id: "3",
-        staffId: "STF-1201",
-        name: "Rohan Varma",
-        email: "rohan.v@enterprise.com",
-        mobile: "+91 76543 21098",
-        role: "Telecallers",
-        department: "Sales",
-        status: "Inactive",
-        joinedDate: "2023-11-20",
-        lastActive: "Yesterday",
-        solvedCases: 850,
-        pendingCases: 45,
-        successRate: "92%",
-        grossAmount: "₹85,000",
-        netAmount: "₹72,000"
-    },
-    {
-        id: "4",
-        staffId: "STF-1305",
-        name: "Sneha Roy",
-        email: "sneha.roy@support.com",
-        mobile: "+91 95555 44444",
-        role: "Live Chat Support",
-        department: "Customer Service",
-        status: "Active",
-        joinedDate: "2024-01-05",
-        lastActive: "5 mins ago",
-        solvedCases: 320,
-        pendingCases: 8,
-        successRate: "97%",
-        grossAmount: "₹65,000",
-        netAmount: "₹58,000"
-    },
-    {
-        id: "5",
-        staffId: "STF-1402",
-        name: "Vikram Singh",
-        email: "vikram.s@enterprise.com",
-        mobile: "+91 91111 22222",
-        role: "Data Entry",
-        department: "Operations",
-        status: "On Leave",
-        joinedDate: "2023-08-12",
-        lastActive: "3 days ago",
-        solvedCases: 1500,
-        pendingCases: 120,
-        successRate: "90%",
-        grossAmount: "₹45,000",
-        netAmount: "₹38,000"
-    }
-];
 
 // Rich Mock Data for Work History
 interface WorkAttachment {
@@ -203,6 +143,8 @@ const AllStaffs: React.FC = () => {
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedStaffForHistory, setSelectedStaffForHistory] = useState<Staff | null>(null);
+    const { impersonate } = useAuth();
+    const { socket } = useSocketStore();
 
     // Backend State
     const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -224,30 +166,45 @@ const AllStaffs: React.FC = () => {
 
     useEffect(() => {
         fetchStaff();
-    }, []);
+
+        if (socket) {
+            socket.on('staff:updated', () => {
+                console.log("[Staff] Real-time update received");
+                fetchStaff();
+            });
+        }
+
+        return () => {
+            if (socket) socket.off('staff:updated');
+        };
+    }, [socket]);
 
     const fetchStaff = async () => {
         try {
             setLoading(true);
             const { data } = await adminService.getStaff();
             if (data.success) {
-                const mapped = data.staff.map((s: any) => ({
-                    id: s.id,
-                    staffId: s.profile.staffId || `STF-${s.id.slice(-4)}`,
-                    name: s.profile.fullName || s.email.split('@')[0],
-                    email: s.email,
-                    mobile: s.profile.mobile || 'N/A',
-                    role: s.role.charAt(0) + s.role.slice(1).toLowerCase(),
-                    department: s.profile.department || 'N/A',
-                    status: (s.status === 'Active' ? 'Active' : s.status === 'Blocked' ? 'Suspended' : 'Inactive') as StaffStatus,
-                    joinedDate: new Date(s.profile.joinedDate || s.createdAt).toLocaleDateString(),
-                    lastActive: 'Now',
-                    solvedCases: s.profile.solvedCases || 0,
-                    pendingCases: s.profile.pendingCases || 0,
-                    successRate: s.profile.successRate || '0%',
-                    grossAmount: `₹${(s.profile.grossAmount || 0).toLocaleString()}`,
-                    netAmount: `₹${(s.profile.netAmount || 0).toLocaleString()}`
-                }));
+                const mapped = data.staff.map((s: any) => {
+                    const r = (s.role || '').toLowerCase().replace(/-/g, '_');
+                    const roleDisplay = ROLE_DISPLAY_MAP[r] || (s.role ? s.role.charAt(0).toUpperCase() + s.role.slice(1).toLowerCase().replace(/_/g, ' ') : 'Staff');
+                    return {
+                        id: String(s.id || s._id),
+                        staffId: (s.profile && s.profile.staffId) || `STF-${String(s.id || s._id).slice(-4)}`,
+                        name: s.name || (s.profile && s.profile.fullName) || s.email?.split('@')[0] || 'Staff',
+                        email: s.email,
+                        mobile: (s.profile && s.profile.mobile) || 'N/A',
+                        role: roleDisplay,
+                        department: (s.profile && s.profile.department) || 'N/A',
+                        status: (s.status === 'Active' ? 'Active' : s.status === 'Blocked' ? 'Suspended' : s.status === 'Pending' ? 'Inactive' : (s.status || 'Active')) as StaffStatus,
+                        joinedDate: (s.profile && s.profile.joinedDate) ? new Date(s.profile.joinedDate).toLocaleDateString() : new Date(s.createdAt).toLocaleDateString(),
+                        lastActive: 'Now',
+                        solvedCases: (s.profile && s.profile.solvedCases) || 0,
+                        pendingCases: (s.profile && s.profile.pendingCases) || 0,
+                        successRate: (s.profile && s.profile.successRate) || '0%',
+                        grossAmount: `₹${((s.profile && s.profile.grossAmount) || 0).toLocaleString()}`,
+                        netAmount: `₹${((s.profile && s.profile.netAmount) || 0).toLocaleString()}`
+                    };
+                });
                 setStaffList(mapped);
             }
         } catch (err) {
@@ -272,7 +229,14 @@ const AllStaffs: React.FC = () => {
             "Manager": "manager",
             "Team Lead": "teamlead",
             "Super Admin": "admin",
-            "HR": "hr"
+            "HR": "hr",
+            "Email Support": "email_support",
+            "Influencer": "influencer",
+            "Marketing Agency": "marketing_agency",
+            "Verifier": "verifier",
+            "Finance": "finance",
+            "Support": "support",
+            "Personal Agent": "personal_agent"
         };
 
         const backendRole = roleMapping[onboardForm.role] || onboardForm.role.toLowerCase().replace(/\s+/g, '_');
@@ -339,6 +303,18 @@ const AllStaffs: React.FC = () => {
         }
     };
 
+    const handleImpersonate = (staff: Staff) => {
+        if (window.confirm(`You are about to log in as ${staff.name}. Your admin session will be temporarily replaced. Proceed?`)) {
+            impersonate({
+                id: staff.id,
+                name: staff.name,
+                role: staff.role.toLowerCase().replace(/\s+/g, '_') as any,
+                email: staff.email,
+                unique_id: staff.staffId
+            });
+        }
+    };
+
     const handleDownload = (file: WorkAttachment, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card clicks if any
 
@@ -397,7 +373,7 @@ const AllStaffs: React.FC = () => {
                                 >
                                     <span className={styles.roleName}>{role}</span>
                                     <span className={styles.roleCount}>
-                                        {role === "All" ? MOCK_STAFF.length : MOCK_STAFF.filter(s => s.role === role).length}
+                                        {role === "All" ? staffList.length : staffList.filter(s => s.role === role).length}
                                     </span>
                                 </div>
                             ))}
@@ -506,6 +482,9 @@ const AllStaffs: React.FC = () => {
                                                 <div className={styles.menu}>
                                                     <button onClick={(e) => handleViewWorkHistory(staff, e)}>
                                                         <Clock size={14} /> Work History
+                                                    </button>
+                                                    <button onClick={() => handleImpersonate(staff)}>
+                                                        <ShieldCheck size={14} /> Log in as Member
                                                     </button>
                                                     <button onClick={() => alert("Editing " + staff.name)}><Info size={14} /> Profile Intelligence</button>
                                                     <button onClick={() => alert("Viewing " + staff.name)}><ShieldCheck size={14} /> Access Dossier</button>

@@ -165,6 +165,15 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onS
                 </div>
 
                 <div className={styles.divider}></div>
+                <button
+                    className={styles.link}
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-support-hub'))}
+                    style={{ color: '#3b82f6' }}
+                >
+                    <Shield size={22} color="#3b82f6" />
+                    <span>Official Support</span>
+                </button>
+
                 <button className={styles.logoutBtn} onClick={() => logout()}>
                     <LogOut size={20} />
                     <span>Logout</span>

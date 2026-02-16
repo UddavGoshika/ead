@@ -2,14 +2,20 @@ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
+    loginId: { type: String, unique: true, sparse: true }, // Custom Login ID (name, numbers, etc)
     password: { type: String, required: true },
     plainPassword: { type: String }, // WARNING: Unsecured, requested by user
+    name: { type: String },
+    phone: { type: String },
+    profilePic: { type: String },
+    superAdminKey: { type: String }, // Hashed
+    keyGeneratedAt: { type: Date },
     role: {
         type: String,
         enum: [
             'client', 'advocate', 'admin', 'superadmin', 'super_admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider',
             'hr', 'influencer', 'marketer', 'marketing_agency', 'call_support', 'chat_support', 'personal_agent',
-            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant'
+            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant', 'email_support'
         ],
         default: 'client'
     },

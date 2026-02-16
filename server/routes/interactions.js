@@ -689,6 +689,29 @@ router.post('/messages', async (req, res) => {
         createNotification('chat', `New message from User ${sender}`, '', sender, { receiver });
 
         res.json({ success: true, message: newMessage });
+
+        // Real-time Update via Socket.IO
+        const io = req.app.get('io');
+        const userSockets = req.app.get('userSockets');
+
+        if (io && userSockets) {
+            // 1. Notify the RECEIVER
+            const receiverSocketId = userSockets.get(receiver.toString());
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit('new-message', {
+                    message: newMessage,
+                    senderId: sender
+                });
+            }
+            // 2. Notify the SENDER (optional, but good for multi-device sync)
+            const senderSocketId = userSockets.get(sender.toString());
+            if (senderSocketId && senderSocketId !== req.socket.id) {
+                io.to(senderSocketId).emit('new-message', {
+                    message: newMessage,
+                    senderId: sender
+                });
+            }
+        }
     } catch (err) {
         console.error('Message Log Error:', err);
         res.status(500).json({ error: err.message });
@@ -747,7 +770,18 @@ router.get('/messages/:id1/:id2', async (req, res) => {
 
 router.get('/conversations/:userId', async (req, res) => {
     try {
-        const { userId } = req.params;
+        let { userId } = req.params;
+
+        // Transform unique_id to ObjectId if necessary
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            const user = await User.findOne({ unique_id: userId });
+            if (user) {
+                userId = user._id.toString();
+            } else {
+                return res.json({ success: true, conversations: [] });
+            }
+        }
+
         const messages = await Message.find({
             $or: [{ sender: userId }, { receiver: userId }]
         }).sort({ timestamp: -1 });
@@ -764,12 +798,21 @@ router.get('/conversations/:userId', async (req, res) => {
         }
 
         const ids = Array.from(partnerIds).filter(id => mongoose.Types.ObjectId.isValid(id));
-        const [advocates, clients, users, currentUser] = await Promise.all([
+        const [advocates, clients, users, currentUser, unreadCounts] = await Promise.all([
             Advocate.find({ userId: { $in: ids } }).lean(),
             Client.find({ userId: { $in: ids } }).lean(),
             User.find({ _id: { $in: ids }, status: { $ne: 'Deleted' } }).lean(),
-            User.findById(userId).lean()
+            User.findById(userId).lean(),
+            Message.aggregate([
+                { $match: { receiver: new mongoose.Types.ObjectId(userId), read: false } },
+                { $group: { _id: "$sender", count: { $sum: 1 } } }
+            ])
         ]);
+
+        const unreadMap = {};
+        unreadCounts.forEach(item => {
+            unreadMap[item._id.toString()] = item.count;
+        });
 
         const viewerIsPremium = currentUser?.isPremium || false;
         const profileMap = {};
@@ -778,11 +821,13 @@ router.get('/conversations/:userId', async (req, res) => {
         advocates.forEach(p => profileMap[p.userId.toString()] = p);
         clients.forEach(p => profileMap[p.userId.toString()] = p);
 
-        const conversations = ids.filter(partnerId => activeUserIds.has(partnerId.toString())).map(partnerId => {
-            const partnerProfile = profileMap[partnerId];
-            const msgData = partnersMap.get(partnerId);
+        const conversations = ids.filter(id => activeUserIds.has(id.toString())).map(partnerIdStr => {
+            const pid = partnerIdStr.toString();
+            const partnerProfile = profileMap[pid];
+            const msgData = partnersMap.get(pid);
 
-            const partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.profilePicPath || partnerProfile.img || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
+            let partnerImg = partnerProfile ? (partnerProfile.profilePic || partnerProfile.profilePicPath || partnerProfile.img) : null;
+            if (!partnerImg) partnerImg = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400';
 
             let partnerLocation = 'N/A';
             if (partnerProfile) {
@@ -797,26 +842,44 @@ router.get('/conversations/:userId', async (req, res) => {
             let partnerUniqueId = partnerProfile ? partnerProfile.unique_id : null;
             const isBlur = !viewerIsPremium;
 
-            if (!viewerIsPremium) {
+            if (isBlur) {
                 if (partnerName) partnerName = partnerName.substring(0, 2) + "*****";
                 if (partnerUniqueId) partnerUniqueId = partnerUniqueId.substring(0, 2) + "*****";
             }
 
             return {
-                partnerId,
+                partnerId: pid,
                 partnerName,
                 partnerUniqueId,
                 partnerImg,
                 partnerLocation,
-                isBlur,
                 lastMessage: msgData.lastMessage,
-                timestamp: msgData.timestamp
+                timestamp: msgData.timestamp,
+                unreadCount: unreadMap[pid] || 0,
+                isBlur
             };
-        }).filter(c => c !== null);
+        });
 
         res.json({ success: true, conversations });
     } catch (err) {
         console.error('Conversations Error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// MARK MESSAGES AS READ
+router.post('/messages/read', async (req, res) => {
+    try {
+        const { userId, partnerId } = req.body;
+        if (!userId || !partnerId) return res.status(400).json({ error: 'Missing IDs' });
+
+        await Message.updateMany(
+            { sender: partnerId, receiver: userId, read: false },
+            { $set: { read: true } }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });

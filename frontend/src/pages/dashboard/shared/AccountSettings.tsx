@@ -119,7 +119,8 @@ import {
   Smartphone,
   Building2,
   Receipt,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 import { PaymentManager } from '../../../services/payment/PaymentManager';
 import type { PaymentGateway, PaymentGatewayConfig } from '../../../types/payment';
@@ -163,8 +164,13 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
   useEffect(() => {
     const loadData = async () => {
       // Load Payment Gateways
-      const gateways = await PaymentManager.getInstance().getEnabledGateways();
-      setEnabledGateways(gateways);
+      const allGateways = await PaymentManager.getInstance().getEnabledGateways();
+      // Filter to ONLY allow Razorpay and Cashfree as per user request
+      const activeGateways = allGateways.filter(g => ['razorpay', 'cashfree'].includes(g.gateway));
+      setEnabledGateways(activeGateways);
+      if (activeGateways.length > 0) {
+        setSelectedGateway(activeGateways[0].gateway as PaymentGateway);
+      }
 
       // Load User Settings
       if (user) {
@@ -546,17 +552,27 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
               <div className={styles.gatewaySelection}>
                 <label>Select Payment Gateway</label>
                 <div className={styles.gwGrid}>
-                  {enabledGateways.map(gw => (
+                  {['razorpay', 'cashfree'].map(gw => (
                     <button
-                      key={gw.gateway}
-                      className={`${styles.gwBtn} ${selectedGateway === gw.gateway ? styles.activeGw : ''}`}
-                      onClick={() => setSelectedGateway(gw.gateway)}
+                      key={gw}
+                      className={`${styles.gwBtn} ${selectedGateway === gw ? styles.activeGw : ''}`}
+                      onClick={() => setSelectedGateway(gw as PaymentGateway)}
                     >
-                      {gw.gateway === 'razorpay' && <CreditCard size={14} />}
-                      {gw.gateway === 'paytm' && <Smartphone size={14} />}
-                      {gw.gateway === 'stripe' && <Building2 size={14} />}
-                      {gw.gateway === 'invoice' && <Receipt size={14} />}
-                      {gw.gateway}
+                      {gw === 'razorpay' && <CreditCard size={14} />}
+                      {gw === 'cashfree' && <Zap size={14} />}
+                      <span style={{ textTransform: 'capitalize' }}>{gw}</span>
+                    </button>
+                  ))}
+                  {/* Disabled placeholders for other gateways */}
+                  {['paytm', 'stripe', 'upi'].map(gw => (
+                    <button
+                      key={gw}
+                      className={styles.gwBtn}
+                      disabled={true}
+                      style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                    >
+                      <Lock size={12} />
+                      <span style={{ textTransform: 'capitalize' }}>{gw}</span>
                     </button>
                   ))}
                 </div>
@@ -624,6 +640,7 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
                           planId: plan.id,
                           userName: user?.name,
                           userEmail: user?.email,
+                          userPhone: (user as any)?.phone || (user as any)?.mobile || '',
                           description: `Subscription: ${plan.name}`
                         }
                       );

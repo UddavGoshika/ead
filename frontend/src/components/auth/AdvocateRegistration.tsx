@@ -141,6 +141,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         }
     }, [currentStep]);
 
+    const [loading, setLoading] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState<{ id: string } | null>(null);
     const [errors, setErrors] = useState<Record<string, boolean>>({});
 
@@ -171,7 +172,7 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         const requiredFields: Record<number, string[]> = {
             1: ['firstName', 'lastName', 'gender', 'dob', 'mobile', 'email', 'idProofType', 'idProofDocument', 'profilePhoto'],
             4: ['degree', 'university', 'college', 'passingYear', 'enrollmentNumber', 'degreeCertificate', 'aboutMe'],
-            5: ['barRegNo', 'stateBar', 'courtOfPractice', 'experienceRange', 'specialization', 'practiceLicense'],
+            5: ['courtOfPractice', 'experienceRange', 'specialization', 'practiceLicense'],
             6: ['currAddress', 'currState', 'currDistrict', 'currCity', 'currPincode'],
             7: ['workType', 'careerBio'],
             9: ['terms1', 'terms2', 'terms3', 'terms4', 'signatureProvided', 'captchaVerified']
@@ -227,6 +228,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
         if (currentIndex < visibleSteps.length - 1) {
             setCurrentStep(visibleSteps[currentIndex + 1].id);
         } else {
+            if (loading) return;
+            setLoading(true);
             // Submit logic...
             try {
                 // Actual Backend Submission using FormData for files
@@ -290,6 +293,8 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                 console.error('Registration Error:', err);
                 const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An unknown error occurred';
                 alert(errorMessage);
+            } finally {
+                setLoading(false);
             }
         }
     };
@@ -375,7 +380,19 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
 
                 {/* Main Content Area */}
                 {/* Main Content Area - Scrollable */}
-                <div className={styles.content} ref={contentRef}>
+                <div
+                    className={styles.content}
+                    ref={contentRef}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+                            // Don't trigger if it's already being handled by a step's internal Enter handler (like OTP)
+                            // or if it's a textarea
+                            if ((e.target as any).tagName !== 'TEXTAREA') {
+                                handleNext();
+                            }
+                        }
+                    }}
+                >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={currentStep}
@@ -404,9 +421,10 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                         </button>
                         <button
                             className={styles.nextBtn}
+                            disabled={loading}
                             onClick={handleNext}
                         >
-                            {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? 'Submit Application' : 'Continue'}
+                            {visibleSteps.length > 0 && currentStep === visibleSteps[visibleSteps.length - 1].id ? (loading ? 'Submitting...' : 'Submit Application') : 'Continue'}
                         </button>
                     </div>
                 </div>

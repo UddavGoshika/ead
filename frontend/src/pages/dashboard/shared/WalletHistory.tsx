@@ -59,8 +59,13 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
 
     useEffect(() => {
         const loadGateways = async () => {
-            const gateways = await PaymentManager.getInstance().getEnabledGateways();
-            setEnabledGateways(gateways);
+            const allGateways = await PaymentManager.getInstance().getEnabledGateways();
+            // Filter to ONLY allow Razorpay and Cashfree as per user request
+            const activeGateways = allGateways.filter(g => ['razorpay', 'cashfree'].includes(g.gateway));
+            setEnabledGateways(activeGateways);
+            if (activeGateways.length > 0) {
+                setSelectedGateway(activeGateways[0].gateway as PaymentGateway);
+            }
         };
         loadGateways();
         fetchRealWalletData();
@@ -467,20 +472,28 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                 <div className={styles.upiMethods}>
                                     <label>Choose Payment Method</label>
                                     <div className={styles.methodGrid}>
-                                        {enabledGateways.map(gw => (
+                                        {['razorpay', 'cashfree'].map(gw => (
                                             <button
-                                                key={gw.gateway}
-                                                className={`${styles.methodBtn} ${selectedGateway === gw.gateway ? styles.activeMethod : ""}`}
-                                                onClick={() => setSelectedGateway(gw.gateway)}
+                                                key={gw}
+                                                className={`${styles.methodBtn} ${selectedGateway === gw ? styles.activeMethod : ""}`}
+                                                onClick={() => setSelectedGateway(gw as PaymentGateway)}
                                                 disabled={isProcessing}
                                             >
-                                                {gw.gateway === 'razorpay' && <CreditCard size={18} />}
-                                                {gw.gateway === 'paytm' && <Smartphone size={24} />}
-                                                {gw.gateway === 'stripe' && <Building2 size={18} />}
-                                                {gw.gateway === 'invoice' && <Receipt size={18} />}
-                                                {gw.gateway === 'upi' && <QrCode size={18} />}
-                                                {gw.gateway === 'cashfree' && <Zap size={18} />}
-                                                <span style={{ textTransform: 'capitalize' }}>{gw.gateway}</span>
+                                                {gw === 'razorpay' && <CreditCard size={18} />}
+                                                {gw === 'cashfree' && <Zap size={18} />}
+                                                <span style={{ textTransform: 'capitalize' }}>{gw}</span>
+                                            </button>
+                                        ))}
+                                        {/* Placeholders for others */}
+                                        {['paytm', 'stripe', 'upi'].map(gw => (
+                                            <button
+                                                key={gw}
+                                                className={styles.methodBtn}
+                                                disabled={true}
+                                                style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                                            >
+                                                <X size={14} />
+                                                <span style={{ textTransform: 'capitalize' }}>{gw}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -589,6 +602,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                                     {
                                                         userName: user?.name,
                                                         userEmail: user?.email,
+                                                        userPhone: (user as any)?.phone || (user as any)?.mobile || '',
                                                         description: `Wallet Recharge: ₹${baseVal} + Taxes`
                                                     }
                                                 );
