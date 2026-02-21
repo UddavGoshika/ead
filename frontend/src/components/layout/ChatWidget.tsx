@@ -93,7 +93,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './ChatWidget.module.css';
-import { MessageSquare, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
+import { MessageSquare, MessageCircle, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -519,8 +519,8 @@ const ChatWidget: React.FC = () => {
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                             />
-                            <button type="submit">
-                                <Send size={18} />
+                            <button type="submit" >
+                                ⮞   <Send size={24} style={{ color: "#fff" }} />
                             </button>
                         </form>
                     </motion.div>
@@ -531,7 +531,7 @@ const ChatWidget: React.FC = () => {
                 className={`${styles.toggleBtn} ${isOpen ? styles.hidden : ''}`}
                 onClick={() => setIsOpen(true)}
             >
-                <MessageSquare size={24} />
+                <MessageCircle size={24} />
             </button>
         </div>
     );
