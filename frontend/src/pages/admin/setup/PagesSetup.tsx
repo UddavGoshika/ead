@@ -75,8 +75,8 @@ const PagesSetup: React.FC = () => {
             const res = await api.get("/pages");
             const dbPages = (res.data.success && res.data.pages) ? res.data.pages : [];
 
-            const dbRouteMap = new Map(dbPages.map((p: any) => [p.route, p]));
-            const dbTitleMap = new Map(dbPages.map((p: any) => [p.title, p]));
+            const dbRouteMap = new Map<string, PageItem>(dbPages.map((p: any) => [p.route, p as PageItem]));
+            const dbTitleMap = new Map<string, PageItem>(dbPages.map((p: any) => [p.title, p as PageItem]));
             const defaultRoutes = new Set(FOOTER_DEFAULTS.map(d => d.route));
             const defaultTitles = new Set(FOOTER_DEFAULTS.map(d => d.title));
 
@@ -85,7 +85,7 @@ const PagesSetup: React.FC = () => {
 
             // 1. Maintain order from FOOTER_DEFAULTS
             FOOTER_DEFAULTS.forEach((def, idx) => {
-                let pageToAdd = dbRouteMap.get(def.route) || dbTitleMap.get(def.title);
+                let pageToAdd: PageItem | undefined = dbRouteMap.get(def.route) || dbTitleMap.get(def.title);
 
                 if (pageToAdd) {
                     combined.push(pageToAdd);
@@ -98,7 +98,7 @@ const PagesSetup: React.FC = () => {
             // 2. Add truly custom administrative pages
             dbPages.forEach((p: any) => {
                 if (!addedDbIds.has(p._id) && !defaultRoutes.has(p.route) && !defaultTitles.has(p.title)) {
-                    combined.push(p);
+                    combined.push(p as PageItem);
                 }
             });
 
