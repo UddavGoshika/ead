@@ -35,6 +35,8 @@ import VerificationBanner from '../../../components/dashboard/shared/Verificatio
 import { useRelationshipStore } from '../../../store/useRelationshipStore';
 import { interactionService } from '../../../services/interactionService';
 import { useToast } from '../../../context/ToastContext';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 interface Notification {
     id: string;
     message: string;
@@ -64,8 +66,8 @@ const ClientDashboard: React.FC = () => {
             loadRelationships();
         }
     }, [user?.id, setRelationships]);
+    const isPremium = checkIsPremium(user);
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
     const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('lite');
     const isUltra = plan.toLowerCase().includes('ultra');
 

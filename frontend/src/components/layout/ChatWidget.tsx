@@ -91,11 +91,13 @@
 
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './ChatWidget.module.css';
-import { MessageSquare, X, Send, Bot, Headphones } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { contactService } from '../../services/api';
 
 type ChatMessage = {
     type: 'bot' | 'user';
@@ -106,7 +108,26 @@ type ChatMessage = {
 const ChatWidget: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState("");
+    const [showAgentForm, setShowAgentForm] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        role: user?.role === 'legal_provider' ? 'legal_advisor' : (user?.role || 'client'),
+        query: ''
+    });
+
+    useEffect(() => {
+        if (user) {
+            setFormData(prev => ({
+                ...prev,
+                name: user.name || '',
+                role: user.role === 'legal_provider' ? 'legal_advisor' : (user.role || 'client')
+            }));
+        }
+    }, [user]);
 
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
         {
@@ -117,7 +138,9 @@ const ChatWidget: React.FC = () => {
     ]);
 
     const getDynamicResponse = (input: string): string => {
+        // ... (rest of search/logic remains same, just keeping the relevant part)
         const text = input.toLowerCase();
+        // (I will keep the knowledge base as is in the replacement)
 
         const knowledgeBase = [
             {
@@ -160,11 +183,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['case', 'file', 'issue', 'problem'],
                 reply: "Dealing with a legal issue? Register as a Client to 'File a Case' and get matched with advocates who can solve your specific problem."
             },
-
-
-
-
-            // Platform Overview & Compliance
             {
                 keys: ['bci', 'bar council', 'legal', 'compliant', 'norms', 'rules', 'regulation', 'guidelines', 'standard', 'professional'],
                 reply: "Our platform strictly adheres to Bar Council of India (BCI) norms. We do NOT facilitate any fee sharing on cases, nor do we provide legal services directly. We are simply a digital bridge connecting clients with independent advocates. All advocates on our platform practice independently and are solely responsible for their legal services."
@@ -173,8 +191,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['platform', 'website', 'about', 'what is', 'how work', 'e-advocate', 'service'],
                 reply: "E-Advocate Services is a secure digital bridge that connects clients with verified advocates. We strictly follow BCI guidelines - we don't collect fees on cases, don't share profits, and don't provide legal advice. Think of us as a sophisticated matchmaking platform for legal needs where advocates and clients can discover each other."
             },
-
-            // Advocate Discovery & Matching
             {
                 keys: ['find advocate', 'search lawyer', 'look for', 'need lawyer', 'hire', 'consult', 'specialist', 'expert'],
                 reply: "Finding the right advocate is easy! Use our 'Browse Profiles' or 'Search' feature to filter advocates by practice area (Divorce, Criminal, Corporate, Civil, Family, Property, etc.), location, experience level, languages spoken, and client ratings. Each profile shows their specialization, years of practice, and verification status."
@@ -183,8 +199,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['recommend', 'suggest', 'match', 'best fit', 'suitable'],
                 reply: "Our smart recommendation system can suggest advocates based on your case type and location. Simply describe your legal need when registering, and we'll show you profiles of advocates who specialize in that area. You're in complete control - browse, compare, and choose who you'd like to connect with."
             },
-
-            // Registration & Account Types
             {
                 keys: ['register', 'sign up', 'join', 'create account', 'become member'],
                 reply: "Registration is free and simple! Choose your account type: 'Advocate' if you're a legal professional looking for clients, or 'Client' if you need legal assistance. Both get you access to our secure platform where you can manage your profile, communications, and connections."
@@ -197,8 +211,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['client registration', 'user signup', 'need help'],
                 reply: "Clients can register by providing basic contact information and optionally describing their legal need. This helps us show you the most relevant advocate profiles. Registration is free - you only pay for premium features if you choose to use them."
             },
-
-            // Verification Process
             {
                 keys: ['verify advocate', 'verification status', 'check verification', 'authentic', 'genuine', 'real lawyer'],
                 reply: "Verification is our priority! Advocates who complete verification get a blue verified badge on their profile. We manually review their Bar Council enrollment, identity proof, and practice details. This process ensures you're connecting with genuine legal professionals who are authorized to practice."
@@ -211,8 +223,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['badge', 'verified', 'trust badge', 'blue tick'],
                 reply: "The blue verified badge indicates an advocate whose credentials have been manually verified by our team. Look for this badge when choosing an advocate - it adds an extra layer of trust to your connection."
             },
-
-            // Wallet & Coins (Platform Features)
             {
                 keys: ['wallet', 'coin', 'coins', 'balance', 'credit', 'virtual currency'],
                 reply: "Wallet coins are our platform's virtual currency used for premium features - like viewing contact details of highly sought-after advocates or boosting your own profile visibility. You can purchase coins securely through the platform, and your balance is visible in your dashboard."
@@ -225,8 +235,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['spend coin', 'use coin', 'coin deduction'],
                 reply: "Coins can be used for: 1) Viewing premium advocate contact details, 2) Featuring your advocate profile in search results, 3) Unlocking advanced search filters. You'll always see the coin cost before confirming any action."
             },
-
-            // Membership Plans
             {
                 keys: ['membership', 'plan', 'subscription', 'premium', 'silver', 'gold', 'platinum'],
                 reply: "Our membership plans (Silver, Gold, Platinum) offer advocates enhanced visibility and features. Benefits include: profile badge, priority in searches, more wallet coins, featured listings, and analytics. Check our 'Pricing' page for detailed comparison of all plans."
@@ -239,8 +247,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['free vs paid', 'compare plans', 'benefits'],
                 reply: "Free accounts give you basic profile visibility and standard search. Premium plans (Silver/Gold/Platinum) add features like verification badges, more wallet coins, priority listing in searches, and detailed analytics. Perfect for advocates looking to grow their practice!"
             },
-
-            // Communication & Connection
             {
                 keys: ['connect', 'contact advocate', 'message', 'reach out', 'get in touch'],
                 reply: "Once you find an advocate you like, you can send them a connection request through the platform. Some advocates may require a small coin deduction to reveal their contact details - this ensures genuine connections and prevents spam."
@@ -253,8 +259,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['schedule', 'appointment', 'meeting', 'consult'],
                 reply: "Many advocates list their availability on their profile. You can request a consultation time that works for you. Actual legal consultations happen independently between you and the advocate - we just facilitate the initial connection."
             },
-
-            // BCI Compliance & Ethical Practices
             {
                 keys: ['fee sharing', 'commission', 'cut', 'percentage', 'share'],
                 reply: "IMPORTANT: We NEVER take any cut or commission from legal fees! Our platform strictly follows BCI rules prohibiting fee sharing between non-lawyers and advocates. Advocates and clients negotiate and settle fees directly. We only charge for optional platform features (like profile boosts), never for legal services."
@@ -267,8 +271,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['ethical', 'professional conduct', 'rules'],
                 reply: "All advocates on our platform are expected to follow BCI professional conduct rules. If you experience any unethical behavior, please report it through our platform and we will investigate."
             },
-
-            // Practice Areas & Specializations
             {
                 keys: ['divorce', 'family', 'marriage', 'matrimonial', 'child custody', 'alimony'],
                 reply: "Family law specialists handle divorce, child custody, alimony, domestic violence cases, and other family matters. Search for 'Family Law' in our directory to find experienced advocates in this field."
@@ -293,8 +295,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['consumer', 'complaint', 'goods', 'services', 'defect'],
                 reply: "Consumer protection lawyers help with cases against defective products, poor services, unfair trade practices, and consumer forum complaints. Search for 'Consumer Law' specialists."
             },
-
-            // Technical Support & Issues
             {
                 keys: ['technical issue', 'problem', 'error', 'bug', 'not working'],
                 reply: "Experiencing a technical glitch? Please describe the issue in detail and our support team will assist you. You can also use the 'Report Problem' option in your dashboard for faster resolution."
@@ -307,8 +307,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['update profile', 'edit info', 'change details'],
                 reply: "You can update your profile information anytime from your dashboard. Advocates can edit practice areas, bio, and availability. Profile photo updates help build trust with potential clients."
             },
-
-            // Privacy & Security
             {
                 keys: ['privacy', 'data', 'secure', 'confidential', 'private'],
                 reply: "Your privacy matters! We use encryption for all data transmission, never share your personal information without consent, and follow strict data protection practices. Read our Privacy Policy for complete details."
@@ -317,18 +315,14 @@ const ChatWidget: React.FC = () => {
                 keys: ['delete account', 'remove profile', 'close account'],
                 reply: "To delete your account, go to Settings → Account → 'Delete Account'. Please note this action is permanent and will remove your profile and data from our platform. For advocates, active connections will be notified."
             },
-
-            // Blog & Resources
             {
                 keys: ['blog', 'article', 'legal news', 'update', 'knowledge'],
                 reply: "Our 'Blogs' section features articles on legal awareness, rights, recent judgments, and practical legal tips. Written by legal professionals, it's a great resource for understanding basic legal concepts."
             },
             {
-                keys: ['FAQ', 'help center', 'guide', 'tutorial'],
+                keys: ['faq', 'help center', 'guide', 'tutorial'],
                 reply: "Visit our Help Center for detailed guides, FAQs, and video tutorials on using all platform features. It's your go-to resource for getting the most out of E-Advocate Services."
             },
-
-            // Feedback & Support
             {
                 keys: ['feedback', 'suggestion', 'improve', 'idea'],
                 reply: "We love hearing from our users! Share your suggestions or feedback through the 'Contact Us' form. Your input helps us make the platform better for everyone."
@@ -337,8 +331,6 @@ const ChatWidget: React.FC = () => {
                 keys: ['complaint', 'report', 'issue with advocate', 'unprofessional'],
                 reply: "If you experience any unprofessional behavior or have concerns about an advocate, please report it immediately through your dashboard or contact our support team. We take all complaints seriously and investigate thoroughly."
             },
-
-            // General Greetings & Small Talk
             {
                 keys: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
                 reply: "Hello! 👋 Welcome to E-Advocate Services. I'm your virtual assistant, here to help you navigate our platform. What can I assist you with today?"
@@ -350,19 +342,7 @@ const ChatWidget: React.FC = () => {
             {
                 keys: ['bye', 'goodbye', 'see you', 'later'],
                 reply: "Goodbye! Thank you for visiting E-Advocate Services. If you need assistance in the future, we're just a message away. Have a great day!"
-            },
-
-            // Fallback for unknown queries
-            {
-                keys: ['default', 'fallback', 'unknown'],
-                reply: "I'm not sure I understood your question. Could you please rephrase or provide more details? I'm here to help with platform-related queries about finding advocates, registration, verification, membership plans, wallet coins, and more. You can also visit our Help Center for detailed information."
             }
-
-
-
-
-
-
         ];
 
         for (const item of knowledgeBase) {
@@ -397,8 +377,31 @@ const ChatWidget: React.FC = () => {
         }, 800);
     };
 
-    const handleAgentRedirect = () => {
-        navigate('/contact'); // Changed to /contact as a default support route
+    const handleConnectToAgent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await contactService.submitInquiry({
+                name: formData.name,
+                email: user?.email || 'visitor@eadvocate.in',
+                message: formData.query,
+                category: 'Support Chat',
+                subject: `Direct Support Connection: ${formData.role}`,
+                source: 'LexiAI Chat Widget'
+            });
+
+            // Success message in chat
+            setChatHistory(prev => [...prev, {
+                type: 'bot',
+                text: `Thank you ${formData.name}! Your request has been sent to our agent dashboard. An expert will reach out to you shortly.`
+            }]);
+            setShowAgentForm(false);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to connect. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -411,6 +414,60 @@ const ChatWidget: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                     >
+                        {/* AGENT FORM OVERLAY */}
+                        {showAgentForm && (
+                            <div className={styles.agentForm}>
+                                <div className={styles.formHeader}>
+                                    <h4>Connect to Agent</h4>
+                                    <button onClick={() => setShowAgentForm(false)} className={styles.closeBtn}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <form className={styles.connectForm} onSubmit={handleConnectToAgent}>
+                                    <div className={styles.formGroup}>
+                                        <label>Full Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="Enter your name"
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label>I am a:</label>
+                                        <select
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        >
+                                            <option value="client">Client</option>
+                                            <option value="advocate">Advocate</option>
+                                            <option value="legal_advisor">Legal Advisor</option>
+                                        </select>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label>Your Query</label>
+                                        <textarea
+                                            required
+                                            value={formData.query}
+                                            onChange={(e) => setFormData({ ...formData, query: e.target.value })}
+                                            placeholder="Tell us what you need help with..."
+                                            rows={4}
+                                        />
+                                    </div>
+
+                                    <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                                        {isSubmitting ? (
+                                            <Loader2 className="animate-spin" size={18} />
+                                        ) : 'Connect with Agent'}
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
                         <div className={styles.header}>
                             <div className={styles.headerInfo}>
                                 <div className={styles.botIcon}>
@@ -442,7 +499,7 @@ const ChatWidget: React.FC = () => {
                                         {msg.type === 'bot' && msg.showAgentBtn && (
                                             <div className={styles.agentCta}>
                                                 <button
-                                                    onClick={handleAgentRedirect}
+                                                    onClick={() => setShowAgentForm(true)}
                                                     className={styles.agentBtn}
                                                 >
                                                     <Headphones size={16} />
@@ -481,3 +538,4 @@ const ChatWidget: React.FC = () => {
 };
 
 export default ChatWidget;
+

@@ -1,0 +1,87 @@
+.scrollButton {
+    position: fixed;
+    bottom: 110px;
+    right: 32px;
+    width: 56px;
+    height: 56px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(197, 161, 87, 0.2), rgba(121, 91, 33, 0.3));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(197, 161, 87, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(197, 161, 87, 0.1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.scrollButton::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.scrollButton:hover {
+    transform: translateY(-5px) scale(1.05);
+    border-color: #facc15;
+    box-shadow: 0 15px 50px rgba(250, 204, 21, 0.2);
+}
+
+.scrollButton:hover::before {
+    opacity: 1;
+}
+
+.iconWrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #facc15;
+    transition: transform 0.5s ease;
+}
+
+/* Stylish Luxury Triangle */
+.triangle {
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.5));
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.up {
+    border-bottom: 14px solid #facc15;
+    transform: translateY(-2px);
+}
+
+.down {
+    border-top: 14px solid #facc15;
+    transform: translateY(2px);
+}
+
+.hidden {
+    opacity: 0;
+    transform: scale(0) translateY(50px);
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .scrollButton {
+        bottom: 100px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+    }
+}

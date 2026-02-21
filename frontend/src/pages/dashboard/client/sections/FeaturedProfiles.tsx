@@ -9,6 +9,8 @@ import styles from '../AdvocateList.module.css';
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
 import { useRelationshipStore } from '../../../../store/useRelationshipStore';
+import { checkIsPremium } from '../../../../utils/planHelper';
+
 import { useInteractions } from '../../../../hooks/useInteractions';
 
 interface Props {
@@ -38,8 +40,8 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     const availableCities = filters.state && filters.district && LOCATION_DATA_RAW[filters.state][filters.district] ? LOCATION_DATA_RAW[filters.state][filters.district] : [];
     const availableSubDepartments = filters.specialization && LEGAL_DOMAINS[filters.specialization] ? LEGAL_DOMAINS[filters.specialization] : [];
 
-    const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPremium = checkIsPremium(user);
+
 
     const { handleInteraction } = useInteractions(showToast);
     const interactedIds = useRelationshipStore(state => state.interactedIds);

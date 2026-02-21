@@ -73,14 +73,23 @@ const PagesSetup: React.FC = () => {
         try {
             setLoading(true);
             const res = await api.get("/pages");
-            if (res.data.success && res.data.pages.length > 0) {
-                setPages(res.data.pages);
-            } else if (res.data.pages.length === 0) {
-                setPages(FOOTER_DEFAULTS);
-            }
+            const dbPages = (res.data.success && res.data.pages) ? res.data.pages : [];
+
+            // Create a set of routes already in DB to avoid duplicates
+            const dbRoutes = new Set(dbPages.map((p: any) => p.route));
+
+            // Combine DB pages with defaults that haven't been saved yet
+            const combinedPages = [...dbPages];
+            FOOTER_DEFAULTS.forEach((def, idx) => {
+                if (!dbRoutes.has(def.route)) {
+                    combinedPages.push({ ...def, _id: `mock-${idx}` } as PageItem);
+                }
+            });
+
+            setPages(combinedPages);
         } catch (err) {
             console.error("Fetch Pages Error:", err);
-            setPages(FOOTER_DEFAULTS);
+            setPages(FOOTER_DEFAULTS.map((p, idx) => ({ ...p, _id: `mock-${idx}` } as PageItem)));
         } finally {
             setLoading(false);
         }
@@ -124,7 +133,7 @@ const PagesSetup: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (editingPage?._id) {
+            if (editingPage?._id && !editingPage._id.startsWith('mock-')) {
                 await api.put(`/pages/${editingPage._id}`, formData);
                 showToast("Page updated successfully");
             } else {
@@ -166,7 +175,7 @@ const PagesSetup: React.FC = () => {
             <div className={styles.topHeader}>
                 <h2>Website Pages Management</h2>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    {pages.length === FOOTER_DEFAULTS.length && !pages[0]?._id && (
+                    {pages.some(p => p._id?.startsWith('mock-')) && (
                         <button className={styles.outlineBtn} onClick={seedPages} style={{ borderColor: '#facc15', color: '#facc15' }}>
                             Save All to Database
                         </button>

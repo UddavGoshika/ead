@@ -175,5 +175,10 @@ export const referralService = {
     getOffersHistory: () => api.get<{ success: boolean; offers: any[] }>('/referral/offers/history'),
 };
 
+export const contactService = {
+    submitInquiry: (data: { name: string, email?: string, phone?: string, subject?: string, message: string, category?: string, source?: string }) =>
+        api.post<{ success: boolean, message: string }>('/contact', data),
+};
+
 
 export default api;

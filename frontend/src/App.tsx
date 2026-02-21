@@ -11,6 +11,7 @@ import SearchPage from './pages/SearchPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import PublicRoute from './components/auth/PublicRoute';
 import ScrollToTop from './components/shared/ScrollToTop';
+import FloatingScrollButton from './components/shared/FloatingScrollButton';
 import ClientDashboard from './pages/dashboard/client/ClientDashboard';
 import AdvocateDashboard from './pages/dashboard/advocate/AdvocateDashboard';
 import AdvisorDashboard from './pages/dashboard/advisor/AdvisorDashboard';
@@ -288,6 +289,7 @@ const AppContent: React.FC = () => {
       <CallWindow />
       <RejectionOverlay />
       <ScrollToTop />
+      <FloatingScrollButton />
       <ImpersonationBanner />
       <Routes>
         {/* ROUTES CONTENT */}
@@ -304,6 +306,9 @@ const AppContent: React.FC = () => {
           <Route path="client-how-it-works" element={<ClientHowIt />} />
           <Route path="terms" element={<TermsOfUse />} />
           <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="careers" element={<Careers />} />
+          <Route path="site-map" element={<SiteMap />} />
+          <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
           <Route path="reset-password/:token" element={<ResetPassword />} />
           <Route path="legal-documentation" element={<LegalDocumentationPage />} />
           <Route path="summons-and-notices" element={<Summons />} />
@@ -432,18 +437,22 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { AccessibilityProvider } from './context/AccessibilityContext';
+
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SettingsProvider>
-          <CallProvider>
-            <ToastProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </ToastProvider>
-          </CallProvider>
+          <AccessibilityProvider>
+            <CallProvider>
+              <ToastProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </ToastProvider>
+            </CallProvider>
+          </AccessibilityProvider>
         </SettingsProvider>
       </AuthProvider>
     </QueryClientProvider>

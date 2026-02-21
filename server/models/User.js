@@ -93,16 +93,11 @@ UserSchema.pre('save', function (next) {
 
     const planStr = (this.plan || '').toLowerCase();
     const typeStr = (this.planType || '').toLowerCase();
+    const isTrialPlan = planStr.includes('temporary') || planStr.includes('trial') || planStr.includes('demo');
 
-    // Rule: Anything except "free" is premium
-    if (planStr !== 'free' && planStr !== '' && !planStr.includes('none')) {
-        this.isPremium = true;
-    } else if (typeStr !== 'free' && typeStr !== '' && typeStr !== 'none') {
-        this.isPremium = true;
-    } else {
-        // Fallback or explicit check for demo trial
-        if (this.demoUsed && this.demoExpiry > Date.now()) {
-            // Force disable demo benefit if pending
+    // Rule: Anything except "free" is premium, but check expiry for trials
+    if (isTrialPlan) {
+        if (this.demoExpiry && this.demoExpiry > Date.now()) {
             if (this.status === 'Pending' || this.status === 'Reverify') {
                 this.isPremium = false;
             } else {
@@ -110,7 +105,14 @@ UserSchema.pre('save', function (next) {
             }
         } else {
             this.isPremium = false;
+            this.plan = 'Free';
+            this.planType = 'Free';
+            this.planTier = null;
         }
+    } else if (planStr !== 'free' && planStr !== '' && !planStr.includes('none')) {
+        this.isPremium = true;
+    } else {
+        this.isPremium = false;
     }
 
     this.subscription_state = this.isPremium ? 'PREMIUM' : 'FREE';

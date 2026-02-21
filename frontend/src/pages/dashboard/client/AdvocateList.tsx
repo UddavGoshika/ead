@@ -13,6 +13,8 @@ import { LOCATION_DATA_RAW } from '../../../components/layout/statesdis';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useInteractions } from '../../../hooks/useInteractions';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 
 interface AdvocateListProps {
     onAction?: (action: string, adv: Advocate) => void;
@@ -39,8 +41,8 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
         experience: ''
     });
 
-    const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPremium = checkIsPremium(user);
+
 
     const fetchAdvocates = async () => {
         setLoading(true);

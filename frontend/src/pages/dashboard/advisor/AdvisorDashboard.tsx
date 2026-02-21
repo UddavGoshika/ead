@@ -25,11 +25,13 @@ import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview.tsx';
 import VerificationBanner from '../../../components/dashboard/shared/VerificationBanner.tsx';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 
 const AdvisorDashboard: React.FC = () => {
     const { user } = useAuth();
-    const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+    const isPremium = checkIsPremium(user);
+
 
     // For Advisor, we land on messenger
     const [currentPage, setCurrentPage] = useState('messenger');

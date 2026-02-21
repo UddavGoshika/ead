@@ -4,6 +4,8 @@ import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
     Coins, LogOut, Wallet, FileText, Briefcase, Gift
 } from 'lucide-react';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 // import styles from '../Sidebar.module.css';
 import styles from './ClientSidebar.module.css';
 interface Props {
@@ -16,8 +18,9 @@ interface Props {
 const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onShowTryon }) => {
     const { user, logout } = useAuth();
 
+    const isPremium = checkIsPremium(user);
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
 
     const menuItems = [
         { id: 'edit-profile', label: 'Edit Profile', icon: User },

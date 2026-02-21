@@ -4,6 +4,8 @@ import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
     Coins, LogOut, Briefcase, Lock, Wallet, FileText, Gift
 } from 'lucide-react';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 import styles from '../Sidebar.module.css';
 
 interface Props {
@@ -36,8 +38,9 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, o
         { id: 'account-settings', label: 'Account & Settings', icon: Settings }
     ];
 
+    const isPremium = checkIsPremium(user);
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
 
     return (
         <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>

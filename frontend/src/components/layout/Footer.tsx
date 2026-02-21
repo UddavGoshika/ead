@@ -43,8 +43,18 @@ const FOOTER_DEFAULTS: any[] = [
 
 const Footer: React.FC = () => {
     const { settings, pages } = useSettings();
-    // Use dynamic pages if they exist in DB, otherwise fallback to defaults for UI visibility
-    const activePages = pages.length > 0 ? pages : FOOTER_DEFAULTS;
+    const activePages = React.useMemo(() => {
+        if (!pages || pages.length === 0) return FOOTER_DEFAULTS;
+
+        // Create a set of routes in DB
+        const dbRoutes = new Set(pages.map(p => p.route));
+
+        // Combine DB pages with defaults that are NOT in the DB
+        return [
+            ...pages,
+            ...FOOTER_DEFAULTS.filter(def => !dbRoutes.has(def.route))
+        ];
+    }, [pages]);
     const { isLoggedIn, user, openAuthModal, setSearchRole, openHelpModal } = useAuth();
     const [modalData, setModalData] = React.useState<{ title: string; content: string; details: string[]; icons?: string[]; sections?: { subtitle: string; points: string[] }[] } | null>(null);
     const navigate = useNavigate();

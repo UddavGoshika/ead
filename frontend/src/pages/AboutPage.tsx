@@ -464,14 +464,54 @@ const AboutPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Card 5: Blogs */}
+                    {/* Card 5: Legal Document Services */}
+                    <div className={styles.fullWidthCard}>
+                        <div className={styles.cardHeader}>
+                            <div className={styles.headerIcon}>
+                                <FileText size={28} />
+                            </div>
+                            <div className={styles.headerText}>
+                                <h2>Legal Document Services</h2>
+                                <div className={styles.headerSubtitle}>Professional Drafting & Verification</div>
+                            </div>
+                        </div>
+
+                        <div className={styles.cardContent}>
+                            <p>
+                                Access high-quality legal drafting services for all your personal and business needs. Our experts ensure every document is legally sound, up-to-date with current laws, and delivered with speed.
+                            </p>
+
+                            <div className={styles.featureGrid}>
+                                <div className={styles.featureItem}>
+                                    <h4>What We Offer</h4>
+                                    <p>Expert drafting of Agreements, Affidavits, Legal Notices, and Business Contracts tailored to your specific requirements.</p>
+                                </div>
+                                <div className={styles.featureItem}>
+                                    <h4>Our Process</h4>
+                                    <p>Select your service, provide details, and receive your expert-verified document within 24-48 hours via secure digital delivery.</p>
+                                </div>
+                            </div>
+
+                            <h3>Key Benefits:</h3>
+                            <ul>
+                                <li><strong>Expert Drafting:</strong> Prepared by specialized legal professionals</li>
+                                <li><strong>Fast Turnaround:</strong> Digital delivery within 24-48 hours</li>
+                                <li><strong>Statutory Compliance:</strong> Fully compliant with latest Indian laws</li>
+                                <li><strong>Cost-Effective:</strong> Premium quality at transparent, affordable pricing</li>
+                                <li><strong>Verified Accuracy:</strong> Multi-layer verification for error-free documentation</li>
+                                <li><strong>Easy Customization:</strong> Tailored to fit your unique legal needs</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Card 6: Blogs */}
                     <div className={styles.fullWidthCard}>
                         <div className={styles.cardHeader}>
                             <div className={styles.headerIcon}>
                                 <MessageSquare size={28} />
                             </div>
                             <div className={styles.headerText}>
-                                <h2>Legal Blogs & Resources</h2>
+                                <h2>Blogs & Resources</h2>
                                 <div className={styles.headerSubtitle}>Knowledge Sharing Platform</div>
                             </div>
                         </div>

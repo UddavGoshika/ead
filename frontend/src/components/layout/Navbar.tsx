@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSettings } from "../../context/SettingsContext";
+import { useAccessibility } from "../../context/AccessibilityContext";
 import {
     Menu,
     X,
@@ -73,6 +74,14 @@ function useTypingPlaceholder(speed = 100, pause = 1500) {
 const Navbar: React.FC = () => {
     const { isLoggedIn, user, logout, openAuthModal, openFilterModal } = useAuth();
     const { settings } = useSettings();
+    const {
+        increaseFontSize,
+        decreaseFontSize,
+        resetFontSize,
+        currentLanguage,
+        changeLanguage,
+        languages
+    } = useAccessibility();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
@@ -187,12 +196,20 @@ const Navbar: React.FC = () => {
                         </div>
 
                         <div className={styles.accessibility}>
-                            <button>A-</button>
-                            <button>A</button>
-                            <button>A+</button>
-                            <select>
-                                <option>EN</option>
-                                <option>HI</option>
+                            <button onClick={decreaseFontSize} title="Decrease Font Size">A-</button>
+                            <button onClick={resetFontSize} title="Reset Font Size">A</button>
+                            <button onClick={increaseFontSize} title="Increase Font Size">A+</button>
+                            <select
+                                value={currentLanguage}
+                                onChange={(e) => changeLanguage(e.target.value)}
+                                title="Change Language"
+                                className="notranslate"
+                            >
+                                {languages.map(lang => (
+                                    <option key={lang.code} value={lang.code} className="notranslate">
+                                        {lang.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>

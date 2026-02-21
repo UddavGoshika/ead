@@ -176,7 +176,7 @@ router.get('/me', async (req, res) => {
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         // CHECK DEMO EXPIRY
-        if (user.isPremium && user.plan.includes('Demo') && user.demoExpiry) {
+        if (user.isPremium && user.plan && (user.plan.includes('Demo') || user.plan.includes('Trial') || user.plan.includes('Temporary')) && user.demoExpiry) {
             if (new Date() > new Date(user.demoExpiry)) {
                 console.log(`[DEMO EXPIRED] User ${user.email} demo ended.`);
                 user.plan = 'Free';

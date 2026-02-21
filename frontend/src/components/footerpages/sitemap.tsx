@@ -31,8 +31,8 @@ const Sitemap: React.FC = () => {
                                 <h4>Platform</h4>
                                 <ul>
                                     <li><Link to="/">Home</Link></li>
-                                    <li><Link to="/about-us">About E-Advocate</Link></li>
-                                    <li><Link to="/site-how-it-works">How It Works</Link></li>
+                                    <li><Link to="/about">About E-Advocate</Link></li>
+                                    <li><Link to="/how-it-works">How It Works</Link></li>
                                     <li><button className={styles.linkBtn} onClick={() => scrollToSection('mainblogs')}>Legal Blogs</button></li>
                                     <li><button className={styles.linkBtn} onClick={() => scrollToSection('contact')}>Contact & Support</button></li>
                                 </ul>
@@ -102,18 +102,18 @@ const Sitemap: React.FC = () => {
                                             Case Status
                                         </a>
                                     </li>
-                                    <li><Link to="/site-how-it-works">Legal Assistant</Link></li>
+                                    <li><Link to="/how-it-works">Legal Assistant</Link></li>
                                 </ul>
                             </div>
 
                             <div>
                                 <h4>Policies</h4>
                                 <ul>
-                                    <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-                                    <li><Link to="/terms-of-use">Terms & Conditions</Link></li>
+                                    <li><Link to="/privacy">Privacy Policy</Link></li>
+                                    <li><Link to="/terms">Terms & Conditions</Link></li>
                                     <li><Link to="/fraud-alert">Fraud Alert</Link></li>
-                                    <li><Link to="/third-party-policy">Third-Party Terms</Link></li>
-                                    <li><Link to="/terms-of-use">Disclaimer</Link></li>
+                                    <li><Link to="/third-party-terms">Third-Party Terms</Link></li>
+                                    <li><Link to="/terms">Disclaimer</Link></li>
                                 </ul>
                             </div>
 

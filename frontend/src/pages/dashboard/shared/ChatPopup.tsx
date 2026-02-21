@@ -24,6 +24,8 @@ import type { Advocate } from '../../../types';
 import PremiumTryonModal from './PremiumTryonModal';
 import DetailedProfileEnhanced from './DetailedProfileEnhanced';
 import { formatImageUrl } from '../../../utils/imageHelper';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 
 import SocialShareModal from '../../../components/shared/SocialShareModal';
 
@@ -78,9 +80,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     const { initiateCall } = useCall();
 
     // Plan check – same logic as client dashboard (Free = masked; Lite/Pro/Ultra = premium)
-    const plan = (user?.plan || 'Free');
-    const planLower = plan.toLowerCase();
-    const isPremium = true; // Always allow chat features for free members as per request
+    const isPremium = checkIsPremium(user);
+
 
     const currentUserId = String(user?.id);
     const partnerUserId = resolveUserId(advocate);

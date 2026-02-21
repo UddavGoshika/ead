@@ -13,6 +13,8 @@ import styles from './DetailedProfile.module.css';
 import { useAuth } from '../../../context/AuthContext';
 import { useCall } from '../../../context/CallContext';
 import { useInteractions } from '../../../hooks/useInteractions';
+import { checkIsPremium } from '../../../utils/planHelper';
+
 
 interface DetailedProfileProps {
     profileId: string | null;
@@ -50,8 +52,9 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
     const [actionLoading, setActionLoading] = useState(false);
     const { initiateCall } = useCall();
 
+    const isPremium = checkIsPremium(user);
     const plan = user?.plan || 'Free';
-    const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
+
 
     // Safety check: if we're in the advisor dashboard, we ARE an advisor.
     const isDashboardAdvisor = typeof window !== 'undefined' && window.location.href.includes('/dashboard/advisor');
@@ -754,7 +757,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                 }}
             >
                 <MessageCircle size={18} />
-                Contact Official Support
+                Lexi
             </button>
         </div>
     );

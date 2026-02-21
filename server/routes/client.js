@@ -204,8 +204,15 @@ router.get('/', async (req, res) => {
                     const viewer = await User.findById(viewerId);
                     if (viewer) {
                         const planStr = (viewer.plan || '').toLowerCase();
+                        const isTrial = planStr.includes('trial') || planStr.includes('temporary') || planStr.includes('demo');
+
                         if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
-                            viewerIsPremium = true;
+                            // If it's a trial, check expiry
+                            if (isTrial && viewer.demoExpiry && new Date() > new Date(viewer.demoExpiry)) {
+                                viewerIsPremium = false;
+                            } else {
+                                viewerIsPremium = true;
+                            }
                         }
                     }
                 }
@@ -375,8 +382,15 @@ router.get('/:userId', async (req, res) => {
         if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
             const viewer = await User.findById(viewerId);
             if (viewer) {
-                if (viewer.isPremium || viewer.role === 'legal_provider') {
-                    viewerIsPremium = true;
+                const planStr = (viewer.plan || '').toLowerCase();
+                const isTrial = planStr.includes('trial') || planStr.includes('temporary') || planStr.includes('demo');
+
+                if (viewer.isPremium || viewer.role === 'legal_provider' || (planStr !== 'free' && planStr !== '')) {
+                    if (isTrial && viewer.demoExpiry && new Date() > new Date(viewer.demoExpiry)) {
+                        viewerIsPremium = false;
+                    } else {
+                        viewerIsPremium = true;
+                    }
                 }
                 if (viewer.role === 'legal_provider' || viewer.role === 'advocate') {
                     viewerIsAdvisor = true;

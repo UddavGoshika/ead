@@ -20,7 +20,7 @@ const ProviderSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage })
         { id: 'provider-stats', label: 'Overview', icon: FileText },
         { id: 'edit-profile', label: 'Service Profile', icon: User },
         { id: 'wallet-history', label: 'Earnings & Wallet', icon: Wallet },
-        { id: 'blogs', label: 'Legal Blogs', icon: Newspaper },
+        { id: 'blogs', label: 'Blogs', icon: Newspaper },
         { id: 'messenger', label: 'Client Inquiries', icon: Briefcase },
         { id: 'upgrade', label: 'Promote Services', icon: ArrowUp },
         { id: 'account-settings', label: 'Account Settings', icon: Settings },

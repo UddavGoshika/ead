@@ -253,7 +253,15 @@ router.get('/members', async (req, res) => {
 
         // 2. Strict Context Filtering (User Level)
         if (context === 'free') {
-            query.$or = [{ plan: 'Free' }, { plan: { $exists: false } }, { plan: null }];
+            query.$or = [
+                { plan: 'Free' },
+                { plan: { $exists: false } },
+                { plan: null },
+                {
+                    plan: { $regex: /Trial|Temporary|Demo/i },
+                    demoExpiry: { $lt: new Date() }
+                }
+            ];
         } else if (context === 'premium') {
             query.plan = { $nin: ['Free', null], $exists: true };
         } else if (context === 'blocked') {
@@ -361,18 +369,29 @@ router.get('/members', async (req, res) => {
                 interests: profile?.interests,
                 superInterests: profile?.superInterests,
                 address: profile?.address,
-                dob: profile?.dob
+                dob: profile?.dob,
+                demoExpiry: u.demoExpiry
             };
         }));
 
         // 3. Strict Context Filtering (Profile Level)
         let filteredMembers = members;
         if (context === 'free') {
-            // Only verified free members
-            filteredMembers = members.filter(m => m.verified === true && (m.plan === 'Free' || !m.plan) && m.status !== 'Deleted');
+            // Only verified free members OR expired trial members
+            filteredMembers = members.filter(m => {
+                const isVerified = m.verified === true;
+                const isFreePlan = m.plan === 'Free' || !m.plan;
+                const isExpiredTrial = /Trial|Temporary|Demo/i.test(m.plan || '') && m.demoExpiry && new Date() > new Date(m.demoExpiry);
+                return isVerified && (isFreePlan || isExpiredTrial) && m.status !== 'Deleted';
+            });
         } else if (context === 'premium') {
-            // Only verified premium members
-            filteredMembers = members.filter(m => m.verified === true && m.plan !== 'Free' && m.plan && m.status !== 'Deleted');
+            // Only verified premium members (excluding expired trials)
+            filteredMembers = members.filter(m => {
+                const isVerified = m.verified === true;
+                const isFreePlan = m.plan === 'Free' || !m.plan;
+                const isExpiredTrial = /Trial|Temporary|Demo/i.test(m.plan || '') && m.demoExpiry && new Date() > new Date(m.demoExpiry);
+                return isVerified && !isFreePlan && !isExpiredTrial && m.status !== 'Deleted';
+            });
         } else if (context === 'approved') {
             filteredMembers = members.filter(m => m.verified === true && m.status === 'Active');
         } else if (context === 'pending') {
