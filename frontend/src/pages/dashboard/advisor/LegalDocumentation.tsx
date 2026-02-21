@@ -27,6 +27,7 @@ interface Provider {
     hourly_rate: string;
     isPremium: boolean;
     isVerified: boolean;
+    email?: string;
     specializations?: string[];
 }
 
@@ -621,6 +622,7 @@ const ProviderCard: React.FC<{
 
 const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
     const [msg, setMsg] = useState('');
+    const { user } = useAuth();
     return (
         <div className={styles.popupOverlay} onClick={onClose}>
             <motion.div className={styles.chatPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
@@ -639,16 +641,21 @@ const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => 
                 </div>
                 <form className={styles.chatInput} onSubmit={async e => {
                     e.preventDefault();
-                    const currentUserId = String((useAuth() as any).user?.id);
+                    if (!user) return alert("Please login to send messages");
+                    const currentUserId = String(user.id || (user as any)._id);
+                    const targetId = String((provider as any).userId?._id || (provider as any).userId || provider.id || (provider as any)._id);
+
                     if (msg.trim()) {
                         try {
-                            await interactionService.sendMessage(currentUserId, provider.id, msg);
-                            // Also record interest action for the dashboard feed
-                            await interactionService.recordActivity('advocate', provider.id, 'chat', currentUserId);
+                            await interactionService.sendMessage(currentUserId, targetId, msg);
                             alert(`Message sent to ${provider.name} regarding ${service}`);
+                            setMsg('');
                             onClose();
+                            // Background task
+                            interactionService.recordActivity('advocate', targetId, 'chat', currentUserId).catch(console.error);
                         } catch (err) {
                             console.error("Chat error:", err);
+                            alert("Failed to send message. Please try again.");
                         }
                     }
                 }}>
@@ -662,6 +669,7 @@ const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => 
 
 const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
     const [form, setForm] = useState({ service, reason: '' });
+    const { user } = useAuth();
     return (
         <div className={styles.popupOverlay} onClick={onClose}>
             <motion.div className={styles.consultPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
@@ -671,13 +679,16 @@ const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose
                 </div>
                 <form className={styles.consultForm} onSubmit={async e => {
                     e.preventDefault();
-                    const currentUserId = String((useAuth() as any).user?.id);
+                    if (!user) return alert("Please login to book consultation");
+                    const currentUserId = String(user.id || (user as any)._id);
+                    const targetId = String((provider as any).userId?._id || (provider as any).userId || provider.id || (provider as any)._id);
                     try {
-                        await interactionService.recordActivity('advocate', provider.id, 'consultation', currentUserId);
-                        alert(`Consultation for ${service} requested from ${provider.name}`);
+                        await interactionService.recordActivity('advocate', targetId, 'meet_request', currentUserId, { service });
+                        alert(`Consultation request for ${service} sent to ${provider.name}`);
                         onClose();
                     } catch (err) {
                         console.error("Consultation error:", err);
+                        alert("Failed to submit request.");
                     }
                 }}>
                     <div className={styles.inputGroup}>
@@ -1409,7 +1420,7 @@ const AdvisorLegalDocumentation: React.FC<{ isEmbedded?: boolean }> = ({ isEmbed
                 {chatTarget && (
                     <ChatPopup
                         provider={chatTarget}
-                        service={currentDetail.title}
+                        service={currentDetail?.title || 'General Legal Inquiry'}
                         onClose={() => setChatTarget(null)}
                     />
                 )}
@@ -1419,7 +1430,7 @@ const AdvisorLegalDocumentation: React.FC<{ isEmbedded?: boolean }> = ({ isEmbed
                 {consultTarget && (
                     <ConsultationPopup
                         provider={consultTarget}
-                        service={currentDetail.title}
+                        service={currentDetail?.title || 'General Legal Consultation'}
                         onClose={() => setConsultTarget(null)}
                     />
                 )}
@@ -1465,51 +1476,40 @@ const AdvisorLegalDocumentation: React.FC<{ isEmbedded?: boolean }> = ({ isEmbed
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Email</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? `${selectedProvider.name.replace(/\s+/g, '.').toLowerCase()}@eadvocate.in`
-                                                            : `${selectedProvider.name.substring(0, 2).toLowerCase()}*******@eadvocate.in`}
+                                                        {selectedProvider.email || `${selectedProvider.name.replace(/\s+/g, '.').toLowerCase()}@eadvocate.in`}
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Phone</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? '+91 98765 43210'
-                                                            : '+91 98********'}
+                                                        {selectedProvider.hourly_rate || '+91 98765 43210'}
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>License ID</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? selectedProvider.license_id
-                                                            : `${selectedProvider.license_id.substring(0, 2)}*******`}
+                                                        {selectedProvider.license_id}
                                                     </span>
                                                 </div>
                                             </div>
-                                            {!isLoggedIn && (
-                                                <p style={{ marginTop: '10px', fontSize: '0.8rem', color: '#daa520' }}>
-                                                    * Login to view full contact details
-                                                </p>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className={styles.modalActionBar}>
-                                    <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}>
-                                        <Briefcase size={20} />
-                                        <span>Express Interest</span>
-                                    </button>
-                                    <button className={styles.modalActionBtnPrimary} onClick={() => { !isLoggedIn ? openAuthModal('login') : setChatTarget(selectedProvider); }}>
-                                        <MessageCircle size={20} />
-                                        <span>Direct Chat</span>
-                                    </button>
-                                    <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}>
-                                        <Clock size={20} />
-                                        <span>Book Consultation</span>
-                                    </button>
-                                </div>
+                            <div className={styles.modalActionBar}>
+                                <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}>
+                                    <Briefcase size={20} />
+                                    <span>Express Interest</span>
+                                </button>
+                                <button className={styles.modalActionBtnPrimary} onClick={() => { !isLoggedIn ? openAuthModal('login') : setChatTarget(selectedProvider); }}>
+                                    <MessageCircle size={20} />
+                                    <span>Direct Chat</span>
+                                </button>
+                                <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}>
+                                    <Clock size={20} />
+                                    <span>Book Consultation</span>
+                                </button>
                             </div>
                         </motion.div>
                     </motion.div>

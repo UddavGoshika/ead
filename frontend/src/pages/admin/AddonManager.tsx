@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./AddonManager.module.css";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
+import api from "../../services/api";
+import { useToast } from "../../context/ToastContext";
 
 /* ================= TYPES ================= */
 interface Addon {
@@ -11,44 +13,64 @@ interface Addon {
     enabled: boolean;
 }
 
-/* ================= DATA ================= */
-const installedAddons: Addon[] = [
-    {
-        id: 1,
-        name: "OTP",
-        version: "1.4",
-        image: "/assets/otp.png",
-        enabled: true,
-    },
-    {
-        id: 2,
-        name: "Referral System",
-        version: "1.1",
-        image: "/assets/image copy.png",
-        enabled: true,
-    },
-    {
-        id: 3,
-        name: "Support Ticket",
-        version: "1.1",
-        image: "/assets/image copy.png",
-        enabled: true,
-    },
-];
-
 /* ================= COMPONENT ================= */
 const AddonsManager: React.FC = () => {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<"installed" | "available">(
         "installed"
     );
-    const [addons, setAddons] = useState(installedAddons);
+    const [addons, setAddons] = useState<Addon[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const toggleAddon = (id: number) => {
-        setAddons(prev =>
-            prev.map(a =>
-                a.id === id ? { ...a, enabled: !a.enabled } : a
-            )
+    const fetchAddons = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/settings/site');
+            if (res.data.success) {
+                const fetchedAddons = res.data.settings.addons || [];
+                if (fetchedAddons.length === 0) {
+                    const defaultAddons = [
+                        { id: 1, name: "Referral System", version: "1.0.0", image: "/assets/referral-icon.webp", enabled: true },
+                        { id: 2, name: "Support Ticket System", version: "1.2.0", image: "/assets/support-icon.webp", enabled: true },
+                        { id: 3, name: "OTP System", version: "1.0.5", image: "/assets/otp-icon.webp", enabled: true }
+                    ];
+                    setAddons(defaultAddons);
+                } else {
+                    setAddons(fetchedAddons);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching addons:", err);
+            showToast("Failed to fetch addons", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAddons();
+    }, []);
+
+    const toggleAddon = async (id: number) => {
+        const updatedAddons = addons.map(a =>
+            a.id === id ? { ...a, enabled: !a.enabled } : a
         );
+        const originalAddons = [...addons];
+        setAddons(updatedAddons);
+
+        try {
+            await api.post('/settings/site', { addons: updatedAddons });
+            showToast(`Addon ${updatedAddons.find(a => a.id === id)?.enabled ? 'enabled' : 'disabled'} successfully`);
+        } catch (err) {
+            console.error("Error toggling addon:", err);
+            showToast("Failed to update addon status", "error");
+            // Revert on error
+            setAddons(originalAddons);
+        }
+    };
+
+    const handleInstallClick = () => {
+        showToast("Please upload the addon zip file to install or update.", "info");
     };
 
     return (
@@ -80,7 +102,7 @@ const AddonsManager: React.FC = () => {
                 </div>
 
                 <div className={styles.headerActionsSecondary}>
-                    <button className={styles.installBtn}>
+                    <button className={styles.installBtn} onClick={handleInstallClick}>
                         Install/Update Addon
                     </button>
                 </div>

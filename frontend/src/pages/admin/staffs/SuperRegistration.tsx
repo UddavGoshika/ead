@@ -545,14 +545,14 @@ const SuperRegistration: React.FC = () => {
                                         <label>Upload ID Document</label>
                                         <div className={styles.fileUpload}>
                                             <input type="file" onChange={(e) => handleFileChange(e, 'idUpload')} />
-                                            <span>{formData.idUpload ? (formData.idUpload as File).name : 'Select ID File (Image/PDF)'}</span>
+                                            <span>{formData.idUpload ? (formData.idUpload as File).name : 'Select ID File (Image)'}</span>
                                         </div>
                                     </div>
                                     <div className={styles.inputGroup}>
                                         <label>Academic / Professional Resume</label>
                                         <div className={styles.fileUpload}>
-                                            <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => handleFileChange(e, 'resumeUpload')} />
-                                            <span>{formData.resumeUpload ? (formData.resumeUpload as File).name : 'Select Resume (PDF)'}</span>
+                                            <input type="file" accept=".jpg,.jpeg,.png" onChange={(e) => handleFileChange(e, 'resumeUpload')} />
+                                            <span>{formData.resumeUpload ? (formData.resumeUpload as File).name : 'Select Resume (Image)'}</span>
                                         </div>
                                     </div>
                                 </div>

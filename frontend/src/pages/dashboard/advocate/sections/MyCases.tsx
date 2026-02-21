@@ -189,7 +189,7 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
     }
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} style={{ paddingBottom: '150px' }}>
             <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
                 <div style={{
                     display: 'grid',
@@ -388,7 +388,7 @@ const MyCases: React.FC<MyCasesProps> = ({ onSelectForChat }) => {
                                 />
                             </div>
 
-                            <button type="submit" className={styles.submitInitiateBtn}>Create Case Request</button>
+                            <button type="submit" className={styles.submitInitiateBtn}>Submit</button>
                         </form>
                     </div>
                 </div>

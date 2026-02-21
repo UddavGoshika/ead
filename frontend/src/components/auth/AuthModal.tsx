@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import styles from './AuthModal.module.css';
 
 const AuthModal: React.FC = () => {
-    const { isAuthModalOpen, closeAuthModal, authTab, login, openAdvocateReg, openClientReg, openLegalProviderReg } = useAuth();
+    const { isAuthModalOpen, closeAuthModal, authTab, authInitialData, login, openAdvocateReg, openClientReg, openLegalProviderReg } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'login' | 'register'>(authTab);
     const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -34,7 +34,12 @@ const AuthModal: React.FC = () => {
         setError(null);
         setMessage(null);
         setAccountStatusWarning(null);
-    }, [authTab, isAuthModalOpen]);
+
+        if (authInitialData) {
+            if (authInitialData.email) setEmail(authInitialData.email);
+            if (authInitialData.password) setPassword(authInitialData.password);
+        }
+    }, [authTab, isAuthModalOpen, authInitialData]);
 
     if (!isAuthModalOpen) return null;
 
@@ -104,12 +109,17 @@ const AuthModal: React.FC = () => {
                 } else if (role === 'legal_provider') {
                     target = `/dashboard/advisor/${uid}`;
                 } else if ([
+                    'referral', 'influencer', 'marketer', 'marketing_agency'
+                ].includes(role)) {
+                    target = '/dashboard/referral';
+                } else if ([
                     'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
                     'chat_support', 'live_chat', 'call_support', 'data_entry',
-                    'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
+                    'personal_assistant', 'personal_agent'
                 ].includes(role)) {
                     target = '/staff/portal';
-                } else if (role === 'email_support') {
+                }
+                else if (role === 'email_support') {
                     target = `/dashboard/email_support/${uid}`;
                 } else if (role === 'user') {
                     target = `/dashboard/user/${uid}`;

@@ -497,7 +497,7 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
 
             const categoryMatch =
                 filterCategory === "All" ||
-                (filterCategory === "Free" && (normalizedPlan === "free" || normalizedPlan === "")) ||
+                (filterCategory === "Free" && (normalizedPlan === "free" || normalizedPlan === "" || normalizedPlan.includes("trial"))) ||
                 (filterCategory === "Pro Lite" && normalizedPlan.includes("lite")) ||
                 (filterCategory === "Pro" && normalizedPlan.includes("pro") && !normalizedPlan.includes("lite") && !normalizedPlan.includes("ultra")) ||
                 (filterCategory === "Ultra Pro" && normalizedPlan.includes("ultra"));
@@ -560,9 +560,11 @@ const MemberTable: React.FC<MemberTableProps> = ({ title, initialMembers, defaul
         // Context-Based Overrides
         let matchesContext = true;
         if (context === 'free') {
-            matchesContext = (m.plan || 'Free').toLowerCase() === 'free';
+            const plan = (m.plan || 'Free').toLowerCase();
+            matchesContext = plan === 'free' || plan.includes('trial');
         } else if (context === 'premium') {
-            matchesContext = (m.plan || 'Free').toLowerCase() !== 'free';
+            const plan = (m.plan || 'Free').toLowerCase();
+            matchesContext = plan !== 'free' && !plan.includes('trial');
         } else if (context === 'approved') {
             matchesContext = m.verified === true;
         } else if (context === 'pending') {

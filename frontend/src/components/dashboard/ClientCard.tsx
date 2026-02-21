@@ -46,7 +46,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const IS_MASKED = !isPremium;
+    const IS_MASKED = client.isMasked !== false;
 
     const maskName = (name: string) => {
         if (!IS_MASKED) return name;
@@ -232,18 +232,16 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
 
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
-                        <span className={styles.topIdText}>{maskId(String(client.unique_id || client.id))}</span>
-                        {variant === 'featured' && (
-                            <div className={styles.metaBadgeContainer}>
-                                <div className={styles.metaBadge}>
-                                    <Check size={16} color="white" strokeWidth={4} />
-                                </div>
+                        <div className={styles.metaBadgeContainer} style={{ marginLeft: 0, marginRight: '4px' }}>
+                            <div className={styles.metaBadge} style={{ width: '16px', height: '16px' }}>
+                                <Check size={12} color="white" strokeWidth={4} />
                             </div>
-                        )}
+                        </div>
+                        <span className={styles.topIdText}>{maskId(String(client.unique_id || client.id))}</span>
                     </div>
                 </div>
 
-                <div className={`${styles.profileTextOverlay} ${shouldBlur ? styles.blurredText : ''}`}>
+                <div className={styles.profileTextOverlay}>
                     <h3 className={styles.overlayName}>
                         <User size={20} className="text-yellow-400" fill="#facc15" stroke="none" />
                         {maskName(client.name || 'Client')}
@@ -251,7 +249,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                     <div className={styles.overlayDetails}>
                         <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <MapPin size={14} color="#38bdf8" />
-                            {client.location ? (typeof client.location === 'object' ? `${client.location.city || ''}` : client.location) : 'Location N/A'}
+                            {maskName(client.location ? (typeof client.location === 'object' ? `${client.location.city || ''}` : client.location) : 'Location N/A')}
                         </p>
                     </div>
                 </div>
@@ -261,14 +259,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, onAction, variant = 'no
                         <div className={styles.overlayDepartmentBadge} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Scale size={14} color="#a78bfa" />
                             {client.legalHelp?.category || client.legalHelp?.specialization || 'FAMILY LAWYER'}
-                        </div>
-                    )}
-                    {client.legalHelp?.subDepartment && (
-                        <div className={styles.idBadge}>
-                            <FileText size={14} fill="currentColor" stroke="currentColor" />
-                            <span className={styles.idText}>
-                                {client.legalHelp.subDepartment}
-                            </span>
                         </div>
                     )}
                 </div>

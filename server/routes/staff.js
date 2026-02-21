@@ -105,6 +105,20 @@ router.post('/leads/:id/update', async (req, res) => {
     }
 });
 
+// Get staff's own call logs
+router.get('/call-logs', async (req, res) => {
+    try {
+        const logs = await CallLog.find({ staffId: req.user.id })
+            .sort({ timestamp: -1 })
+            .limit(200)
+            .populate('leadId', 'clientName clientMobile leadStatus')
+            .lean();
+        res.json({ success: true, logs });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to fetch call logs' });
+    }
+});
+
 // Get staff's own performance snapshot
 router.get('/performance', async (req, res) => {
     try {

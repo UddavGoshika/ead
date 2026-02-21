@@ -125,7 +125,7 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
     });
 
     return (
-        <div className={styles.page}>
+        <div className={styles.page} style={{ paddingBottom: '150px' }}>
             <div className={styles.headerSection}>
                 <button className={styles.backLink} onClick={() => showsidePage('normalfccards')}>
                     <ArrowLeft size={18} />

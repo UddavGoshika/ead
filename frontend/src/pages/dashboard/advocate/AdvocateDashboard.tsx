@@ -25,7 +25,9 @@ import CreateBlog from './sections/CreateBlog';
 import CreditsPage from '../shared/CreditsPage';
 import LegalDocumentationPage from '../../LegalDocumentationPage';
 import PremiumTryonModal from '../shared/PremiumTryonModal';
-import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare, FileText, PlusSquare, Briefcase, Zap } from 'lucide-react';
+import AlreadyUsedTrialModal from '../shared/AlreadyUsedTrialModal';
+import ReferAndEarn from '../shared/ReferAndEarn';
+import { Menu, ScrollText, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare, FileText, PlusSquare, Briefcase, Zap } from 'lucide-react';
 import type { Advocate } from '../../../types';
 
 import { useAuth } from '../../../context/AuthContext';
@@ -77,18 +79,30 @@ const AdvocateDashboard: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showCreateBlog, setShowCreateBlog] = useState(false);
     const [showTryonModal, setShowTryonModal] = useState(false);
+    const [showAlreadyUsedModal, setShowAlreadyUsedModal] = useState(false);
     const [showPendingPopup, setShowPendingPopup] = useState(false);
     const location = useLocation();
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        // Show try-on modal ONLY if user is on Free plan and hasn't used demo
+        // Show try-on modal ONLY if user is on Free plan
         const currentPlan = (user?.plan || 'Free').toLowerCase();
-        if (user && currentPlan === 'free' && !user.demoUsed && user.status !== 'Pending' && user.status !== 'Reverify') {
-            const hasSeen = sessionStorage.getItem('hasSeenTryon');
-            if (!hasSeen) {
-                setShowTryonModal(true);
-                sessionStorage.setItem('hasSeenTryon', 'true');
+        if (user && currentPlan === 'free' && user.status !== 'Pending' && user.status !== 'Reverify') {
+            const hasSeenTryon = sessionStorage.getItem('hasSeenTryon');
+            const hasSeenAlreadyUsed = sessionStorage.getItem('hasSeenAlreadyUsedPopup');
+
+            if (user.demoUsed) {
+                // Show "Already Used" modal if they haven't seen it this session
+                if (!hasSeenAlreadyUsed) {
+                    setShowAlreadyUsedModal(true);
+                    sessionStorage.setItem('hasSeenAlreadyUsedPopup', 'true');
+                }
+            } else {
+                // Show "Trial Promo" modal if they haven't seen it this session
+                if (!hasSeenTryon) {
+                    setShowTryonModal(true);
+                    sessionStorage.setItem('hasSeenTryon', 'true');
+                }
             }
         }
 
@@ -237,20 +251,11 @@ const AdvocateDashboard: React.FC = () => {
                 />;
             case 'my-cases':
                 return <MyCases onSelectForChat={handleSelectForChat} />;
-            case 'initiate-case':
-                return (
-                    <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '20px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                        <Briefcase size={64} color="#facc15" style={{ marginBottom: '20px' }} />
-                        <h2 style={{ color: '#f8fafc', marginBottom: '10px' }}>Initiate a New Case</h2>
-                        <p style={{ color: '#94a3b8', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto' }}>
-                            To initiate a case, please visit a client profile and click on "Appoint as Advocate" or "Start Case".
-                        </p>
-                    </div>
-                );
-            case 'fileacase':
-                return <FileCase backToHome={backtohome} showToast={showToast} />;
+
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
+            case 'refer-earn':
+                return <ReferAndEarn />;
             default:
                 return (
                     <FeaturedProfiles
@@ -265,7 +270,7 @@ const AdvocateDashboard: React.FC = () => {
 
     const getPageTitle = () => {
         switch (currentPage) {
-            case 'featured-profiles': return 'Featured Clients';
+            case 'featured-profiles': return 'Featured Profiles';
             case 'normalfccards': return 'Browse Clients';
             case 'detailed-profile-view': return 'Client View';
             case 'edit-profile': return 'Edit Profile';
@@ -275,7 +280,7 @@ const AdvocateDashboard: React.FC = () => {
             case 'credits': return 'My Credits';
             case 'safety-center': return 'Safety Center';
             case 'help-support': return 'Help & Support';
-            case 'blogs': return 'Legal Blogs';
+            case 'blogs': return 'Blogs';
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
@@ -283,6 +288,7 @@ const AdvocateDashboard: React.FC = () => {
             case 'initiate-case': return 'Initiate New Case';
             case 'fileacase': return 'File a New Case';
             case 'legal-documentation': return 'Legal Documentation';
+            case 'refer-earn': return 'Refer & Earn';
             default: return 'Advocate Dashboard';
         }
     };
@@ -351,7 +357,7 @@ const AdvocateDashboard: React.FC = () => {
                                 gap: '6px',
                                 marginRight: '10px'
                             }}>
-                                <Zap size={16} fill="#facc15" />
+                                {/* <Zap size={16} fill="#facc15" /> */}
                                 <span style={{ textTransform: 'capitalize' }}>{plan} Plan</span>
                             </div>
                         </div>
@@ -427,14 +433,37 @@ const AdvocateDashboard: React.FC = () => {
                     {user?.status === 'Pending' && <VerificationBanner />}
                     {currentPage === 'my-cases' && (
                         <div className={styles.caseActions}>
+
+
+                            <button className={styles.topBtn} onClick={() => window.open('https://filing.ecourts.gov.in/pdedev/', '_blank')}>
+                                <FileText size={18} />
+                                File a Case
+                            </button>
+
+
                             <button className={styles.topBtn} onClick={() => window.open('https://ecourts.gov.in/ecourts_home/', '_blank')}>
                                 <FileText size={18} />
                                 Case Status
                             </button>
-                            <button className={styles.topBtnPrimary} onClick={() => setCurrentPage('fileacase')}>
+                            <button className={styles.topBtnPrimary} onClick={() => {
+                                const event = new CustomEvent('open-initiate-case');
+                                window.dispatchEvent(event);
+                            }}>
                                 <PlusSquare size={18} />
                                 Initiate New Case
                             </button>
+
+
+                            <button
+                                className={styles.backLink}
+                                onClick={() => window.open('/dashboard/legal-docs', '_blank')}
+                                style={{ marginLeft: 'auto' }}
+                            >
+                                <ScrollText size={18} />
+                                <span>Legal Documentation</span>
+                            </button>
+
+
                         </div>
                     )}
                     {renderPage()}
@@ -477,6 +506,9 @@ const AdvocateDashboard: React.FC = () => {
             )}
             {showTryonModal && (
                 <PremiumTryonModal onClose={() => setShowTryonModal(false)} />
+            )}
+            {showAlreadyUsedModal && (
+                <AlreadyUsedTrialModal onClose={() => setShowAlreadyUsedModal(false)} />
             )}
             {showPendingPopup && user && (
                 <PendingPopup

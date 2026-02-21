@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // SPECIFIC MAILER FOR SUPPORT ONLY
-const sendSupportEmail = async (to, subject, text, html) => {
+const sendSupportEmail = async (to, subject, text, html, attachments = []) => {
     // READ CREDENTIALS
     const user = process.env.SMTP_FROM || 'info.eadvocateservices@gmail.com';
     let pass = process.env.smtp_pass || process.env.SMTP_PASS;
@@ -30,7 +30,8 @@ const sendSupportEmail = async (to, subject, text, html) => {
             to: to,
             subject: subject,
             text: text,
-            html: html || `<p>${text}</p>`
+            html: html || `<p>${text}</p>`,
+            attachments: attachments
         });
 
         console.log(`[Support Mailer] Sent! ID: ${info.messageId}`);

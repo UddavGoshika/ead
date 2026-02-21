@@ -1,6 +1,6 @@
 .page {
     animation: fadeIn 0.4s ease-out;
-    padding-bottom: 50px;
+    padding-bottom: 80px;
 }
 
 .headerSection {
@@ -234,4 +234,47 @@
     .filterSelect {
         width: 100%;
     }
+}
+
+.noProfiles {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.noProfiles p {
+    color: #94a3b8;
+    font-size: 16px;
+    margin: 0;
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+.switchBtn {
+    background: transparent;
+    border: 1.5px solid #facc15;
+    color: #facc15;
+    padding: 10px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.switchBtn:hover {
+    background: #facc15;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.2);
 }

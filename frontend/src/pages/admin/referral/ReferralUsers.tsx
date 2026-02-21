@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import styles from "./ReferralUsers.module.css";
-import { Search, Filter, UserCircle, Briefcase, IndianRupee, PieChart, FileText, MoreVertical, CheckCircle, XCircle, ShieldCheck, Zap, Activity } from "lucide-react";
+import { Search, Filter, UserCircle, Briefcase, IndianRupee, PieChart, FileText, MoreVertical, CheckCircle, XCircle, ShieldCheck, Zap, Activity, UserPlus, X, Mail, Phone as PhoneIcon, Key, Hash, Percent } from "lucide-react";
+import { referralService } from "../../../services/api";
+import { motion } from "framer-motion";
 
 type UserStatus = "Active" | "Blocked" | "Pending";
 type KYCStatus = "Verified" | "Pending" | "Unverified";
@@ -19,8 +21,7 @@ interface ReferralUser {
     pending: string;
     joiningDetails: string;
     status: UserStatus;
-    level: string;
-    // NEW IMPORTANT COLUMNS
+    level?: string;
     referralCode: string;
     commissionType: "Percentage" | "Fixed";
     kycStatus: KYCStatus;
@@ -138,24 +139,122 @@ const ReferralUserAdmin: React.FC = () => {
     const [selectedRole, setSelectedRole] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [users, setUsers] = useState<ReferralUser[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        loginId: "",
+        password: "",
+        role: "Marketer",
+        department: "",
+        percentage: "",
+        referralCode: ""
+    });
+
+    const [submitting, setSubmitting] = useState(false);
+
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const res = await referralService.getUsers();
+            if (res.data.success) {
+                // Map backend user to ReferralUser type
+                const mapped: ReferralUser[] = res.data.users.map((u: any) => ({
+                    id: u.id,
+                    name: u.name,
+                    userId: u.userId,
+                    email: u.email,
+                    phone: u.phone,
+                    role: u.role,
+                    totalEarned: `₹${u.totalEarned.toLocaleString()}`,
+                    withdrawn: `₹${u.withdrawn.toLocaleString()}`,
+                    pending: `₹${u.pending.toLocaleString()}`,
+                    status: (u.status as any) || "Active",
+                    referralCode: u.myReferralCode || "N/A",
+                    commissionType: "Percentage",
+                    kycStatus: "Verified",
+                    lastActivity: "Recently",
+                    joiningDetails: new Date(u.createdAt).toLocaleDateString(),
+                    paymentType: "Internal",
+                    joiningFee: "₹0"
+                }));
+                setUsers(mapped);
+            }
+        } catch (err) {
+            console.error("Failed to fetch referral users", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const handleOnboard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setSubmitting(true);
+            const res = await referralService.onboardUser(formData);
+            if (res.data.success) {
+                alert("Referral user registered successfully!");
+                setShowModal(false);
+                setFormData({
+                    name: "",
+                    firstName: "",
+                    lastName: "",
+                    email: "",
+                    phone: "",
+                    loginId: "",
+                    password: "",
+                    role: "Marketer",
+                    department: "",
+                    percentage: "",
+                    referralCode: ""
+                });
+                fetchUsers();
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || "Registration failed");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const generateCode = () => {
+        const code = "REF-" + Math.floor(1000 + Math.random() * 9000);
+        setFormData({ ...formData, referralCode: code });
+    };
 
     const filteredUsers = useMemo(() => {
-        return MOCK_USERS.filter(user => {
+        return users.filter(user => {
             const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.email.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRole = selectedRole === "All" || user.role === selectedRole;
+            const matchesRole = selectedRole === "All" || user.role.toLowerCase().includes(selectedRole.toLowerCase().split(' ')[0]);
             const matchesStatus = selectedStatus === "All" || user.status === selectedStatus;
             return matchesSearch && matchesRole && matchesStatus;
         });
-    }, [searchTerm, selectedRole, selectedStatus]);
+    }, [searchTerm, selectedRole, selectedStatus, users]);
 
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <div>
-                    <h1>Referral User Analytics & Management</h1>
-                    <p>Advanced filtering and detailed tracking for all referral roles.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h1>Referral User Analytics & Management</h1>
+                        <p>Advanced filtering and detailed tracking for all referral roles.</p>
+                    </div>
+                    <button className={styles.onboardBtn} onClick={() => setShowModal(true)}>
+                        <UserPlus size={18} /> Add Referral User
+                    </button>
                 </div>
             </header>
 
@@ -308,6 +407,183 @@ const ReferralUserAdmin: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* ONBOARD MODAL */}
+            {showModal && (
+                <div className={styles.modalOverlay}>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={styles.modalContent}
+                    >
+                        <div className={styles.modalHeader}>
+                            <h2><UserPlus /> Register New Referral User</h2>
+                            <button className={styles.closeBtn} onClick={() => setShowModal(false)}><X />X</button>
+                        </div>
+
+                        <form onSubmit={handleOnboard} className={styles.onboardForm}>
+                            <div className={styles.formGrid}>
+                                <div className={styles.inputGroup}>
+                                    <label>first Name</label>
+                                    <div className={styles.inputWrapper}>
+                                        <UserCircle size={18} />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="Enter name"
+                                            value={formData.firstName}
+                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+
+                                <div className={styles.inputGroup}>
+                                    <label>last Name</label>
+                                    <div className={styles.inputWrapper}>
+                                        <UserCircle size={18} />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="Enter name"
+                                            value={formData.lastName}
+                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.inputGroup}>
+                                    <label>Email Address</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Mail size={18} />
+                                        <input
+                                            required
+                                            type="email"
+                                            placeholder="Email for login"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Phone Number</label>
+                                    <div className={styles.inputWrapper}>
+                                        <PhoneIcon size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="+91..."
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.inputGroup}>
+                                    <label>Department</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Briefcase size={18} />
+                                        <select
+                                            value={formData.department}
+                                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                        >
+                                            <option value="">Select Department</option>
+                                            <option value="Legal">Legal</option>
+                                            <option value="Accounting">Accounting</option>
+                                            <option value="Marketing">Marketing</option>
+                                            <option value="Sales">Sales</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+
+
+                                <div className={styles.inputGroup}>
+                                    <label>Role</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Briefcase size={18} />
+                                        <select
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        >
+                                            <option value="referral">Referral Person</option>
+                                            <option value="Marketer">Marketer</option>
+                                            <option value="Influencer">Influencer</option>
+                                            <option value="Marketing_Agency">Marketing Agency</option>
+                                            <option value="Teamlead">Team Lead</option>
+                                            <option value="Manager">Manager</option>
+                                            <option value="Email_Support">Email Support</option>
+                                            <option value="Call_Support">Call Support</option>
+                                            <option value="Data_Entry">Data Entry</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Login ID (Unique)</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Key size={18} />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="e.g. MKT-001"
+                                            value={formData.loginId}
+                                            onChange={(e) => setFormData({ ...formData, loginId: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label> Password</label>
+                                    <div className={styles.inputWrapper}>
+                                        <ShieldCheck size={18} />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="Assign a password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Referral Code</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Hash size={18} />
+                                        <input
+                                            type="text"
+                                            placeholder="Custom or generate"
+                                            value={formData.referralCode}
+                                            onChange={(e) => setFormData({ ...formData, referralCode: e.target.value })}
+                                        />
+                                        <button type="button" onClick={generateCode} className={styles.genBtn}>Gen</button>
+                                    </div>
+                                </div>
+
+                                <div className={styles.inputGroup}>
+                                    <label>Percentage</label>
+                                    <div className={styles.inputWrapper}>
+                                        <Percent size={18} />
+                                        <input
+                                            required
+                                            type="number"
+                                            placeholder="Enter percentage"
+                                            value={formData.percentage}
+                                            onChange={(e) => setFormData({ ...formData, percentage: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <div className={styles.modalFooter}>
+                                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" disabled={submitting} className={styles.submitBtn}>
+                                    {submitting ? "Registering..." : "Register Referral User"}
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 };

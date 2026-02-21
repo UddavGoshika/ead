@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styles from "./HeaderSetup.module.css"; // Reusing styles for consistency
 import { useSettings } from "../../../context/SettingsContext";
+import { useToast } from "../../../context/ToastContext";
 
 const FooterConfiguration: React.FC = () => {
     const { settings, updateSettings, loading } = useSettings();
+    const { showToast } = useToast();
     const [footerText, setFooterText] = useState("");
     const [contactEmail, setContactEmail] = useState("");
     const [contactPhone, setContactPhone] = useState("");
@@ -93,9 +95,9 @@ const FooterConfiguration: React.FC = () => {
             footer_pages: footerPages
         });
         if (success) {
-            alert("Footer settings saved successfully");
+            showToast("Footer settings saved successfully");
         } else {
-            alert("Failed to save settings");
+            showToast("Failed to save settings", "error");
         }
     };
 

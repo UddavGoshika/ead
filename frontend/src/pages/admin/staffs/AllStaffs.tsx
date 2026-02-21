@@ -154,14 +154,18 @@ const AllStaffs: React.FC = () => {
 
     // Onboarding Form State
     const [onboardForm, setOnboardForm] = useState({
-        fullName: "",
+        firstName: "",
+        lastName: "",
         email: "",
         mobile: "",
+        department: "",
+        designation: "",
+        role: "",
         loginId: "",
         password: "",
-        department: "Sales",
-        role: "Telecallers",
-        experience: ""
+        previousCompany: "",
+        experienceYears: "",
+        experienceLevel: ""
     });
 
     useEffect(() => {
@@ -239,18 +243,18 @@ const AllStaffs: React.FC = () => {
             "Personal Agent": "personal_agent"
         };
 
-        const backendRole = roleMapping[onboardForm.role] || onboardForm.role.toLowerCase().replace(/\s+/g, '_');
+        const backendRole = roleMapping[onboardForm.role] || (onboardForm.role || "").toLowerCase().replace(/\s+/g, '_');
 
         try {
             const res = await adminService.onboardStaff({
                 email: onboardForm.email,
-                fullName: onboardForm.fullName,
+                fullName: `${onboardForm.firstName} ${onboardForm.lastName}`,
                 loginId: onboardForm.loginId || `STF-${Math.floor(Math.random() * 8999) + 1000}`,
                 tempPassword: onboardForm.password || "Staff@123",
                 role: backendRole,
                 department: onboardForm.department,
-                mobile: onboardForm.mobile,
-                level: onboardForm.experience === "" ? "Junior" : onboardForm.experience
+                phone: onboardForm.mobile,
+                level: onboardForm.experienceLevel || "Junior"
             });
 
             if (res.data.success) {
@@ -312,6 +316,19 @@ const AllStaffs: React.FC = () => {
                 email: staff.email,
                 unique_id: staff.staffId
             });
+        }
+    };
+
+    const handleUpdateStatus = async (id: string, newStatus: string) => {
+        try {
+            const res = await adminService.updateMemberStatus(id, newStatus);
+            if (res.data.success) {
+                alert(`Staff status updated to ${newStatus}`);
+                fetchStaff();
+            }
+        } catch (err) {
+            console.error("Status update error:", err);
+            alert("Failed to update status");
         }
     };
 
@@ -407,13 +424,11 @@ const AllStaffs: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Employee / ID</th>
-                                    <th>Channels</th>
+                                    <th>Employee Details</th>
                                     <th>Position / Role</th>
+                                    <th>Performance</th>
                                     <th>Analytics (Solved/Pend)</th>
-                                    <th>Success Rate</th>
-                                    <th>Gross (Lakhs)</th>
-                                    <th>Net Rec.</th>
+                                    <th>Earnings (Gross/Net)</th>
                                     <th>Joined / Activity</th>
                                     <th>Status</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
@@ -432,13 +447,11 @@ const AllStaffs: React.FC = () => {
                                                 <div className={styles.stacked}>
                                                     <span className={styles.primaryText}>{staff.name}</span>
                                                     <span className={styles.idText}>{staff.staffId}</span>
+                                                    <div className={styles.miniChannels}>
+                                                        <span title={staff.email}><Mail size={10} /> {staff.email}</span>
+                                                        <span><Phone size={10} /> {staff.mobile}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.contactInfo}>
-                                                <span className={styles.infoRow}><Mail size={12} /> {staff.email}</span>
-                                                <span className={styles.infoRow}><Phone size={12} /> {staff.mobile}</span>
                                             </div>
                                         </td>
                                         <td>
@@ -448,18 +461,22 @@ const AllStaffs: React.FC = () => {
                                             </div>
                                         </td>
                                         <td>
+                                            <div className={styles.successRateBox}>
+                                                <BarChart3 size={14} /> {staff.successRate}
+                                            </div>
+                                        </td>
+                                        <td>
                                             <div className={styles.analyticsCell}>
                                                 <span className={styles.solvedText}>{staff.solvedCases} Solved</span>
                                                 <span className={styles.pendingText}>{staff.pendingCases} Pending</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <div className={styles.successRateBox}>
-                                                <BarChart3 size={14} /> {staff.successRate}
+                                            <div className={styles.earningsCell}>
+                                                <span className={styles.grossText}>{staff.grossAmount} Gross</span>
+                                                <span className={styles.netText}>{staff.netAmount} Net</span>
                                             </div>
                                         </td>
-                                        <td><span className={styles.grossText}>{staff.grossAmount}</span></td>
-                                        <td><span className={styles.netText}>{staff.netAmount}</span></td>
                                         <td>
                                             <div className={styles.joinedCol}>
                                                 <span className={styles.secondaryText}>{staff.joinedDate}</span>
@@ -486,9 +503,9 @@ const AllStaffs: React.FC = () => {
                                                     <button onClick={() => handleImpersonate(staff)}>
                                                         <ShieldCheck size={14} /> Log in as Member
                                                     </button>
-                                                    <button onClick={() => alert("Editing " + staff.name)}><Info size={14} /> Profile Intelligence</button>
-                                                    <button onClick={() => alert("Viewing " + staff.name)}><ShieldCheck size={14} /> Access Dossier</button>
-                                                    <button className={styles.deleteBtn} onClick={() => alert("Suspending " + staff.name)}><X size={14} /> Deactivate</button>
+                                                    <button onClick={() => alert("Profile Intelligence feature coming soon for " + staff.name)}><Info size={14} /> Profile Intelligence</button>
+                                                    <button onClick={() => alert("Dossier review feature coming soon for " + staff.name)}><ShieldCheck size={14} /> Access Dossier</button>
+                                                    <button className={styles.deleteBtn} onClick={() => handleUpdateStatus(staff.id, "Blocked")}><X size={14} /> Deactivate</button>
                                                 </div>
                                             )}
                                         </td>
@@ -509,17 +526,34 @@ const AllStaffs: React.FC = () => {
                             <button className={styles.closeBtn} onClick={() => setIsAddModalOpen(false)}>&times;</button>
                         </div>
                         <form className={styles.registrationForm} onSubmit={handleOnboard}>
+
+                            {/* Row 1 */}
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label>Full Legal Name</label>
+                                    <label>First Name</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Rahul Verma"
-                                        value={onboardForm.fullName}
-                                        onChange={(e) => setOnboardForm({ ...onboardForm, fullName: e.target.value })}
+                                        placeholder="e.g. Rahul"
+                                        value={onboardForm.firstName}
+                                        onChange={(e) => setOnboardForm({ ...onboardForm, firstName: e.target.value })}
                                         required
                                     />
                                 </div>
+
+                                <div className={styles.formGroup}>
+                                    <label>Last Name</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Verma"
+                                        value={onboardForm.lastName}
+                                        onChange={(e) => setOnboardForm({ ...onboardForm, lastName: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Row 2 */}
+                            <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label>Professional Email</label>
                                     <input
@@ -530,32 +564,67 @@ const AllStaffs: React.FC = () => {
                                         required
                                     />
                                 </div>
-                            </div>
-                            <div className={styles.formRow}>
+
                                 <div className={styles.formGroup}>
                                     <label>Mobile Number</label>
                                     <input
                                         type="tel"
-                                        placeholder="+91 00000 00000"
+                                        placeholder="+91 98765 43210"
                                         value={onboardForm.mobile}
                                         onChange={(e) => setOnboardForm({ ...onboardForm, mobile: e.target.value })}
                                         required
                                     />
                                 </div>
+                            </div>
+
+                            {/* Row 3 */}
+                            <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label>Assigned Department</label>
                                     <select
                                         value={onboardForm.department}
                                         onChange={(e) => setOnboardForm({ ...onboardForm, department: e.target.value })}
+                                        required
                                     >
-                                        <option>Sales</option>
-                                        <option>Customer Service</option>
-                                        <option>Human Resources</option>
-                                        <option>Operations</option>
-                                        <option>Technical</option>
+                                        <option value="">Select Department</option>
+                                        <option value="Sales">Sales</option>
+                                        <option value="Customer Service">Customer Service</option>
+                                        <option value="Human Resources">Human Resources</option>
+                                        <option value="Operations">Operations</option>
+                                        <option value="Technical">Technical</option>
+                                    </select>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label>Assigned Designation</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Senior Executive"
+                                        value={onboardForm.designation}
+                                        onChange={(e) => setOnboardForm({ ...onboardForm, designation: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* New Row for Role */}
+                            <div className={styles.formRow}>
+                                <div className={styles.formGroup}>
+                                    <label>System Role Mapping</label>
+                                    <select
+                                        value={onboardForm.role}
+                                        onChange={(e) => setOnboardForm({ ...onboardForm, role: e.target.value })}
+                                        required
+                                    >
+                                        <option value="">Select System Role</option>
+                                        {ALL_ROLES.filter(r => r !== "All").map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
+
+                            {/* Row 4 */}
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
                                     <label>Assigned Login ID</label>
@@ -564,45 +633,78 @@ const AllStaffs: React.FC = () => {
                                         placeholder="e.g. STF-2024-X"
                                         value={onboardForm.loginId}
                                         onChange={(e) => setOnboardForm({ ...onboardForm, loginId: e.target.value })}
+                                        required
                                     />
                                 </div>
+
                                 <div className={styles.formGroup}>
-                                    <label>Initial Passcode</label>
+                                    <label>Password</label>
                                     <input
-                                        type="text"
-                                        placeholder="Min. 8 characters"
+                                        type="password"
+                                        placeholder="Minimum 8 characters"
                                         value={onboardForm.password}
                                         onChange={(e) => setOnboardForm({ ...onboardForm, password: e.target.value })}
+                                        required
+                                        minLength={8}
                                     />
                                 </div>
                             </div>
+
+                            {/* Row 5 */}
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label>Operational Designation</label>
-                                    <select
-                                        value={onboardForm.role}
-                                        onChange={(e) => setOnboardForm({ ...onboardForm, role: e.target.value })}
-                                    >
-                                        {ALL_ROLES.filter(r => r !== "All").map(r => (
-                                            <option key={r} value={r}>{r}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Industry Experience</label>
+                                    <label>Previous Company</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. 3 Years"
-                                        value={onboardForm.experience}
-                                        onChange={(e) => setOnboardForm({ ...onboardForm, experience: e.target.value })}
+                                        placeholder="e.g. TCS, Infosys, HCL"
+                                        value={onboardForm.previousCompany}
+                                        onChange={(e) => setOnboardForm({ ...onboardForm, previousCompany: e.target.value })}
                                     />
                                 </div>
+
+                                <div className={styles.formGroup}>
+                                    <label>Experience</label>
+                                    <div style={{ display: "flex", gap: "10px" }}>
+                                        <input
+                                            type="number"
+                                            placeholder="Years"
+                                            min="0"
+                                            value={onboardForm.experienceYears}
+                                            onChange={(e) => setOnboardForm({ ...onboardForm, experienceYears: e.target.value })}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <select
+                                            value={onboardForm.experienceLevel}
+                                            onChange={(e) => setOnboardForm({ ...onboardForm, experienceLevel: e.target.value })}
+                                            style={{ flex: 1 }}
+                                        >
+                                            <option value="">Level</option>
+                                            <option value="Fresher">Fresher</option>
+                                            <option value="Junior">Junior</option>
+                                            <option value="Mid-Level">Mid-Level</option>
+                                            <option value="Senior">Senior</option>
+                                            <option value="Lead">Lead</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Actions */}
                             <div className={styles.formActions}>
-                                <button type="button" className={styles.cancelBtn} onClick={() => setIsAddModalOpen(false)}>Cancel</button>
-                                <button type="submit" className={styles.submitBtn}>Complete Registration</button>
+                                <button
+                                    type="button"
+                                    className={styles.cancelBtn}
+                                    onClick={() => setIsAddModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button type="submit" className={styles.submitBtn}>
+                                    Complete Registration
+                                </button>
                             </div>
+
                         </form>
+
                     </div>
                 </div>
             )}

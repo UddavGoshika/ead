@@ -135,20 +135,20 @@ const Step4Education: React.FC<StepProps> = ({ formData, updateFormData, isOptio
                 {/* Degree Certificate */}
                 <div className={styles.formGroup}>
                     <label>
-                        DEGREE CERTIFICATE {!isOptional && <span className={styles.required}>*</span>} <span className={styles.fileHint}>(JPG, PNG, PDF | Max 5MB)</span>
+                        DEGREE CERTIFICATE {!isOptional && <span className={styles.required}>*</span>} <span className={styles.fileHint}>(JPG, PNG | Max 5MB)</span>
                     </label>
                     <div className={styles.uploadWrapper}>
                         <input
                             type="file"
                             id="degreeCertificate"
-                            accept=".pdf,.jpg,.jpeg,.png"
+                            accept=".jpg,.jpeg,.png"
                             hidden
                             onChange={(e) => {
                                 const file = e.target.files?.[0] || null;
                                 if (file) {
-                                    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                                    const allowedTypes = ['image/jpeg', 'image/png'];
                                     if (!allowedTypes.includes(file.type)) {
-                                        alert('Invalid file type. Please upload JPG, PNG or PDF.');
+                                        alert('Invalid file type. Please upload JPG or PNG.');
                                         e.target.value = '';
                                         return;
                                     }

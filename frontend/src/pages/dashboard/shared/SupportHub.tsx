@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Phone, Video, MessageSquare, Send, X,
     Mic, MicOff, VideoOff, PhoneOff, Shield,
-    Activity, Headphones, ChevronRight, ArrowLeft
+    Activity, Headphones, Bot, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { WebRTCService, useCallSignals } from '../../../services/WebRTCService';
@@ -20,18 +20,15 @@ const SupportHub: React.FC = () => {
 
     // --- CALLING STATE ---
     const [isInCall, setIsInCall] = useState(false);
-    const [callMode, setCallMode] = useState<'voice' | null>(null); // Changed to only 'voice'
+    const [callMode, setCallMode] = useState<'voice' | null>(null);
     const [callDuration, setCallDuration] = useState(0);
     const [isMuted, setIsMuted] = useState(false);
-    // const [isVideoOff, setIsVideoOff] = useState(false); // Removed
     const [isIncomingCall, setIsIncomingCall] = useState(false);
     const [incomingCallData, setIncomingCallData] = useState<any>(null);
     const [incomingCallId, setIncomingCallId] = useState<string | null>(null);
 
     const lastActivityRef = useRef<number>(Date.now());
     const rtcRef = useRef<WebRTCService | null>(null);
-    // const localVideoRef = useRef<HTMLVideoElement>(null); // Removed
-    // const remoteVideoRef = useRef<HTMLVideoElement>(null); // Removed
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
     // --- CHAT STATE ---
@@ -44,12 +41,11 @@ const SupportHub: React.FC = () => {
     const [isStartingCall, setIsStartingCall] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // --- NEW STAGES ---
+    // --- POPUP STAGES ---
     const [hubStage, setHubStage] = useState<'faq' | 'form' | 'agent'>('faq');
     const [formData, setFormData] = useState({ name: user?.name || '', email: user?.email || '', query: '' });
     const dragControls = useDragControls();
 
-    // FAQs data
     const faqs = [
         { q: "How do I update my profile?", a: "Go to 'My Identity' in the sidebar, click the edit icon on your profile card, and save your changes." },
         { q: "Where can I see my active leads?", a: "Leads are located in the CRM Leads module. You can filter them by status or date." },
@@ -64,7 +60,6 @@ const SupportHub: React.FC = () => {
         return () => clearInterval(interval);
     }, [isInCall]);
 
-    // LISTEN FOR CALLS FROM STAFF
     useEffect(() => {
         if (!user?.id || !isFirebaseReady) return;
         const unsubscribe = useCallSignals(String(user.id), (callId, caller) => {
@@ -77,26 +72,8 @@ const SupportHub: React.FC = () => {
         return () => unsubscribe();
     }, [user?.id, isInCall, isIncomingCall]);
 
-    useEffect(() => {
-        const handleOpen = () => setIsOpen(true);
-        window.addEventListener('open-support-hub', handleOpen);
-        return () => window.removeEventListener('open-support-hub', handleOpen);
-    }, []);
-
-    // CHAT LOGIC
     const handleStartChat = async () => {
-        if (sessionId || isStartingChat) return;
-
-        if (!user?.id) {
-            alert("User identity verification missing. Please refresh.");
-            return;
-        }
-
-        if (!isFirebaseReady) {
-            alert("Connecting to secure server... Please wait a moment and try again.");
-            return;
-        }
-
+        if (sessionId || isStartingChat || !user?.id || !isFirebaseReady) return;
         setIsStartingChat(true);
         try {
             const metadata = {
@@ -112,11 +89,7 @@ const SupportHub: React.FC = () => {
             lastActivityRef.current = Date.now();
         } catch (err: any) {
             console.error("Chat Start Error:", err);
-            if (err.code === 'permission-denied') {
-                alert("Access Denied: Please enable 'Anonymous Auth' in Firebase Authentication and check Firestore Rules.");
-            } else {
-                alert(`Failed to initialize session: ${err.message || 'Connection Error'}`);
-            }
+            alert(`Failed to initialize session: ${err.message || 'Connection Error'}`);
         } finally {
             setIsStartingChat(false);
         }
@@ -141,73 +114,51 @@ const SupportHub: React.FC = () => {
                     setIsAgentConnected(true);
                 }
             });
-            return () => {
-                unsubMessages();
-                unsubSession();
-            };
+            return () => { unsubMessages(); unsubSession(); };
         }
     }, [sessionId, user?.id]);
 
     const handleSendMessage = async () => {
         if (!messageInput.trim() || !sessionId) return;
-        const text = messageInput.trim();
         await chatService.sendMessage(sessionId, {
             senderId: String(user?.id),
             senderName: user?.name || 'Client',
-            text: text,
+            text: messageInput.trim(),
             type: 'text'
         });
         setMessageInput('');
         lastActivityRef.current = Date.now();
     };
 
-    // AUTO-SCROLL
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // INACTIVITY TIMEOUT (2 MINS)
-    useEffect(() => {
+    const handleCloseChat = async () => {
         if (!sessionId) return;
+        if (window.confirm("End this official support session?")) {
+            await chatService.closeSession(sessionId);
+            setSessionId(null);
+            setMessages([]);
+            setIsAgentConnected(false);
+            setAssignedStaffId(null);
+        }
+    };
 
-        const interval = setInterval(() => {
-            const inactiveTime = Date.now() - lastActivityRef.current;
-            if (inactiveTime > 120000) { // 2 minutes
-                console.log("Inactivity timeout: Closing session");
-                handleCloseChat(); // Use existing handleCloseChat
-                alert("Session closed due to 2 minutes of inactivity.");
-            }
-        }, 10000); // Check every 10 seconds
-
-        return () => clearInterval(interval);
-    }, [sessionId]);
-
-    // CALLING LOGIC
     const handleAnswerCall = async () => {
         if (!incomingCallId) return;
         setIsStartingCall(true);
         try {
             const service = new WebRTCService();
             rtcRef.current = service;
-            const streams = await service.startLocalStream(false); // No video
-            // if (localVideoRef.current) localVideoRef.current.srcObject = streams.local; // Removed
-
+            await service.startLocalStream(false);
             await service.answerCall(incomingCallId);
-
-            // LISTEN FOR CALL STATUS (ENDED BY OTHER SIDE)
-            const unsubscribe = onSnapshot(doc(db, 'calls', incomingCallId), (snapshot) => {
-                if (!snapshot.exists()) {
-                    handleEndCall();
-                }
-            });
-
             rtcRef.current.pc.ontrack = (event) => {
                 if (remoteAudioRef.current) remoteAudioRef.current.srcObject = event.streams[0];
             };
-
             setIsInCall(true);
             setIsIncomingCall(false);
-            setCallMode('voice'); // Force voice mode
+            setCallMode('voice');
             setCallDuration(0);
         } catch (err) {
             console.error("Answer Call Error:", err);
@@ -221,58 +172,33 @@ const SupportHub: React.FC = () => {
         setIsInCall(false);
         setIsIncomingCall(false);
         setCallMode(null);
-        setIsStartingCall(false);
         rtcRef.current?.hangup();
         rtcRef.current = null;
     };
 
-    const handleStartOutgoingCall = async (mode: 'voice') => { // Only voice mode allowed
+    const handleStartOutgoingCall = async (mode: 'voice') => {
         if (!assignedStaffId) {
-            alert("No official agent is currently assigned to your session. Please send a message in chat first.");
+            alert("No official agent is currently assigned. Please send a message in chat first.");
             return;
         }
         setIsInCall(true);
         setCallMode(mode);
         setIsStartingCall(true);
         setCallDuration(0);
-
         try {
             const service = new WebRTCService();
             rtcRef.current = service;
-            const streams = await service.startLocalStream(false); // No video
-            // if (localVideoRef.current) localVideoRef.current.srcObject = streams.local; // Removed
-
+            await service.startLocalStream(false);
             const callId = await service.createCall(assignedStaffId, user?.name || 'Client', mode);
-
-            // LISTEN FOR CALL STATUS (ENDED BY OTHER SIDE)
-            const unsubscribe = onSnapshot(doc(db, 'calls', callId), (snapshot) => {
-                if (!snapshot.exists()) {
-                    handleEndCall();
-                }
-            });
-
             rtcRef.current.pc.ontrack = (event) => {
                 if (remoteAudioRef.current) remoteAudioRef.current.srcObject = event.streams[0];
             };
-
         } catch (err) {
             console.error("Call Start Error:", err);
-            alert("Digital Signal Negotiation Failed.");
+            alert("Connection Failed.");
             setIsInCall(false);
-            setCallMode(null);
         } finally {
             setIsStartingCall(false);
-        }
-    };
-
-    const handleCloseChat = async () => {
-        if (!sessionId) return;
-        if (window.confirm("End this official support session?")) {
-            await chatService.closeSession(sessionId);
-            setSessionId(null);
-            setMessages([]);
-            setIsAgentConnected(false);
-            setAssignedStaffId(null);
         }
     };
 
@@ -282,21 +208,38 @@ const SupportHub: React.FC = () => {
         return `${m}:${rs < 10 ? '0' : ''}${rs}`;
     };
 
+    const [isDragging, setIsDragging] = useState(false);
+    const constraintsRef = useRef(null);
+
     return (
         <>
-            {/* FLOATING ACTION BUTTON */}
-            <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+            {/* CONSTRAINTS CONTAINER FOR DRAG */}
+            <div ref={constraintsRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 4999 }} />
+
+            {/* GRAVITY DRAGGABLE BOT BALL */}
+            <motion.div
+                drag
+                dragConstraints={constraintsRef}
+                dragMomentum={true}
+                dragElastic={0.1}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
+                whileHover={{ scale: 1.1, y: -5 }}
+                whileTap={{ scale: 0.9, cursor: 'grabbing' }}
+                initial={false}
                 className={styles.fab}
                 onClick={() => {
-                    setIsOpen(true);
-                    if (!sessionId) setHubStage('faq');
+                    if (!isDragging) {
+                        setIsOpen(true);
+                        if (!sessionId) setHubStage('faq');
+                    }
                 }}
             >
-                <Headphones size={24} />
-                <span>Ask Lexi</span>
-            </motion.button>
+                <div className={styles.botIconWrapper}>
+                    <Bot size={30} />
+                </div>
+                <span className={styles.fabLabel}>Lexi</span>
+            </motion.div>
 
             {/* MAIN SUPPORT HUB OVERLAY */}
             <AnimatePresence>
@@ -313,6 +256,7 @@ const SupportHub: React.FC = () => {
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 100, opacity: 0 }}
                             className={styles.hubContent}
+                            style={{ position: 'relative', overflow: 'hidden' }}
                         >
                             <div
                                 className={styles.hubHeader}
@@ -320,7 +264,7 @@ const SupportHub: React.FC = () => {
                                 onPointerDown={(e) => dragControls.start(e)}
                             >
                                 <div className={styles.headerTitle}>
-                                    <div className={styles.lexiAvatar}>L</div>
+                                    <div className={styles.lexiAvatar}><Bot size={24} /></div>
                                     <div>
                                         <h3>Ask Lexi</h3>
                                         <p>{hubStage === 'faq' ? 'Virtual Assistant' : 'Official Support Relay'}</p>
@@ -329,16 +273,15 @@ const SupportHub: React.FC = () => {
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     {sessionId && (
                                         <button className={styles.endChatBtn} onClick={handleCloseChat} title="End Session">
-                                            <X size={16} color="#ef4444" />
+                                            <PhoneOff size={16} color="#ef4444" />
                                         </button>
                                     )}
                                     <button className={styles.closeBtn} onClick={() => setIsOpen(false)}>
-                                        <X size={16} />
+                                        <X size={16} />X
                                     </button>
                                 </div>
                             </div>
 
-                            {/* BODY CONTENT BASED ON STAGE */}
                             <div className={styles.hubScrollBody}>
                                 {hubStage === 'faq' && (
                                     <div className={styles.faqView}>
@@ -374,7 +317,7 @@ const SupportHub: React.FC = () => {
                                                 <MessageSquare size={18} /> LIVE CHAT
                                             </button>
                                             <button
-                                                className={`${styles.hubTab} ${activeTab === 'call' ? styles.activeTab : ''}`}
+                                                className={activeTab === 'call' ? styles.activeTab : ''}
                                                 onClick={() => setActiveTab('call')}
                                             >
                                                 <Phone size={18} /> VOICE CALL
@@ -392,14 +335,6 @@ const SupportHub: React.FC = () => {
                                                     value={formData.name}
                                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                                     placeholder="Enter your full name"
-                                                />
-                                            </div>
-                                            <div className={styles.inputGroup}>
-                                                <label>Official Email</label>
-                                                <input
-                                                    value={formData.email}
-                                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                    placeholder="Verification email address"
                                                 />
                                             </div>
                                             <div className={styles.inputGroup}>
@@ -436,7 +371,7 @@ const SupportHub: React.FC = () => {
                                                 <MessageSquare size={18} /> LIVE CHAT
                                             </button>
                                             <button
-                                                className={`${styles.hubTab} ${activeTab === 'call' ? styles.activeTab : ''}`}
+                                                className={activeTab === 'call' ? styles.activeTab : ''}
                                                 onClick={() => setActiveTab('call')}
                                             >
                                                 <Phone size={18} /> VOICE CALL
@@ -454,16 +389,9 @@ const SupportHub: React.FC = () => {
                                                     {!isAgentConnected ? (
                                                         <div className={styles.waitingForAgent}>
                                                             <div className={styles.pulseContainer}>
-                                                                <Shield size={48} className={styles.pulseShield} />
-                                                                <div className={styles.pulseRing} />
+                                                                <Shield size={60} className={styles.pulseShield} />
                                                             </div>
-                                                            <h3>SECURE CONNECTION INITIALIZED</h3>
-                                                            <div className={styles.terminalContainer}>
-                                                                <div className={styles.terminalText}>
-                                                                    <span className={styles.typingCursor}>&gt;</span>
-                                                                    Assignment Pending...
-                                                                </div>
-                                                            </div>
+                                                            <h3 className={styles.secureHeader}>SECURE CONNECTION INITIALIZED</h3>
                                                         </div>
                                                     ) : (
                                                         <div className={styles.messagesContainer}>
@@ -477,7 +405,7 @@ const SupportHub: React.FC = () => {
                                                     )}
                                                     <div className={styles.inputArea}>
                                                         <input
-                                                            placeholder="Type your query..."
+                                                            placeholder="Type your message..."
                                                             value={messageInput}
                                                             onChange={(e) => setMessageInput(e.target.value)}
                                                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -488,22 +416,13 @@ const SupportHub: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className={styles.callSection}>
-                                                <div className={styles.callFeatures}>
-                                                    <div className={styles.featureItem}>
-                                                        <Shield size={24} />
-                                                        <div>
-                                                            <h5>End-to-End Secure</h5>
-                                                            <p>All calls are encrypted via Official WebRTC Signaling.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
                                                 <div className={styles.callInitiation}>
                                                     {isStartingCall ? (
-                                                        <div className={styles.callLoader}><div className={styles.spinner} /> Connecting...</div>
+                                                        <div className={styles.callLoader}>Connecting...</div>
                                                     ) : (
-                                                        <div className={styles.callButtons}>
-                                                            <button disabled={!isAgentConnected} onClick={() => handleStartOutgoingCall('voice')} className={styles.voiceBtn}><Phone size={20} /> VOICE HUB</button>
-                                                        </div>
+                                                        <button disabled={!isAgentConnected} onClick={() => handleStartOutgoingCall('voice')} className={styles.voiceBtn}>
+                                                            <Phone size={20} /> START VOICE CALL
+                                                        </button>
                                                     )}
                                                     {!isAgentConnected && <p className={styles.note}>Waiting for Official Agent Assignment...</p>}
                                                 </div>
@@ -517,7 +436,7 @@ const SupportHub: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* GLOBAL INCOMING CALL MODAL (FOR CLIENT) */}
+            {/* CALL MODAL */}
             <AnimatePresence>
                 {(isIncomingCall || isInCall) && (
                     <motion.div
@@ -525,39 +444,23 @@ const SupportHub: React.FC = () => {
                         animate={{ opacity: 1 }}
                         className={styles.fullCallOverlay}
                     >
-                        <div className={styles.overlayBlur} />
                         <div className={styles.callContainer}>
-                            {isIncomingCall ? (
-                                <div className={styles.incomingBox}>
-                                    <div className={styles.callerAv}>{(incomingCallData?.callerName?.charAt(0) || '?')}</div>
-                                    <h2>{isStartingCall ? 'NEGOTIATING SIGNAL...' : 'INCOMING OFFICIAL CALL'}</h2>
-                                    <p>{isStartingCall ? 'Connecting to Secure Hub' : incomingCallData?.callerName}</p>
-                                    {!isStartingCall && (
-                                        <div className={styles.actions}>
-                                            <button className={styles.hangup} onClick={() => setIsIncomingCall(false)}><PhoneOff size={32} /></button>
-                                            <button className={styles.answer} onClick={handleAnswerCall}><Phone size={32} /></button>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className={styles.activeCallBox}>
-                                    <div className={styles.videoStreamGrid}>
-                                        {/* Removed video elements, only voice avatar remains */}
-                                        <div className={styles.voiceOnlyAv}>
-                                            <div className={styles.pulseWaves} />
-                                            <div className={styles.callerAv}>{(incomingCallData?.callerName?.charAt(0) || '?')}</div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.callInfo}>
-                                        <h3>{incomingCallData?.callerName}</h3>
-                                        <span className={styles.timer}>{formatDuration(callDuration)}</span>
-                                    </div>
-                                    <div className={styles.controls}>
-                                        <button className={`${styles.controlBtn} ${isMuted ? styles.active : ''}`} onClick={() => { setIsMuted(!isMuted); rtcRef.current?.toggleAudio(!isMuted); }}>{isMuted ? <MicOff /> : <Mic />}</button>
-                                        <button className={styles.hangupLarge} onClick={handleEndCall}><PhoneOff size={32} /></button>
-                                    </div>
-                                </div>
-                            )}
+                            <div className={styles.voiceOnlyAv}>
+                                <div className={styles.pulseWaves} />
+                                <div className={styles.callerAv}><Bot size={32} /></div>
+                            </div>
+                            <h2>{incomingCallData?.callerName || 'Official Admin'}</h2>
+                            <span className={styles.timer}>{formatDuration(callDuration)}</span>
+                            <div className={styles.controls}>
+                                {!isInCall ? (
+                                    <>
+                                        <button className={styles.hangup} onClick={() => setIsIncomingCall(false)}><PhoneOff size={24} /></button>
+                                        <button className={styles.answer} onClick={handleAnswerCall}><Phone size={24} /></button>
+                                    </>
+                                ) : (
+                                    <button className={styles.hangupLarge} onClick={handleEndCall}><PhoneOff size={32} /></button>
+                                )}
+                            </div>
                         </div>
                         <audio ref={remoteAudioRef} autoPlay />
                     </motion.div>

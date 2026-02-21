@@ -15,9 +15,10 @@ interface AuthContextType {
     logout: () => void;
     refreshUser: (updates: Partial<User>) => void;
     isAuthModalOpen: boolean;
-    openAuthModal: (tab?: 'login' | 'register') => void;
+    openAuthModal: (tab?: 'login' | 'register', initialData?: any) => void;
     closeAuthModal: () => void;
     authTab: 'login' | 'register';
+    authInitialData: any;
     isFilterModalOpen: boolean;
     openFilterModal: () => void;
     closeFilterModal: () => void;
@@ -66,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isFirebaseReady, setIsFirebaseReady] = useState(false); // Added
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
+    const [authInitialData, setAuthInitialData] = useState<any>(null);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [isAdvocateRegOpen, setIsAdvocateRegOpen] = useState(false);
     const [isClientRegOpen, setIsClientRegOpen] = useState(false);
@@ -159,8 +161,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [isLoggedIn, user?.id, initializeSocket]);
 
-    const openAuthModal = (tab: 'login' | 'register' = 'login') => {
+    const openAuthModal = (tab: 'login' | 'register' = 'login', initialData: any = null) => {
         setAuthTab(tab);
+        setAuthInitialData(initialData);
         setIsAuthModalOpen(true);
     };
 
@@ -278,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             openAuthModal,
             closeAuthModal,
             authTab,
+            authInitialData,
             isFilterModalOpen,
             openFilterModal,
             closeFilterModal,

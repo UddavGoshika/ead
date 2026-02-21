@@ -52,7 +52,11 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
 
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
-    const shouldMask = !isPremium;
+
+    // Safety check: if we're in the advisor dashboard, we ARE an advisor.
+    const isDashboardAdvisor = typeof window !== 'undefined' && window.location.href.includes('/dashboard/advisor');
+    const isAdvisor = user?.role === 'legal_provider' || user?.role === 'advocate' || isDashboardAdvisor;
+    const shouldMask = (advocate?.isMasked !== false) && !isAdvisor;
 
     const relationships = useRelationshipStore((state: any) => state.relationships);
     const setRelationship = useRelationshipStore((state: any) => state.setRelationship);
@@ -217,15 +221,12 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
 
     const handleUnlock = async () => {
         if (!user) return;
-        if (!user.isPremium && (user.plan || '').toLowerCase() === 'free') {
-            showToast?.('Upgrade to Premium to unlock contact details.');
-            return;
-        }
         if ((user?.coins || 0) < 1) {
             showToast?.('Insufficient coins. Please top up.');
             return;
         }
-        if (!confirm('Spending 1 coin will permanently reveal this contact. Proceed?')) return;
+        const itemsToUnlock = actualRole === 'advocate' ? 'Mobile, Email and License ID' : 'Mobile and Email';
+        if (!confirm(`Spending 1 coin will permanently reveal ${itemsToUnlock}. Proceed?`)) return;
 
         const res = await performAction('unlock_contact');
         if (res && res.success && res.contact) {
@@ -233,10 +234,11 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
             setAdvocate(prev => prev ? ({
                 ...prev,
                 contactInfo: res.contact,
-                // Also ensure main fields are updated if they were masked
-                mobile: res.contact.mobile, // Maps to main mobile field
+                licenseId: res.contact.licenseId || prev.licenseId,
+                mobile: res.contact.mobile,
                 email: res.contact.email,
-                isMasked: false // It is now unmasked for this user
+                isMasked: false,
+                isBlur: false
             }) : null);
         }
     };
@@ -400,7 +402,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                         <div className={styles.contentSection}>
                             <div className={styles.sectionHeader}>
                                 <Users size={20} color="#facc15" />
-                                <h3>About {shouldMask && advocate.name ? advocate.name.substring(0, 2) + '*****' : (advocate.name?.split(' ')[0])}</h3>
+                                <h3>About {shouldMask && advocate.name ? advocate.name.substring(0, 2) + '*****' : (advocate.firstName || advocate.name?.split(' ')[0] || 'User')}</h3>
                             </div>
                             <p className={styles.aboutText}>
                                 {advocate.bio || "Hi"}
@@ -513,12 +515,13 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                     <div className={styles.contactValue}>
                                         {advocate.contactInfo?.mobile ? (
                                             advocate.contactInfo.mobile
-                                        ) : !isPremium ? (
-                                            <span className={styles.blurText} style={{ userSelect: 'none' }}>+91 9XXXX XXXXX</span>
                                         ) : (
-                                            <button className={styles.unlockSmallBtn} onClick={handleUnlock} style={{ width: '100%' }}>
-                                                <Lock size={12} /> Unlock Contact Info (1 Coin)
-                                            </button>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                                                <span className={styles.blurText} style={{ userSelect: 'none' }}>+91 9XXXX XXXXX</span>
+                                                <button className={styles.unlockSmallBtn} onClick={handleUnlock}>
+                                                    <Lock size={12} /> Unlock Details (1 Coin)
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -532,29 +535,27 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                     <div className={styles.contactValue}>
                                         {advocate.contactInfo?.email ? (
                                             advocate.contactInfo.email
-                                        ) : !isPremium ? (
-                                            <span className={styles.blurText} style={{ userSelect: 'none' }}>exa***@gmail.com</span>
                                         ) : (
-                                            <span style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                <Lock size={12} /> Unlocks with Mobile
-                                            </span>
+                                            <span className={styles.blurText} style={{ userSelect: 'none' }}>exa***@gmail.com</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <div className={styles.contactItem}>
-                                <div className={styles.contactIcon}>
-                                    <Shield size={18} />
-                                </div>
-                                <div className={styles.contactInfo}>
-                                    <div className={styles.contactLabel}>License ID</div>
-                                    <div className={styles.contactValue}>
-                                        <span className={advocate.isMasked ? styles.blurText : ''}>
-                                            {advocate.licenseId || 'N/A'}
-                                        </span>
+                            {actualRole === 'advocate' && (
+                                <div className={styles.contactItem}>
+                                    <div className={styles.contactIcon}>
+                                        <Shield size={18} />
+                                    </div>
+                                    <div className={styles.contactInfo}>
+                                        <div className={styles.contactLabel}>License ID</div>
+                                        <div className={styles.contactValue}>
+                                            <span className={(!advocate.contactInfo && advocate.isMasked) ? styles.blurText : ''}>
+                                                {advocate.licenseId || 'XXXXXXXXXX'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                             <div className={styles.contactItem}>
                                 <div className={styles.contactIcon}>
                                     <MapPin size={18} />

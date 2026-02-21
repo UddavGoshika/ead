@@ -465,6 +465,16 @@ const AdvocateRegistration: React.FC<AdvocateRegistrationProps> = ({ onClose }) 
                                 </div>
 
                                 <button
+                                    className={styles.loginBtn}
+                                    onClick={() => {
+                                        onClose();
+                                        openAuthModal('login', { email: formData.email, password: formData.password });
+                                    }}
+                                >
+                                    Login & Explore Platform
+                                </button>
+
+                                <button
                                     className={styles.finishBtn}
                                     onClick={onClose}
                                 >

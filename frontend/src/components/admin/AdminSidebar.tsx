@@ -129,7 +129,7 @@ export const MENU_SCHEMA: MenuItem[] = [
     },
     {
         id: "marketing",
-        name: "Marketing",
+        name: "Mail Agent Activity",
         icon: MdCampaign,
         path: "/admin/marketing",
         children: [
@@ -152,6 +152,7 @@ export const MENU_SCHEMA: MenuItem[] = [
         children: [
             { id: "set-referral-commission", name: "Referral users commission", path: "/admin/referral/commission" },
             { id: "referral-users", name: "Referral Users", path: "/admin/referral/users" },
+            { id: "referral-offers", name: "Referral Offers", path: "/admin/referral/offers" },
             { id: "referral-earnings", name: "Referral Earnings", path: "/admin/referral/earnings" },
             { id: "wallet-withdraw-request", name: "Wallet Withdraw Request", path: "/admin/referral/withdraw" },
         ],

@@ -97,6 +97,7 @@ import ContactQueries from './pages/admin/ContactQueries';
 import ReferralCommission from './pages/admin/referral/ReferralCommission';
 import ReferralUsers from './pages/admin/referral/ReferralUsers';
 import ReferralEarnings from './pages/admin/referral/ReferralEarnings';
+import ReferralOffers from './pages/admin/referral/OfferManagement';
 import WalletWithdraw from './pages/admin/referral/WalletWithdraw';
 import ActiveTickets from './pages/admin/support/ActiveTickets';
 import MyTickets from './pages/admin/support/MyTickets';
@@ -231,6 +232,8 @@ import { ToastProvider } from './context/ToastContext';
 
 const queryClient = new QueryClient();
 
+import ReferralDashboard from './pages/dashboard/referral/ReferralDashboard';
+
 // Helper component to redirect to the specific user's dashboard URL
 const DashboardRedirect: React.FC = () => {
   const { user, isLoggedIn } = useAuth();
@@ -246,10 +249,16 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
+  // Referral Roles mapping
+  const referralRoles = ['referral', 'influencer', 'marketer', 'marketing_agency'];
+  if (referralRoles.includes(role)) {
+    return <Navigate to="/dashboard/referral" replace />;
+  }
+
   if ([
     'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
-    'chat_support', 'live_chat', 'call_support', 'data_entry',
-    'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency'
+    'chat_support', 'live_chat', 'personal_assistant', 'personal_agent',
+    'email_support', 'call_support', 'data_entry'
   ].includes(role)) {
     return <Navigate to="/staff/portal" replace />;
   }
@@ -262,10 +271,6 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/dashboard/finance" replace />;
   }
 
-  if (role === 'email_support') {
-    return <Navigate to={`/dashboard/email_support/${id}`} replace />;
-  }
-
   // Custom mapping for role-to-path
   let pathRole = role;
   if (role === 'legal_provider') pathRole = 'advisor';
@@ -273,10 +278,13 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={`/dashboard/${pathRole}/${id}`} replace />;
 };
 
+import GlobalUtilityHandler from './components/shared/GlobalUtilityHandler';
+
 const AppContent: React.FC = () => {
   useRelationshipSync();
   return (
     <>
+      <GlobalUtilityHandler />
       <CallWindow />
       <RejectionOverlay />
       <ScrollToTop />
@@ -316,9 +324,11 @@ const AppContent: React.FC = () => {
         <Route path="/dashboard/email_support/:uniqueId" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupport /></ProtectedRoute>} />
         <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><AssignedVerifications /></ProtectedRoute>} />
         <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><Transactions /></ProtectedRoute>} />
+        <Route path="/dashboard/referral" element={<ProtectedRoute allowedRoles={['referral', 'influencer', 'marketer', 'marketing_agency']}><ReferralDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs />} />
 
         {/* STAFF ROUTES */}
-        <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care', 'chat_support', 'live_chat', 'call_support', 'data_entry', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency']}><StaffGlobalDashboard /></ProtectedRoute>} />
+        <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care', 'chat_support', 'live_chat', 'call_support', 'data_entry', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency', 'email_support']}><StaffGlobalDashboard /></ProtectedRoute>} />
 
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminLayout /></ProtectedRoute>}>
@@ -372,6 +382,7 @@ const AppContent: React.FC = () => {
 
           <Route path="referral/commission" element={<ReferralCommission />} />
           <Route path="referral/users" element={<ReferralUsers />} />
+          <Route path="referral/offers" element={<ReferralOffers />} />
           <Route path="referral/earnings" element={<ReferralEarnings />} />
           <Route path="referral/withdraw" element={<WalletWithdraw />} />
 

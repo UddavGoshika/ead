@@ -1,7 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./UploadedFiles.module.css";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
+import api from "../../services/api";
 
 /* ================= TYPES ================= */
 interface FileItem {
@@ -60,8 +61,27 @@ const initialFiles: FileItem[] = [
 
 /* ================= COMPONENT ================= */
 const UploadedFiles: React.FC = () => {
-    const [files, setFiles] = useState<FileItem[]>(initialFiles);
+    const [files, setFiles] = useState<FileItem[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectAll, setSelectAll] = useState(false);
+
+    const fetchFiles = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/admin/files');
+            if (res.data.success) {
+                setFiles(res.data.files);
+            }
+        } catch (err) {
+            console.error("Error fetching files:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFiles();
+    }, []);
 
     const toggleSelectAll = () => {
         setSelectAll(!selectAll);
@@ -77,6 +97,8 @@ const UploadedFiles: React.FC = () => {
             )
         );
     };
+
+    if (loading) return <div className={styles.page}>Loading files...</div>;
 
     return (
         <div className={styles.page}>

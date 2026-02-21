@@ -293,7 +293,7 @@ const AccountSettings: React.FC<Props> = ({ backToHome, showToast }) => {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
-          <ArrowLeft onClick={backToHome} style={{ cursor: 'pointer' }} />
+          {/* <ArrowLeft onClick={backToHome} style={{ cursor: 'pointer' }} /> */}
           <h1>Account & Settings</h1>
         </div>
 

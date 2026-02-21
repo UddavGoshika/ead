@@ -236,8 +236,12 @@ router.get('/config', async (req, res) => {
 });
 
 // ADMIN: GET PAYMENT SETTINGS
-router.get('/admin/settings', async (req, res) => {
+router.get('/admin/settings', authenticate, async (req, res) => {
     try {
+        const role = (req.user?.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
         const settings = await PaymentSetting.find();
         res.json({ success: true, settings });
     } catch (err) {
@@ -246,8 +250,12 @@ router.get('/admin/settings', async (req, res) => {
 });
 
 // ADMIN: SAVE PAYMENT SETTINGS
-router.post('/admin/settings', async (req, res) => {
+router.post('/admin/settings', authenticate, async (req, res) => {
     try {
+        const role = (req.user?.role || '').toLowerCase();
+        if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
         const { gateway, isActive, mode, credentials } = req.body;
 
         const setting = await PaymentSetting.findOneAndUpdate(
@@ -594,6 +602,18 @@ router.post('/verify', authenticate, async (req, res) => {
             }
 
             if (!transaction.packageId.toLowerCase().includes('wallet')) {
+                // COUPON LOGIC: If a coupon was used, mark it as used for this user
+                if (transaction.metadata && transaction.metadata.appliedOfferId) {
+                    const offerId = transaction.metadata.appliedOfferId;
+                    if (mongoose.Types.ObjectId.isValid(offerId)) {
+                        if (!user.usedOffers) user.usedOffers = [];
+                        if (!user.usedOffers.includes(offerId)) {
+                            user.usedOffers.push(offerId);
+                            console.log(`[PAYMENT] Coupon ${offerId} marked as USED for user ${user.email}`);
+                        }
+                    }
+                }
+
                 await user.save();
                 createNotification('payment', `Payment Successful! Your account has been upgraded to ${user.plan}.`, user.email, user._id);
             } else {

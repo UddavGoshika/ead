@@ -190,12 +190,14 @@ router.post('/register', (req, res, next) => {
 
 router.get('/', async (req, res) => {
     try {
-        const { search, specialization, court, state, city, experience, languages, category } = req.query;
+        const { search, specialization, court, state, city, experience, languages, category, excludeInteracted, excludeSelf, verified: verifiedQuery } = req.query;
 
         // 1. Detect Viewer Plan (Auth Optional)
         let viewerIsPremium = false;
         let viewerId = null;
         const authHeader = req.headers.authorization;
+        // const User = require('../models/User'); // Ensure User is available - User is already imported at the top
+
         if (authHeader) {
             const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
             if (token && token.startsWith('user-token-')) {
@@ -214,7 +216,15 @@ router.get('/', async (req, res) => {
         // Admin Override (for testing)
         if (authHeader && (authHeader.includes('admin') || authHeader.includes('mock'))) viewerIsPremium = true;
 
-        let query = { verified: true };
+        let query = {};
+        if (verifiedQuery === 'all') {
+            // No verified filter
+        } else if (verifiedQuery === 'false') {
+            query.verified = false;
+        } else {
+            query.verified = true; // Default
+        }
+
         const conditions = [];
 
         const buildCondition = (field, value) => {
@@ -255,23 +265,28 @@ router.get('/', async (req, res) => {
 
         // SERVER-DRIVEN FILTERING: Exclude Interacted Profiles
         if (viewerId) {
-            const relationships = await Relationship.find({
-                $or: [{ user1: viewerId }, { user2: viewerId }],
-                state: { $nin: ['NONE', 'SHORTLISTED'] }
-            });
-            const excludedUserIds = relationships.map(rel =>
-                rel.user1.toString() === viewerId.toString() ? rel.user2 : rel.user1
-            );
+            if (excludeSelf !== 'false') {
+                if (!query.$and) query.$and = [];
+                query.$and.push({ userId: { $ne: viewerId } }); // Don't show self
+            }
 
-            // Push exclusion filters to query if not already there
-            if (!query.$and) query.$and = [];
-            query.$and.push({ userId: { $ne: viewerId } }); // Don't show self
-            if (excludedUserIds.length > 0) {
-                query.$and.push({ userId: { $nin: excludedUserIds } });
+            if (excludeInteracted !== 'false') {
+                const relationships = await Relationship.find({
+                    $or: [{ user1: viewerId }, { user2: viewerId }],
+                    state: { $nin: ['NONE', 'SHORTLISTED'] }
+                });
+                const excludedUserIds = relationships.map(rel =>
+                    rel.user1.toString() === viewerId.toString() ? rel.user2 : rel.user1
+                );
+
+                if (excludedUserIds.length > 0) {
+                    if (!query.$and) query.$and = [];
+                    query.$and.push({ userId: { $nin: excludedUserIds } });
+                }
             }
         }
 
-        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings status');
+        let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings status role');
 
         // Filter out private profiles and deleted users
         dbAdvocates = dbAdvocates.filter(adv => {
@@ -312,48 +327,44 @@ router.get('/', async (req, res) => {
             dbAdvocates = dbAdvocates.filter(adv => !adv.userId?.isPremium);
         }
 
+        // 5. FETCH UNLOCKED IDS FOR VIEWER
+        let unlockedIds = new Set();
+        if (viewerId) {
+            const unlocked = await require('../models/UnlockedContact').find({ viewer_user_id: viewerId });
+            unlocked.forEach(u => unlockedIds.add(u.profile_user_id.toString()));
+        }
+
         const advocates = dbAdvocates.map(adv => {
             const user = adv.userId;
             const isPremium = user?.isPremium || false;
 
-            // MASKING LOGIC
-            // If viewer is NOT premium AND listing is Featured (Premium), we might show it (as per "Profile List... Profile image blurred"). 
-            // WAIT - "Normal Profiles: Advocates on Free plan only", "Featured: Advocates on any premium plan". 
-            // "Free clients: Cannot see contact info". 
-            // "Profile List (Normal & Featured)... Profile image: blurred... Name: show first 2 chars".
-            // This applies to ALL profiles if the VIEWER is FREE.
-
-            const shouldMask = !viewerIsPremium;
+            const isUnlocked = unlockedIds.has(user?._id?.toString());
+            const shouldMask = !viewerIsPremium && !isUnlocked;
 
             let displayName = adv.name || `${adv.firstName} ${adv.lastName}`;
             let displayId = adv.unique_id || 'N/A';
             let displayImage = getImageUrl(adv.profilePicPath) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
 
-            // Mask details if viewer is Free
-            if (shouldMask) {
-                // Name: first 2 chars + stars
-                displayName = displayName.substring(0, 2) + '*****';
-                displayId = displayId.substring(0, 2) + '*****';
-                // Image: flag for frontend
-            }
-
             return {
                 id: adv._id,
-                role: 'advocate',
-                userId: user?._id || adv.userId, // RULE: Always expose User ID for interactions
-                unique_id: adv.unique_id, // RULE FIX: Never mask routing ID
+                // Critical: expose real role so dashboards can include legal providers
+                role: (user?.role || 'advocate'),
+                userId: user?._id || adv.userId,
+                unique_id: adv.unique_id,
                 name: displayName,
-                display_id: displayId, // Masked version for UI if needed
+                display_id: displayId,
                 location: adv.location?.city ? `${adv.location.city}, ${adv.location.state}` : (adv.location?.state || 'Unknown'),
                 experience: adv.practice?.experience || '0 Years',
                 specialties: adv.practice?.specialization ? [adv.practice.specialization] : [],
-                bio: shouldMask ? '' : (adv.career?.bio || ''), // Hide bio if masked
+                legalDocumentation: Array.isArray(adv.legalDocumentation) ? adv.legalDocumentation : [],
+                verified: adv.verified === true,
+                bio: shouldMask ? '' : (adv.career?.bio || ''),
                 image_url: displayImage,
                 isFeatured: isPremium,
-                isMasked: shouldMask, // Frontend uses this to apply blur/lock UI
+                isMasked: shouldMask,
                 specialization: adv.practice?.specialization || 'Legal Services',
                 category: adv.practice?.specialization || 'General',
-                bar_council_id: adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A'
+                bar_council_id: shouldMask ? 'XXXXXXXXXX' : (adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A')
             };
         });
 
@@ -418,14 +429,15 @@ router.get('/:uniqueId', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Advocate not found or deleted' });
         }
 
-        // 1. Detect Viewer Plan
+        // 1. Detect Viewer
         let viewerIsPremium = false;
-        let viewerId = null; // Declare viewerId here
+        let viewerIsAdvisor = false;
+        let viewerId = null;
         const authHeader = req.headers.authorization;
         if (authHeader) {
             const token = authHeader.includes(' ') ? authHeader.split(' ')[1] : authHeader;
             if (token && token.startsWith('user-token-')) {
-                viewerId = token.replace('user-token-', ''); // Assign to viewerId
+                viewerId = token.replace('user-token-', '');
                 if (require('mongoose').Types.ObjectId.isValid(viewerId)) {
                     const viewer = await User.findById(viewerId);
                     if (viewer) {
@@ -433,33 +445,38 @@ router.get('/:uniqueId', async (req, res) => {
                         if (viewer.isPremium || (planStr !== 'free' && planStr !== '')) {
                             viewerIsPremium = true;
                         }
+                        if (viewer.role === 'legal_provider' || viewer.role === 'advocate') {
+                            viewerIsAdvisor = true;
+                        }
                     }
                 }
             }
+            if (authHeader.includes('admin') || authHeader.includes('mock')) {
+                viewerIsPremium = true;
+                viewerIsAdvisor = true;
+            }
         }
-        if (authHeader && (authHeader.includes('admin') || authHeader.includes('mock'))) viewerIsPremium = true;
 
-        const plan = advocate.userId?.plan || 'Free';
-        const isFeatured = advocate.userId?.isPremium || false;
+        const isOwner = viewerId && viewerId.toString() === advocate.userId?._id?.toString();
 
-        // CHECK IF CONTACT ALREADY UNLOCKED (Permanent record)
-        let contactInfo = null;
+        // 3. CHECK IF CONTACT UNLOCKED
+        let contactUnlocked = false;
         if (viewerId) {
-            const unlocked = await UnlockedContact.findOne({
+            const isUnlocked = await require('../models/UnlockedContact').findOne({
                 viewer_user_id: viewerId,
                 profile_user_id: advocate.userId?._id || advocate.userId
             });
-            if (unlocked || viewerIsPremium === 'override_logic_below') {
-                // We only set contactInfo if it's found in UnlockedContact
-            }
-            if (unlocked) {
-                contactInfo = {
-                    email: advocate.email || (advocate.userId && advocate.userId.email) || 'N/A',
-                    mobile: advocate.mobile || advocate.phone || (advocate.userId && advocate.userId.phone) || 'N/A',
-                    whatsapp: advocate.whatsapp || advocate.mobile || 'N/A'
-                };
-            }
+            if (isUnlocked) contactUnlocked = true;
         }
+
+        const shouldShowReal = isOwner || contactUnlocked || viewerIsAdvisor;
+
+        // ALWAYS show contact info as per request to remove restrictions
+        let contactInfo = {
+            email: advocate.email || (advocate.userId && advocate.userId.email) || 'N/A',
+            mobile: advocate.mobile || advocate.phone || (advocate.userId && advocate.userId.phone) || 'N/A',
+            whatsapp: advocate.whatsapp || advocate.mobile || 'N/A'
+        };
 
         // FETCH RELATIONSHIP STATUS
         let relationshipState = 'NONE';
@@ -485,29 +502,19 @@ router.get('/:uniqueId', async (req, res) => {
         const msgSettings = advocate.userId?.messageSettings || { allowDirectMessages: true };
 
         // 1. If showProfile is false, most info should be masked even for premium, unless it's the owner themselves
-        const isOwner = viewerId && viewerId.toString() === advocate.userId?._id?.toString();
         const profileHidden = !privacy.showProfile && !isOwner;
 
         // 2. MASKING
-        const shouldMask = !viewerIsPremium || profileHidden;
+        const shouldMask = false;
 
         let displayName = advocate.name || `${advocate.firstName} ${advocate.lastName}`;
         let displayId = advocate.unique_id;
         let displayImage = getImageUrl(advocate.profilePicPath) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400';
         let bio = advocate.career?.bio || '';
 
-        if (shouldMask && !isOwner) {
-            // Masking Name: Pr*****
-            displayName = displayName.substring(0, 2) + '*****';
-            // ID: first 2 chars + stars
-            displayId = displayId.substring(0, 2) + '*****';
-            bio = (profileHidden) ? 'This profile is private.' : '';
-        }
-
         // Contact Info Overrides - If UNLOCKED (Paid), show it regardless of public privacy
-        if (contactInfo) {
-            // if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
-            // if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+        if (!shouldShowReal) {
+            contactInfo = null; // Let frontend handle masked display
         }
 
         const formattedAdvocate = {
@@ -528,15 +535,15 @@ router.get('/:uniqueId', async (req, res) => {
             practice: (shouldMask || profileHidden) ? null : advocate.practice,
             availability: (shouldMask || profileHidden) ? null : advocate.availability,
             image_url: displayImage,
-            isBlur: shouldMask,
-            isFeatured: isFeatured,
-            isMasked: shouldMask,
+            isBlur: false,
+            isFeatured: advocate.userId?.isPremium || false,
+            isMasked: !shouldShowReal,
             contactInfo: contactInfo,
             allowChat: msgSettings.allowDirectMessages,
             allowCall: viewerIsPremium,
             allowVideo: viewerIsPremium,
             allowMeet: viewerIsPremium,
-            licenseId: advocate.education?.enrollmentNo || 'N/A',
+            licenseId: shouldShowReal ? (advocate.education?.enrollmentNo || 'N/A') : 'XXXXXXXXXX',
             privacySettings: privacy,
             notificationSettings: advocate.userId?.notificationSettings,
             messageSettings: msgSettings,

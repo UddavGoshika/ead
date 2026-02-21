@@ -27,6 +27,7 @@ export interface User {
     rejectionReason?: string;
     relationship_state?: string;
     subscription_state?: 'FREE' | 'PREMIUM';
+    myReferralCode?: string;
 }
 
 export interface AuthResponse {
@@ -118,6 +119,7 @@ export interface Advocate {
     phone?: string;
     email?: string;
     licenseId?: string;
+    verified?: boolean;
     city?: string;
     state?: string;
 }

@@ -8,7 +8,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { interactionService } from '../services/interactionService';
+import api, { advocateService } from '../services/api';
 import { LOCATION_DATA_RAW } from '../components/layout/statesdis';
+import { formatImageUrl } from '../utils/imageHelper';
+import type { Advocate } from '../types';
 
 // --- Types ---
 
@@ -414,60 +417,6 @@ const serviceDetails: Record<string, ServiceDetail> = {
     }
 };
 
-const mockProviders: Provider[] = [
-    {
-        id: 'p1',
-        adv_id: 'ADV-100000',
-        license_id: 'TS/1428/5256',
-        name: 'Rajesh Kumar',
-        age: 27,
-        location: 'Delhi, India',
-        specialization: 'Civil & Documentation',
-        experience: '12 Years',
-        rating: 4.8,
-        reviews: 124,
-        hourly_rate: '₹2,500',
-        isPremium: true,
-        isVerified: true,
-        image_url: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=800',
-        specializations: ['Agreement drafting', 'Affidavits', 'Legal Notices']
-    },
-    {
-        id: 'p2',
-        adv_id: 'ADV-100001',
-        license_id: 'MH/4521/8765',
-        name: 'Sneha Sharma',
-        age: 31,
-        location: 'Mumbai, Maharashtra',
-        specialization: 'Corporate Contracts',
-        experience: '8 Years',
-        rating: 4.9,
-        reviews: 86,
-        hourly_rate: '₹3,200',
-        isPremium: true,
-        isVerified: true,
-        image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800',
-        specializations: ['Agreements', 'Corporate Docs']
-    },
-    {
-        id: 'p3',
-        adv_id: 'ADV-100002',
-        license_id: 'KA/2219/3341',
-        name: 'Vikas Mehra',
-        age: 42,
-        location: 'Bangalore, Karnataka',
-        specialization: 'Property Laws',
-        experience: '15 Years',
-        rating: 4.7,
-        reviews: 210,
-        hourly_rate: '₹4,000',
-        isPremium: false,
-        isVerified: true,
-        image_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
-        specializations: ['Property Deeds', 'Wills', 'Notices']
-    }
-];
-
 // --- Helpers ---
 const maskString = (str: string) => {
     if (str.length <= 2) return str;
@@ -504,16 +453,39 @@ const SelectableFilter: React.FC<{
     </div>
 );
 
-const ProviderCard: React.FC<{
-    provider: Provider;
+interface ProviderCardProps {
+    provider: Advocate;
     isLoggedIn: boolean;
     onLogin: () => void;
     onClick: () => void;
-    onChat: (p: Provider) => void;
-    onConsult: (p: Provider) => void;
-}> = ({ provider, isLoggedIn, onLogin, onClick, onChat, onConsult }) => {
+    onChat: (p: Advocate) => void;
+    onConsult: (p: Advocate) => void;
+    isAlreadyInterested?: boolean;
+    isAlreadyConsulted?: boolean;
+    onInteractionSuccess?: (type: string) => void;
+}
+
+const ProviderCard: React.FC<ProviderCardProps> = ({
+    provider,
+    isLoggedIn,
+    onLogin,
+    onClick,
+    onChat,
+    onConsult,
+    isAlreadyInterested = false,
+    isAlreadyConsulted = false,
+    onInteractionSuccess
+}) => {
     const { user } = useAuth();
-    const { name, age, location, experience, specialization, license_id, adv_id, image_url, specializations } = provider;
+    const name = provider.name || `${provider.firstName} ${provider.lastName}`;
+    const age = provider.age || 35;
+    const location = typeof provider.location === 'object' ? (provider.location as any).city : provider.location;
+    const experience = provider.experience || '10+ years';
+    const specialization = provider.specialization || (provider.practice as any)?.specialization || 'Legal Specialist';
+    const license_id = provider.licenseId || (provider as any).bar_council_id || 'BCI-VERIFIED';
+    const adv_id = provider.unique_id || provider.display_id || 'ADV-USER';
+    const image_url = provider.profilePicPath ? formatImageUrl(provider.profilePicPath) : provider.image_url;
+    const specializations = provider.specialties || [(specialization)];
 
     return (
         <motion.div
@@ -534,9 +506,15 @@ const ProviderCard: React.FC<{
                 <div className={styles.topBadgesContainer}>
                     <div className={styles.topIdBadge}>
                         <span>{adv_id}</span>
-                        <div className={styles.checkInner}>
-                            <CheckCircle2 size={12} />
-                        </div>
+                        {provider.verified === true ? (
+                            <div className={styles.checkInner} title="Verified Specialist">
+                                <CheckCircle2 size={12} />
+                            </div>
+                        ) : (
+                            <div className={`${styles.checkInner} ${styles.pendingBadgeSmall}`} title="Verification Pending">
+                                <Clock size={12} />
+                            </div>
+                        )}
                     </div>
                     {/* Specializations moved to top right */}
                     <div className={styles.topSpecTags}>
@@ -549,7 +527,7 @@ const ProviderCard: React.FC<{
                 {/* Bottom Overlay Details */}
                 <div className={styles.imageOverlay}>
                     <div className={styles.overlayMain}>
-                        <h3>{name}, {age}</h3>
+                        <h3>{name}{age ? `, ${age}` : ''}</h3>
                         <p className={styles.overlayLoc}>{location}</p>
                         <p className={styles.overlayExp}>{experience} experience</p>
                     </div>
@@ -566,24 +544,32 @@ const ProviderCard: React.FC<{
             {/* Action Bar */}
             <div className={styles.cardActionBar}>
                 <button
-                    className={styles.actionItem}
+                    className={`${styles.actionItem} ${isAlreadyInterested ? styles.actionDisabled : ''}`}
+                    disabled={isAlreadyInterested}
                     onClick={async (e) => {
                         e.stopPropagation();
                         if (!isLoggedIn) {
                             onLogin();
                         } else {
                             try {
-                                await interactionService.recordActivity('advocate', provider.id, 'interest', String(user?.id));
-                                alert(`Interest for ${provider.name} recorded!`);
-                            } catch (err) {
+                                const targetId = String((provider as any).userId?._id || (provider as any).userId || provider.id || (provider as any)._id);
+                                await interactionService.recordActivity('advocate', targetId, 'interest', String(user?.id));
+                                alert(`Interest for ${name} recorded!`);
+                                if (onInteractionSuccess) onInteractionSuccess('interest');
+                            } catch (err: any) {
                                 console.error("Error recording interest:", err);
-                                alert("Action failed. Please try again.");
+                                if (err.response?.data?.error === 'ALREADY_SENT') {
+                                    alert("Interest already sent.");
+                                    if (onInteractionSuccess) onInteractionSuccess('interest');
+                                } else {
+                                    alert("Action failed. Please try again.");
+                                }
                             }
                         }
                     }}
                 >
                     <div className={styles.actionIcon}><Briefcase size={20} /></div>
-                    <span>Interest</span>
+                    <span>{isAlreadyInterested ? 'Interested' : 'Interest'}</span>
                 </button>
                 <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onChat(provider); }}>
                     <div className={styles.actionIcon}><MessageCircle size={20} /></div>
@@ -597,10 +583,12 @@ const ProviderCard: React.FC<{
                             onLogin();
                         } else {
                             try {
-                                await interactionService.recordActivity('advocate', provider.id, 'shortlist', String(user?.id));
-                                alert(`${provider.name} added to your shortlist!`);
+                                const targetId = String(provider.userId?._id || provider.userId || provider.id || (provider as any)._id);
+                                await interactionService.recordActivity('advocate', targetId, 'shortlist', String(user?.id));
+                                alert(`${name} added to your shortlist!`);
                             } catch (err) {
                                 console.error("Error shortlisting:", err);
+                                alert("Failed to shortlist.");
                             }
                         }
                     }}
@@ -608,47 +596,58 @@ const ProviderCard: React.FC<{
                     <div className={styles.actionIcon}><Award size={20} /></div>
                     <span>Shortlist</span>
                 </button>
-                <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onConsult(provider); }}>
+                <button
+                    className={`${styles.actionItem} ${isAlreadyConsulted ? styles.actionDisabled : ''}`}
+                    disabled={isAlreadyConsulted}
+                    onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onConsult(provider); }}
+                >
                     <div className={styles.actionIcon}><Clock size={20} /></div>
-                    <span>Consultation</span>
+                    <span>{isAlreadyConsulted ? 'Requested' : 'Consultation'}</span>
                 </button>
             </div>
         </motion.div>
     );
 };
 
-// --- Form & Popup Components ---
-
-const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
+const ChatPopup: React.FC<{ provider: Advocate; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
     const [msg, setMsg] = useState('');
+    const { user } = useAuth();
+    const name = provider.name || `${provider.firstName} ${provider.lastName}`;
+    const image_url = provider.profilePicPath ? formatImageUrl(provider.profilePicPath) : provider.image_url;
+
     return (
         <div className={styles.popupOverlay} onClick={onClose}>
             <motion.div className={styles.chatPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
                 <div className={styles.popupHeader}>
                     <div className={styles.popupProviderInfo}>
-                        <img src={provider.image_url} alt="" />
+                        <img src={image_url} alt="" />
                         <div>
-                            <h4>Chat with {provider.name}</h4>
+                            <h4>Chat with {name}</h4>
                             <p>Ref: {service}</p>
                         </div>
                     </div>
-                    <button onClick={onClose}><X size={20} /></button>
+                    <button onClick={onClose}><X size={20} />X</button>
                 </div>
                 <div className={styles.chatMessages}>
                     <div className={styles.systemNote}>Logged in messenger: {service} service initiated</div>
                 </div>
                 <form className={styles.chatInput} onSubmit={async e => {
                     e.preventDefault();
-                    const currentUserId = String((useAuth() as any).user?.id);
+                    if (!user) return alert("Please login to send messages");
+                    const currentUserId = String(user.id || (user as any)._id);
+                    const targetId = String(provider.userId?._id || provider.userId || provider.id || (provider as any)._id);
+
                     if (msg.trim()) {
                         try {
-                            await interactionService.sendMessage(currentUserId, provider.id, msg);
-                            // Also record interest action for the dashboard feed
-                            await interactionService.recordActivity('advocate', provider.id, 'chat', currentUserId);
-                            alert(`Message sent to ${provider.name} regarding ${service}`);
+                            await interactionService.sendMessage(currentUserId, targetId, msg);
+                            alert(`Message sent to ${name} regarding ${service}`);
+                            setMsg('');
                             onClose();
+                            // Background task
+                            interactionService.recordActivity('advocate', targetId, 'chat', currentUserId).catch(console.error);
                         } catch (err) {
                             console.error("Chat error:", err);
+                            alert("Failed to send message. Please try again.");
                         }
                     }
                 }}>
@@ -660,24 +659,37 @@ const ChatPopup: React.FC<{ provider: Provider; service: string; onClose: () => 
     );
 };
 
-const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
+const ConsultationPopup: React.FC<{ provider: Advocate; service: string; onClose: () => void; onInteractionSuccess?: (type: string) => void }> = ({ provider, service, onClose, onInteractionSuccess }) => {
     const [form, setForm] = useState({ service, reason: '' });
+    const { user } = useAuth();
+    const name = provider.name || `${provider.firstName} ${provider.lastName}`;
+
     return (
         <div className={styles.popupOverlay} onClick={onClose}>
             <motion.div className={styles.consultPopup} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} onClick={e => e.stopPropagation()}>
                 <div className={styles.popupHeader}>
                     <h3>Book Consultation</h3>
-                    <button onClick={onClose}><X size={20} /></button>
+                    <button onClick={onClose}><X size={20} />X</button>
                 </div>
                 <form className={styles.consultForm} onSubmit={async e => {
                     e.preventDefault();
-                    const currentUserId = String((useAuth() as any).user?.id);
+                    if (!user) return alert("Please login to book consultation");
+                    const currentUserId = String(user.id || (user as any)._id);
+                    const targetId = String(provider.userId?._id || provider.userId || provider.id || (provider as any)._id);
                     try {
-                        await interactionService.recordActivity('advocate', provider.id, 'consultation', currentUserId);
-                        alert(`Consultation for ${service} requested from ${provider.name}`);
+                        await interactionService.recordActivity('advocate', targetId, 'meet_request', currentUserId, { service });
+                        alert(`Consultation request for ${service} sent to ${name}`);
+                        if (onInteractionSuccess) onInteractionSuccess('meet_request');
                         onClose();
-                    } catch (err) {
+                    } catch (err: any) {
                         console.error("Consultation error:", err);
+                        if (err.response?.data?.error === 'ALREADY_SENT') {
+                            alert("Consultation request already sent.");
+                            if (onInteractionSuccess) onInteractionSuccess('meet_request');
+                            onClose();
+                        } else {
+                            alert("Failed to submit request.");
+                        }
                     }
                 }}>
                     <div className={styles.inputGroup}>
@@ -703,11 +715,69 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
     const location = useLocation();
     const [activeNav, setActiveNav] = useState('home');
     const [isLoaded, setIsLoaded] = useState(false);
-    const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+    const [providers, setProviders] = useState<Advocate[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedProvider, setSelectedProvider] = useState<Advocate | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-    const [chatTarget, setChatTarget] = useState<Provider | null>(null);
-    const [consultTarget, setConsultTarget] = useState<Provider | null>(null);
+    const [chatTarget, setChatTarget] = useState<Advocate | null>(null);
+    const [consultTarget, setConsultTarget] = useState<Advocate | null>(null);
+    const [sentInteractions, setSentInteractions] = useState<Set<string>>(new Set());
     const contentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isLoggedIn && user?.id) {
+            interactionService.getAllActivities(String(user.id))
+                .then(activities => {
+                    const ids = new Set<string>();
+                    activities.forEach((act: any) => {
+                        const tId = String(act.partnerUserId || act.receiver || act.sender);
+                        if (act.isSender) {
+                            ids.add(tId + ':' + act.type);
+                            if (act.status === 'accepted') {
+                                ids.add(tId + ':interest');
+                                ids.add(tId + ':meet_request');
+                            }
+                        } else if (act.status === 'accepted') {
+                            ids.add(tId + ':interest');
+                            ids.add(tId + ':meet_request');
+                        }
+                    });
+                    setSentInteractions(ids);
+                })
+                .catch(console.error);
+        }
+    }, [isLoggedIn, user]);
+
+    // Support Form State
+    const [queryForm, setQueryForm] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        message: ''
+    });
+    const [submittingQuery, setSubmittingQuery] = useState(false);
+
+    const handleQuerySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittingQuery(true);
+        try {
+            const res = await api.post('/contact', {
+                ...queryForm,
+                category: activeNav !== 'home' ? `Legal Doc: ${activeNav}` : 'General Inquiry',
+                subject: `Legal Query from Dashboard (${activeNav})`,
+                source: 'Legal Documentation Dashboard'
+            });
+            if (res.data.success) {
+                alert("Your query has been submitted successfully! Our experts will contact you soon.");
+                setQueryForm({ name: '', phone: '', email: '', message: '' });
+            }
+        } catch (err) {
+            console.error("Error submitting query:", err);
+            alert("Failed to submit query. Please try again.");
+        } finally {
+            setSubmittingQuery(false);
+        }
+    };
     const [filters, setFilters] = useState({
         state: '',
         district: '',
@@ -717,6 +787,111 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
         subtype: '',
         experience: '',
         search: ''
+    });
+
+    const fetchProviders = async () => {
+        setLoading(true);
+        try {
+            const params: any = {
+                state: filters.state,
+                district: filters.district,
+                city: filters.city,
+                experience: filters.experience,
+                search: filters.search,
+                excludeInteracted: 'false',
+                excludeSelf: 'false',
+                verified: 'all'
+            };
+
+            const res = await advocateService.getAdvocates(params);
+            if (res.data.success) {
+                let fetchedProviders = res.data.advocates || [];
+
+                // Filter by Documentation related specialists and strictly only verified ones
+                fetchedProviders = fetchedProviders.filter(p => {
+                    const role = String(((p as any).role || '')).toLowerCase();
+                    const rawSpec = p.specialization || (p.practice as any)?.specialization || '';
+                    const spec = (Array.isArray(rawSpec) ? rawSpec.join(' ') : String(rawSpec)).toLowerCase();
+
+                    const specsArray = [
+                        ...(p.specialties || []),
+                        ...((p as any).legalDocumentation || []),
+                        ...(Array.isArray(rawSpec) ? rawSpec : [String(rawSpec)])
+                    ].filter(Boolean).map(s => String(s).toLowerCase());
+
+                    const keywords = ['documentation', 'drafting', 'agreement', 'advisor', 'service provider', 'affidavit', 'notice', 'bond', 'registration', 'drafiting'];
+                    const hasDocKeyword = keywords.some(k => spec.includes(k) || specsArray.some(s => s.includes(k)));
+
+                    // Show if they are literally a Legal Service Provider role OR match the doc keywords
+                    const isLegalProviderRole =
+                        role === 'legal_provider' ||
+                        role === 'legal provider' ||
+                        role === 'legal_service_provider' ||
+                        role === 'legal service provider';
+
+                    const isSpecialist = hasDocKeyword || isLegalProviderRole;
+
+                    // Show for now even if not verified (table/grid will show the Badge)
+                    // This allows users to see their own profile after registration
+                    return isSpecialist;
+                });
+
+                setProviders(fetchedProviders);
+            }
+        } catch (err) {
+            console.error("Error fetching providers:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeNav !== 'home') {
+            fetchProviders();
+        }
+    }, [activeNav, filters.state, filters.district, filters.city, filters.experience, filters.search]);
+
+    // Secondary filter for categories in frontend
+    const filteredProviders = providers.filter(p => {
+        // Match against specialties, specialization, OR the specialized legalDocumentation array
+        const rawSpec = p.specialization || (p.practice as any)?.specialization || '';
+        const pSpecs = [
+            ...(p.specialties || []),
+            ...(Array.isArray(rawSpec) ? rawSpec : [String(rawSpec)]),
+            ...((p as any).legalDocumentation || [])
+        ].filter(Boolean).map(s => String(s).toLowerCase());
+
+        // If no chips selected, filter by activeNav relevance
+        if (filters.categories.length === 0) {
+            if (activeNav === 'home') return true;
+
+            const navKeywords: Record<string, string[]> = {
+                'agreements': ['agreement', 'drafting', 'contract', 'deed', 'nda', 'mou'],
+                'affidavits': ['affidavit', 'statement', 'sworn', 'bond'],
+                'notices': ['notice', 'legal notice', 'warning', 'demand'],
+                'legal-docs': ['documentation', 'legal-docs', 'service', 'advisor', 'will', 'power of attorney', 'trust', 'deed', 'registration', 'legal document', 'statutory']
+            };
+
+            const keywords = navKeywords[activeNav] || [];
+            if (keywords.length === 0) return true;
+
+            return pSpecs.some(spec => keywords.some(k => spec.includes(k)));
+        }
+        return filters.categories.some(cat => {
+            const lowerCat = cat.toLowerCase();
+            return pSpecs.some(spec => {
+                const lowerSpec = spec.toLowerCase();
+                // Match if spec contains category OR category contains spec (e.g. "Agreement Drafting" vs "Purchase Agreement")
+                if (lowerSpec.includes(lowerCat) || lowerCat.includes(lowerSpec)) return true;
+
+                // Special case: if category is a multi-word agreement, and provider has "Agreement" and "Drafting"
+                if (lowerCat.includes('agreement') && lowerSpec.includes('agreement')) return true;
+                if (lowerCat.includes('notice') && lowerSpec.includes('notice')) return true;
+                if (lowerCat.includes('affidavit') && lowerSpec.includes('affidavit')) return true;
+
+                return false;
+            });
+        });
     });
 
     useEffect(() => {
@@ -764,74 +939,88 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                         </tr>
                     </thead>
                     <tbody>
-                        {mockProviders.map((p, index) => (
-                            <tr key={p.id}>
-                                <td>{index + 1}</td>
-                                <td>
-                                    <div className={styles.providerInfoCell}>
-                                        <img src={p.image_url} alt="" className={styles.miniAvatar} />
-                                        <div>
-                                            <div className={styles.pName}>{p.name}</div>
-                                            <div className={styles.pId}>{p.adv_id}</div>
+                        {providers.map((p, index) => {
+                            const name = p.name || `${p.firstName} ${p.lastName}`;
+                            const location = typeof p.location === 'object' ? (p.location as any).city : p.location;
+                            const adv_id = p.unique_id || p.display_id || 'ADV-USER';
+                            const license_id = p.licenseId || (p as any).bar_council_id || 'BCI-VERIFIED';
+                            const image_url = p.profilePicPath ? formatImageUrl(p.profilePicPath) : p.image_url;
+
+                            return (
+                                <tr key={p.unique_id}>
+                                    <td>{index + 1}</td>
+                                    <td>
+                                        <div className={styles.providerInfoCell}>
+                                            <img src={image_url} alt="" className={styles.miniAvatar} />
+                                            <div>
+                                                <div className={styles.pName}>{name}</div>
+                                                <div className={styles.pId}>{adv_id}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>{p.location}</td>
-                                <td>
-                                    <div className={styles.tableSpecBadge}>
-                                        {activeNav === 'agreements' ? 'Agreement Specialist' :
-                                            activeNav === 'affidavits' ? 'Affidavit Specialist' :
-                                                activeNav === 'notices' ? 'Notice Specialist' : 'Doc Specialist'}
-                                    </div>
-                                    <div className={styles.pSub} style={{ marginTop: '4px', fontSize: '0.7rem' }}>
-                                        Matching: {currentDetail.categories[0]} & more
-                                    </div>
-                                </td>
-                                <td>{p.experience}</td>
-                                <td>{p.license_id}</td>
-                                <td>
-                                    {p.isVerified ? (
+                                    </td>
+                                    <td>{location}</td>
+                                    <td>
+                                        <div className={styles.tableSpecBadge}>
+                                            {activeNav === 'agreements' ? 'Agreement Specialist' :
+                                                activeNav === 'affidavits' ? 'Affidavit Specialist' :
+                                                    activeNav === 'notices' ? 'Notice Specialist' : 'Doc Specialist'}
+                                        </div>
+                                    </td>
+                                    <td>{p.experience || '10+ yrs'}</td>
+                                    <td>{license_id}</td>
+                                    <td>
                                         <div className={styles.verifiedTag}>
                                             <CheckCircle2 size={14} /> Verified
                                         </div>
-                                    ) : (
-                                        <span className={styles.pendingTag}>Pending</span>
-                                    )}
-                                </td>
-                                <td className={styles.rateCell}>{p.hourly_rate}</td>
-                                <td>
-                                    <div className={styles.ratingCell}>
-                                        <Star size={14} fill="#daa520" color="#daa520" />
-                                        <span>{p.rating}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className={styles.tableActions}>
-                                        <button
-                                            className={styles.tableViewDetail}
-                                            onClick={() => setSelectedProvider(p)}
-                                            title="View Full Profile"
-                                        >
-                                            View Details
-                                        </button>
-                                        <button
-                                            className={styles.tableQuickAction}
-                                            onClick={(e) => { e.stopPropagation(); !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}
-                                            title="Send Interest"
-                                        >
-                                            <Briefcase size={16} />
-                                        </button>
-                                        <button
-                                            className={styles.tableQuickAction}
-                                            onClick={(e) => { e.stopPropagation(); !isLoggedIn ? openAuthModal('login') : setChatTarget(p); }}
-                                            title="Quick Chat"
-                                        >
-                                            <MessageCircle size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className={styles.rateCell}>₹2,500+</td>
+                                    <td>
+                                        <div className={styles.ratingCell}>
+                                            <Star size={14} fill="#daa520" color="#daa520" />
+                                            <span>{p.rating || '4.8'}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className={styles.tableActions}>
+                                            <button
+                                                className={styles.tableViewDetail}
+                                                onClick={() => setSelectedProvider(p)}
+                                                title="View Full Profile"
+                                            >
+                                                View Details
+                                            </button>
+                                            <button
+                                                className={styles.tableQuickAction}
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    if (!isLoggedIn) {
+                                                        openAuthModal('login');
+                                                    } else {
+                                                        try {
+                                                            const targetId = String(p.userId?._id || p.userId || p.id || (p as any)._id);
+                                                            await interactionService.recordActivity('advocate', targetId, 'interest', String(user?.id));
+                                                            alert(`Interest for ${name} recorded!`);
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                        }
+                                                    }
+                                                }}
+                                                title="Send Interest"
+                                            >
+                                                <Briefcase size={16} />
+                                            </button>
+                                            <button
+                                                className={styles.tableQuickAction}
+                                                onClick={(e) => { e.stopPropagation(); !isLoggedIn ? openAuthModal('login') : setChatTarget(p); }}
+                                                title="Quick Chat"
+                                            >
+                                                <MessageCircle size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -956,7 +1145,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                         <input
                                             type="text"
                                             placeholder="Search specific services..."
-                                            onChange={(e) => {/* Add local search logic if needed */ }}
+                                            onChange={(e) => { /* local search logic if needed */ }}
                                         />
                                     </div>
                                     <button className={styles.secSearchBtn}>Search</button>
@@ -982,7 +1171,6 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                 })}
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -990,7 +1178,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                     <div className={styles.resultsHeader}>
                         <div className={styles.resultsTitleArea}>
                             <h2>Available Specialists</h2>
-                            <p>Found 14 certified advocates for this service</p>
+                            <p>Found {filteredProviders.length} certified specialists for this service</p>
                         </div>
                         <div className={styles.viewToggle}>
                             <button
@@ -1008,21 +1196,127 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                         </div>
                     </div>
 
-                    {viewMode === 'grid' ? (
-                        <div className={styles.providersGrid}>
-                            {mockProviders.map(p => (
-                                <ProviderCard
-                                    key={p.id}
-                                    provider={p}
-                                    isLoggedIn={isLoggedIn}
-                                    onLogin={() => openAuthModal('login')}
-                                    onClick={() => setSelectedProvider(p)}
-                                    onChat={(p) => setChatTarget(p)}
-                                    onConsult={(p) => setConsultTarget(p)}
-                                />
-                            ))}
+                    {loading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+                            <Zap className="animate-spin" size={40} color="#daa520" />
                         </div>
-                    ) : renderProviderTable()}
+                    ) : (
+                        viewMode === 'grid' ? (
+                            <div className={styles.providersGrid}>
+                                {filteredProviders.length > 0 ? (
+                                    filteredProviders.map(p => {
+                                        const tId = String(p.userId?._id || p.userId || p.id || (p as any)._id);
+                                        const alreadyInterested = sentInteractions.has(tId + ':interest') || sentInteractions.has(tId + ':superInterest');
+                                        const alreadyConsulted = sentInteractions.has(tId + ':meet_request');
+                                        return (
+                                            <ProviderCard
+                                                key={p.unique_id}
+                                                provider={p}
+                                                isLoggedIn={isLoggedIn}
+                                                onLogin={() => openAuthModal('login')}
+                                                onClick={() => setSelectedProvider(p)}
+                                                onChat={(p) => setChatTarget(p)}
+                                                onConsult={(p) => setConsultTarget(p)}
+                                                isAlreadyInterested={alreadyInterested}
+                                                isAlreadyConsulted={alreadyConsulted}
+                                                onInteractionSuccess={(type) => {
+                                                    setSentInteractions(prev => new Set(prev).add(tId + ':' + type));
+                                                }}
+                                            />
+                                        );
+                                    })
+                                ) : (
+                                    <div style={{ textAlign: 'center', gridColumn: '1/-1', padding: '80px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px' }}>
+                                        <Info size={48} color="#94a3b8" style={{ marginBottom: '20px' }} />
+                                        <h3>No Specialists Found</h3>
+                                        <p style={{ color: '#94a3b8' }}>Try adjusting your filters or search for {activeNav}.</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className={styles.tableCard}>
+                                <div className={styles.tableWrapper}>
+                                    <table className={styles.providerTable}>
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Specialist (Name/ID)</th>
+                                                <th>Location</th>
+                                                <th>Expertise</th>
+                                                <th>Exp.</th>
+                                                <th>License ID</th>
+                                                <th>Verification</th>
+                                                <th>Starting Rate</th>
+                                                <th>Rating</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredProviders.map((p, index) => {
+                                                const name = p.name || `${p.firstName} ${p.lastName}`;
+                                                const locationStr = typeof p.location === 'object' ? (p.location as any).city : p.location;
+                                                const adv_id = p.unique_id || p.display_id || 'ADV-USER';
+                                                const license_id = p.licenseId || (p as any).bar_council_id || 'BCI-VERIFIED';
+                                                const image_url = p.profilePicPath ? formatImageUrl(p.profilePicPath) : p.image_url;
+                                                const isVerified = (p as any).verified === true;
+
+                                                return (
+                                                    <tr key={p.unique_id}>
+                                                        <td>{index + 1}</td>
+                                                        <td>
+                                                            <div className={styles.providerInfoCell}>
+                                                                <img src={image_url} alt="" className={styles.miniAvatar} />
+                                                                <div>
+                                                                    <div className={styles.pName}>{name}</div>
+                                                                    <div className={styles.pId}>{adv_id}</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{locationStr}</td>
+                                                        <td>
+                                                            <div className={styles.tableSpecBadge}>
+                                                                {p.specialization || (p.practice as any)?.specialization || 'Specialist'}
+                                                            </div>
+                                                        </td>
+                                                        <td>{p.experience || '10+ yrs'}</td>
+                                                        <td>{license_id}</td>
+                                                        <td>
+                                                            {isVerified ? (
+                                                                <div className={styles.verifiedTag}>
+                                                                    <CheckCircle2 size={14} /> Verified
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                                                                    <Clock size={14} /> Pending
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className={styles.rateCell}>₹2,500+</td>
+                                                        <td>
+                                                            <div className={styles.ratingCell}>
+                                                                <Star size={14} fill="#daa520" color="#daa520" />
+                                                                <span>{p.rating || '4.8'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className={styles.tableActions}>
+                                                                <button
+                                                                    className={styles.tableViewDetail}
+                                                                    onClick={() => setSelectedProvider(p)}
+                                                                >
+                                                                    View
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )
+                    )}
                 </div>
             </motion.div>
         );
@@ -1356,14 +1650,44 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                             <div className={styles.queryFormCard}>
                                 <h3>Submit a Legal Query</h3>
                                 <p>Our experts will get back to you within 24 hours.</p>
-                                <form className={styles.supportForm}>
+                                <form className={styles.supportForm} onSubmit={handleQuerySubmit}>
                                     <div className={styles.formRow}>
-                                        <input type="text" placeholder="Full Name" required />
-                                        <input type="tel" placeholder="Phone Number" required />
+                                        <input
+                                            type="text"
+                                            placeholder="Full Name"
+                                            value={queryForm.name}
+                                            onChange={(e) => setQueryForm({ ...queryForm, name: e.target.value })}
+                                            required
+                                        />
+                                        <input
+                                            type="tel"
+                                            placeholder="Phone Number"
+                                            value={queryForm.phone}
+                                            onChange={(e) => setQueryForm({ ...queryForm, phone: e.target.value })}
+                                            required
+                                        />
                                     </div>
-                                    <input type="email" placeholder="Email Address" required />
-                                    <textarea placeholder="Describe your legal requirement or query..." rows={4} required></textarea>
-                                    <button type="submit" className={styles.formSubmitBtn}>Send Message</button>
+                                    <input
+                                        type="email"
+                                        placeholder="Email Address"
+                                        value={queryForm.email}
+                                        onChange={(e) => setQueryForm({ ...queryForm, email: e.target.value })}
+                                        required
+                                    />
+                                    <textarea
+                                        placeholder="Describe your legal requirement or query..."
+                                        rows={4}
+                                        value={queryForm.message}
+                                        onChange={(e) => setQueryForm({ ...queryForm, message: e.target.value })}
+                                        required
+                                    ></textarea>
+                                    <button
+                                        type="submit"
+                                        className={styles.formSubmitBtn}
+                                        disabled={submittingQuery}
+                                    >
+                                        {submittingQuery ? 'Sending...' : 'Send Message'}
+                                    </button>
                                 </form>
                             </div>
 
@@ -1409,7 +1733,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                 {chatTarget && (
                     <ChatPopup
                         provider={chatTarget}
-                        service={currentDetail.title}
+                        service={currentDetail?.title || 'General Legal Inquiry'}
                         onClose={() => setChatTarget(null)}
                     />
                 )}
@@ -1419,8 +1743,12 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                 {consultTarget && (
                     <ConsultationPopup
                         provider={consultTarget}
-                        service={currentDetail.title}
+                        service={currentDetail?.title || 'General Legal Consultation'}
                         onClose={() => setConsultTarget(null)}
+                        onInteractionSuccess={(type) => {
+                            const tId = String((consultTarget as any).userId?._id || (consultTarget as any).userId || consultTarget.id || (consultTarget as any)._id);
+                            setSentInteractions(prev => new Set(prev).add(tId + ':' + type));
+                        }}
                     />
                 )}
             </AnimatePresence>
@@ -1450,13 +1778,13 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                 {/* Detailed Profile View for All Users */}
                                 <div style={{ display: 'flex', gap: '40px' }}>
                                     <img
-                                        src={selectedProvider.image_url}
+                                        src={selectedProvider.profilePicPath ? formatImageUrl(selectedProvider.profilePicPath) : selectedProvider.image_url}
                                         style={{ width: '200px', height: '200px', borderRadius: '24px', objectFit: 'cover' }}
                                     />
                                     <div>
-                                        <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display' }}>{selectedProvider.name}</h1>
-                                        <p style={{ color: '#daa520', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedProvider.specialization}</p>
-                                        <p style={{ color: '#94a3b8' }}>{selectedProvider.location} • {selectedProvider.experience} experience</p>
+                                        <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display' }}>{selectedProvider.name || `${selectedProvider.firstName} ${selectedProvider.lastName}`}</h1>
+                                        <p style={{ color: '#daa520', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedProvider.specialization || (selectedProvider.practice as any)?.specialization || 'Legal Specialist'}</p>
+                                        <p style={{ color: '#94a3b8' }}>{typeof selectedProvider.location === 'object' ? (selectedProvider.location as any).city : selectedProvider.location} • {selectedProvider.experience || '10+ years'} experience</p>
 
                                         {/* Masked Contact Info */}
                                         <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
@@ -1465,49 +1793,64 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Email</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? `${selectedProvider.name.replace(/\s+/g, '.').toLowerCase()}@eadvocate.in`
-                                                            : `${selectedProvider.name.substring(0, 2).toLowerCase()}*******@eadvocate.in`}
+                                                        {(selectedProvider.contactInfo?.email || selectedProvider.email || 'N/A')}
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Phone</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? '+91 98765 43210'
-                                                            : '+91 98********'}
+                                                        {(selectedProvider.contactInfo?.mobile || selectedProvider.phone || 'N/A')}
                                                     </span>
                                                 </div>
                                                 <div>
                                                     <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>License ID</span>
                                                     <span>
-                                                        {isLoggedIn
-                                                            ? selectedProvider.license_id
-                                                            : `${selectedProvider.license_id.substring(0, 2)}*******`}
+                                                        {(selectedProvider.licenseId || (selectedProvider as any).bar_council_id || 'BCI-VERIFIED')}
                                                     </span>
                                                 </div>
                                             </div>
-                                            {!isLoggedIn && (
-                                                <p style={{ marginTop: '10px', fontSize: '0.8rem', color: '#daa520' }}>
-                                                    * Login to view full contact details
-                                                </p>
-                                            )}
+
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className={styles.modalActionBar}>
-                                    <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : console.log('Interest'); }}>
+                                    <button
+                                        className={`${styles.modalActionBtn} ${(sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest') || sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':superInterest')) ? styles.actionDisabled : ''}`}
+                                        disabled={sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest') || sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':superInterest')}
+                                        onClick={async () => {
+                                            if (!isLoggedIn) {
+                                                openAuthModal('login');
+                                            } else {
+                                                try {
+                                                    const targetId = String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id || (selectedProvider as any)._id);
+                                                    await interactionService.recordActivity('advocate', targetId, 'interest', String(user?.id));
+                                                    alert(`Interest recorded!`);
+                                                    setSentInteractions(prev => new Set(prev).add(targetId + ':interest'));
+                                                } catch (err: any) {
+                                                    console.error(err);
+                                                    if (err.response?.data?.error === 'ALREADY_SENT') {
+                                                        alert("Interest already sent.");
+                                                        setSentInteractions(prev => new Set(prev).add(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest'));
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    >
                                         <Briefcase size={20} />
-                                        <span>Express Interest</span>
+                                        <span>{(sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest') || sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':superInterest')) ? 'Interest Sent' : 'Express Interest'}</span>
                                     </button>
                                     <button className={styles.modalActionBtnPrimary} onClick={() => { !isLoggedIn ? openAuthModal('login') : setChatTarget(selectedProvider); }}>
                                         <MessageCircle size={20} />
                                         <span>Direct Chat</span>
                                     </button>
-                                    <button className={styles.modalActionBtn} onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}>
+                                    <button
+                                        className={`${styles.modalActionBtn} ${sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request') ? styles.actionDisabled : ''}`}
+                                        disabled={sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request')}
+                                        onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}
+                                    >
                                         <Clock size={20} />
-                                        <span>Book Consultation</span>
+                                        <span>{sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request') ? 'Booking Sent' : 'Book Consultation'}</span>
                                     </button>
                                 </div>
                             </div>

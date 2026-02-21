@@ -7,6 +7,8 @@ const AuditLog = require('../models/AuditLog');
 const SupportActivity = require('../models/SupportActivity');
 const auth = require('../middleware/auth');
 const { sendSupportEmail } = require('../utils/supportMailer');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 // @route   GET /api/support/tickets
 // @desc    Get all support tickets (inbox)
@@ -64,21 +66,28 @@ router.post('/reply', auth, async (req, res) => {
                 <hr/>
                 <p style="font-size:12px; color:#666;">This is a reply to your ticket ref: ${ticketId}</p>
                 <p style="font-size:12px; color:#666;">- <strong>E-Advocate Support Team</strong></p>
-            </div>`
+            </div>`,
+            [] // Empty attachments for reply (unless we add them there too)
         );
 
         if (!emailResult.success) {
             return res.status(500).json({ success: false, error: 'SMTP failed: ' + emailResult.error });
         }
 
-        // Save reply thread
-        ticket.messages.push({
-            sender: req.user.name || 'Support Staff',
-            text: message,
-            timestamp: new Date()
-        });
-        ticket.status = 'In Progress';
-        await ticket.save();
+        // DUPLICATE CHECK: Prevent adding if sync already captured it
+        const alreadyExists = ticket.messages.find(m => m.messageId === emailResult.messageId);
+
+        if (!alreadyExists) {
+            // Save reply thread
+            ticket.messages.push({
+                sender: req.user.name || 'Support Staff',
+                text: message,
+                messageId: emailResult.messageId, // CRITICAL: Prevents duplication in sync
+                timestamp: new Date()
+            });
+            ticket.status = 'In Progress';
+            await ticket.save();
+        }
 
         // LOG ACTION (AuditLog)
         await AuditLog.create({
@@ -126,8 +135,14 @@ router.post('/reply', auth, async (req, res) => {
 
 // @route   POST /api/support/send-bulk
 // @desc    Send email to all users or specific roles (SMTP GMAIL)
-router.post('/send-bulk', auth, async (req, res) => {
+router.post('/send-bulk', auth, upload.array('attachments'), async (req, res) => {
     const { role, subject, message, targetEmail } = req.body;
+    const files = req.files || [];
+
+    const attachments = files.map(file => ({
+        filename: file.originalname,
+        content: file.buffer
+    }));
     try {
         let users = [];
 
@@ -160,7 +175,8 @@ router.post('/send-bulk', auth, async (req, res) => {
                     <p>${message}</p>
                     <br/>
                     <p style="font-size:11px; color:#94a3b8;">Ref: Transmission Dispatched by ${req.user.name || 'Support'}</p>
-                </div>`
+                </div>`,
+                attachments // Pass attachments here
             );
 
             // IF MANUAL SINGLE SEND, CREATE TICKET IN DB
@@ -176,6 +192,7 @@ router.post('/send-bulk', auth, async (req, res) => {
                     messages: [{
                         sender: req.user.name || 'Support Agent',
                         text: message,
+                        messageId: result.messageId, // Prevents duplicates
                         timestamp: new Date()
                     }]
                 });
@@ -230,7 +247,13 @@ router.get('/stats', auth, async (req, res) => {
         const totalUsers = await User.countDocuments();
         const openTickets = await Ticket.countDocuments({ status: 'Open' });
         const solvedTickets = await Ticket.countDocuments({ status: 'Solved' });
-        const recentLogs = await AuditLog.find().sort({ timestamp: -1 }).limit(20);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const totalEmailsSentToday = await SupportActivity.countDocuments({
+            status: 'Sent',
+            timestamp: { $gte: today }
+        });
 
         res.json({
             success: true,
@@ -238,6 +261,7 @@ router.get('/stats', auth, async (req, res) => {
                 totalUsers,
                 openTickets,
                 solvedTickets,
+                totalEmailsSentToday,
                 health: 'Optimal',
                 recentLogs
             }

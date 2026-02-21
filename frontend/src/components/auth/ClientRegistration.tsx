@@ -545,16 +545,16 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                 </select>
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Upload ID Proof * <span className={styles.fileHint}>(JPG, PNG, PDF | Max 5MB)</span></label>
+                                <label>Upload ID Proof * <span className={styles.fileHint}>(JPG, PNG | Max 5MB)</span></label>
                                 <input
                                     type="file"
-                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    accept=".jpg,.jpeg,.png"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
                                         if (file) {
-                                            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+                                            const allowedTypes = ['image/jpeg', 'image/png'];
                                             if (!allowedTypes.includes(file.type)) {
-                                                alert('Invalid file type. Please upload JPG, PNG or PDF.');
+                                                alert('Invalid file type. Please upload JPG or PNG.');
                                                 e.target.value = '';
                                                 return;
                                             }
@@ -1628,6 +1628,16 @@ const ClientRegistration: React.FC<ClientRegistrationProps> = ({ onClose }) => {
                                     <ShieldCheck size={20} className={styles.noteIcon} />
                                     <p>Your application is under verification. Please wait for <strong>12-24 hours</strong>. You will receive an email with your account details shortly.</p>
                                 </div>
+
+                                <button
+                                    className={styles.loginBtn}
+                                    onClick={() => {
+                                        onClose();
+                                        openAuthModal('login', { email: formData.email, password: formData.password });
+                                    }}
+                                >
+                                    Login & Explore Platform
+                                </button>
 
                                 <button
                                     className={styles.finishBtn}

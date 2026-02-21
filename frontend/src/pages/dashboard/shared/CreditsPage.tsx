@@ -49,7 +49,7 @@ const CreditsPage: React.FC<{ backToHome?: () => void }> = ({ backToHome }) => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>}
+                {/* {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>} */}
                 <h1>Institutional Foundation & Credits</h1>
             </div>
 

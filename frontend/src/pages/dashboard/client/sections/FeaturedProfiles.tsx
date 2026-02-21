@@ -188,22 +188,31 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
             ) : (
                 <div className={styles.gridContainer}>
                     <div className={styles.grid}>
-                        {filteredAdvocates.map(adv => (
-                            <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
-                                <AdvocateCard
-                                    advocate={adv}
-                                    variant="featured"
-                                    isPremium={isPremium}
-                                    onAction={async (action, data) => {
-                                        if (action === 'view_profile') {
-                                            showDetailedProfile(adv.unique_id);
-                                            return;
-                                        }
-                                        handleInteraction(adv, action, data);
-                                    }}
-                                />
+                        {filteredAdvocates.length > 0 ? (
+                            filteredAdvocates.map(adv => (
+                                <div key={adv.id} onClick={() => showDetailedProfile(adv.unique_id)} style={{ cursor: 'pointer' }}>
+                                    <AdvocateCard
+                                        advocate={adv}
+                                        variant="featured"
+                                        isPremium={isPremium}
+                                        onAction={async (action, data) => {
+                                            if (action === 'view_profile') {
+                                                showDetailedProfile(adv.unique_id);
+                                                return;
+                                            }
+                                            handleInteraction(adv, action, data);
+                                        }}
+                                    />
+                                </div>
+                            ))
+                        ) : (
+                            <div className={styles.noProfiles}>
+                                <p>No featured advocates found at the moment.</p>
+                                <button onClick={() => showsidePage('normalfccards')} className={styles.switchBtn}>
+                                    Browse All Profiles
+                                </button>
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             )}

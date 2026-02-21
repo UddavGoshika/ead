@@ -9,10 +9,10 @@ interface Props {
 
 const AdvisorBottomNav: React.FC<Props> = ({ bottomNavClick, currentPage }) => {
     const items = [
-        { id: 'messenger', label: 'Inbox', icon: MessageSquare },
-        { id: 'activity', label: 'Feeds', icon: Clock },
-        { id: 'blogs', label: 'Insights', icon: Newspaper },
-        { id: 'my-cases', label: 'Tasks', icon: Briefcase }
+        { id: 'messenger', label: 'Messenger', icon: MessageSquare },
+        { id: 'activity', label: 'Activity', icon: Clock },
+        { id: 'blogs', label: 'Blogs', icon: Newspaper },
+        { id: 'my-cases', label: 'My Cases', icon: Briefcase }
     ];
 
     return (

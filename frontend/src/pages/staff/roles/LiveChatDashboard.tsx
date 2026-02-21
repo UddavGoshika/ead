@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '../../../services/chatService';
 import type { ChatMessage, ChatSession } from '../../../services/chatService';
 import { useAuth } from '../../../context/AuthContext';
+import { staffService } from '../../../services/api';
 import { WebRTCService } from '../../../services/WebRTCService';
 import { db } from '../../../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -20,6 +21,40 @@ import { doc, onSnapshot } from 'firebase/firestore';
 interface LiveChatDashboardProps {
     view?: 'dashboard' | 'live' | 'history' | 'performance';
 }
+
+const ChatHistoryView: React.FC = () => {
+    return (
+        <div className={styles.emptyCenter}>
+            <h2>Chat History</h2>
+            <p>Archived sessions will appear here. Completed chats are tracked per session.</p>
+            <p style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>No archived records to display yet.</p>
+        </div>
+    );
+};
+
+const PerformanceView: React.FC = () => {
+    const { user } = useAuth();
+    const [stats, setStats] = useState<{ solvedCases?: number; pendingCases?: number; successRate?: string; callsToday?: number; convertedLeads?: number } | null>(null);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        staffService.getPerformance().then(({ data }) => {
+            if (data.success && data.stats) setStats(data.stats);
+        }).catch(() => {}).finally(() => setLoading(false));
+    }, []);
+    if (loading) return <div className={styles.emptyCenter}><p>Loading metrics...</p></div>;
+    return (
+        <div className={styles.fullDashboardArea} style={{ padding: 24 }}>
+            <h2 style={{ marginBottom: 20 }}>My Performance</h2>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div className={styles.statCard}><span>Solved Cases</span><strong>{stats?.solvedCases ?? 0}</strong></div>
+                <div className={styles.statCard}><span>Pending Cases</span><strong>{stats?.pendingCases ?? 0}</strong></div>
+                <div className={styles.statCard}><span>Success Rate</span><strong>{stats?.successRate ?? '0%'}</strong></div>
+                <div className={styles.statCard}><span>Calls Today</span><strong>{stats?.callsToday ?? 0}</strong></div>
+                <div className={styles.statCard}><span>Converted Leads</span><strong>{stats?.convertedLeads ?? 0}</strong></div>
+            </div>
+        </div>
+    );
+};
 
 const LiveChatDashboard = ({ view = 'live' }: LiveChatDashboardProps) => {
     const { user } = useAuth();
@@ -384,8 +419,8 @@ const LiveChatDashboard = ({ view = 'live' }: LiveChatDashboardProps) => {
         <div className={styles.fullDashboardArea}>
             {view === 'dashboard' && renderDashboard()}
             {view === 'live' && renderLiveChat()}
-            {view === 'history' && <div className={styles.emptyCenter}><h2>Chat History</h2><p>Archive loading...</p></div>}
-            {view === 'performance' && <div className={styles.emptyCenter}><h2>Performance</h2><p>Syncing service metrics...</p></div>}
+            {view === 'history' && <ChatHistoryView />}
+            {view === 'performance' && <PerformanceView />}
         </div>
     );
 };

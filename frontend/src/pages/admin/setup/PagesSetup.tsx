@@ -3,6 +3,7 @@ import styles from "./HeaderSetup.module.css";
 import api from "../../../services/api";
 import { Loader2, Plus, Edit, Trash2, X } from "lucide-react";
 import { useSettings } from "../../../context/SettingsContext";
+import { useToast } from "../../../context/ToastContext";
 
 /* ================= TYPES ================= */
 interface PageItem {
@@ -55,6 +56,7 @@ const FOOTER_DEFAULTS: PageItem[] = [
 /* ================= COMPONENT ================= */
 const PagesSetup: React.FC = () => {
     const { refreshPages } = useSettings();
+    const { showToast } = useToast();
     const [pages, setPages] = useState<PageItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -74,12 +76,11 @@ const PagesSetup: React.FC = () => {
             if (res.data.success && res.data.pages.length > 0) {
                 setPages(res.data.pages);
             } else if (res.data.pages.length === 0) {
-                // If DB empty, show defaults as mock and offer to seed
                 setPages(FOOTER_DEFAULTS);
             }
         } catch (err) {
             console.error("Fetch Pages Error:", err);
-            setPages(FOOTER_DEFAULTS); // Fallback to mock if API fails
+            setPages(FOOTER_DEFAULTS);
         } finally {
             setLoading(false);
         }
@@ -104,7 +105,7 @@ const PagesSetup: React.FC = () => {
     const handleDelete = async (id: string, title: string) => {
         if (!window.confirm(`Are you sure you want to delete the "${title}" page?`)) return;
         try {
-            if (id.startsWith('mock-')) { // Mock handle
+            if (id.startsWith('mock-')) {
                 setPages(pages.filter(p => (p._id || p.id?.toString()) !== id));
                 return;
             }
@@ -113,9 +114,10 @@ const PagesSetup: React.FC = () => {
                 fetchPages();
                 refreshPages();
                 localStorage.setItem('pages_timestamp', Date.now().toString());
+                showToast("Page deleted successfully");
             }
         } catch (err) {
-            alert("Delete failed.");
+            showToast("Delete failed.", "error");
         }
     };
 
@@ -124,15 +126,17 @@ const PagesSetup: React.FC = () => {
         try {
             if (editingPage?._id) {
                 await api.put(`/pages/${editingPage._id}`, formData);
+                showToast("Page updated successfully");
             } else {
                 await api.post("/pages", formData);
+                showToast("Page created successfully");
             }
             setShowModal(false);
             fetchPages();
             refreshPages();
             localStorage.setItem('pages_timestamp', Date.now().toString());
         } catch (err: any) {
-            alert(err.response?.data?.error || "Operation failed.");
+            showToast(err.response?.data?.error || "Operation failed.", "error");
         }
     };
 
@@ -143,13 +147,15 @@ const PagesSetup: React.FC = () => {
             for (const p of FOOTER_DEFAULTS) {
                 try {
                     await api.post("/pages", p);
-                } catch (e) { } // Ignore duplicates (if route exists)
+                } catch (e) { }
             }
             fetchPages();
             refreshPages();
             localStorage.setItem('pages_timestamp', Date.now().toString());
+            showToast("Default pages seeded successfully!");
         } catch (err) {
             console.error(err);
+            showToast("Seeding failed.", "error");
         } finally {
             setLoading(false);
         }
@@ -160,7 +166,7 @@ const PagesSetup: React.FC = () => {
             <div className={styles.topHeader}>
                 <h2>Website Pages Management</h2>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    {pages.length === FOOTER_DEFAULTS.length && !pages[0]._id && (
+                    {pages.length === FOOTER_DEFAULTS.length && !pages[0]?._id && (
                         <button className={styles.outlineBtn} onClick={seedPages} style={{ borderColor: '#facc15', color: '#facc15' }}>
                             Save All to Database
                         </button>
@@ -230,7 +236,6 @@ const PagesSetup: React.FC = () => {
                 )}
             </section>
 
-            {/* CREATE / EDIT MODAL */}
             {showModal && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

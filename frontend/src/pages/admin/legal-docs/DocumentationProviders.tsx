@@ -319,10 +319,15 @@ import {
     Edit,
     UserCheck,
     Loader2,
-    LogIn
+    LogIn,
+    MoreVertical,
+    ShieldAlert,
+    ShieldCheck
 } from "lucide-react";
 import { MdSyncAlt } from "react-icons/md";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { useAuth } from "../../../context/AuthContext";
 
 interface DocumentationProvider {
     id: string;
@@ -404,6 +409,8 @@ const DocumentationProviders = () => {
     const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | null>(null);
     const [selectedService, setSelectedService] = useState("All");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [selectedProvider, setSelectedProvider] = useState<DocumentationProvider | null>(null);
+    const { impersonate } = useAuth();
 
     const serviceTypes = [
         { id: "All", label: "All" },
@@ -419,7 +426,7 @@ const DocumentationProviders = () => {
         try {
             setLoading(true);
             const res = await axios.get("/api/admin/members", {
-                params: { role: "Advocate" }
+                params: { role: "legal_provider" }
             });
 
             if (res.data.success) {
@@ -583,6 +590,66 @@ const DocumentationProviders = () => {
 
     const toggleMenu = (id: string) => {
         setOpenMenuId(openMenuId === id ? null : id);
+    };
+
+    const handleUpdateStatus = async (id: string, status: string) => {
+        if (!window.confirm(`Are you sure you want to change status to ${status}?`)) return;
+        try {
+            const res = await axios.patch(`/api/admin/members/${id}/status`, { status });
+            if (res.data.success) {
+                toast.success(`Status updated to ${status}`);
+                fetchProviders();
+                setOpenMenuId(null);
+            }
+        } catch (err) {
+            toast.error("Failed to update status");
+        }
+    };
+
+    const handleVerify = async (id: string, verified: boolean) => {
+        const action = verified ? "Verify" : "Unverify";
+        if (!window.confirm(`Are you sure you want to ${action} this provider?`)) return;
+        try {
+            const res = await axios.patch(`/api/admin/members/${id}/verify`, { verified });
+            if (res.data.success) {
+                toast.success(`Provider ${verified ? 'verified' : 'unverified'}`);
+                fetchProviders();
+                setOpenMenuId(null);
+            }
+        } catch (err) {
+            toast.error("Failed to update verification status");
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("Are you sure you want to delete this member? This action cannot be undone.")) return;
+        try {
+            const res = await axios.patch(`/api/admin/members/${id}/status`, { status: "Deleted" });
+            if (res.data.success) {
+                toast.success("Member deleted");
+                fetchProviders();
+                setOpenMenuId(null);
+            }
+        } catch (err) {
+            toast.error("Failed to delete member");
+        }
+    };
+
+    const handleImpersonate = (p: any) => {
+        if (window.confirm(`You are about to log in as ${p.name}. Proceed?`)) {
+            impersonate({
+                id: p.id,
+                name: p.name,
+                role: 'legal_provider',
+                email: p.email,
+                unique_id: p.adv_id
+            } as any);
+        }
+    };
+
+    const handleViewDetails = (p: any) => {
+        setSelectedProvider(p);
+        setOpenMenuId(null);
     };
 
     if (loading) {
@@ -832,29 +899,15 @@ const DocumentationProviders = () => {
                                             <td style={{ color: "#10b981", fontWeight: 500 }}>₹{earned.toLocaleString()}</td>
                                             <td>{p.joinDate}</td>
                                             <td>
-                                                <div className={styles.rowActions} style={{ position: "relative" }}>
-                                                    <button className={styles.actionIcon} title="View">
-                                                        <Eye size={16} />
-                                                    </button>
-
+                                                <div className={styles.rowActions}>
                                                     <button
                                                         className={styles.actionIcon}
-                                                        style={{
-                                                            color: "#3b82f6",
-                                                            border: "1px solid rgba(59,130,246,0.3)",
-                                                            padding: "4px 10px",
-                                                            fontSize: "0.85rem",
-                                                        }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             toggleMenu(p.id);
                                                         }}
                                                     >
-                                                        Manage
-                                                    </button>
-
-                                                    <button className={styles.actionIcon} title="Delete" style={{ color: "#ef4444" }}>
-                                                        <Trash2 size={16} />
+                                                        <MoreVertical size={20} />
                                                     </button>
 
                                                     {openMenuId === p.id && (
@@ -862,17 +915,47 @@ const DocumentationProviders = () => {
                                                             className={styles.dropdownMenu}
                                                             onClick={(e) => e.stopPropagation()}
                                                         >
-                                                            <button><LogIn size={14} /> Login as Specialist</button>
-                                                            <button><UserCheck size={14} /> Verify / Re-verify</button>
-                                                            <button><Edit size={14} /> Edit Profile</button>
-                                                            <button style={{ color: "#f59e0b" }}>
-                                                                <Shield size={14} /> Flag / Review
+                                                            <div className={styles.menuDivider}>Main Actions</div>
+                                                            <button onClick={() => handleViewDetails(p)}>
+                                                                <Eye size={14} /> View Details
                                                             </button>
-                                                            <button style={{ color: "#ef4444" }}>
+                                                            <button onClick={() => handleImpersonate(p)}>
+                                                                <LogIn size={14} /> Login as Specialist
+                                                            </button>
+
+                                                            <div className={styles.menuDivider}>Status Management</div>
+
+                                                            {p.status !== 'Active' && (
+                                                                <button onClick={() => handleUpdateStatus(p.id, 'Active')}>
+                                                                    <CheckCircle size={14} style={{ color: '#22c55e' }} /> Mark as Active
+                                                                </button>
+                                                            )}
+
+                                                            <button
+                                                                style={{ color: "#ef4444" }}
+                                                                onClick={() => handleUpdateStatus(p.id, 'Blocked')}
+                                                            >
                                                                 <Ban size={14} /> Block / Suspend
                                                             </button>
-                                                            <button style={{ color: "#94a3b8" }}>
-                                                                <MdSyncAlt size={14} /> Reset Password
+
+                                                            <button
+                                                                style={{ color: "#f59e0b" }}
+                                                                onClick={() => handleUpdateStatus(p.id, 'Deactivated')}
+                                                            >
+                                                                <ShieldAlert size={14} /> Deactivate Account
+                                                            </button>
+
+                                                            <div className={styles.menuDivider}>Verification</div>
+                                                            <button onClick={() => handleVerify(p.id, !p.verified)}>
+                                                                <ShieldCheck size={14} /> {p.verified ? 'Unverify Profile' : 'Verify Profile'}
+                                                            </button>
+
+                                                            <div className={styles.menuDivider}>Account</div>
+                                                            <button
+                                                                style={{ color: "#ef4444", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "4px", paddingTop: "8px" }}
+                                                                onClick={() => handleDelete(p.id)}
+                                                            >
+                                                                <Trash2 size={14} /> Delete Member
                                                             </button>
                                                         </div>
                                                     )}
@@ -1028,6 +1111,77 @@ const DocumentationProviders = () => {
                                         })}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Provider Details Modal */}
+            {selectedProvider && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedProvider(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h2>Specialist Profile Details</h2>
+                            <button className={styles.closeBtn} onClick={() => setSelectedProvider(null)}>
+                                <X size={28} />
+                            </button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.detailGrid}>
+                                <div className={styles.profileHero}>
+                                    <div className={styles.largeAvatar}>
+                                        <UserCircle size={48} />
+                                    </div>
+                                    <div className={styles.heroInfo}>
+                                        <h3>{selectedProvider.name}</h3>
+                                        <p>{selectedProvider.adv_id}</p>
+                                    </div>
+                                </div>
+
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <label>Email Address</label>
+                                        <p>{selectedProvider.email}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Phone Number</label>
+                                        <p>{selectedProvider.mobile}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Specialization</label>
+                                        <p>{selectedProvider.specialization}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Experience</label>
+                                        <p>{selectedProvider.experience}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>License ID</label>
+                                        <p>{selectedProvider.license_id}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Location</label>
+                                        <p>{selectedProvider.location}</p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Account Status</label>
+                                        <p className={`${styles.statusBadge} ${styles[selectedProvider.status.toLowerCase()]}`}>
+                                            {selectedProvider.status}
+                                        </p>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label>Verification</label>
+                                        <p style={{ color: selectedProvider.verified ? '#10b981' : '#f59e0b', fontWeight: 700 }}>
+                                            {selectedProvider.verified ? 'VERIFIED' : 'PENDING'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.secondaryBtn} onClick={() => setSelectedProvider(null)}>Close</button>
+                            <button className={styles.primaryBtn} onClick={() => handleImpersonate(selectedProvider)}>
+                                Login as Specialist
+                            </button>
                         </div>
                     </div>
                 </div>

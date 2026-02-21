@@ -9,7 +9,10 @@ import {
   Settings,
   GraduationCap,
   Layers,
-  Shield
+  Shield,
+  Clock,
+  Lock,
+  Upload
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { advocateService, authService, clientService } from '../../../services/api';
@@ -92,7 +95,8 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
           gender: formData.gender,
           dob: formData.dob,
           mobile: formData.mobile,
-          idProofType: formData.idProofType
+          idProofType: formData.idProofType,
+          email: formData.email
         };
         break;
 
@@ -101,10 +105,56 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
           location: {
             state: formData.state,
             city: formData.city,
+            district: formData.district,
             pincode: formData.pincode,
             officeAddress: formData.officeAddress,
             permanentAddress: formData.permanentAddress,
             country: 'India'
+          }
+        };
+        break;
+
+      case 'Professional Practice':
+        payload = {
+          practice: {
+            court: formData.court,
+            experience: formData.experience,
+            specialization: formData.specialization,
+            subSpecialization: formData.subSpecialization,
+            barState: formData.barState,
+            barAssociation: formData.barAssociation,
+          }
+        };
+        break;
+
+      case 'Education & Background':
+        payload = {
+          education: {
+            degree: formData.degree,
+            university: formData.university,
+            college: formData.college,
+            gradYear: formData.gradYear,
+            enrollmentNo: formData.enrollmentNo,
+          }
+        };
+        break;
+
+      case 'Career & Bio':
+        payload = {
+          career: {
+            bio: formData.bio,
+            languages: formData.languages,
+            skills: formData.skills,
+          }
+        };
+        break;
+
+      case 'Availability & Schedule':
+        payload = {
+          availability: {
+            consultationFee: formData.consultationFee,
+            days: formData.days?.split(',').map((s: string) => s.trim()).filter(Boolean),
+            timeSlots: formData.timeSlots?.split(',').map((s: string) => s.trim()).filter(Boolean),
           }
         };
         break;
@@ -121,6 +171,28 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         };
         break;
 
+      case 'Change Password':
+        if (formData.newPassword !== formData.confirmPassword) {
+          showToast?.('Passwords do not match');
+          return;
+        }
+        setLoading(true);
+        try {
+          const res = await authService.changePassword({
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword
+          });
+          if (res.data.success) {
+            showToast?.('Password changed successfully');
+            setActiveLayout(null);
+          }
+        } catch (err: any) {
+          showToast?.(err.response?.data?.error || 'Password change failed');
+        } finally {
+          setLoading(false);
+        }
+        return;
+
       default:
         return;
     }
@@ -129,7 +201,13 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
 
     if (activeLayout === 'Personal Details' && selectedFile) {
       const fd = new FormData();
-      Object.keys(payload).forEach(k => fd.append(k, payload[k]));
+      Object.keys(payload).forEach(k => {
+        if (typeof payload[k] === 'object' && payload[k] !== null) {
+          fd.append(k, JSON.stringify(payload[k]));
+        } else {
+          fd.append(k, payload[k]);
+        }
+      });
       fd.append('profilePic', selectedFile);
       dataToSend = fd;
     }
@@ -158,9 +236,9 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         setActiveLayout(null);
         setSelectedFile(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      showToast?.('Update failed');
+      showToast?.(err.response?.data?.error || 'Update failed');
     } finally {
       setLoading(false);
     }
@@ -169,8 +247,14 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
   const menuItems = [
     { title: 'Personal Details', icon: <User />, text: 'Name, Contact, ID Proof' },
     { title: 'Location Details', icon: <MapPin />, text: 'Address, City, State' },
-    ...(user?.role === 'client' ? [{ title: 'Legal Preferences', icon: <Briefcase />, text: 'Case Type, Language, Mode' }] : []),
-    { title: 'Account & Settings', icon: <Settings />, text: 'Privacy, Password, Notifications' }
+    ...(user?.role === 'client' ? [{ title: 'Legal Preferences', icon: <Briefcase />, text: 'Case Type, Language, Mode' }] : [
+      { title: 'Education & Background', icon: <GraduationCap />, text: 'Degree, University, Graduation' },
+      { title: 'Professional Practice', icon: <Briefcase />, text: 'Court, Specialization, License' },
+      { title: 'Career & Bio', icon: <Layers />, text: 'Bio, Languages, Skills' },
+      { title: 'Availability & Schedule', icon: <Clock size={16} />, text: 'Fee, Slots, Working Days' }
+    ]),
+    { title: 'Change Password', icon: <Lock size={16} />, text: 'Update login credentials' },
+    { title: 'Account Settings', icon: <Settings />, text: 'Privacy & Notifications' }
   ];
 
   const openModal = (layout: string) => {
@@ -187,12 +271,47 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         idProofType: data.idProofType || 'Aadhaar Card'
       };
     } else if (layout === 'Location Details') {
+      const addr = data.location || data.address || {};
       initialData = {
-        state: data.location?.state || data.address?.state || '',
-        city: data.location?.city || data.address?.city || '',
-        pincode: data.location?.pincode || data.address?.pincode || '',
-        officeAddress: data.location?.officeAddress || data.address?.office || '',
-        permanentAddress: data.location?.permanentAddress || data.address?.permanent || ''
+        state: addr.state || '',
+        city: addr.city || '',
+        district: addr.district || '',
+        pincode: addr.pincode || '',
+        officeAddress: addr.officeAddress || addr.office || '',
+        permanentAddress: addr.permanentAddress || addr.permanent || ''
+      };
+    } else if (layout === 'Professional Practice') {
+      const practice = data.practice || {};
+      initialData = {
+        court: practice.court || '',
+        experience: practice.experience || '',
+        specialization: practice.specialization || '',
+        subSpecialization: practice.subSpecialization || '',
+        barState: practice.barState || '',
+        barAssociation: practice.barAssociation || '',
+      };
+    } else if (layout === 'Education & Background') {
+      const edu = data.education || {};
+      initialData = {
+        degree: edu.degree || '',
+        university: edu.university || '',
+        college: edu.college || '',
+        gradYear: edu.gradYear || '',
+        enrollmentNo: edu.enrollmentNo || '',
+      };
+    } else if (layout === 'Career & Bio') {
+      const career = data.career || {};
+      initialData = {
+        bio: career.bio || '',
+        languages: career.languages || '',
+        skills: career.skills || '',
+      };
+    } else if (layout === 'Availability & Schedule') {
+      const avail = data.availability || {};
+      initialData = {
+        consultationFee: avail.consultationFee || '',
+        days: (avail.days || []).join(', '),
+        timeSlots: (avail.timeSlots || []).join(', '),
       };
     } else if (layout === 'Legal Preferences') {
       initialData = {
@@ -201,6 +320,12 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
         mode: data.legalHelp?.mode || '',
         languages: data.legalHelp?.languages || '',
         issueDescription: data.legalHelp?.issueDescription || ''
+      };
+    } else if (layout === 'Change Password') {
+      initialData = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       };
     }
 
@@ -211,11 +336,11 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        {backToHome && (
+        {/* {backToHome && (
           <button onClick={backToHome} className={styles.backBtn}>
             <ArrowLeft size={20} />
           </button>
-        )}
+        )} */}
         <h2>Edit Profile</h2>
       </div>
 
@@ -261,10 +386,11 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
                 <>
                   <InputGroup label="First Name" name="firstName" value={formData.firstName} onChange={handleInputChange} />
                   <InputGroup label="Last Name" name="lastName" value={formData.lastName} onChange={handleInputChange} />
-                  <InputGroup label="Gender" name="gender" type="select" options={['Male', 'Female', 'Other']} value={formData.gender} onChange={handleInputChange} />
+                  {/* <InputGroup label="Gender" name="gender" type="select" options={['Male', 'Female', 'Other']} value={formData.gender} onChange={handleInputChange} /> */}
                   <InputGroup label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
                   <InputGroup label="Mobile Number" name="mobile" value={formData.mobile} onChange={handleInputChange} />
-                  <InputGroup label="ID Proof Type" name="idProofType" type="select" options={['Aadhaar Card', 'PAN Card', 'Voter ID']} value={formData.idProofType} onChange={handleInputChange} />
+                  <InputGroup label="Email" name="email" value={formData.email} onChange={handleInputChange} />
+                  {/* <InputGroup label="ID Proof Type" name="idProofType" type="select" options={['Aadhaar Card', 'PAN Card', 'Voter ID']} value={formData.idProofType} onChange={handleInputChange} /> */}
                   <div className={styles.inputGroup}>
                     <label>Profile Picture</label>
                     <input type="file" onChange={handleInputChange} accept="image/*" />
@@ -285,9 +411,57 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
                   <InputGroup label="Category" name="category" type="select" options={['Civil', 'Criminal', 'Corporate', 'Family', 'Property']} value={formData.category} onChange={handleInputChange} />
                   <InputGroup label="Specialization" name="specialization" type="select" options={['Divorce', 'Murder', 'IPR', 'Real Estate']} value={formData.specialization} onChange={handleInputChange} />
                   <InputGroup label="Consultation Mode" name="mode" type="select" options={['Video', 'Audio', 'Chat', 'In-Person']} value={formData.mode} onChange={handleInputChange} />
+                  <InputGroup label="Preferred Languages" name="languages" value={formData.languages} onChange={handleInputChange} />
+                  <div className={styles.inputGroup}>
+                    <label>Brief Issue Description</label>
+                    <textarea name="issueDescription" value={formData.issueDescription} onChange={handleInputChange} className={styles.textArea} />
+                  </div>
                 </>
               )}
-              {activeLayout === 'Account & Settings' && (
+              {activeLayout === 'Education & Background' && (
+                <>
+                  <InputGroup label="Degree" name="degree" value={formData.degree} onChange={handleInputChange} />
+                  <InputGroup label="University" name="university" value={formData.university} onChange={handleInputChange} />
+                  <InputGroup label="College" name="college" value={formData.college} onChange={handleInputChange} />
+                  <InputGroup label="Graduation Year" name="gradYear" type="number" value={formData.gradYear} onChange={handleInputChange} />
+                  <InputGroup label="Enrollment Number" name="enrollmentNo" value={formData.enrollmentNo} onChange={handleInputChange} />
+                </>
+              )}
+              {activeLayout === 'Professional Practice' && (
+                <>
+                  <InputGroup label="Court of Practice" name="court" value={formData.court} onChange={handleInputChange} />
+                  <InputGroup label="Experience (Years)" name="experience" type="number" value={formData.experience} onChange={handleInputChange} />
+                  <InputGroup label="Primary Specialization" name="specialization" value={formData.specialization} onChange={handleInputChange} />
+                  <InputGroup label="Sub Specialization" name="subSpecialization" value={formData.subSpecialization} onChange={handleInputChange} />
+                  <InputGroup label="Bar Council State" name="barState" value={formData.barState} onChange={handleInputChange} />
+                  <InputGroup label="Bar Association" name="barAssociation" value={formData.barAssociation} onChange={handleInputChange} />
+                </>
+              )}
+              {activeLayout === 'Career & Bio' && (
+                <>
+                  <div className={styles.inputGroup}>
+                    <label>Professional Biography</label>
+                    <textarea name="bio" value={formData.bio} onChange={handleInputChange} className={styles.textArea} />
+                  </div>
+                  <InputGroup label="Languages Spoken" name="languages" value={formData.languages} onChange={handleInputChange} />
+                  <InputGroup label="Core Skills" name="skills" value={formData.skills} onChange={handleInputChange} />
+                </>
+              )}
+              {activeLayout === 'Availability & Schedule' && (
+                <>
+                  {/* <InputGroup label="Consultation Fee (₹)" name="consultationFee" type="number" value={formData.consultationFee} onChange={handleInputChange} /> */}
+                  <InputGroup label="Available Days (e.g. Mon, Tue, Fri)" name="days" value={formData.days} onChange={handleInputChange} />
+                  <InputGroup label="Time Slots (e.g. 10AM-12PM)" name="timeSlots" value={formData.timeSlots} onChange={handleInputChange} />
+                </>
+              )}
+              {activeLayout === 'Change Password' && (
+                <>
+                  <InputGroup label="Current Password" name="currentPassword" type="password" value={formData.currentPassword} onChange={handleInputChange} />
+                  <InputGroup label="New Password" name="newPassword" type="password" value={formData.newPassword} onChange={handleInputChange} />
+                  <InputGroup label="Confirm New Password" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleInputChange} />
+                </>
+              )}
+              {(activeLayout === 'Account & Settings' || activeLayout === 'Account Settings') && (
                 <div className={styles.settingsWrapper}>
                   {!formData.settingsView ? (
                     <div className={styles.settingsGrid}>
@@ -398,6 +572,9 @@ const EditProfile: React.FC<Props> = ({ backToHome, showToast }) => {
               <button className={styles.cancel} onClick={() => setActiveLayout(null)}>
                 {activeLayout === 'Account & Settings' ? 'Close' : 'Cancel'}
               </button>
+
+
+
               {activeLayout !== 'Account & Settings' && (
                 <button className={styles.save} onClick={handleSave} disabled={loading}>
                   {loading ? 'Saving...' : 'Save'}

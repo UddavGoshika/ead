@@ -1404,6 +1404,101 @@ router.post('/config/attributes/:role', async (req, res) => {
     }
 });
 
+// ================= REFERRAL USER MANAGEMENT =================
+// GET ALL REFERRAL USERS (Filtering by role)
+router.get('/referral/users', async (req, res) => {
+    try {
+        const referralRoles = ['referral', 'influencer', 'marketer', 'marketing_agency', 'teamlead', 'manager', 'hr', 'email_support', 'call_support', 'data_entry'];
+        const users = await User.find({
+            role: { $in: referralRoles },
+            status: { $ne: 'Deleted' }
+        }).sort({ createdAt: -1 });
+
+        const referralUsers = await Promise.all(users.map(async (u) => {
+            // Calculate earnings logic here or fetch from transactions
+            const Transaction = require('../models/Transaction');
+            const earnings = await Transaction.aggregate([
+                { $match: { userId: u._id, packageId: 'referral_earning', status: 'completed' } },
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ]);
+
+            const totalEarned = earnings[0]?.total || 0;
+
+            // Withdrawals
+            const withdrawals = await Transaction.aggregate([
+                { $match: { userId: u._id, packageId: 'withdrawal', status: 'completed' } },
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ]);
+            const totalWithdrawn = withdrawals[0]?.total || 0;
+
+            return {
+                id: u._id,
+                name: u.name,
+                userId: u.loginId || `REF-${u._id.toString().slice(-6).toUpperCase()}`,
+                email: u.email,
+                phone: u.phone || 'N/A',
+                role: u.role,
+                status: u.status,
+                myReferralCode: u.myReferralCode,
+                walletBalance: u.walletBalance || 0,
+                totalEarned: totalEarned,
+                withdrawn: totalWithdrawn,
+                pending: (u.walletBalance || 0),
+                createdAt: u.createdAt
+            };
+        }));
+
+        res.json({ success: true, users: referralUsers });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ONBOARD NEW REFERRAL USER
+router.post('/referral/onboard-user', async (req, res) => {
+    try {
+        const { email, name, phone, loginId, password, role, referralCode } = req.body;
+
+        if (!email || !name || !loginId || !password || !role) {
+            return res.status(400).json({ success: false, error: 'Missing required fields' });
+        }
+
+        const existingUser = await User.findOne({ $or: [{ email }, { loginId }] });
+        if (existingUser) {
+            return res.status(400).json({ success: false, error: 'User with this email or Login ID already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = await User.create({
+            email,
+            password: hashedPassword,
+            name,
+            phone,
+            loginId,
+            plainPassword: password, // As requested by user for admin visibility
+            role: role.toLowerCase(),
+            myReferralCode: referralCode || `REF-${Math.floor(1000 + Math.random() * 9000)}`,
+            status: 'Active',
+            walletBalance: 0
+        });
+
+        // Optional: Create a staff profile if needed for role consistency
+        const StaffProfile = require('../models/StaffProfile');
+        await StaffProfile.create({
+            userId: newUser._id,
+            staffId: loginId,
+            department: 'Referral',
+            level: 'Junior'
+        });
+
+        res.json({ success: true, message: 'Referral user created successfully', user: newUser });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ================= REFERRAL COMMISSION MANAGEMENT =================
 // GET ALL RULES
 router.get('/referral/rules', async (req, res) => {
@@ -1473,4 +1568,82 @@ router.post('/test-approve-email', async (req, res) => {
     }
 });
 
+// GET UPLOADED FILES
+router.get('/files', async (req, res) => {
+    try {
+        const uploadDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            return res.json({ success: true, files: [] });
+        }
+
+        const files = [];
+        const scanDir = (dir, basePath = '') => {
+            const list = fs.readdirSync(dir);
+            list.forEach(file => {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                if (stat.isDirectory()) {
+                    scanDir(filePath, path.join(basePath, file));
+                } else {
+                    const fileUrl = `/uploads/${basePath ? basePath.replace(/\\/g, '/') + '/' : ''}${file}`;
+                    files.push({
+                        id: files.length + 1,
+                        name: file,
+                        size: (stat.size / 1024).toFixed(2) + ' KB',
+                        url: fileUrl,
+                        selected: false,
+                        path: filePath
+                    });
+                }
+            });
+        };
+
+        scanDir(uploadDir);
+        res.json({ success: true, files });
+    } catch (err) {
+        console.error('File fetch error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= OFFER & COUPON MANAGEMENT =================
+const Offer = require('../models/Offer');
+
+// GET ALL OFFERS
+router.get('/referral/offers', async (req, res) => {
+    try {
+        const offers = await Offer.find().sort({ createdAt: -1 });
+        res.json({ success: true, offers });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// CREATE/UPDATE OFFER
+router.post('/referral/offers', async (req, res) => {
+    try {
+        const data = req.body;
+        let offer;
+        if (data._id || data.id) {
+            offer = await Offer.findByIdAndUpdate(data._id || data.id, data, { new: true });
+        } else {
+            offer = await Offer.create(data);
+        }
+        res.json({ success: true, offer });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE OFFER
+router.delete('/referral/offers/:id', async (req, res) => {
+    try {
+        await Offer.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Offer deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;
+

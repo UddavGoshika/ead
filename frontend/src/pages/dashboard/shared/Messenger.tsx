@@ -39,6 +39,9 @@ interface MessengerProps {
 
 const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, onBack, onSelectForChat }) => {
     const { user } = useAuth();
+    const plan = (user?.plan || 'Free').toLowerCase();
+    const isPremium = !!(user?.isPremium || (plan !== 'free' && ['lite', 'pro', 'ultra'].some((p) => plan.includes(p))));
+    const canShowFull = isPremium || user?.role === 'legal_provider';
     const queryClient = useQueryClient();
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [messageText, setMessageText] = useState("");
@@ -479,8 +482,10 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
 
     if (selectedConversation || view === 'chat') {
         const activeConv = selectedConversation;
-        const displayName = activeConv?.advocate.name || selectedAdvocate?.name || 'User';
-        const displayId = activeConv?.advocate.unique_id || selectedAdvocate?.unique_id || '---';
+        const rawName = activeConv?.advocate.name || selectedAdvocate?.name || 'User';
+        const rawId = activeConv?.advocate.unique_id || selectedAdvocate?.unique_id || '---';
+        const displayName = canShowFull ? rawName : maskContactInfo(rawName);
+        const displayId = canShowFull ? rawId : maskContactInfo(rawId);
 
         return (
             <div className={styles.fullChatContainer}>
@@ -491,7 +496,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                         </button>
                         <div className={styles.profileClickArea} onClick={() => setSelectedProfileId(String(activeConv?.advocate.id || selectedAdvocate?.id))}>
                             <div className={styles.avatarMini}>
-                                {displayName.charAt(0)}
+                                {rawName.charAt(0)}
                             </div>
                             <div className={styles.headerInfo}>
                                 <h3>{displayName}</h3>
@@ -588,7 +593,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
                                         <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(String(conv.advocate.id), e); }} style={{ cursor: 'pointer' }}>
-                                            {conv.advocate.name}
+                                            {canShowFull ? conv.advocate.name : maskContactInfo(conv.advocate.name || '')}
                                         </h4>
                                         <span className={styles.convTime}>
                                             {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -596,7 +601,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                     </div>
                                     <div className={styles.convSub}>
                                         <span onClick={(e) => { e.stopPropagation(); handleClientClick(String(conv.advocate.id), e); }} style={{ cursor: 'pointer' }}>
-                                            {conv.advocate.unique_id || 'ID: N/A'}
+                                            {canShowFull ? (conv.advocate.unique_id || 'ID: N/A') : maskContactInfo(conv.advocate.unique_id || 'N/A')}
                                         </span>
                                         {conv.advocate.location && conv.advocate.location !== 'N/A' && (
                                             <>
@@ -642,13 +647,13 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}>
                                         <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(act.advocateId || act.receiver, e); }} style={{ cursor: 'pointer' }}>
-                                            {act.partnerName}
+                                            {canShowFull ? act.partnerName : maskContactInfo(act.partnerName || '')}
                                         </h4>
                                         <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
                                     </div>
                                     <div className={styles.convSub}>
                                         <span onClick={(e) => { e.stopPropagation(); handleClientClick(act.advocateId || act.receiver, e); }} style={{ cursor: 'pointer' }}>
-                                            {act.partnerUniqueId}
+                                            {canShowFull ? act.partnerUniqueId : maskContactInfo(act.partnerUniqueId || '')}
                                         </span>
                                         <span>•</span>
                                         <span style={{ color: act.type === 'superInterest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
@@ -733,7 +738,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                 <div className={styles.convDetails}>
                                                     <div className={styles.convTitleRow}>
                                                         <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(partnerId, e); }} style={{ cursor: 'pointer' }}>
-                                                            {conv.advocate.name}
+                                                            {canShowFull ? conv.advocate.name : maskContactInfo(conv.advocate.name || '')}
                                                         </h4>
                                                         <span className={styles.convTime}>
                                                             {conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -741,7 +746,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                     </div>
                                                     <div className={styles.convSub}>
                                                         <span onClick={(e) => { e.stopPropagation(); handleClientClick(partnerId, e); }} style={{ cursor: 'pointer' }}>
-                                                            {conv.advocate.unique_id || 'ID: N/A'}
+                                                            {canShowFull ? (conv.advocate.unique_id || 'ID: N/A') : maskContactInfo(conv.advocate.unique_id || 'N/A')}
                                                         </span>
                                                         <span>•</span>
                                                         <span style={{ color: '#22c55e', fontWeight: 'bold' }}>ACCEPTED CHAT</span>
@@ -779,7 +784,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                 <div className={styles.convDetails}>
                                                     <div className={styles.convTitleRow}>
                                                         <h4 onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
-                                                            {act.partnerName}
+                                                            {canShowFull ? act.partnerName : maskContactInfo(act.partnerName || '')}
                                                         </h4>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <span className={styles.convTime}>{new Date(act.timestamp).toLocaleDateString()}</span>
@@ -790,7 +795,7 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                                     </div>
                                                     <div className={styles.convSub}>
                                                         <span onClick={(e) => { e.stopPropagation(); handleClientClick(act.clientId || act.sender, e); }} style={{ cursor: 'pointer' }}>
-                                                            {act.partnerUniqueId}
+                                                            {canShowFull ? act.partnerUniqueId : maskContactInfo(act.partnerUniqueId || '')}
                                                         </span>
                                                         <span>•</span>
                                                         <span style={{ color: act.type === 'super-interest' ? '#facc15' : '#38bdf8', fontWeight: 'bold' }}>
@@ -874,11 +879,11 @@ const Messenger: React.FC<MessengerProps> = ({ view = 'list', selectedAdvocate, 
                                         />
                                         <div className={styles.convDetails} onClick={(e) => handleClientClick(String(call.partnerDetails._id), e)}>
                                             <div className={styles.convTitleRow}>
-                                                <h4>{call.partnerDetails.name}</h4>
+                                                <h4>{isPremium ? call.partnerDetails.name : maskContactInfo(call.partnerDetails.name || '')}</h4>
                                                 <span className={styles.convTime}>{new Date(call.timestamp).toLocaleString()}</span>
                                             </div>
                                             <div className={styles.convSub}>
-                                                <span>{call.partnerDetails.unique_id}</span>
+                                                <span>{isPremium ? call.partnerDetails.unique_id : maskContactInfo(call.partnerDetails.unique_id || '')}</span>
                                                 <span>•</span>
                                                 <div className={`${styles.callIndicator} ${call.isSender ? styles.outgoing : styles.incoming}`}>
                                                     {call.isSender ? <PhoneOutgoing size={12} /> : <PhoneIncoming size={12} />}

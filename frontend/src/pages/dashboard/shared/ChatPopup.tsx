@@ -80,10 +80,7 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     // Plan check – same logic as client dashboard (Free = masked; Lite/Pro/Ultra = premium)
     const plan = (user?.plan || 'Free');
     const planLower = plan.toLowerCase();
-    const isPremium = !!(
-        user?.isPremium ||
-        (planLower !== 'free' && ['lite', 'pro', 'ultra'].some((p) => planLower.includes(p)))
-    );
+    const isPremium = true; // Always allow chat features for free members as per request
 
     const currentUserId = String(user?.id);
     const partnerUserId = resolveUserId(advocate);
@@ -352,9 +349,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
     // Safe extraction of display fields
     const rawName = advocate.name || (advocate.firstName ? `${advocate.firstName} ${advocate.lastName}` : "Member");
     const rawId = advocate.unique_id || advocate.partnerUniqueId || "---";
-    const displayName = isPremium ? rawName : (rawName ? (rawName.length <= 2 ? "**" : rawName.substring(0, 2) + "*****") : "*****");
+    const displayName = rawName || "Member";
+    const displayId = rawId || "---";
     const displayImage = advocate.image_url || advocate.profilePic || advocate.img || "/default-avatar.png";
-    const displayId = isPremium ? rawId : (rawId ? (rawId.length <= 2 ? "**" : rawId.substring(0, 2) + "*****") : "*****");
     const isClient = advocate.role === 'client' || !!advocate.legalHelp;
 
     const locationStr = isClient
@@ -460,24 +457,12 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
 
                         return (
                             <div key={msg.id} className={isMine ? styles.myMsg : styles.theirMsg}>
-                                {showLocked ? (
-                                    <div className={styles.msgBubble} onClick={() => setShowTrialModal(true)} style={{ cursor: 'pointer' }}>
-                                        <div className={styles.blurredMsgWrapper}>
-                                            <div className={styles.blurredText}>████████████████</div>
-                                            <div className={styles.lockOverlay}>
-                                                <Lock size={12} />
-                                                <span>Click to unlock</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className={styles.msgBubble}>
-                                        <p className={styles.msgText}>{msg.text}</p>
-                                        <span className={styles.msgTime}>
-                                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                )}
+                                <div className={styles.msgBubble}>
+                                    <p className={styles.msgText}>{msg.text}</p>
+                                    <span className={styles.msgTime}>
+                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
                             </div>
                         );
                     })}
@@ -485,29 +470,22 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                 </div>
 
                 <div className={styles.inputArea}>
-                    {isPremium ? (
-                        <>
-                            <p className={styles.tipText}>Secure, end-to-end encrypted messaging.</p>
-                            <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
-                                <input
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="Write a message..."
-                                    value={messageText}
-                                    onChange={e => setMessageText(e.target.value)}
-                                    disabled={isSending}
-                                />
-                                <button type="submit" className={styles.sendBtn} disabled={!messageText.trim() || isSending}>
-                                    <Send size={18} />
-                                </button>
-                            </form>
-                        </>
-                    ) : (
-                        <div className={styles.upgradeNotice}>
-                            <p>Upgrade to Premium to reply and view full content.</p>
-                            <button className={styles.miniUpgradeBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>Upgrade Now</button>
-                        </div>
-                    )}
+                    <>
+                        <p className={styles.tipText}>Secure, end-to-end encrypted messaging.</p>
+                        <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
+                            <input
+                                type="text"
+                                className={styles.input}
+                                placeholder="Write a message..."
+                                value={messageText}
+                                onChange={e => setMessageText(e.target.value)}
+                                disabled={isSending}
+                            />
+                            <button type="submit" className={styles.sendBtn} disabled={!messageText.trim() || isSending}>
+                                <Send size={18} />
+                            </button>
+                        </form>
+                    </>
                 </div>
             </div >
             {showTrialModal && (

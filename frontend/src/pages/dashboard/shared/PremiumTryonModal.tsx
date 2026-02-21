@@ -59,9 +59,11 @@ const PremiumTryonModal: React.FC<PremiumTryonModalProps> = ({ onClose }) => {
                             <div className={styles.iconWrapper}>
                                 <Sparkles className={styles.sparkleIcon} size={40} />
                             </div>
-                            <h2 className={styles.title}>Unlock Premium Trial</h2>
+                            <h2 className={styles.title}>{user?.demoUsed ? 'Go Premium Today!' : 'Unlock Premium Trial'}</h2>
                             <p className={styles.subtitle}>
-                                Experience the power of <strong>Pro Lite Silver</strong> for the next 12 hours. Totally free, no commitment.
+                                {user?.demoUsed
+                                    ? "Upgrade your account to unlock all premium features forever and connect with everyone instantly."
+                                    : "Experience the power of Pro Lite Silver for the next 12 hours. Totally free, no commitment."}
                             </p>
                             <div className={styles.features}>
                                 <div className={styles.featureItem}>
@@ -74,13 +76,15 @@ const PremiumTryonModal: React.FC<PremiumTryonModalProps> = ({ onClose }) => {
                                 </div>
                                 <div className={styles.featureItem}>
                                     <Clock size={18} className={styles.clockIcon} />
-                                    <span>Valid for 12 hours from activation</span>
+                                    <span>{user?.demoUsed ? 'Unlock permanent priority access' : 'Valid for 12 hours from activation'}</span>
                                 </div>
                             </div>
                             <div className={styles.footer}>
-                                <button className={styles.activateBtn} onClick={() => setStep('confirm')}>
-                                    Activate 1-Day Trial
-                                </button>
+                                {!user?.demoUsed && (
+                                    <button className={styles.activateBtn} onClick={() => setStep('confirm')}>
+                                        Activate 1-Day Trial
+                                    </button>
+                                )}
                                 <button className={styles.upgradeNowBtn} onClick={() => window.location.href = '/dashboard?page=upgrade'}>
                                     Upgrade to Premium
                                 </button>

@@ -98,11 +98,11 @@ const HelpSupport: React.FC<Props> = ({ backToHome, showToast }) => {
     return (
         <div className={styles.page}>
             <div className={styles.header}>
-                {backToHome && (
+                {/* {backToHome && (
                     <button onClick={backToHome} className={styles.backBtn}>
                         <ArrowLeft size={20} />
                     </button>
-                )}
+                )} */}
                 <div>
                     <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff', marginBottom: '5px' }}>Help & Support Center</h2>
                     <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>We are here to assist you 24/7. Find answers or contact us.</p>

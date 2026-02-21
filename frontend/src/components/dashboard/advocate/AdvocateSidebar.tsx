@@ -2,7 +2,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { formatImageUrl } from '../../../utils/imageHelper';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
-    Coins, LogOut, Briefcase, Lock, Wallet, FileText
+    Coins, LogOut, Briefcase, Lock, Wallet, FileText, Gift
 } from 'lucide-react';
 import styles from '../Sidebar.module.css';
 
@@ -19,16 +19,21 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, o
     const menuItems = [
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
-        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
-        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
-        { id: 'featured-profiles', label: 'Featured Clients', icon: Star, premium: true },
+        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star, premium: false },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
         { id: 'my-cases', label: 'My Cases', icon: Briefcase },
+
         { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
+        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
+
+        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
         { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
-        { id: 'safety-center', label: 'Safety Center', icon: Shield },
-        { id: 'account-settings', label: 'Account & Settings', icon: Settings },
         { id: 'credits', label: 'Credits', icon: Coins },
+
+        { id: 'safety-center', label: 'Safety Center', icon: Shield },
+        { id: 'help-support', label: 'Help & Support', icon: Shield },
+        { id: 'refer-earn', label: 'Refer & Earn', icon: Gift },
+        { id: 'account-settings', label: 'Account & Settings', icon: Settings }
     ];
 
     const plan = user?.plan || 'Free';

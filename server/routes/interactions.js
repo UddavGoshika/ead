@@ -18,7 +18,7 @@ const auth = require('../middleware/auth');
 router.get('/stats/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const [visits, sent, received, accepted] = await Promise.all([
+        const [visits, sent, received, accepted, messages, meet_request, blocked] = await Promise.all([
             Activity.countDocuments({ sender: userId, type: 'visit' }),
             Activity.countDocuments({ sender: userId, type: { $in: ['interest', 'superInterest'] } }),
             Activity.countDocuments({ receiver: userId, type: { $in: ['interest', 'superInterest'] } }),
@@ -27,11 +27,17 @@ router.get('/stats/:userId', async (req, res) => {
                     { sender: userId, status: 'accepted' },
                     { receiver: userId, status: 'accepted' }
                 ]
-            })
+            }),
+            Activity.countDocuments({
+                $or: [{ sender: userId }, { receiver: userId }],
+                type: { $in: ['chat', 'message', 'chat_initiated'] }
+            }),
+            Activity.countDocuments({ receiver: userId, type: 'meet_request' }),
+            Activity.countDocuments({ sender: userId, type: 'block' })
         ]);
         res.json({
             success: true,
-            stats: { visits, sent, received, accepted }
+            stats: { visits, sent, received, accepted, messages, meet_request, blocked }
         });
     } catch (err) {
         console.error('Stats Error:', err);
@@ -161,12 +167,12 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
 
         // COIN TABLE (Rule 9)
         const COIN_COSTS = {
-            interest: 1,
-            superInterest: 2,
+            interest: 0,
+            superInterest: 0,
             shortlist: 0,
             view_contact: 1,
             unlock_contact: 1,
-            chat: 1,
+            chat: 0,
             accept: 0,
             decline: 0,
             withdraw: 0,
@@ -176,7 +182,7 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
             super_accept: 0,
             remove_connection: 0,
             cancel: 0,
-            upgrade_super: 1,
+            upgrade_super: 0,
             remove_shortlist: 0,
             meet_request: 0
         };
@@ -188,10 +194,16 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
         let cost = COIN_COSTS[action];
 
         // Fetch Target Details
+        // Legal providers are stored in Advocate model; accept aliases.
+        const normalizedTargetRole = String(targetRole || '').toLowerCase().trim();
         let targetModel;
-        if (targetRole === 'advocate') targetModel = Advocate;
-        else if (targetRole === 'client') targetModel = Client;
-        else return res.status(400).json({ error: 'Invalid target role' });
+        if (normalizedTargetRole === 'advocate' || normalizedTargetRole === 'legal_provider' || normalizedTargetRole === 'legal provider' || normalizedTargetRole === 'legal_service_provider' || normalizedTargetRole === 'legal service provider') {
+            targetModel = Advocate;
+        } else if (normalizedTargetRole === 'client') {
+            targetModel = Client;
+        } else {
+            return res.status(400).json({ error: 'Invalid target role' });
+        }
 
         let target = null;
         if (mongoose.Types.ObjectId.isValid(targetId)) {
@@ -242,7 +254,7 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
         }
 
         // Logic For Free Users (Rule 8: Coins only for premium)
-        if (!isPremium && cost > 0) {
+        if (!isPremium && cost > 0 && action !== 'unlock_contact' && action !== 'view_contact') {
             return res.status(403).json({
                 error: 'UPGRADE_REQUIRED',
                 message: 'This action requires a Premium Plan.'
@@ -257,6 +269,12 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
         }).sort({ timestamp: -1 });
 
         if (alreadyPerformed) {
+            if (['interest', 'superInterest', 'meet_request'].includes(action)) {
+                return res.status(400).json({
+                    error: 'ALREADY_SENT',
+                    message: `You have already sent ${action === 'meet_request' ? 'a consultation request' : 'an interest'} to this profile.`
+                });
+            }
             if (action === 'chat') {
                 // Rule: Chat valid for 3 months from unlock date
                 const monthsDiff = (Date.now() - new Date(alreadyPerformed.timestamp).getTime()) / (1000 * 60 * 60 * 24 * 30);
@@ -363,7 +381,7 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
                 sender: userId.toString(),
                 receiver: targetUserId.toString(),
                 type: action,
-                status: (['interest', 'superInterest', 'upgrade_super', 'super_accept'].includes(action)) ? 'pending' : 'none',
+                status: (['interest', 'superInterest', 'upgrade_super', 'super_accept', 'meet_request'].includes(action)) ? 'pending' : 'none',
                 metadata: { cost }
             });
             await newActivity.save();
@@ -461,7 +479,8 @@ router.post('/:targetRole/:targetId/:action', auth, async (req, res) => {
                 contact: {
                     email: contactEmail,
                     mobile: contactPhone,
-                    whatsapp: whatsapp
+                    whatsapp: whatsapp,
+                    licenseId: target.education?.enrollmentNo || target.licenseId || 'N/A'
                 }
             });
         }
@@ -552,8 +571,9 @@ router.get('/my-requests/:role/:userId', async (req, res) => {
     try {
         const { role, userId } = req.params;
         let model;
-        if (role === 'advocate') model = Advocate;
-        else if (role === 'client') model = Client;
+        const normalizedRole = String(role || '').toLowerCase().trim();
+        if (normalizedRole === 'advocate' || normalizedRole === 'legal_provider' || normalizedRole === 'legal provider' || normalizedRole === 'legal_service_provider' || normalizedRole === 'legal service provider') model = Advocate;
+        else if (normalizedRole === 'client') model = Client;
         else return res.status(400).json({ error: 'Invalid role' });
 
         let profile = null;
@@ -741,22 +761,8 @@ router.get('/messages/:id1/:id2', async (req, res) => {
                 return msg;
             }
 
-            // If we have a viewerId, check THEIR premium status
-            if (viewerId && String(msg.receiver) === String(viewerId)) {
-                const viewer = await User.findById(viewerId);
-                if (viewer) {
-                    const planStr = (viewer.plan || 'Free').toLowerCase();
-                    const isPremium = viewer.isPremium || (planStr !== 'free' && planStr !== '');
-
-                    if (!isPremium) {
-                        return {
-                            ...msg,
-                            text: "████████████████", // Use a placeholder instead of the old string
-                            isLocked: true
-                        };
-                    }
-                }
-            }
+            // Default: show original message
+            return msg;
 
             // Default: show original message
             return msg;
@@ -840,12 +846,7 @@ router.get('/conversations/:userId', async (req, res) => {
 
             let partnerName = partnerProfile ? (partnerProfile.name || `${partnerProfile.firstName} ${partnerProfile.lastName}`) : 'Unknown User';
             let partnerUniqueId = partnerProfile ? partnerProfile.unique_id : null;
-            const isBlur = !viewerIsPremium;
-
-            if (isBlur) {
-                if (partnerName) partnerName = partnerName.substring(0, 2) + "*****";
-                if (partnerUniqueId) partnerUniqueId = partnerUniqueId.substring(0, 2) + "*****";
-            }
+            const isBlur = false;
 
             return {
                 partnerId: pid,
@@ -971,18 +972,14 @@ router.get('/all/:userId', async (req, res) => {
 
             let pName = partnerName;
             let pUniqueId = partnerProfile ? partnerProfile.unique_id : fallbackId;
-            const isBlur = !viewerIsPremium;
-
-            if (!viewerIsPremium) {
-                if (pName) pName = pName.substring(0, 2) + "*****";
-                if (pUniqueId) pUniqueId = pUniqueId.substring(0, 2) + "*****";
-            }
+            const isBlur = false;
 
             return {
                 ...act,
                 text: act.metadata?.text,
                 partnerName: pName,
                 partnerUniqueId: pUniqueId,
+                partnerId,
                 partnerUserId: partnerId,
                 partnerRole,
                 partnerImg,

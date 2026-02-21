@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../services/api";
 import styles from "./PaymentMethods.module.css";
 
 interface GatewayState {
@@ -65,7 +65,7 @@ const PaymentCredentials: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            const res = await axios.get("/api/payments/admin/settings");
+            const res = await api.get("/payments/admin/settings");
             if (res.data.success) {
                 const newSettings = { ...settings };
                 res.data.settings.forEach((s: any) => {
@@ -86,7 +86,7 @@ const PaymentCredentials: React.FC = () => {
 
     const handleSave = async (gateway: string) => {
         try {
-            const res = await axios.post("/api/payments/admin/settings", {
+            const res = await api.post("/payments/admin/settings", {
                 gateway,
                 ...settings[gateway]
             });

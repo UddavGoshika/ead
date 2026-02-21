@@ -266,7 +266,7 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
         <div className={styles.container}>
             <div className={styles.header}>
                 <div className={styles.headerLeft}>
-                    {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>}
+                    {/* {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>} */}
                     <h2>Wallet & History</h2>
                 </div>
                 <div className={styles.balanceSection}>

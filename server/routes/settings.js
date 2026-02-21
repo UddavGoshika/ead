@@ -25,12 +25,19 @@ router.post('/site', auth, async (req, res) => {
         if (role !== 'admin' && role !== 'superadmin' && role !== 'super_admin') {
             return res.status(403).json({ error: 'Access denied. Admins only.' });
         }
-        const update = req.body;
+
+        const update = { ...req.body };
+        // Sanitize update object to remove read-only fields
+        delete update._id;
+        delete update.__v;
+        delete update.createdAt;
+        delete update.updatedAt;
+
         const settings = await Settings.findOneAndUpdate({}, update, { new: true, upsert: true });
         res.json({ success: true, settings });
     } catch (err) {
         console.error('Update Site Settings Error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
 
@@ -128,6 +135,53 @@ router.post('/presets', auth, async (req, res) => {
         res.json({ success: true, presets: user.searchPresets });
     } catch (err) {
         res.status(500).json({ error: 'Failed to save presets' });
+    }
+});
+
+// SEND TEST EMAIL
+router.post('/test-email', auth, async (req, res) => {
+    try {
+        const { email, smtp_settings } = req.body;
+        if (!email) return res.status(400).json({ error: 'Email is required' });
+
+        const nodemailer = require('nodemailer');
+
+        // Use provided settings or fall back to DB settings
+        let config = smtp_settings;
+        if (!config) {
+            const settings = await Settings.findOne();
+            config = settings?.smtp_settings;
+        }
+
+        if (!config || !config.host) {
+            return res.status(400).json({ error: 'SMTP settings not configured' });
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: config.host,
+            port: config.port,
+            secure: config.port === 465, // true for 465, false for other ports
+            auth: {
+                user: config.user,
+                pass: config.pass,
+            },
+            tls: {
+                rejectUnauthorized: false // Often needed for shared hosting
+            }
+        });
+
+        await transporter.sendMail({
+            from: `"${config.sender_name}" <${config.sender_email}>`,
+            to: email,
+            subject: "SMTP Test Email",
+            text: "This is a test email from your system settings. If you received this, your SMTP configuration is correct!",
+            html: "<b>This is a test email from your system settings.</b><p>If you received this, your SMTP configuration is correct!</p>"
+        });
+
+        res.json({ success: true, message: 'Test email sent successfully!' });
+    } catch (err) {
+        console.error('Test Email Error:', err);
+        res.status(500).json({ error: 'Failed to send test email: ' + err.message });
     }
 });
 

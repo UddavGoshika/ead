@@ -2,7 +2,7 @@
     background: transparent;
     min-height: 100vh;
     padding: 24px;
-    padding-bottom: 80px;
+    padding-bottom: 180px;
     color: #e2e8f0;
     font-family: 'Outfit', sans-serif;
 }
@@ -10,7 +10,7 @@
 /* 6 Grid Stats */
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 16px;
     margin-bottom: 40px;
 }

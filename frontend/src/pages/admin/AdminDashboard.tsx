@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./admindash.module.css";
 import RevenueChart from "./revenuechart";
 import axios from "axios";
-import { Loader2, ShieldCheck, Briefcase } from "lucide-react";
+import { Loader2, ShieldCheck, Briefcase, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import MemberDetailModal from "../../components/admin/MemberDetailModal";
@@ -169,6 +169,35 @@ const AdminDashboard: React.FC = () => {
                     >
                         Open Staff Hub
                     </Link>
+                </div>
+
+                <div className={`${styles.graphCard} ${styles.referralHubCard}`} style={{ marginLeft: '20px' }}>
+                    <div className={styles.permissionLeft}>
+                        <div className={styles.permissionIcon} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                            <Gift size={32} />
+                        </div>
+                        <div className={styles.permissionText}>
+                            <h2>Referral & Offer Hub</h2>
+                            <p>Manage cashback offers, referral users, and commissions.</p>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <Link
+                            to="/admin/referral/offers"
+                            className={`${styles.actionButton}`}
+                            style={{ background: '#10b981' }}
+                        >
+                            Manage Offers
+                        </Link>
+                        <Link
+                            to="/admin/referral/users"
+                            className={`${styles.actionButton}`}
+                            style={{ border: '1px solid #10b981', background: 'transparent', color: '#10b981' }}
+                        >
+                            Users
+                        </Link>
+                    </div>
                 </div>
             </section>
 

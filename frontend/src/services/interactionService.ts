@@ -27,11 +27,32 @@ export interface Conversation {
     unreadCount: number;
 }
 
+const normalizeTargetRole = (role: string) => {
+    const r = String(role || '').toLowerCase().trim();
+    if (!r) return 'advocate';
+    // Legal providers are stored in Advocate model on backend
+    if (['legal_provider', 'legal provider', 'legal_service_provider', 'legal service provider', 'provider', 'legal_advisor', 'legal advisor'].includes(r)) {
+        return 'advocate';
+    }
+    if (r === 'advocate' || r === 'client') return r;
+    // fallback: keep existing behavior (most non-client profiles are advocates)
+    return 'advocate';
+};
+
+const normalizeAction = (action: string) => {
+    const a = String(action || '').trim();
+    // Frontend uses "consultation" in a few places; backend supports "meet_request"
+    if (a === 'consultation') return 'meet_request';
+    return a;
+};
+
 export const interactionService = {
     recordActivity: async (targetRole: string, targetId: string, action: string, userId: string, details?: any) => {
+        const role = normalizeTargetRole(targetRole);
+        const act = normalizeAction(action);
         const payload: any = { userId };
         if (details) payload.details = details;
-        const response = await api.post(`/interactions/${targetRole}/${targetId}/${action}`, payload);
+        const response = await api.post(`/interactions/${role}/${targetId}/${act}`, payload);
         return response.data;
     },
 
@@ -149,62 +170,62 @@ export const interactionService = {
 
     // New methods for dynamic action buttons
     acceptInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/accept`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/accept`, { userId });
         return response.data;
     },
 
     declineInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/decline`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/decline`, { userId });
         return response.data;
     },
 
     withdrawInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/withdraw`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/withdraw`, { userId });
         return response.data;
     },
 
     blockUser: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/block`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/block`, { userId });
         return response.data;
     },
 
     unblockUser: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/unblock`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/unblock`, { userId });
         return response.data;
     },
 
     ignoreUser: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/ignore`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/ignore`, { userId });
         return response.data;
     },
 
     superAcceptInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/super_accept`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/super_accept`, { userId });
         return response.data;
     },
 
     removeConnection: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/remove_connection`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/remove_connection`, { userId });
         return response.data;
     },
 
     cancelInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/cancel`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/cancel`, { userId });
         return response.data;
     },
 
     upgradeToSuperInterest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/upgrade_super`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/upgrade_super`, { userId });
         return response.data;
     },
 
     removeShortlist: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/remove_shortlist`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/remove_shortlist`, { userId });
         return response.data;
     },
 
     sendMeetRequest: async (userId: string, partnerId: string, partnerRole: 'advocate' | 'client') => {
-        const response = await api.post(`/interactions/${partnerRole}/${partnerId}/meet_request`, { userId });
+        const response = await api.post(`/interactions/${normalizeTargetRole(partnerRole)}/${partnerId}/meet_request`, { userId });
         return response.data;
     },
 

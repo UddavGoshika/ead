@@ -8,6 +8,27 @@
     font-family: 'Inter', sans-serif;
 }
 
+.backLink {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.backLink:hover {
+    color: #facc15;
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.3);
+}
+
 .mainContentadvocatedash {
     flex: 1;
     overflow-y: auto;
@@ -22,7 +43,7 @@
     padding: 15px 25px;
     background: rgba(15, 20, 26, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(6px);
     z-index: 100;
     gap: 15px;
 }
@@ -280,7 +301,7 @@
 .contentBody {
     flex: 1;
     padding: 30px;
-    padding-bottom: 150px;
+    padding-bottom: 120px;
     position: relative;
     min-height: calc(100vh - 80px);
 }

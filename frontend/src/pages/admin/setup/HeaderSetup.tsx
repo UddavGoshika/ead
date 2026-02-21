@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import styles from "./HeaderSetup.module.css";
 import { useSettings } from "../../../context/SettingsContext";
+import { useToast } from "../../../context/ToastContext";
 
 /* ================= COMPONENT ================= */
 const HeaderConfiguration: React.FC = () => {
     const { settings, updateSettings, loading } = useSettings();
+    const { showToast } = useToast();
     const [siteName, setSiteName] = useState("");
     const [heroTitle, setHeroTitle] = useState("");
     const [heroSubtitle, setHeroSubtitle] = useState("");
@@ -53,9 +55,9 @@ const HeaderConfiguration: React.FC = () => {
             header_menu: menuItems
         });
         if (success) {
-            alert("Header settings saved successfully");
+            showToast("Header settings saved successfully");
         } else {
-            alert("Failed to save settings");
+            showToast("Failed to save settings", "error");
         }
     };
 

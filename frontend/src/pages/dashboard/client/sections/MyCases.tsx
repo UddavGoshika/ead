@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from "./mycases.module.css";
 import { caseService, advocateService } from "../../../../services/api";
 import { useAuth } from "../../../../context/AuthContext";
-import { Loader2, MessageSquare, Phone, Briefcase, Filter, FileText, CheckCircle, Clock, Info, X, Upload, Shield } from "lucide-react";
+import { Loader2, MessageSquare, Phone, FileText, ScrollText, Briefcase, Filter, CheckCircle, Clock, Info, X, Upload, Shield } from "lucide-react";
 import { useCall } from "../../../../context/CallContext";
 import { LOCATION_DATA_RAW } from '../../../../components/layout/statesdis';
 import { LEGAL_DOMAINS } from '../../../../data/legalDomainData';
@@ -218,7 +218,7 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
     }
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} style={{ paddingBottom: '150px' }}>
             <div className={styles.caseActionsTop}>
                 <button className={styles.topBtnYellow} onClick={() => setShowNewCaseModal(true)}>
                     <Briefcase size={18} />
@@ -228,6 +228,16 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
                     <FileText size={18} />
                     Case Status
                 </button>
+
+                <button
+                    className={styles.backLink}
+                    onClick={() => window.open('/dashboard/legal-docs', '_blank')}
+                    style={{ marginLeft: 'auto' }}
+                >
+                    <ScrollText size={18} />
+                    <span>Legal Documentation</span>
+                </button>
+
             </div>
 
             <div className={styles.searchSection} style={{ flexDirection: 'column', gap: '15px' }}>
@@ -308,8 +318,8 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
             ) : cases.length === 0 ? (
                 <div style={{ textAlign: 'center', color: '#94a3b8', marginTop: '50px' }}>
                     <Briefcase size={64} style={{ opacity: 0.2, marginBottom: '20px', margin: '0 auto' }} />
-                    <h3>No cases found</h3>
-                    <p>Wait for an advocate to initiate a case request.</p>
+                    <h3>No Active Cases</h3>
+                    <p>When you initiate or are assigned to a case, it will appear here.</p>
                 </div>
             ) : (
                 <div className={styles.gallery}>
@@ -456,7 +466,7 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
                 <div className={styles.modalOverlay} onClick={() => setShowNewCaseModal(false)}>
                     <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
                         <div className={styles.modalHeader}>
-                            <h2>File New Case</h2>
+                            <h2>Initiate New Case</h2>
                             <button className={styles.closeBtn} onClick={() => setShowNewCaseModal(false)}><X /></button>
                         </div>
                         <div className={styles.reviewBody} style={{ padding: '20px', gap: '20px', display: 'flex', flexDirection: 'column' }}>
@@ -518,11 +528,14 @@ const Cases: React.FC<CasesProps> = ({ onSelectForChat }) => {
                                 disabled={creatingCase}
                                 style={{ marginTop: '10px' }}
                             >
-                                {creatingCase ? 'Creating...' : 'Submit Case File'}
+                                {creatingCase ? 'Creating...' : 'Submit'}
                             </button>
                         </div>
                     </div>
                 </div>
+
+
+
             )}
         </div>
     );

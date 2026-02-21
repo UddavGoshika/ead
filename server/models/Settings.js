@@ -22,14 +22,14 @@ const SettingsSchema = new mongoose.Schema({
         {
             platform: { type: String, required: true },
             url: { type: String, required: true },
-            icon: { type: String, default: 'Link' }, // Lucide Icon Name
+            icon: { type: String, default: 'Link' },
             active: { type: Boolean, default: true }
         }
     ],
     footer_pages: [
         {
             title: { type: String, required: true },
-            link: { type: String, required: true }, // e.g. /privacy
+            link: { type: String, required: true },
             active: { type: Boolean, default: true }
         }
     ],
@@ -55,12 +55,77 @@ const SettingsSchema = new mongoose.Schema({
         dark_mode: { type: Boolean, default: true }
     },
     invoice_header_url: { type: String, default: '/assets/left-logo.jpeg' },
-    referral_settings: {
-        min_payout: { type: Number, default: 2000 },
-        payout_method: { type: String, default: 'Bank Transfer / UPI' },
-        link_expiry_days: { type: Number, default: 30 },
-        enable_multilevel: { type: Boolean, default: true }
-    }
+    languages: [
+        { name: String, code: String, rtl: { type: Boolean, default: false }, enabled: { type: Boolean, default: true } }
+    ],
+    default_language: { type: String, default: 'en' },
+    currencies: [
+        { name: String, symbol: String, code: String, enabled: { type: Boolean, default: true } }
+    ],
+    default_currency: { type: String, default: 'INR' },
+    currency_format: {
+        symbol_format: { type: String, default: '[Symbol] [Amount]' },
+        decimal_separator: { type: String, default: '.' },
+        no_of_decimals: { type: Number, default: 2 }
+    },
+    payment_methods: {
+        razorpay: { enabled: Boolean, key: String, secret: String },
+        stripe: { enabled: Boolean, key: String, secret: String },
+        paypal: { enabled: Boolean, clientId: String, secret: String },
+        manual: { enabled: Boolean, details: String }
+    },
+    smtp_settings: {
+        host: String,
+        port: Number,
+        user: String,
+        pass: String,
+        sender_email: String,
+        sender_name: String,
+        encryption: { type: String, default: 'tls' }
+    },
+    email_templates: [
+        { key: String, title: String, subject: String, body: String, active: { type: Boolean, default: true } }
+    ],
+    third_party_settings: {
+        google_recaptcha: {
+            activation: { type: Boolean, default: false },
+            site_key: String,
+            secret_key: String,
+            v3_score: { type: String, default: '0.5' },
+            enable_for_registration: { type: Boolean, default: false },
+            enable_for_contact: { type: Boolean, default: false }
+        },
+        google_analytics: {
+            activation: { type: Boolean, default: false },
+            tracking_id: String
+        },
+        facebook_pixel: {
+            activation: { type: Boolean, default: false },
+            pixel_id: String
+        },
+        tawk_to: {
+            activation: { type: Boolean, default: false },
+            widget_id: String
+        }
+    },
+    social_login: {
+        google: { activation: { type: Boolean, default: false }, client_id: String, client_secret: String },
+        facebook: { activation: { type: Boolean, default: false }, app_id: String, app_secret: String },
+        twitter: { activation: { type: Boolean, default: false }, client_id: String, client_secret: String }
+    },
+    push_notification: {
+        activation: { type: Boolean, default: false },
+        fcm_api_key: String,
+        fcm_auth_domain: String,
+        fcm_project_id: String,
+        fcm_storage_bucket: String,
+        fcm_messaging_sender_id: String,
+        fcm_app_id: String,
+        firebase_server_key: String
+    },
+    addons: [
+        { id: Number, name: String, version: String, image: String, enabled: { type: Boolean, default: true }, identifier: String }
+    ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', SettingsSchema);

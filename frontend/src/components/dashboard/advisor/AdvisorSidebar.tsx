@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { formatImageUrl } from '../../../utils/imageHelper';
 import {
     User, Newspaper, ArrowUp, Shield, Settings,
-    Coins, LogOut, Briefcase, Lock, Wallet, FileText
+    Coins, LogOut, Briefcase, Lock, Wallet, FileText, Search, Star, Gift
 } from 'lucide-react';
 import styles from '../Sidebar.module.css';
 
@@ -17,15 +17,42 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
     const { user, logout } = useAuth();
 
     const menuItems = [
-        { id: 'edit-profile', label: 'Manage Profile', icon: User },
-        { id: 'wallet-history', label: 'Wallet & Billing', icon: Wallet },
-        { id: 'my-subscription', label: 'Pro Benefits', icon: Shield },
-        { id: 'blogs', label: 'Legal Insights', icon: Newspaper },
-        { id: 'my-cases', label: 'Active Services', icon: Briefcase },
-        { id: 'upgrade', label: 'Premium Tiers', icon: ArrowUp },
-        { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
-        { id: 'account-settings', label: 'Security & Access', icon: Settings },
-        { id: 'credits', label: 'Service Credits', icon: Coins },
+        // { id: 'edit-profile', label: 'Manage Profile', icon: User },
+        // { id: 'wallet-history', label: 'Wallet & Billing', icon: Wallet },
+        // { id: 'my-subscription', label: 'Pro Benefits', icon: Shield },
+        // { id: 'blogs', label: 'Legal Insights', icon: Newspaper },
+        // { id: 'my-cases', label: 'Active Services', icon: Briefcase },
+        // { id: 'upgrade', label: 'Premium Tiers', icon: ArrowUp },
+        // { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
+        // { id: 'account-settings', label: 'Security & Access', icon: Settings },
+        // { id: 'credits', label: 'Service Credits', icon: Coins },
+
+
+
+        { id: 'edit-profile', label: 'Edit Profile', icon: User },
+        { id: 'search-preferences', label: 'Search Preferences', icon: Search },
+        // { id: 'featured-profiles', label: 'Featured Profiles', icon: Star },
+        { id: 'blogs', label: 'Blogs', icon: Newspaper },
+        { id: 'my-cases', label: 'My Cases', icon: Briefcase },
+        // { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
+        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
+
+        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
+        { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
+        { id: 'credits', label: 'Credits', icon: Coins },
+
+        { id: 'safety-center', label: 'Safety Center', icon: Shield },
+        { id: 'help-support', label: 'Help & Support', icon: Settings },
+
+        { id: 'refer-earn', label: 'Refer & Earn', icon: Gift },
+
+        { id: 'account-settings', label: 'Account & Settings', icon: Settings }
+
+
+
+
+
+
     ];
 
     const plan = user?.plan || 'Free';

@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./EmailTemplates.module.css";
+import api from "../../../services/api";
+import { useToast } from "../../../context/ToastContext";
 
 type Template = {
     key: string;
@@ -9,7 +11,7 @@ type Template = {
     active: boolean;
 };
 
-const templates: Template[] = [
+const DEFAULT_TEMPLATES: Template[] = [
     {
         key: "account_opening",
         title: "Account Opening Email",
@@ -122,10 +124,37 @@ Thanks,
 ];
 
 const EmailTemplates: React.FC = () => {
-    const [activeKey, setActiveKey] = useState(templates[0].key);
-    const [data, setData] = useState(templates);
+    const { showToast } = useToast();
+    const [activeKey, setActiveKey] = useState(DEFAULT_TEMPLATES[0].key);
+    const [data, setData] = useState<Template[]>(DEFAULT_TEMPLATES);
+    const [loading, setLoading] = useState(true);
 
-    const activeTemplate = data.find((t) => t.key === activeKey)!;
+    useEffect(() => {
+        const fetchTemplates = async () => {
+            try {
+                const res = await api.get('/settings/site');
+                if (res.data.success && res.data.settings.email_templates && res.data.settings.email_templates.length > 0) {
+                    setData(res.data.settings.email_templates);
+                    setActiveKey(res.data.settings.email_templates[0].key);
+                }
+            } catch (err) {
+                console.error("Error fetching templates:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTemplates();
+    }, []);
+
+    const handleUpdate = async () => {
+        try {
+            await api.post('/settings/site', { email_templates: data });
+            showToast("Email templates updated successfully");
+        } catch (err) {
+            console.error("Error updating templates:", err);
+            showToast("Failed to update templates", "error");
+        }
+    };
 
     const updateTemplate = (field: keyof Template, value: any) => {
         setData((prev) =>
@@ -134,6 +163,10 @@ const EmailTemplates: React.FC = () => {
             )
         );
     };
+
+    if (loading) return <div>Loading templates...</div>;
+
+    const activeTemplate = data.find((t) => t.key === activeKey) || data[0];
 
     return (
         <div className={styles.card}>
@@ -207,7 +240,7 @@ const EmailTemplates: React.FC = () => {
                     </p>
 
                     <div className={styles.actions}>
-                        <button className={styles.saveBtn}>
+                        <button className={styles.saveBtn} onClick={handleUpdate}>
                             Update Settings
                         </button>
                     </div>

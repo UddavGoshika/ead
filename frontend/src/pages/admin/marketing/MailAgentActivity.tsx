@@ -761,9 +761,9 @@ const MailAgentActivity: React.FC = () => {
 
                                 {[
                                     { icon: Mail, label: 'Communications', id: 'content', active: activeDetailTab === 'content' },
-                                    { icon: Server, label: 'Technical Details', id: 'smtp', active: activeDetailTab === 'smtp' },
-                                    { icon: MousePointer2, label: 'Engagement', id: 'tracking', active: activeDetailTab === 'tracking' },
-                                    { icon: History, label: 'System Logs', id: 'audit', active: activeDetailTab === 'audit' }
+                                    // { icon: Server, label: 'Technical Details', id: 'smtp', active: activeDetailTab === 'smtp' },
+                                    // { icon: MousePointer2, label: 'Engagement', id: 'tracking', active: activeDetailTab === 'tracking' },
+                                    // { icon: History, label: 'System Logs', id: 'audit', active: activeDetailTab === 'audit' }
                                 ].map(item => (
                                     <div
                                         key={item.id}

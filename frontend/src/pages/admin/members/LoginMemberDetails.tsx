@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./LoginMemberDetails.module.css";
 import axios from "axios";
-import { Loader2, Search, Key, Eye, EyeOff, UserCircle } from "lucide-react";
+import { Loader2, Search, Key, Eye, EyeOff, UserCircle, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { formatImageUrl } from "../../../utils/imageHelper";
 import { useAuth } from "../../../context/AuthContext";
@@ -28,6 +28,7 @@ const LoginMemberDetails: React.FC = () => {
     const [members, setMembers] = useState<LoginDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedMember, setSelectedMember] = useState<LoginDetail | null>(null);
     const { impersonate } = useAuth();
 
     // Filters
@@ -95,8 +96,12 @@ const LoginMemberDetails: React.FC = () => {
                 role: member.role as any,
                 email: member.email,
                 unique_id: member.uniqueId
-            });
+            } as any);
         }
+    };
+
+    const handleViewDetails = (member: LoginDetail) => {
+        setSelectedMember(member);
     };
 
     const filteredMembers = members.filter(m => {
@@ -242,7 +247,12 @@ const LoginMemberDetails: React.FC = () => {
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button className={styles.actionBtn}>View Full</button>
+                                            <button
+                                                className={styles.actionBtn}
+                                                onClick={() => handleViewDetails(member)}
+                                            >
+                                                View Full
+                                            </button>
                                             <button
                                                 className={styles.actionBtn}
                                                 style={{ background: '#facc15', color: '#000' }}
@@ -256,6 +266,57 @@ const LoginMemberDetails: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Member Details Modal */}
+            {selectedMember && (
+                <div className={styles.modalOverlay} onClick={() => setSelectedMember(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h2>Member Profile Details</h2>
+                            <button className={styles.closeBtn} onClick={() => setSelectedMember(null)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.detailGrid}>
+                                <div className={styles.profileSection}>
+                                    <img src={selectedMember.photo} alt={selectedMember.name} className={styles.largeAvatar} />
+                                    <h3>{selectedMember.name}</h3>
+                                    <span className={styles.idBadge}>{selectedMember.uniqueId}</span>
+                                </div>
+                                <div className={styles.infoSection}>
+                                    <div className={styles.infoGroup}>
+                                        <label>Email Address</label>
+                                        <p>{selectedMember.email}</p>
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Phone Number</label>
+                                        <p>{selectedMember.phone}</p>
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Current Role</label>
+                                        <p style={{ textTransform: 'capitalize' }}>{selectedMember.role.replace('_', ' ')}</p>
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Account Status</label>
+                                        <p className={`${styles.statusBadge} ${styles[selectedMember.status.toLowerCase()]}`}>{selectedMember.status}</p>
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Subscription Plan</label>
+                                        <p className={`${styles.planBadge} ${selectedMember.isPremium ? styles.premium : styles.free}`}>{selectedMember.plan}</p>
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Last Login Activity</label>
+                                        <p>{selectedMember.lastLogin}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.secondaryBtn} onClick={() => setSelectedMember(null)}>Close</button>
+                            <button className={styles.primaryBtn} onClick={() => handleImpersonate(selectedMember)}>Login as {selectedMember.name}</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -49,7 +49,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
     const [shareCount] = useState(advocate.shares || 0);
     const [loading, setLoading] = useState(false);
 
-    const IS_MASKED = !isPremium;
+    const IS_MASKED = advocate.isMasked !== false;
 
     const maskName = (name: string) => {
         if (!IS_MASKED) return name;
@@ -195,10 +195,9 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
 
     const getLocationString = () => {
         const loc = advocate.location as any;
-        if (typeof loc === 'object' && loc !== null) {
-            return `${loc.city || ''}, ${loc.state || ''}`;
-        }
-        return String(loc || 'India');
+        if (!loc) return 'Location N/A';
+        const raw = typeof loc === 'string' ? loc : `${loc.city || ''}${loc.state ? ', ' + loc.state : ''}`;
+        return maskName(raw);
     };
 
     return (
@@ -235,22 +234,20 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
 
                 <div className={styles.verifiedBadgeGroup}>
                     <div className={styles.topIdBadge}>
-                        <span className={styles.topIdText}>{maskId(advocate.unique_id)}</span>
-                        {variant === 'featured' && (
-                            <div className={styles.metaBadgeContainer}>
-                                <div className={styles.metaBadge}>
-                                    <Check size={16} color="white" strokeWidth={4} />
-                                </div>
+                        <div className={styles.metaBadgeContainer} style={{ marginLeft: 0, marginRight: '4px' }}>
+                            <div className={styles.metaBadge} style={{ width: '16px', height: '16px' }}>
+                                <Check size={12} color="white" strokeWidth={4} />
                             </div>
-                        )}
+                        </div>
+                        <span className={styles.topIdText}>{maskId(advocate.unique_id)}</span>
                     </div>
                 </div>
 
-                <div className={`${styles.profileTextOverlay} ${shouldBlur ? styles.blurredText : ''}`}>
+                <div className={styles.profileTextOverlay}>
                     <h3 className={styles.overlayName} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <User size={20} className="text-yellow-400" fill="#facc15" stroke="none" />
                         {maskName(advocate.name)}
-                        {advocate.age ? <span style={{ fontSize: '0.8em', opacity: 0.8, fontWeight: 400 }}>, {advocate.age}</span> : ''}
+                        {advocate.age && !IS_MASKED ? <span style={{ fontSize: '0.8em', opacity: 0.8, fontWeight: 400 }}>, {advocate.age}</span> : ''}
                     </h3>
 
                     <div className={styles.overlayDetails} style={{ marginTop: '4px' }}>
@@ -260,7 +257,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                         </p>
                         <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Briefcase size={14} color="#4ade80" />
-                            {advocate.experience || '0'} Years Experience
+                            {IS_MASKED ? '**' : (advocate.experience || '0')} Years Experience
                         </p>
                     </div>
                 </div>
@@ -279,7 +276,7 @@ const AdvocateCard: React.FC<AdvocateCardProps> = ({ advocate, onAction, variant
                             {(() => {
                                 const realId = advocate.bar_council_id || (advocate as any).barCouncilId;
                                 const displayId = realId || 'N/A';
-                                return (variant === 'featured' || isPremium) ? displayId : maskId(displayId);
+                                return isPremium ? displayId : maskId(displayId);
                             })()}
                         </span>
                     </div>

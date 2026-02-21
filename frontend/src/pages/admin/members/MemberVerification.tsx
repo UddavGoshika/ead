@@ -5,7 +5,7 @@ import {
     Users, ShieldCheck, FileText,
     ArrowRight, Search, FileSearch, CheckCircle, AlertTriangle,
     Mail, Phone, MapPin, GraduationCap, Briefcase, Calendar,
-    ExternalLink, X, Eye, Download, Star
+    X, Eye, Download, Star
 } from "lucide-react";
 
 interface PendingMember {
@@ -309,20 +309,37 @@ const MemberVerification: React.FC = () => {
         }
     };
 
-    const handleDownloadAll = () => {
+    const handleDownloadFile = async (doc: { name: string, path: string }) => {
+        try {
+            const url = getMediaUrl(doc.path);
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Download failed');
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = doc.name || 'document';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Failed to download file. Please try again.');
+        }
+    };
+
+    const handleDownloadAll = async () => {
         if (!selectedMember || !selectedMember.documents) return;
-        selectedMember.documents.forEach((doc, index) => {
+        for (let i = 0; i < selectedMember.documents.length; i++) {
+            const doc = selectedMember.documents[i];
             if (doc.path) {
-                setTimeout(() => {
-                    const link = document.createElement('a');
-                    link.href = getMediaUrl(doc.path);
-                    link.download = doc.name || `document_${index}`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }, index * 250);
+                await handleDownloadFile(doc);
+                if (i < selectedMember.documents.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
             }
-        });
+        }
     };
 
     const renderDataField = (label: string, value: any, icon?: React.ReactNode) => {
@@ -596,7 +613,7 @@ const MemberVerification: React.FC = () => {
                                     <h3 className={styles.sectionTitle}><FileSearch size={18} /> Document Evidence</h3>
                                     {selectedMember.documents && selectedMember.documents.length > 0 && (
                                         <button className={styles.downloadAllBtn} onClick={handleDownloadAll}>
-                                            <Download size={14} /> Download All (Images)
+                                            <Download size={14} /> Download All
                                         </button>
                                     )}
                                 </div>
@@ -614,25 +631,26 @@ const MemberVerification: React.FC = () => {
                                             doc.path?.startsWith('data:')
                                         );
 
+                                        const fileIcon = isPdf ? '📄' : isDoc ? '📝' : isImage ? null : '📎';
+
                                         return (
                                             <div key={idx} className={styles.docCard}>
-                                                <div className={styles.docIcon}>
+                                                <div className={styles.docIcon} onClick={() => setPreviewFile(doc)} style={{ cursor: 'pointer' }}>
                                                     {isImage ? (
                                                         <img
                                                             src={getMediaUrl(doc.path)}
                                                             alt=""
                                                             className={styles.docThumbnail}
-                                                            onClick={() => setPreviewFile(doc)}
-                                                            style={{ cursor: 'pointer' }}
                                                             onError={(e) => {
-                                                                e.currentTarget.src = "/file_placeholder.png"; // Use generic icon on error
-                                                                e.currentTarget.style.display = 'none'; // Or hide and show icon parent
-                                                                // Better: replace parent innerHTML logic in complex app, but here fallback src is okay if we had one.
-                                                                // Since we don't have a guaranteed placeholder image, let's rely on strict type checking above.
+                                                                e.currentTarget.style.display = 'none';
+                                                                const parent = e.currentTarget.parentElement;
+                                                                if (parent) {
+                                                                    parent.innerHTML = '<div style="font-size: 24px;">📎</div>';
+                                                                }
                                                             }}
                                                         />
                                                     ) : (
-                                                        <FileText size={20} />
+                                                        <div style={{ fontSize: '24px' }}>{fileIcon || <FileText size={20} />}</div>
                                                     )}
                                                 </div>
                                                 <div className={styles.docInfo}>
@@ -644,15 +662,12 @@ const MemberVerification: React.FC = () => {
                                                         >
                                                             <Eye size={14} /> View
                                                         </button>
-                                                        <a
-                                                            href={getMediaUrl(doc.path)}
-                                                            download
+                                                        <button
                                                             className={styles.docBtn}
-                                                            target="_blank"
-                                                            rel="noreferrer"
+                                                            onClick={() => handleDownloadFile(doc)}
                                                         >
                                                             <Download size={14} />
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -802,24 +817,22 @@ const MemberVerification: React.FC = () => {
                                 <h3 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
                                     {previewFile.name}
                                 </h3>
-                                <a
-                                    href={getMediaUrl(previewFile.path)}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadFile(previewFile);
+                                    }}
                                     className={styles.downloadAllBtn}
-                                    style={{ padding: '6px 16px', fontSize: '0.8rem', textDecoration: 'none', background: '#3b82f6', color: 'white', border: 'none' }}
-                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ padding: '6px 16px', fontSize: '0.8rem', textDecoration: 'none', background: '#3b82f6', color: 'white', border: 'none', cursor: 'pointer' }}
                                 >
-                                    <ExternalLink size={16} /> Open / Download Original
-                                </a>
+                                    <Download size={16} /> Download File
+                                </button>
                             </div>
                             <button className={styles.closeModal} onClick={() => setPreviewFile(null)}><X size={24} /></button>
                         </div>
                         <div className={styles.previewBody} style={{ background: '#1e293b', position: 'relative' }}>
                             {/* LOADER / FALLBACK TEXT BEHIND IFRAME */}
                             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 0, color: '#94a3b8', textAlign: 'center' }}>
-                                <p>Loading Preview...</p>
-                                <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>If it doesn't load, use the "Open / Download" button above.</span>
                             </div>
 
                             {/* LOGIC FOR DIFFERENT FILE TYPES */}
@@ -831,28 +844,27 @@ const MemberVerification: React.FC = () => {
                                 const isTxt = /\.txt($|\?|#)/i.test(lowerPath);
 
                                 if (isPdf) {
-                                    /* Use Native Browser PDF Viewer (embed) first - it's the most reliable for direct URLs */
                                     return (
                                         <div style={{ width: '100%', height: '100%', position: 'relative', zIndex: 1, background: '#fff' }}>
-                                            <object data={url} type="application/pdf" width="100%" height="100%">
-                                                <div style={{ padding: '20px', textAlign: 'center', color: '#333' }}>
-                                                    <p>Preview not supported directly.</p>
-                                                    <a href={url} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline' }}>
-                                                        Click here to view PDF
-                                                    </a>
-                                                </div>
-                                            </object>
+                                            <iframe
+                                                src={url}
+                                                className={styles.pdfViewer}
+                                                style={{ width: '100%', height: '100%', border: 'none' }}
+                                                title="PDF Preview"
+                                            />
                                         </div>
                                     );
                                 } else if (isOffice) {
-                                    /* Microsoft Office Online Viewer is best for Word/Excel/PPT */
                                     return (
-                                        <iframe
-                                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
-                                            className={styles.pdfViewer}
-                                            title="Office Doc Preview"
-                                            style={{ width: '100%', height: '100%', border: 'none', position: 'relative', zIndex: 1, background: '#fff' }}
-                                        />
+                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', padding: '40px', color: '#fff' }}>
+                                            <FileText size={64} />
+                                            <p style={{ fontSize: '1.1rem', textAlign: 'center' }}>
+                                                Office documents (Word, Excel, PowerPoint) cannot be previewed directly.
+                                            </p>
+                                            <p style={{ fontSize: '0.9rem', color: '#94a3b8', textAlign: 'center' }}>
+                                                Please download the file to view it.
+                                            </p>
+                                        </div>
                                     );
                                 } else if (isTxt) {
                                     return (
@@ -860,19 +872,33 @@ const MemberVerification: React.FC = () => {
                                             src={url}
                                             className={styles.pdfViewer}
                                             style={{ width: '100%', height: '100%', border: 'none', background: '#fff', padding: '20px', color: '#000' }}
+                                            title="Text Preview"
                                         />
                                     );
                                 } else {
-                                    /* Default to Image */
                                     return (
                                         <img
                                             src={url}
                                             alt="Preview"
                                             className={styles.previewImg}
-                                            style={{ position: 'relative', zIndex: 1, maxWidth: '100%', maxHeight: '100%' }}
+                                            style={{ position: 'relative', zIndex: 1, maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';
-                                                alert("Could not load image preview. Please download the file.");
+                                                const parent = e.currentTarget.parentElement;
+                                                if (parent) {
+                                                    parent.innerHTML = `
+                                                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px; color: #fff;">
+                                                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                                            </svg>
+                                                            <p>Preview not available. Please download the file.</p>
+                                                        </div>
+                                                    `;
+                                                }
                                             }}
                                         />
                                     );

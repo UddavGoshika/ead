@@ -21,7 +21,7 @@ import BlogFeed from '../shared/BlogFeed';
 import ChatPopup from '../shared/ChatPopup';
 import MyCases from './sections/MyCases';
 import FileCase from './sections/FileCase';
-import PromoCodes from './sections/PromoCodes';
+import ReferAndEarn from '../shared/ReferAndEarn';
 import LegalDocumentationPage from '../../LegalDocumentationPage';
 import PremiumTryonModal from '../shared/PremiumTryonModal';
 
@@ -80,9 +80,9 @@ const ClientDashboard: React.FC = () => {
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
-        // Show try-on modal ONLY if user is on Free plan and hasn't used demo
+        // Show try-on modal ONLY if user is on Free plan
         const currentPlan = (user?.plan || 'Free').toLowerCase();
-        if (user && currentPlan === 'free' && !user.demoUsed && user.status !== 'Pending' && user.status !== 'Reverify') {
+        if (user && currentPlan === 'free' && user.status !== 'Pending' && user.status !== 'Reverify') {
             const hasSeen = sessionStorage.getItem('hasSeenTryon');
             if (!hasSeen) {
                 setShowTryonModal(true);
@@ -240,8 +240,8 @@ const ClientDashboard: React.FC = () => {
                         </p>
                     </div>
                 );
-            case 'Promocodes':
-                return <PromoCodes />;
+            case 'refer-earn':
+                return <ReferAndEarn />;
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
             default:
@@ -250,7 +250,7 @@ const ClientDashboard: React.FC = () => {
     };
 
     const getPageTitle = () => {
-        if (currentPage === 'featured-profiles') return 'Featured Experts';
+        if (currentPage === 'featured-profiles') return 'Featured Profiles';
         if (currentPage === 'normalfccards') return 'Profiles';
         return getPageTitleBase(currentPage);
     };
@@ -270,8 +270,9 @@ const ClientDashboard: React.FC = () => {
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
             case 'my-cases': return 'My Cases';
+
             case 'new-case-info': return 'New Case Information';
-            case 'Promocodes': return 'Special Promocodes';
+            case 'refer-earn': return 'Refer & Earn';
             case 'legal-documentation': return 'Legal Documentation';
             default: return 'Client Dashboard';
         }
@@ -342,7 +343,10 @@ const ClientDashboard: React.FC = () => {
                                         {plan.toUpperCase()} PLAN
                                     </span>
                                 ) : (
-                                    <span className={`${styles.badgePlan} ${styles.freeBadge}`}>FREE MEMBER</span>
+
+
+
+                                    <span className={`${styles.badgePlan} ${styles.freeBadge}`}>Free Plan</span>
                                 )}
                             </div>
                         </div>

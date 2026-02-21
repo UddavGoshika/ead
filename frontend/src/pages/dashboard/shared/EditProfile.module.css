@@ -508,3 +508,21 @@
   accent-color: #facc15;
   cursor: pointer;
 }
+
+.textArea {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  outline: none;
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.textArea:focus {
+  border-color: #facc15;
+}

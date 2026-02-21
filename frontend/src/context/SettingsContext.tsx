@@ -27,12 +27,48 @@ interface Settings {
         active: boolean;
     }>;
     ecosystem_links: Array<{ label: string; link: string; icon_url: string }>;
+    member_code_prefix: string;
+    male_min_age: number;
+    female_min_age: number;
+    profile_pic_privacy: string;
+    gallery_privacy: string;
+    activations: {
+        https: boolean;
+        maintenance: boolean;
+        wallet: boolean;
+        email_phone_verify: boolean;
+        reg_verify: boolean;
+        member_verify: boolean;
+        premium_only_profile: boolean;
+        pic_approval: boolean;
+        disable_encoding: boolean;
+    };
     manager_permissions: Record<string, boolean>;
     appearance: {
         primary_color: string;
         dark_mode: boolean;
     };
     invoice_header_url: string;
+    smtp_settings: {
+        host: string;
+        port: number;
+        user: string;
+        pass: string;
+        sender_email: string;
+        sender_name: string;
+        encryption: string;
+    };
+    email_templates: Array<{
+        key: string;
+        title: string;
+        subject: string;
+        body: string;
+        active: boolean;
+    }>;
+    third_party_settings: any;
+    social_login: any;
+    push_notification: any;
+    addons: any[];
 }
 
 interface PageItem {

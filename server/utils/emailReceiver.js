@@ -11,13 +11,22 @@ const config = {
         host: 'imap.gmail.com',
         port: 993,
         tls: true,
-        authTimeout: 10000,
-        tls: true,
-        tlsOptions: { rejectUnauthorized: false }
+        tlsOptions: {
+            rejectUnauthorized: false,
+            servername: 'imap.gmail.com'
+        },
+        authTimeout: 30000
     }
 };
 
+let isSyncing = false;
+
 const syncEmails = async () => {
+    if (isSyncing) {
+        console.log("⏳ Sync already in progress, skipping...");
+        return { success: true, count: 0, message: 'Sync in progress' };
+    }
+    isSyncing = true;
     console.log("📨 Syncing Emails via IMAP (Filtered & Thorough)...");
     let connection;
     let newMessagesCount = 0;
@@ -114,6 +123,7 @@ const syncEmails = async () => {
         console.error("❌ IMAP Error:", err);
         return { success: false, error: err.message };
     } finally {
+        isSyncing = false;
         if (connection) connection.end();
     }
 };

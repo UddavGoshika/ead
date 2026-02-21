@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styles from "./HeaderSetup.module.css";
 import { useSettings } from "../../../context/SettingsContext";
+import { useToast } from "../../../context/ToastContext";
 
 const EcosystemConfiguration: React.FC = () => {
     const { settings, updateSettings, loading } = useSettings();
+    const { showToast } = useToast();
     const [links, setLinks] = useState<{ label: string; link: string; icon_url: string }[]>([]);
 
     useEffect(() => {
@@ -31,9 +33,9 @@ const EcosystemConfiguration: React.FC = () => {
             ecosystem_links: links
         });
         if (success) {
-            alert("Ecosystem links saved successfully");
+            showToast("Ecosystem links saved successfully");
         } else {
-            alert("Failed to save settings");
+            showToast("Failed to save settings", "error");
         }
     };
 

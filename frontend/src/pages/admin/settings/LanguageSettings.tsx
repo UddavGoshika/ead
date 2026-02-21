@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./LanguageSettings.module.css";
+import api from "../../../services/api";
+import { useToast } from "../../../context/ToastContext";
 
 type Language = {
     id: number;
@@ -35,45 +37,92 @@ const initialLanguages: Language[] = [
 ];
 
 const LanguageSettings: React.FC = () => {
-    const [languages, setLanguages] = useState<Language[]>(initialLanguages);
+    const { showToast: centralShowToast } = useToast();
+    const [languages, setLanguages] = useState<Language[]>([]);
     const [defaultLang, setDefaultLang] = useState<string>("en");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     const [newName, setNewName] = useState("");
     const [newCode, setNewCode] = useState("");
 
+    const fetchLanguages = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/settings/site');
+            if (res.data.success) {
+                const fetched = res.data.settings.languages || [];
+                if (fetched.length === 0) {
+                    setLanguages(initialLanguages);
+                } else {
+                    setLanguages(fetched);
+                }
+                setDefaultLang(res.data.settings.default_language || 'en');
+            }
+        } catch (err) {
+            console.error("Error fetching languages:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLanguages();
+    }, []);
+
+    const saveAll = async (updatedLangs: Language[], newDefault?: string) => {
+        try {
+            setSaving(true);
+            await api.post('/settings/site', {
+                languages: updatedLangs,
+                default_language: newDefault || defaultLang
+            });
+            centralShowToast("Language settings updated");
+        } catch (err) {
+            console.error("Error saving languages:", err);
+            centralShowToast("Error saving settings");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const toggleRTL = (id: number) => {
-        setLanguages((prev) =>
-            prev.map((l) =>
-                l.id === id ? { ...l, rtl: !l.rtl } : l
-            )
+        const updated = languages.map((l) =>
+            l.id === id ? { ...l, rtl: !l.rtl } : l
         );
+        setLanguages(updated);
+        saveAll(updated);
     };
 
     const toggleEnabled = (id: number) => {
-        setLanguages((prev) =>
-            prev.map((l) =>
-                l.id === id ? { ...l, enabled: !l.enabled } : l
-            )
+        const updated = languages.map((l) =>
+            l.id === id ? { ...l, enabled: !l.enabled } : l
         );
+        setLanguages(updated);
+        saveAll(updated);
     };
 
     const deleteLanguage = (id: number) => {
-        setLanguages((prev) => prev.filter((l) => l.id !== id));
+        const updated = languages.filter((l) => l.id !== id);
+        setLanguages(updated);
+        saveAll(updated);
     };
 
     const addLanguage = () => {
         if (!newName || !newCode) return;
 
-        setLanguages((prev) => [
-            ...prev,
+        const updated = [
+            ...languages,
             {
-                id: prev.length + 1,
+                id: Date.now(),
                 name: newName,
                 code: newCode.toLowerCase(),
                 rtl: false,
                 enabled: true,
             },
-        ]);
+        ];
+        setLanguages(updated);
+        saveAll(updated);
 
         setNewName("");
         setNewCode("");
@@ -82,6 +131,8 @@ const LanguageSettings: React.FC = () => {
     const handleTranslate = (lang: Language) => {
         alert(`Open translate panel for: ${lang.name}`);
     };
+
+    if (loading) return <div className={styles.page}>Loading...</div>;
 
     return (
         <div className={styles.page}>
@@ -101,7 +152,7 @@ const LanguageSettings: React.FC = () => {
                                 </option>
                             ))}
                     </select>
-                    <button className={styles.saveBtn}>Save</button>
+                    <button className={styles.saveBtn} onClick={() => saveAll(languages, defaultLang)}>Save</button>
                 </div>
             </div>
 

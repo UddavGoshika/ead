@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { staffService } from '../../services/api';
 import TelecallerDashboard from './roles/TelecallerDashboard';
 import LiveChatDashboard from './roles/LiveChatDashboard';
 import CallSupportDashboard from './roles/CallSupportDashboard';
@@ -16,6 +17,73 @@ import MailSupportDashboard from './roles/MailSupportDashboard';
 import MemberTable from '../../components/admin/MemberTable';
 
 type ActiveView = 'dashboard' | 'telecaller' | 'chat' | 'call' | 'mail' | 'members' | 'profile' | 'chat_history' | 'performance' | 'call_history' | 'lead_stats';
+
+const CallLogsView: React.FC = () => {
+    const [logs, setLogs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        staffService.getCallLogs().then(({ data }) => {
+            if (data.success) setLogs(data.logs || []);
+        }).catch(() => setLogs([])).finally(() => setLoading(false));
+    }, []);
+    if (loading) return <div className={styles.emptyCenter}><p>Loading voice logs...</p></div>;
+    return (
+        <div className={styles.scrollableContent}>
+            <h2 style={{ marginBottom: 16 }}>Voice Logs</h2>
+            {logs.length === 0 ? <p className={styles.emptyCenter}>No call records yet.</p> : (
+                <table className={styles.dataTable}>
+                    <thead><tr><th>Date / Time</th><th>Contact</th><th>Type</th><th>Mode</th><th>Duration</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {logs.map((l: any) => (
+                            <tr key={l._id}>
+                                <td>{l.timestamp ? new Date(l.timestamp).toLocaleString() : '—'}</td>
+                                <td>{l.leadId?.clientName || l.leadId?.clientMobile || l.leadId?._id || '—'}</td>
+                                <td>{l.type || '—'}</td>
+                                <td>{l.mode || 'Voice'}</td>
+                                <td>{l.duration != null ? `${l.duration}s` : '—'}</td>
+                                <td>{l.status || '—'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+};
+
+const LeadStatsView: React.FC = () => {
+    const [leads, setLeads] = useState<any[]>([]);
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        Promise.all([staffService.getMyLeads(), staffService.getPerformance()]).then(([r1, r2]) => {
+            if (r1.data.success) setLeads(r1.data.leads || []);
+            if (r2.data.success) setStats(r2.data.stats);
+        }).catch(() => {}).finally(() => setLoading(false));
+    }, []);
+    if (loading) return <div className={styles.emptyCenter}><p>Loading conversion metrics...</p></div>;
+    const byStatus = leads.reduce((acc: Record<string, number>, l: any) => { acc[l.leadStatus] = (acc[l.leadStatus] || 0) + 1; return acc; });
+    return (
+        <div className={styles.scrollableContent}>
+            <h2 style={{ marginBottom: 16 }}>Lead Stats & Conversions</h2>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
+                <div className={styles.statCard}><span>Total Leads</span><strong>{leads.length}</strong></div>
+                <div className={styles.statCard}><span>Converted</span><strong>{stats?.convertedLeads ?? byStatus['Converted'] ?? 0}</strong></div>
+                <div className={styles.statCard}><span>By Status</span><strong>{Object.keys(byStatus).length}</strong></div>
+            </div>
+            {leads.length === 0 ? <p>No leads assigned yet.</p> : (
+                <table className={styles.dataTable}>
+                    <thead><tr><th>Name</th><th>Mobile</th><th>Status</th><th>Category</th></tr></thead>
+                    <tbody>
+                        {leads.slice(0, 50).map((l: any) => (
+                            <tr key={l._id}><td>{l.clientName}</td><td>{l.clientMobile}</td><td>{l.leadStatus}</td><td>{l.category || '—'}</td></tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+};
 
 const StaffGlobalDashboard: React.FC = () => {
     const { user, logout } = useAuth();
@@ -45,12 +113,7 @@ const StaffGlobalDashboard: React.FC = () => {
 
     const roleName = getRoleDisplayName();
 
-    useEffect(() => {
-        const r = user?.role?.toLowerCase() || '';
-        if (['telecaller', 'customer_care', 'telecalling_support'].includes(r)) setActiveView('telecaller');
-        else if (['chat_agent', 'chat_support'].includes(r)) setActiveView('chat');
-        else if (['call_agent', 'voice_support'].includes(r)) setActiveView('call');
-    }, [user]);
+    // Default stays 'dashboard' (Operational Home) so user selects module; no auto-switch to role view
 
     const handleLogout = () => { if (window.confirm("End your terminal session?")) logout(); };
 
@@ -281,8 +344,8 @@ const StaffGlobalDashboard: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        {activeView === 'call_history' && <div className={styles.emptyCenter}><h2>Call Logs</h2><p>Viewing historical voice data...</p></div>}
-                        {activeView === 'lead_stats' && <div className={styles.emptyCenter}><h2>Lead Stats</h2><p>Conversion metrics loading...</p></div>}
+                        {activeView === 'call_history' && <CallLogsView />}
+                        {activeView === 'lead_stats' && <LeadStatsView />}
                     </motion.div>
                 </AnimatePresence>
             </main>

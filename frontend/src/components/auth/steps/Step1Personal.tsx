@@ -22,12 +22,10 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
         const file = e.target.files?.[0];
         if (file) {
             const isID = field === 'idProofDocument';
-            const allowedTypes = isID
-                ? ['image/jpeg', 'image/png', 'application/pdf']
-                : ['image/jpeg', 'image/png'];
+            const allowedTypes = ['image/jpeg', 'image/png'];
 
             if (!allowedTypes.includes(file.type)) {
-                alert(`Invalid file type. Please upload ${isID ? 'JPG, PNG or PDF' : 'JPG or PNG'}.`);
+                alert(`Invalid file type. Please upload JPG or PNG.`);
                 e.target.value = '';
                 return;
             }
@@ -142,12 +140,12 @@ const Step1Personal: React.FC<StepProps> = ({ formData, updateFormData, errors }
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label>UPLOAD ID PROOF <span className={styles.required}>*</span> <span className={styles.fileHint}>(JPG, PNG, PDF | Max 5MB)</span></label>
+                    <label>UPLOAD ID PROOF <span className={styles.required}>*</span> <span className={styles.fileHint}>(JPG, PNG | Max 5MB)</span></label>
                     <div className={styles.fileUploadContainer}>
                         <input
                             type="file"
                             ref={fileInputRef}
-                            accept=".jpg,.jpeg,.png,.pdf"
+                            accept=".jpg,.jpeg,.png"
                             style={{ display: 'none' }}
                             onChange={(e) => handleFileChange(e, 'idProofDocument')}
                         />

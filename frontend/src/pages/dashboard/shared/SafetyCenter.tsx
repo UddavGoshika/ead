@@ -29,7 +29,7 @@ const SafetyCenter: React.FC<Props> = ({ backToHome, showToast, onNavigate }) =>
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>}
+        {/* {backToHome && <button onClick={backToHome} className={styles.backBtn}><ArrowLeft size={20} /></button>} */}
         <h2>Safety & Security Center</h2>
       </div>
 

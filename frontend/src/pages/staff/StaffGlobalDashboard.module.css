@@ -254,6 +254,18 @@
     width: 100%;
 }
 
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.dataTable th, .dataTable td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.dataTable th { color: #94a3b8; font-weight: 600; }
+
 .header {
     display: flex;
     justify-content: space-between;

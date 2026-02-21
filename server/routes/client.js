@@ -28,7 +28,7 @@ async function generateClientId() {
 
     while (exists) {
         // Generate exactly 6 random digits (000000-999999)
-        const digits = Math.floor(100000 + Math.random() * 900000).toString();
+        const digits = Math.floor(1000 + Math.random() * 9000).toString();
         id = `${prefix}${digits}`;
         const existing = await Client.findOne({ unique_id: id });
         if (!existing) exists = false;
@@ -273,15 +273,19 @@ router.get('/', async (req, res) => {
             });
         }
 
+        // 5. FETCH UNLOCKED IDS FOR VIEWER
+        let unlockedIds = new Set();
+        if (viewerId) {
+            const unlocked = await require('../models/UnlockedContact').find({ viewer_user_id: viewerId });
+            unlocked.forEach(u => unlockedIds.add(u.profile_user_id.toString()));
+        }
+
         const formattedClients = dbClients.map(client => {
-            const shouldMask = !viewerIsPremium;
+            const isUnlocked = unlockedIds.has(client.userId?._id?.toString());
+            const shouldMask = !viewerIsPremium && !isUnlocked;
+
             let displayName = `${client.firstName} ${client.lastName}`;
             let displayId = client.unique_id || `CL-${client._id.toString().slice(-4).toUpperCase()}`;
-
-            if (shouldMask) {
-                displayName = displayName.substring(0, 2) + '*****';
-                displayId = displayId.substring(0, 2) + '*****';
-            }
 
             return {
                 id: client._id,
@@ -367,19 +371,29 @@ router.get('/:userId', async (req, res) => {
 
         // Detect Viewer Plan
         let viewerIsPremium = false;
+        let viewerIsAdvisor = false;
         if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
             const viewer = await User.findById(viewerId);
-            if (viewer && viewer.isPremium) viewerIsPremium = true;
+            if (viewer) {
+                if (viewer.isPremium || viewer.role === 'legal_provider') {
+                    viewerIsPremium = true;
+                }
+                if (viewer.role === 'legal_provider' || viewer.role === 'advocate') {
+                    viewerIsAdvisor = true;
+                }
+            }
         }
 
         // CHECK IF CONTACT ALREADY UNLOCKED (Activity or UnlockedContact)
         let contactInfo = null;
+        let contactUnlocked = false;
         if (viewerId && require('mongoose').Types.ObjectId.isValid(viewerId)) {
             const unlocked = await UnlockedContact.findOne({
                 viewer_user_id: viewerId,
                 profile_user_id: client.userId?._id || client.userId
             });
             if (unlocked) {
+                contactUnlocked = true;
                 contactInfo = {
                     email: client.email || (client.userId && client.userId.email) || 'N/A',
                     mobile: client.mobile || (client.userId && client.userId.phone) || 'N/A',
@@ -387,6 +401,9 @@ router.get('/:userId', async (req, res) => {
                 };
             }
         }
+
+        const isOwner = viewerId && viewerId.toString() === client.userId?._id?.toString();
+        const shouldShowReal = isOwner || contactUnlocked;
 
         // FETCH RELATIONSHIP STATUS
         let relationshipState = 'NONE';
@@ -410,16 +427,13 @@ router.get('/:userId', async (req, res) => {
         // OWNER PRIVACY OVERRIDES
         const privacy = client.userId?.privacySettings || { showProfile: true, showContact: true, showEmail: true };
         const msgSettings = client.userId?.messageSettings || { allowDirectMessages: true };
-        const isOwner = viewerId && viewerId.toString() === client.userId?._id?.toString();
 
         // Contact Info Overrides
-        if (contactInfo) {
-            // Unlocked -> Show everything
-            // if (!privacy.showContact && !isOwner) contactInfo.mobile = 'Hidden by User';
-            // if (!privacy.showEmail && !isOwner) contactInfo.email = 'Hidden by User';
+        if (!shouldShowReal) {
+            contactInfo = null;
         }
 
-        const shouldMask = !viewerIsPremium && !isOwner;
+        const shouldMask = false; // We use isMasked for specific UI elements
         let displayName = `${client.firstName} ${client.lastName}`.trim();
         let displayId = client.unique_id;
 
@@ -445,8 +459,8 @@ router.get('/:userId', async (req, res) => {
             img: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             image_url: getImageUrl(client.profilePicPath) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=400',
             profilePicPath: client.profilePicPath,
-            isBlur: shouldMask,
-            isMasked: shouldMask,
+            isBlur: !shouldShowReal,
+            isMasked: !shouldShowReal,
             contactInfo: contactInfo,
             privacySettings: privacy,
             notificationSettings: client.userId?.notificationSettings,

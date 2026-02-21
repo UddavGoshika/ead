@@ -381,3 +381,62 @@
     font-size: 13px;
     line-height: 1.5;
 }
+
+/* New Action Buttons */
+.actionRow {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.acceptBtn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.acceptBtn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.declineBtn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.declineBtn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.chatActionBtn {
+    background: #facc15;
+    color: #0f172a;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.chatActionBtn:hover {
+    background: #eab308;
+    transform: translateY(-1px);
+}

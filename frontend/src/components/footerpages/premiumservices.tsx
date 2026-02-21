@@ -202,7 +202,10 @@ const Preservices: React.FC = () => {
 
     const [coupon, setCoupon] = useState('');
     const [discount, setDiscount] = useState(0);
+    const [discountType, setDiscountType] = useState('Percentage');
     const [appliedCode, setAppliedCode] = useState<string | null>(null);
+    const [appliedOfferId, setAppliedOfferId] = useState<string | null>(null);
+    const [isVerifying, setIsVerifying] = useState(false);
 
     const getCurrentPackage = () => packages[activeCategory];
     const getCurrentTier = () => {
@@ -212,8 +215,11 @@ const Preservices: React.FC = () => {
 
     // Price Breakdown Logic
     const basePrice = getCurrentTier()?.price || 0;
-    const discountAmount = basePrice * (discount / 100);
-    const afterDiscount = basePrice - discountAmount;
+    const discountAmount = discountType === 'Percentage'
+        ? basePrice * (discount / 100)
+        : Math.min(discount, basePrice);
+
+    const afterDiscount = Math.max(0, basePrice - discountAmount);
 
     // Tax & Fees
     const cgst = afterDiscount * 0.09;
@@ -227,6 +233,36 @@ const Preservices: React.FC = () => {
 
     // Allow logic to use base price for display if needed, but we use detailed variables now.
     const price = basePrice;
+
+    const handleApplyCoupon = async () => {
+        if (!isLoggedIn) { alert("Please login to use coupons."); return; }
+        if (!selectedTier) { alert("Please select a tier first."); return; }
+        if (!coupon) return;
+
+        setIsVerifying(true);
+        try {
+            const { referralService } = await import('../../services/api');
+            const res = await referralService.verifyCoupon(coupon);
+            if (res.data.success) {
+                const { discount, discountType, minPurchase } = res.data;
+
+                if (basePrice < minPurchase) {
+                    alert(`This coupon requires a minimum purchase of ₹${minPurchase}`);
+                    return;
+                }
+
+                setAppliedCode(coupon);
+                setAppliedOfferId(res.data.offerId || null);
+                setDiscount(discount);
+                setDiscountType(discountType);
+                alert(`Coupon Applied! ${discount}${discountType === 'Percentage' ? '%' : ' ₹'} Discount.`);
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || 'Invalid Coupon Code');
+        } finally {
+            setIsVerifying(false);
+        }
+    };
 
     const handleBuyNow = async () => {
         if (!isLoggedIn) { alert("Please login to proceed."); return; }
@@ -516,17 +552,7 @@ const Preservices: React.FC = () => {
                                     />
                                     <button
                                         onClick={() => {
-                                            if (coupon === 'WELCOME10') {
-                                                setAppliedCode(coupon);
-                                                setDiscount(10);
-                                                alert('Coupon Applied! 10% Discount.');
-                                            } else if (coupon === 'EADVOCATE20') {
-                                                setAppliedCode(coupon);
-                                                setDiscount(20);
-                                                alert('Coupon Applied! 20% Discount.');
-                                            } else {
-                                                alert('Invalid Coupon Code');
-                                            }
+                                            handleApplyCoupon();
                                         }}
                                         style={{
                                             padding: '0 20px',
@@ -535,16 +561,16 @@ const Preservices: React.FC = () => {
                                             border: 'none',
                                             color: appliedCode ? '#fff' : '#000',
                                             fontWeight: 'bold',
-                                            cursor: appliedCode ? 'default' : 'pointer'
+                                            cursor: (appliedCode || isVerifying) ? 'default' : 'pointer'
                                         }}
-                                        disabled={!!appliedCode}
+                                        disabled={!!appliedCode || isVerifying}
                                     >
-                                        {appliedCode ? 'APPLIED' : 'APPLY'}
+                                        {isVerifying ? '...' : (appliedCode ? 'APPLIED' : 'APPLY')}
                                     </button>
                                 </div>
                                 {appliedCode && (
                                     <p style={{ color: '#10b981', fontSize: '0.8rem', marginTop: '8px' }}>
-                                        Discount Applied: {discount}% OFF
+                                        Discount Applied: {discount}{discountType === 'Percentage' ? '%' : ' ₹'} OFF
                                     </p>
                                 )}
                             </div>
@@ -645,6 +671,7 @@ const Preservices: React.FC = () => {
                                                     userName: user?.name,
                                                     userEmail: user?.email,
                                                     userPhone: (user as any)?.phone || (user as any)?.mobile || '',
+                                                    appliedOfferId,
                                                     breakdown: {
                                                         base: basePrice,
                                                         discount: discountAmount,

@@ -2,9 +2,9 @@
     width: 100%;
     min-height: 100vh;
     background:
-        radial-gradient(800px 400px at 10% 0%, rgba(124, 58, 237, 0.423), transparent 45%),
-        radial-gradient(800px 400px at 90% 10%, rgba(56, 191, 248, 0.647), transparent 35%),
-        linear-gradient(180deg, #0b122f, #0b102a);
+        radial-gradient(800px 400px at 10% 0%, rgba(218, 165, 32, 0.15), transparent 45%),
+        radial-gradient(800px 400px at 90% 10%, rgba(218, 165, 32, 0.1), transparent 35%),
+        linear-gradient(180deg, #060b1a, #000);
     color: #fff;
     overflow-x: hidden;
     padding-top: 0;
@@ -20,11 +20,11 @@
 }
 
 .publicView {
-    padding-top: 110px;
+    padding-top: 20px;
 }
 
 .publicView .navBackground {
-    margin-top: 80px;
+    margin-top: 0;
 }
 
 .embeddedMode {
@@ -96,14 +96,14 @@
 
 /* HERO SECTION */
 .hero {
-    padding: 80px 80px 70px;
+    padding: 80px 40px;
     text-align: center;
-    margin: 0 50px;
+    margin: 20px auto;
     border-radius: 40px;
-    background: linear-gradient(rgba(6, 11, 26, 0.8), rgba(6, 11, 26, 0.8)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2000');
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2000');
     background-size: cover;
-    width: 1250px;
-    margin-left: 130px;
+    max-width: 1250px;
+    width: 95%;
     background-position: center;
 }
 
@@ -421,6 +421,11 @@
     justify-content: center;
 }
 
+.pendingBadgeSmall {
+    color: #f59e0b !important;
+    /* Amber color for pending */
+}
+
 .imageOverlay {
     position: absolute;
     inset: 0;
@@ -528,6 +533,13 @@
 .actionItem:hover {
     color: #fff;
     transform: translateY(-2px);
+}
+
+.actionDisabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    filter: grayscale(1);
 }
 
 /* SELECTABLE CHIPS */

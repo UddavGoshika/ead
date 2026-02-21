@@ -5,11 +5,11 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(2px);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 20000;
+    z-index: 10000;
     padding: 20px;
     animation: fadeIn 0.3s ease-out;
 }

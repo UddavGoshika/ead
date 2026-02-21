@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./CurrencySettings.module.css";
+import api from "../../../services/api";
+import { useToast } from "../../../context/ToastContext";
 
 type Currency = {
     id: number;
@@ -23,15 +25,67 @@ const initialCurrencies: Currency[] = [
 ];
 
 const CurrencySettings: React.FC = () => {
-    const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
+    const { showToast } = useToast();
+    const [currencies, setCurrencies] = useState<Currency[]>([]);
+    const [defaultCurrency, setDefaultCurrency] = useState("USD");
+    const [loading, setLoading] = useState(true);
+    const [format, setFormat] = useState({
+        symbol_format: "[Amount] [Symbol]",
+        decimal_separator: "1,234,567.00",
+        no_of_decimals: "123.45"
+    });
+
+    const fetchCurrencies = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/settings/site');
+            if (res.data.success) {
+                const fetched = res.data.settings.currencies || [];
+                if (fetched.length === 0) {
+                    setCurrencies(initialCurrencies);
+                } else {
+                    setCurrencies(fetched);
+                }
+                setDefaultCurrency(res.data.settings.default_currency || 'USD');
+                if (res.data.settings.currency_format) {
+                    setFormat(res.data.settings.currency_format);
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching currencies:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCurrencies();
+    }, []);
+
+    const saveSettings = async (updates: any) => {
+        try {
+            await api.post('/settings/site', updates);
+            showToast("Currency settings saved");
+        } catch (err) {
+            console.error("Error saving currencies:", err);
+            showToast("Error saving settings");
+        }
+    };
 
     const toggleCurrency = (id: number) => {
-        setCurrencies((prev) =>
-            prev.map((c) =>
-                c.id === id ? { ...c, enabled: !c.enabled } : c
-            )
+        const updated = currencies.map((c) =>
+            c.id === id ? { ...c, enabled: !c.enabled } : c
         );
+        setCurrencies(updated);
+        saveSettings({ currencies: updated });
     };
+
+    const handleDefaultChange = (val: string) => {
+        setDefaultCurrency(val);
+        saveSettings({ default_currency: val });
+    };
+
+    if (loading) return <div className={styles.page}>Loading...</div>;
 
     return (
         <div className={styles.page}>
@@ -40,10 +94,12 @@ const CurrencySettings: React.FC = () => {
                 <div className={styles.card}>
                     <h3>System Default Currency</h3>
                     <div className={styles.inline}>
-                        <select>
-                            <option>U.S. Dollar</option>
+                        <select value={defaultCurrency} onChange={(e) => handleDefaultChange(e.target.value)}>
+                            {currencies.map(c => (
+                                <option key={c.id} value={c.code}>{c.name} ({c.symbol})</option>
+                            ))}
                         </select>
-                        <button className={styles.saveBtn}>Save</button>
+                        <button className={styles.saveBtn} onClick={() => saveSettings({ default_currency: defaultCurrency })}>Save</button>
                     </div>
                 </div>
 
@@ -52,27 +108,31 @@ const CurrencySettings: React.FC = () => {
 
                     <div className={styles.field}>
                         <label>Symbol Format</label>
-                        <select>
+                        <select value={format.symbol_format} onChange={e => setFormat({ ...format, symbol_format: e.target.value })}>
                             <option>[Amount] [Symbol]</option>
+                            <option>[Symbol] [Amount]</option>
                         </select>
                     </div>
 
                     <div className={styles.field}>
                         <label>Decimal Separator</label>
-                        <select>
+                        <select value={format.decimal_separator} onChange={e => setFormat({ ...format, decimal_separator: e.target.value })}>
                             <option>1,234,567.00</option>
+                            <option>1.234.567,00</option>
                         </select>
                     </div>
 
                     <div className={styles.field}>
                         <label>No of decimals</label>
-                        <select>
+                        <select value={format.no_of_decimals} onChange={e => setFormat({ ...format, no_of_decimals: e.target.value })}>
                             <option>123.45</option>
+                            <option>123.4</option>
+                            <option>123</option>
                         </select>
                     </div>
 
                     <div className={styles.right}>
-                        <button className={styles.saveBtn}>Save</button>
+                        <button className={styles.saveBtn} onClick={() => saveSettings({ currency_format: format })}>Save</button>
                     </div>
                 </div>
             </div>

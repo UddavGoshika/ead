@@ -13,7 +13,7 @@
     width: 100vw !important;
     height: 100vh !important;
     background: rgba(2, 6, 23, 0.95) !important;
-    backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(3px) !important;
     z-index: 99999;
     display: flex;
     justify-content: center;

@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema({
         enum: [
             'client', 'advocate', 'admin', 'superadmin', 'super_admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider',
             'hr', 'influencer', 'marketer', 'marketing_agency', 'call_support', 'chat_support', 'personal_agent',
-            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant', 'email_support'
+            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant', 'email_support', 'referral'
         ],
         default: 'client'
     },
@@ -79,7 +79,8 @@ const UserSchema = new mongoose.Schema({
         cardType: String, // VISA, Mastercard, etc.
         expiry: String,
         holderName: String
-    }]
+    }],
+    usedOffers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Offer' }]
 });
 
 UserSchema.pre('save', function (next) {

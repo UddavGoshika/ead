@@ -295,28 +295,9 @@ export const NormalProfiles = ({ showDetailedProfile, showToast, showsidePage, o
                             </div>
                         ))
                     ) : (
-                        <div style={{
-                            gridColumn: '1 / -1',
-                            textAlign: 'center',
-                            padding: '60px 20px',
-                            background: 'rgba(255, 255, 255, 0.02)',
-                            borderRadius: '16px',
-                            border: '1px dashed rgba(255, 255, 255, 0.1)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '15px'
-                        }}>
-                            <p style={{ color: '#94a3b8', fontSize: '16px' }}>No {isAdvocate ? 'clients' : 'advocates'} found matching your criteria.</p>
-                            <button onClick={() => showsidePage('featured-profiles')} style={{
-                                background: 'transparent',
-                                border: '1px solid #facc15',
-                                color: '#facc15',
-                                padding: '8px 20px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}>
+                        <div className={styles.noProfiles}>
+                            <p>No {isAdvocate ? 'clients' : 'advocates'} found matching your criteria.</p>
+                            <button onClick={() => showsidePage('featured-profiles')} className={styles.switchBtn}>
                                 View Featured {isAdvocate ? 'Clients' : 'Profiles'}
                             </button>
                         </div>

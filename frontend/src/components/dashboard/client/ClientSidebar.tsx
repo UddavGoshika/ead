@@ -2,7 +2,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { formatImageUrl } from '../../../utils/imageHelper';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
-    Coins, LogOut, Wallet, FileText
+    Coins, LogOut, Wallet, FileText, Briefcase, Gift
 } from 'lucide-react';
 // import styles from '../Sidebar.module.css';
 import styles from './ClientSidebar.module.css';
@@ -20,19 +20,24 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onS
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
 
     const menuItems = [
-        { id: 'Promocodes', label: 'Refer & Earn', icon: User },
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
-        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
-        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
-        ...(isPremium ? [{ id: 'featured-profiles', label: 'Featured Profiles', icon: Star }] : []),
+        { id: 'featured-profiles', label: 'Featured Profiles', icon: Star },
         { id: 'blogs', label: 'Blogs', icon: Newspaper },
+        { id: 'my-cases', label: 'My Cases', icon: Briefcase },
         { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
+        { id: 'my-subscription', label: 'My Subscription', icon: Shield },
+
+        { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
         { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
-        { id: 'safety-center', label: 'Safety Center', icon: Shield },
-        { id: 'account-settings', label: 'Account & Settings', icon: Settings },
         { id: 'credits', label: 'Credits', icon: Coins },
-        { id: 'help-support', label: 'Help & Support', icon: Settings }
+
+        { id: 'safety-center', label: 'Safety Center', icon: Shield },
+        { id: 'help-support', label: 'Help & Support', icon: Settings },
+
+        { id: 'refer-earn', label: 'Refer & Earn', icon: Gift },
+
+        { id: 'account-settings', label: 'Account & Settings', icon: Settings }
     ];
 
     return (

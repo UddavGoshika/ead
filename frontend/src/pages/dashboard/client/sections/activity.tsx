@@ -333,7 +333,7 @@ const Activity = ({ onSelectForChat, showToast }: { onSelectForChat?: (partner: 
     };
 
     return (
-        <div className={styles.dashboard}>
+        <div className={styles.dashboard} style={{ paddingBottom: '150px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0, fontSize: '22px', color: '#fff' }}>Activity Overview</h2>
                 <button

@@ -305,9 +305,11 @@ const AdvocateList: React.FC<AdvocateListProps> = ({ onAction, showDetailedProfi
                             </div>
                         ))
                     ) : (
-                        <div className={styles.noResults}>
-                            <h3>No Experts Found</h3>
-                            <p>Try adjusting your search or filters to find more results.</p>
+                        <div className={styles.noProfiles}>
+                            <p>No experts found matching your criteria.</p>
+                            <button onClick={() => onAction?.('switchFeatured', {} as Advocate)} className={styles.switchBtn}>
+                                View Featured Profiles
+                            </button>
                         </div>
                     )}
                 </div>

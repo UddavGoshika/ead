@@ -641,7 +641,31 @@
 
 .deptText {
     font-weight: 600;
-    color: #cbd5e1;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.miniChannels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.miniChannels span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.miniChannels span:hover {
+    color: #94a3b8;
 }
 
 .activityRow {
@@ -777,6 +801,24 @@
     font-weight: 900;
 }
 
+.earningsCell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.earningsCell .grossText {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.earningsCell .netText {
+    font-size: 14px;
+    color: #3b82f6;
+    font-weight: 800;
+}
+
 .joinedCol {
     display: flex;
     flex-direction: column;
@@ -802,6 +844,7 @@
     align-items: center;
     justify-content: center;
     z-index: 2000;
+
     padding: 40px;
 }
 
@@ -809,8 +852,9 @@
     background: #0f172a;
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 32px;
-    width: 700px;
+    width: 800px;
     max-width: 95%;
+
     box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
     animation: modalSpring 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -830,6 +874,8 @@
 /* For forms mainly */
 .registrationForm {
     padding: 32px;
+    height: 100%;
+    overflow-y: auto;
 }
 
 .formRow {

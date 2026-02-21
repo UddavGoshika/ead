@@ -105,6 +105,7 @@ export const adminService = {
     getReportLeads: (reportId: string) => api.get<{ success: boolean; leads: any[] }>(`/admin/reports/${reportId}/leads`),
     getStaffWorkLogs: (staffId: string) => api.get<{ success: boolean; logs: any[] }>(`/admin/staff/${staffId}/work-logs`),
     allocateProject: (staffId: string, project: string) => api.post<{ success: boolean; profile: any }>(`/admin/staff/${staffId}/allocate`, { project }),
+    updateMemberStatus: (id: string, status: string) => api.patch<{ success: boolean; user: any }>(`/admin/members/${id}/status`, { status }),
     updateTransactionStatus: (id: string, status: string, remarks?: string) => api.patch<{ success: boolean; transaction: any }>(`/admin/transactions/${id}/status`, { status, remarks }),
 };
 
@@ -123,6 +124,7 @@ export const staffService = {
     updateLead: (id: string, data: any) =>
         api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
     getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
+    getCallLogs: () => api.get<{ success: boolean; logs: any[] }>('/staff/call-logs'),
 };
 
 export const walletService = {
@@ -156,5 +158,22 @@ export const supportService = {
     getStats: () => api.get<{ success: boolean; totalUsers: number; openInquiries: number; recentLogs: any[] }>('/support/stats'),
     sync: () => api.get<{ success: boolean; count: number; error?: string }>('/support/sync'),
 };
+
+export const referralService = {
+    getUsers: () => api.get<{ success: boolean; users: any[] }>('/admin/referral/users'),
+    onboardUser: (data: any) => api.post<{ success: boolean; message: string; user: any }>('/admin/referral/onboard-user', data),
+    getStats: () => api.get<{ success: boolean; stats: any }>('/referral/stats'),
+    getReferrals: () => api.get<{ success: boolean; referrals: any[] }>('/referral/referrals'),
+    withdraw: (data: { amount: number; bankDetails?: any }) => api.post<{ success: boolean; message: string }>('/referral/withdraw', data),
+
+    // Offers
+    getOffers: () => api.get<{ success: boolean; offers: any[] }>('/referral/offers'),
+    adminGetOffers: () => api.get<{ success: boolean; offers: any[] }>('/admin/referral/offers'),
+    saveOffer: (data: any) => api.post<{ success: boolean; offer: any }>('/admin/referral/offers', data),
+    deleteOffer: (id: string) => api.delete<{ success: boolean }>('/admin/referral/offers/' + id),
+    verifyCoupon: (code: string) => api.post<{ success: boolean; discount: number; discountType: string; minPurchase: number; offerId?: string }>('/referral/verify-coupon', { code }),
+    getOffersHistory: () => api.get<{ success: boolean; offers: any[] }>('/referral/offers/history'),
+};
+
 
 export default api;

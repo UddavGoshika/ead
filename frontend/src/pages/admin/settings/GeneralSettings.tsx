@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import styles from "./GeneralSettings.module.css";
 import api from "../../../services/api";
 import { Loader2, Check } from "lucide-react";
+import { useToast } from "../../../context/ToastContext";
 
 const GeneralSettings: React.FC = () => {
+    const { showToast } = useToast();
     const [settings, setSettings] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
 
     const fetchSettings = async () => {
         try {
@@ -18,6 +19,7 @@ const GeneralSettings: React.FC = () => {
             }
         } catch (err) {
             console.error("Error fetching settings:", err);
+            showToast("Error loading settings", "error");
         } finally {
             setLoading(false);
         }
@@ -32,12 +34,11 @@ const GeneralSettings: React.FC = () => {
             setSaving(true);
             const res = await api.post('/settings/site', settings);
             if (res.data.success) {
-                setSaved(true);
-                setTimeout(() => setSaved(false), 3000);
+                showToast("General settings updated successfully");
             }
         } catch (err) {
             console.error("Save error:", err);
-            alert("Error saving settings");
+            showToast("Failed to update general settings", "error");
         } finally {
             setSaving(false);
         }
@@ -75,13 +76,6 @@ const GeneralSettings: React.FC = () => {
 
     return (
         <div className={styles.page}>
-            {/* SAVED NOTIFICATION */}
-            {saved && (
-                <div className={styles.notification}>
-                    <Check size={18} /> Settings updated successfully
-                </div>
-            )}
-
             {/* GENERAL SETTINGS */}
             <div className={styles.card}>
                 <h3 className={styles.title}>General Settings</h3>

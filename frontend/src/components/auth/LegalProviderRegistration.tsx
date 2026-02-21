@@ -431,6 +431,16 @@ const LegalProviderRegistration: React.FC<LegalProviderRegistrationProps> = ({ o
                                 </div>
 
                                 <button
+                                    className={styles.loginBtn}
+                                    onClick={() => {
+                                        onClose();
+                                        openAuthModal('login', { email: formData.email, password: formData.password });
+                                    }}
+                                >
+                                    Login & Explore Platform
+                                </button>
+
+                                <button
                                     className={styles.finishBtn}
                                     onClick={onClose}
                                 >

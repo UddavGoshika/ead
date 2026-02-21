@@ -19,6 +19,7 @@ import FileCase from '../advocate/sections/FileCase.tsx';
 import CreateBlog from '../advocate/sections/CreateBlog.tsx';
 import CreditsPage from '../shared/CreditsPage.tsx';
 import LegalDocumentationPage from '../../LegalDocumentationPage.tsx';
+import ReferAndEarn from '../shared/ReferAndEarn.tsx';
 import { Menu, ArrowLeft, Bell, PenLine } from 'lucide-react';
 
 import { useAuth } from '../../../context/AuthContext';
@@ -41,10 +42,19 @@ const AdvisorDashboard: React.FC = () => {
     useEffect(() => {
         const statePage = location.state?.initialPage;
         const queryPage = searchParams.get('page');
+        const chatPartnerId = searchParams.get('chat');
+
         if (statePage) {
             setCurrentPage(statePage);
         } else if (queryPage) {
             setCurrentPage(queryPage);
+        } else if (chatPartnerId) {
+            setCurrentPage('messenger');
+        }
+
+        if (chatPartnerId) {
+            // Passing minimal object that Messenger can use to trigger fetch
+            setActiveChatAdvocate({ id: chatPartnerId } as any);
         }
     }, [location.state, searchParams]);
 
@@ -88,12 +98,13 @@ const AdvisorDashboard: React.FC = () => {
             case 'blogs':
                 return <BlogFeed />;
             case 'activity':
-                return <AdvisorActivity />;
+                return <AdvisorActivity onNavigate={setCurrentPage} onChatSelect={setActiveChatAdvocate} />;
             case 'my-subscription':
                 return <PlanOverview />;
             case 'messenger':
                 return <Messenger
                     view="list"
+                    selectedAdvocate={activeChatAdvocate}
                     onSelectForChat={handleSelectForChat}
                 />;
             case 'my-cases':
@@ -102,6 +113,8 @@ const AdvisorDashboard: React.FC = () => {
                 return <FileCase backToHome={backtohome} showToast={showToast} />;
             case 'legal-documentation':
                 return <LegalDocumentationPage isEmbedded />;
+            case 'refer-earn':
+                return <ReferAndEarn />;
             default:
                 return (
                     <Messenger
@@ -126,6 +139,7 @@ const AdvisorDashboard: React.FC = () => {
             case 'my-cases': return 'Service Cases';
             case 'fileacase': return 'New Service Request';
             case 'legal-documentation': return 'Legal Documentation';
+            case 'refer-earn': return 'Refer & Earn';
             default: return 'Legal Advisor Workspace';
         }
     };

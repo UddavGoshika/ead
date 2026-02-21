@@ -1,7 +1,55 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./ThirdPartySettings.module.css";
+import api from "../../../services/api";
+import { useToast } from "../../../context/ToastContext";
 
 const ThirdPartySettings: React.FC = () => {
+    const { showToast } = useToast();
+    const [config, setConfig] = useState({
+        google_recaptcha: {
+            activation: false,
+            site_key: "",
+            secret_key: "",
+            v3_score: "0.5",
+            enable_for_registration: false,
+            enable_for_contact: false
+        },
+        google_analytics: {
+            activation: false,
+            tracking_id: ""
+        }
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await api.get('/settings/site');
+                if (res.data.success && res.data.settings.third_party_settings) {
+                    setConfig(res.data.settings.third_party_settings);
+                }
+            } catch (err) {
+                console.error("Error fetching third party settings:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSave = async (section: 'google_recaptcha' | 'google_analytics') => {
+        try {
+            const updatedConfig = { ...config };
+            await api.post('/settings/site', { third_party_settings: updatedConfig });
+            showToast(`${section === 'google_recaptcha' ? 'reCAPTCHA' : 'Analytics'} settings saved successfully`);
+        } catch (err) {
+            console.error("Error saving third party settings:", err);
+            showToast("Failed to save settings", "error");
+        }
+    };
+
+    if (loading) return <div>Loading Third Party Settings...</div>;
+
     return (
         <div className={styles.page}>
             {/* GOOGLE reCAPTCHA */}
@@ -16,29 +64,55 @@ const ThirdPartySettings: React.FC = () => {
                         <div className={styles.row}>
                             <label>Activation</label>
                             <label className={styles.switch}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={config.google_recaptcha.activation}
+                                    onChange={e => setConfig({
+                                        ...config,
+                                        google_recaptcha: { ...config.google_recaptcha, activation: e.target.checked }
+                                    })}
+                                />
                                 <span className={styles.slider} />
                             </label>
                         </div>
 
                         <div className={styles.field}>
                             <label>Site KEY</label>
-                            <input placeholder="Site KEY" />
+                            <input
+                                placeholder="Site KEY"
+                                value={config.google_recaptcha.site_key}
+                                onChange={e => setConfig({
+                                    ...config,
+                                    google_recaptcha: { ...config.google_recaptcha, site_key: e.target.value }
+                                })}
+                            />
                         </div>
 
                         <div className={styles.field}>
                             <label>SECRET KEY</label>
-                            <input placeholder="SECRET KEY" />
+                            <input
+                                placeholder="SECRET KEY"
+                                value={config.google_recaptcha.secret_key}
+                                onChange={e => setConfig({
+                                    ...config,
+                                    google_recaptcha: { ...config.google_recaptcha, secret_key: e.target.value }
+                                })}
+                            />
                         </div>
 
                         <div className={styles.field}>
                             <label>Accept V3 Score</label>
-                            <select>
-                                <option>Select Score</option>
-                                <option>0.3</option>
-                                <option>0.5</option>
-                                <option>0.7</option>
-                                <option>0.9</option>
+                            <select
+                                value={config.google_recaptcha.v3_score}
+                                onChange={e => setConfig({
+                                    ...config,
+                                    google_recaptcha: { ...config.google_recaptcha, v3_score: e.target.value }
+                                })}
+                            >
+                                <option value="0.3">0.3</option>
+                                <option value="0.5">0.5</option>
+                                <option value="0.7">0.7</option>
+                                <option value="0.9">0.9</option>
                             </select>
                             <small>
                                 reCAPTCHA v3 score (0–1) estimates if a request is human or bot.
@@ -46,7 +120,7 @@ const ThirdPartySettings: React.FC = () => {
                         </div>
 
                         <div className={styles.actions}>
-                            <button className={styles.saveBtn}>Save</button>
+                            <button className={styles.saveBtn} onClick={() => handleSave('google_recaptcha')}>Save</button>
                         </div>
                     </div>
 
@@ -72,7 +146,7 @@ const ThirdPartySettings: React.FC = () => {
                             </li>
                             <li>
                                 No credentials yet?{" "}
-                                <a href="#" className={styles.link}>
+                                <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noreferrer" className={styles.link}>
                                     Register reCAPTCHA v3 here
                                 </a>
                             </li>
@@ -88,7 +162,14 @@ const ThirdPartySettings: React.FC = () => {
                         <div className={styles.row}>
                             <span>User Registration</span>
                             <label className={styles.switch}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={config.google_recaptcha.enable_for_registration}
+                                    onChange={e => setConfig({
+                                        ...config,
+                                        google_recaptcha: { ...config.google_recaptcha, enable_for_registration: e.target.checked }
+                                    })}
+                                />
                                 <span className={styles.slider} />
                             </label>
                         </div>
@@ -96,7 +177,14 @@ const ThirdPartySettings: React.FC = () => {
                         <div className={styles.row}>
                             <span>Contact Us Form</span>
                             <label className={styles.switch}>
-                                <input type="checkbox" />
+                                <input
+                                    type="checkbox"
+                                    checked={config.google_recaptcha.enable_for_contact}
+                                    onChange={e => setConfig({
+                                        ...config,
+                                        google_recaptcha: { ...config.google_recaptcha, enable_for_contact: e.target.checked }
+                                    })}
+                                />
                                 <span className={styles.slider} />
                             </label>
                         </div>
@@ -112,18 +200,32 @@ const ThirdPartySettings: React.FC = () => {
                     <div className={styles.row}>
                         <label>Activation</label>
                         <label className={styles.switch}>
-                            <input type="checkbox" />
+                            <input
+                                type="checkbox"
+                                checked={config.google_analytics.activation}
+                                onChange={e => setConfig({
+                                    ...config,
+                                    google_analytics: { ...config.google_analytics, activation: e.target.checked }
+                                })}
+                            />
                             <span className={styles.slider} />
                         </label>
                     </div>
 
                     <div className={styles.field}>
                         <label>Tracking ID</label>
-                        <input placeholder="Tracking ID" />
+                        <input
+                            placeholder="Tracking ID"
+                            value={config.google_analytics.tracking_id}
+                            onChange={e => setConfig({
+                                ...config,
+                                google_analytics: { ...config.google_analytics, tracking_id: e.target.value }
+                            })}
+                        />
                     </div>
 
                     <div className={styles.actions}>
-                        <button className={styles.saveBtn}>Save</button>
+                        <button className={styles.saveBtn} onClick={() => handleSave('google_analytics')}>Save</button>
                     </div>
                 </div>
             </div>

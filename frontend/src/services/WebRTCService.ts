@@ -195,7 +195,14 @@ export const useCallSignals = (userId: string, onIncomingCall: (callId: string, 
         snapshot.docChanges().forEach((change) => {
             if (change.type === 'added') {
                 const data = change.doc.data();
-                if (data.offer && !data.answer) {
+
+                // --- PREVENT OLD CALLS ON LOGIN ---
+                // Only trigger if the call was created in the last 10 seconds
+                const createdAt = data.createdAt?.toDate();
+                const now = new Date();
+                const isRecent = createdAt && (now.getTime() - createdAt.getTime()) < 10000;
+
+                if (data.offer && !data.answer && isRecent) {
                     onIncomingCall(change.doc.id, data.offer);
                 }
             }

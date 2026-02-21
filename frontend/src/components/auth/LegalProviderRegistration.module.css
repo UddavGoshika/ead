@@ -1124,6 +1124,26 @@ refreal code  */
     box-shadow: 0 10px 20px -5px rgba(0, 210, 255, 0.4);
 }
 
+.loginBtn {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s;
+    margin-bottom: 12px;
+}
+
+.loginBtn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+}
+
 @keyframes errorBlink {
 
     0%,

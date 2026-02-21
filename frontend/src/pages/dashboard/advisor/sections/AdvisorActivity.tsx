@@ -4,19 +4,27 @@ import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare, X } from "lucide-react";
 import api from "../../../../services/api";
+import DetailedProfileEnhanced from "../../shared/DetailedProfileEnhanced";
 
-const AdvisorActivity = () => {
+interface AdvisorActivityProps {
+    onNavigate?: (page: string) => void;
+    onChatSelect?: (partner: any) => void;
+}
+
+const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSelect }) => {
     const { user } = useAuth();
     const plan = user?.plan || 'Free';
     const isPremium = user?.isPremium || (plan.toLowerCase() !== 'free' && ['lite', 'pro', 'ultra'].some(p => plan.toLowerCase().includes(p)));
-    const shouldMask = !isPremium;
+    const shouldMask = false;
 
     const [stats, setStats] = useState({
         visits: 0,
         sent: 0,
         received: 0,
         accepted: 0,
-        messages: 0
+        messages: 0,
+        consultations: 0,
+        blocked: 0
     });
     const [activities, setActivities] = useState<any[]>([]);
     const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -33,7 +41,12 @@ const AdvisorActivity = () => {
                         interactionService.getActivityStats(String(user.id)),
                         interactionService.getAllActivities(String(user.id))
                     ]);
-                    setStats({ ...statsData, messages: statsData.messages || 0 });
+                    setStats({
+                        ...statsData,
+                        messages: statsData.messages || 0,
+                        consultations: statsData.consultations || statsData.meet_request || 0,
+                        blocked: statsData.blocked || 0
+                    });
                     setActivities(activitiesData);
                 } catch (err) {
                     console.error("Error fetching activity data:", err);
@@ -49,41 +62,129 @@ const AdvisorActivity = () => {
         { label: "Profile Visits", value: stats.visits, icon: <Eye size={22} />, color: "#3b82f6", type: 'visit' },
         { label: "Interests Sent", value: stats.sent, icon: <Send size={22} />, color: "#facc15", type: 'sent' },
         { label: "Interests Received", value: stats.received, icon: <Inbox size={22} />, color: "#10b981", type: 'received' },
-        { label: "Shortlisted", value: stats.accepted, icon: <UserCheck size={22} />, color: "#f43f5e", type: 'accepted' },
-        { label: "Messages", value: stats.messages, icon: <MessageSquare size={22} />, color: "#8b5cf6", type: 'message' }
+        { label: "Accepted", value: stats.accepted, icon: <UserCheck size={22} />, color: "#f43f5e", type: 'accepted' },
+        { label: "Messages", value: stats.messages, icon: <MessageSquare size={22} />, color: "#8b5cf6", type: 'message' },
+        { label: "Consultations", value: stats.consultations, icon: <Clock size={22} />, color: "#daa520", type: 'consultation' },
+        { label: "Blocked", value: stats.blocked, icon: <X size={22} />, color: "#64748b", type: 'blocked' }
     ];
 
     const filteredActivities = activities.filter(act => {
         if (activeFilter === 'all') return true;
         if (activeFilter === 'visit') return act.type === 'visit' && act.isSender;
-        if (activeFilter === 'sent') return ['interest', 'superInterest'].includes(act.type) && act.isSender;
-        if (activeFilter === 'received') return ['interest', 'superInterest'].includes(act.type) && !act.isSender;
+        if (activeFilter === 'sent') return ['interest', 'superInterest', 'meet_request'].includes(act.type) && act.isSender;
+        if (activeFilter === 'received') return (['interest', 'superInterest', 'meet_request'].includes(act.type) && !act.isSender);
         if (activeFilter === 'accepted') return act.status === 'accepted';
         if (activeFilter === 'message') return act.type === 'message' || act.type === 'chat_initiated';
+        if (activeFilter === 'consultation') return act.type === 'meet_request' || act.type === 'consultation';
+        if (activeFilter === 'blocked') return act.type === 'block' && act.isSender;
         return true;
     });
 
-    const handleClientClick = async (partnerId: string) => {
+    const dedupedActivities = filteredActivities.reduce((acc: any[], current) => {
+        // For chats, we only want the LATEST message from/to a specific partner in the log
+        if (current.type === 'chat' || current.type === 'message' || current.type === 'chat_initiated') {
+            const existingChat = acc.find(item =>
+                (item.type === 'chat' || item.type === 'message' || item.type === 'chat_initiated') &&
+                ((item.sender === current.sender && item.receiver === current.receiver) ||
+                    (item.sender === current.receiver && item.receiver === current.sender))
+            );
+            if (!existingChat) {
+                return acc.concat([current]);
+            } else if (new Date(current.timestamp).getTime() > new Date(existingChat.timestamp).getTime()) {
+                // Keep the newer one
+                return acc.filter(i => i !== existingChat).concat([current]);
+            }
+            return acc;
+        }
+
+        // For interests/consultations, show the latest state for that pair
+        const isInterest = ['interest', 'superInterest', 'meet_request', 'consultation'].includes(current.type);
+        if (isInterest) {
+            const existingInterest = acc.find(item =>
+                ['interest', 'superInterest', 'meet_request', 'consultation'].includes(item.type) &&
+                item.sender === current.sender &&
+                item.receiver === current.receiver
+            );
+            if (!existingInterest) {
+                return acc.concat([current]);
+            } else if (new Date(current.timestamp).getTime() > new Date(existingInterest.timestamp).getTime()) {
+                return acc.filter(i => i !== existingInterest).concat([current]);
+            }
+            return acc;
+        }
+
+        // Default: add if not exact duplicate
+        const x = acc.find(item =>
+            item.sender === current.sender &&
+            item.receiver === current.receiver &&
+            item.type === current.type &&
+            item.status === current.status
+        );
+        if (!x) {
+            return acc.concat([current]);
+        } else {
+            return acc;
+        }
+    }, []);
+
+    const handleClientClick = async (partnerId: string, role: string = 'client') => {
         try {
             setPopupLoading(true);
-            const response = await api.get(`/client/${partnerId}`);
+            const endpoint = (role === 'advocate' || role === 'legal_provider') ? `/advocate/${partnerId}` : `/client/${partnerId}`;
+            const response = await api.get(endpoint);
             if (response.data.success) {
-                setSelectedClient(response.data.client);
+                const data = response.data.client || response.data.advocate;
+                console.log("[DEBUG] Profile Data Loaded:", data);
+
+                // DetailedProfileEnhanced prefers the record ID or userId string
+                const resolvedId = data.userId?._id || data.userId || data._id || data.id;
+
+                setSelectedClient({
+                    ...data,
+                    resolvedId: resolvedId,
+                    role: role,
+                    firstName: data.firstName || data.name?.split(' ')[0] || 'User',
+                    lastName: data.lastName || data.name?.split(' ').slice(1).join(' ') || '',
+                    img: data.img || data.profilePic || data.profilePicPath,
+                    unique_id: data.unique_id || data.display_id || 'ID-PENDING'
+                });
             } else {
-                alert("Could not fetch client details.");
+                console.error("Fetch Failed:", response.data);
+                alert("Could not fetch profile details: " + (response.data.error || 'Unknown error'));
             }
-        } catch (error) {
-            console.error("Error fetching client details:", error);
-            alert("Error fetching client details.");
+        } catch (error: any) {
+            console.error("Error fetching profile details:", error);
+            alert("Error: " + (error.response?.data?.error || error.message));
         } finally {
             setPopupLoading(false);
         }
     };
 
+    const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await interactionService.respondToActivity(activityId, status);
+            alert(`Request ${status}`);
+            // Refresh counts and list
+            const [statsData, activitiesData] = await Promise.all([
+                interactionService.getActivityStats(String(user?.id)),
+                interactionService.getAllActivities(String(user?.id))
+            ]);
+            setStats({
+                ...statsData,
+                messages: statsData.messages || 0,
+                consultations: statsData.consultations || statsData.meet_request || 0,
+                blocked: statsData.blocked || 0
+            });
+            setActivities(activitiesData);
+        } catch (err) {
+            console.error("Failed to respond:", err);
+            alert("Failed to update status.");
+        }
+    };
+
     const maskContactInfo = (info: string) => {
-        if (!info) return "N/A";
-        if (info.length <= 2) return info;
-        return info.substring(0, 2) + "888" + "*".repeat(Math.max(0, info.length - 5));
+        return info || "N/A";
     };
 
     return (
@@ -116,16 +217,30 @@ const AdvisorActivity = () => {
                 <div className={styles.activityList}>
                     {loading ? (
                         <div className={styles.emptyMsg}>Syncing professional activities...</div>
-                    ) : filteredActivities.length > 0 ? (
-                        filteredActivities.map((act) => {
+                    ) : dedupedActivities.length > 0 ? (
+                        dedupedActivities.map((act) => {
                             const isIncoming = !act.isSender;
                             const showService = act.metadata?.service || act.service;
+                            const canRespond = isIncoming && act.status === 'pending' && ['interest', 'superInterest', 'meet_request'].includes(act.type);
 
                             return (
                                 <div
                                     key={act._id}
                                     className={styles.activityItem}
-                                    onClick={() => isIncoming && handleClientClick(act.isSender ? act.sender : act.receiver)}
+                                    onClick={() => {
+                                        // Row click -> Open Chat Popup (floating)
+                                        if (onChatSelect) {
+                                            onChatSelect({
+                                                id: act.partnerId,
+                                                partnerUserId: act.partnerId,
+                                                name: act.partnerName,
+                                                profilePic: act.partnerImg,
+                                                role: act.partnerRole || 'client',
+                                                unique_id: act.partnerUniqueId
+                                            });
+                                        }
+                                    }}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <img
                                         src={act.partnerImg}
@@ -134,8 +249,16 @@ const AdvisorActivity = () => {
                                     />
                                     <div className={styles.activityContent}>
                                         <div className={styles.activityHeader}>
-                                            <span className={styles.activityName}>
-                                                {shouldMask && act.partnerName ? act.partnerName.substring(0, 2) + "*****" : act.partnerName}
+                                            <span
+                                                className={styles.activityName}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleClientClick(act.partnerId, act.partnerRole || 'client');
+                                                }}
+                                                title="View Profile"
+                                                style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                            >
+                                                {act.partnerName}
                                             </span>
                                             <span className={styles.activityDate}>
                                                 {new Date(act.timestamp).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
@@ -143,9 +266,7 @@ const AdvisorActivity = () => {
                                         </div>
                                         <div className={styles.activitySub}>
                                             <span>
-                                                {shouldMask && (act.partnerUniqueId || act.partnerId)
-                                                    ? (act.partnerUniqueId || act.partnerId || '').substring(0, 2) + "*****"
-                                                    : (act.partnerUniqueId || 'ID: N/A')}
+                                                {act.partnerUniqueId || act.partnerId || 'ID: N/A'}
                                             </span>
                                             {act.partnerLocation && act.partnerLocation !== 'N/A' && (
                                                 <>
@@ -162,17 +283,39 @@ const AdvisorActivity = () => {
                                         </div>
                                         <div className={styles.activityMessage}>
                                             {act.status === 'accepted' ? (
-                                                <span style={{ color: '#10b981' }}>Client shortlisted you for their case.</span>
+                                                <span style={{ color: '#10b981' }}>Connected (Accepted)</span>
                                             ) : act.type === 'message' || act.type === 'chat_initiated' ? (
                                                 <span>New message {act.isSender ? 'sent' : 'received'}</span>
+                                            ) : act.type === 'meet_request' || act.type === 'consultation' ? (
+                                                <span style={{ color: '#daa520' }}>Meeting request {act.isSender ? 'sent' : 'received'}</span>
                                             ) : (
-                                                <span>{act.isSender ? 'Interest Sent' : 'Interest Received'}</span>
+                                                <span style={{ color: act.isSender ? '#94a3b8' : '#facc15' }}>
+                                                    {act.isSender ? 'Interest Sent' : 'Interest Received (New Enquiry)'}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
 
+                                    {/* Action Buttons */}
+                                    {canRespond && (
+                                        <div className={styles.actionRow} onClick={e => e.stopPropagation()}>
+                                            <button
+                                                className={styles.acceptBtn}
+                                                onClick={(e) => handleResponse(act._id, 'accepted', e)}
+                                            >
+                                                Accept
+                                            </button>
+                                            <button
+                                                className={styles.declineBtn}
+                                                onClick={(e) => handleResponse(act._id, 'declined', e)}
+                                            >
+                                                Decline
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {/* Optional Badge */}
-                                    {act.status !== 'none' && (
+                                    {!canRespond && act.status !== 'none' && act.status !== 'pending' && (
                                         <div
                                             className={styles.statusBadge}
                                             style={{
@@ -182,6 +325,27 @@ const AdvisorActivity = () => {
                                         >
                                             {act.status.toUpperCase()}
                                         </div>
+                                    )}
+
+                                    {act.status === 'accepted' && (
+                                        <button
+                                            className={styles.chatActionBtn}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (onChatSelect) {
+                                                    onChatSelect({
+                                                        id: act.partnerId,
+                                                        partnerUserId: act.partnerId,
+                                                        name: act.partnerName,
+                                                        profilePic: act.partnerImg,
+                                                        role: act.partnerRole || 'client',
+                                                        unique_id: act.partnerUniqueId
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            Chat
+                                        </button>
                                     )}
                                 </div>
                             );
@@ -194,61 +358,20 @@ const AdvisorActivity = () => {
                 </div>
             </div>
 
-            {/* Client Details Popup */}
+            {/* Client Details Popup - Premium UI */}
             {selectedClient && (
-                <div className={styles.overlay} onClick={() => setSelectedClient(null)}>
-                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h3>Client Details</h3>
-                            <button onClick={() => setSelectedClient(null)}><X size={20} /></button>
-                        </div>
-                        <div className={styles.modalBody}>
-                            <div className={styles.profileHeader}>
-                                <img src={selectedClient.img || "https://uia-avatars.com/api/?name=" + selectedClient.firstName} alt="Profile" className={`${styles.avatar} ${(selectedClient.isBlur || shouldMask) ? styles.blurred : ''}`} />
-                                <div>
-                                    <h4>
-                                        {shouldMask ? selectedClient.firstName.substring(0, 2) + "*****" : `${selectedClient.firstName} ${selectedClient.lastName}`}
-                                    </h4>
-                                    <p className={styles.uid}>
-                                        {shouldMask ? (selectedClient.unique_id || '').substring(0, 2) + "*****" : selectedClient.unique_id}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className={styles.infoGrid}>
-                                <div className={styles.infoItem}>
-                                    <label>Email</label>
-                                    <p>{maskContactInfo(selectedClient.email)}</p>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Mobile</label>
-                                    <p>{maskContactInfo(selectedClient.mobile)}</p>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <label>Location</label>
-                                    <p>{selectedClient.location?.city || 'N/A'}, {selectedClient.location?.state || 'N/A'}</p>
-                                </div>
-                            </div>
-
-                            {selectedClient.legalHelp && (
-                                <div className={styles.legalSection}>
-                                    <h5>Legal Requirement</h5>
-                                    <div className={styles.tagContainer}>
-                                        <span className={styles.tag}>{selectedClient.legalHelp.category}</span>
-                                        <span className={styles.tag}>{selectedClient.legalHelp.specialization}</span>
-                                        {selectedClient.legalHelp.subDepartment && <span className={styles.tag}>{selectedClient.legalHelp.subDepartment}</span>}
-                                    </div>
-                                    {selectedClient.legalHelp.issueDescription && (
-                                        <div className={styles.descBox}>
-                                            <label>Issue Description:</label>
-                                            <p>{selectedClient.legalHelp.issueDescription}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <DetailedProfileEnhanced
+                    profileId={selectedClient.resolvedId}
+                    isModal={true}
+                    onClose={() => setSelectedClient(null)}
+                    backToProfiles={() => setSelectedClient(null)}
+                    partnerRole={selectedClient.role === 'advocate' || selectedClient.role === 'legal_provider' ? 'advocate' : 'client'}
+                    onSelectForChat={(p) => {
+                        onChatSelect?.(p);
+                        onNavigate?.('messenger');
+                        setSelectedClient(null); // Close modal when navigating to chat
+                    }}
+                />
             )}
         </div>
     );
