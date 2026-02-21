@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 // GET ALL PAGES
 router.get('/', async (req, res) => {
     try {
-        const pages = await Page.find().sort({ title: 1 });
+        const pages = await Page.find();
         res.json({ success: true, pages });
     } catch (err) {
         console.error('Fetch Pages Error:', err);

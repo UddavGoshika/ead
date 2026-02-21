@@ -44,16 +44,36 @@ const FOOTER_DEFAULTS: any[] = [
 const Footer: React.FC = () => {
     const { settings, pages } = useSettings();
     const activePages = React.useMemo(() => {
-        if (!pages || pages.length === 0) return FOOTER_DEFAULTS;
+        const basePages = pages || [];
+        const dbRouteMap = new Map(basePages.map(p => [p.route, p]));
+        const dbTitleMap = new Map(basePages.map(p => [p.title, p]));
+        const defaultRoutes = new Set(FOOTER_DEFAULTS.map(d => d.route));
+        const defaultTitles = new Set(FOOTER_DEFAULTS.map(d => d.title));
 
-        // Create a set of routes in DB
-        const dbRoutes = new Set(pages.map(p => p.route));
+        const combined: any[] = [];
+        const addedDbIds = new Set<string>();
 
-        // Combine DB pages with defaults that are NOT in the DB
-        return [
-            ...pages,
-            ...FOOTER_DEFAULTS.filter(def => !dbRoutes.has(def.route))
-        ];
+        // 1. Maintain original order of FOOTER_DEFAULTS
+        // Favor DB entries that match by route, then by title
+        FOOTER_DEFAULTS.forEach(def => {
+            let pageToAdd = dbRouteMap.get(def.route) || dbTitleMap.get(def.title);
+
+            if (pageToAdd) {
+                combined.push(pageToAdd);
+                if (pageToAdd._id) addedDbIds.add(pageToAdd._id);
+            } else {
+                combined.push({ ...def, _id: `default-${def.route}` });
+            }
+        });
+
+        // 2. Append any truly custom pages (no match in defaults)
+        basePages.forEach(p => {
+            if (p._id && !addedDbIds.has(p._id) && !defaultRoutes.has(p.route) && !defaultTitles.has(p.title)) {
+                combined.push(p);
+            }
+        });
+
+        return combined;
     }, [pages]);
     const { isLoggedIn, user, openAuthModal, setSearchRole, openHelpModal } = useAuth();
     const [modalData, setModalData] = React.useState<{ title: string; content: string; details: string[]; icons?: string[]; sections?: { subtitle: string; points: string[] }[] } | null>(null);

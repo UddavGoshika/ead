@@ -75,18 +75,34 @@ const PagesSetup: React.FC = () => {
             const res = await api.get("/pages");
             const dbPages = (res.data.success && res.data.pages) ? res.data.pages : [];
 
-            // Create a set of routes already in DB to avoid duplicates
-            const dbRoutes = new Set(dbPages.map((p: any) => p.route));
+            const dbRouteMap = new Map(dbPages.map((p: any) => [p.route, p]));
+            const dbTitleMap = new Map(dbPages.map((p: any) => [p.title, p]));
+            const defaultRoutes = new Set(FOOTER_DEFAULTS.map(d => d.route));
+            const defaultTitles = new Set(FOOTER_DEFAULTS.map(d => d.title));
 
-            // Combine DB pages with defaults that haven't been saved yet
-            const combinedPages = [...dbPages];
+            const combined: PageItem[] = [];
+            const addedDbIds = new Set<string>();
+
+            // 1. Maintain order from FOOTER_DEFAULTS
             FOOTER_DEFAULTS.forEach((def, idx) => {
-                if (!dbRoutes.has(def.route)) {
-                    combinedPages.push({ ...def, _id: `mock-${idx}` } as PageItem);
+                let pageToAdd = dbRouteMap.get(def.route) || dbTitleMap.get(def.title);
+
+                if (pageToAdd) {
+                    combined.push(pageToAdd);
+                    if (pageToAdd._id) addedDbIds.add(pageToAdd._id);
+                } else {
+                    combined.push({ ...def, _id: `mock-${idx}` } as PageItem);
                 }
             });
 
-            setPages(combinedPages);
+            // 2. Add truly custom administrative pages
+            dbPages.forEach((p: any) => {
+                if (!addedDbIds.has(p._id) && !defaultRoutes.has(p.route) && !defaultTitles.has(p.title)) {
+                    combined.push(p);
+                }
+            });
+
+            setPages(combined);
         } catch (err) {
             console.error("Fetch Pages Error:", err);
             setPages(FOOTER_DEFAULTS.map((p, idx) => ({ ...p, _id: `mock-${idx}` } as PageItem)));

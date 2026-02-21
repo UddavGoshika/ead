@@ -93,7 +93,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './ChatWidget.module.css';
-import { MessageSquare, MessageCircle, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
+import { MessageSquare, BotMessageSquare, MessageCircle, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -531,7 +531,7 @@ const ChatWidget: React.FC = () => {
                 className={`${styles.toggleBtn} ${isOpen ? styles.hidden : ''}`}
                 onClick={() => setIsOpen(true)}
             >
-                <MessageCircle size={24} />
+                <BotMessageSquare size={24} />
             </button>
         </div>
     );
