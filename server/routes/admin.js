@@ -437,6 +437,68 @@ router.patch('/members/:id/status', async (req, res) => {
     }
 });
 
+// UPDATE MEMBER DETAILS (Full Edit)
+router.put('/members/:id', async (req, res) => {
+    try {
+        const { email, name, phone, role, status, plan, loginId } = req.body;
+        const userId = req.params.id;
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Update User Model
+        if (email) user.email = email.toLowerCase();
+        if (role) user.role = role;
+        if (status) user.status = status;
+        if (loginId) user.loginId = loginId;
+        if (plan) user.plan = plan;
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+
+        await user.save();
+
+        // Update Profile Model based on role
+        if (user.role === 'advocate' || user.role === 'legal_provider') {
+            await Advocate.findOneAndUpdate(
+                { userId: user._id },
+                {
+                    name: name,
+                    mobile: phone,
+                    email: email,
+                    role: role
+                },
+                { upsert: true }
+            );
+        } else if (user.role === 'client') {
+            await Client.findOneAndUpdate(
+                { userId: user._id },
+                {
+                    firstName: name.split(' ')[0],
+                    lastName: name.split(' ').slice(1).join(' '),
+                    mobile: phone,
+                    email: email
+                },
+                { upsert: true }
+            );
+        } else {
+            // Staff profiles
+            await StaffProfile.findOneAndUpdate(
+                { userId: user._id },
+                {
+                    email: email,
+                    // name or other fields if StaffProfile has them
+                },
+                { upsert: true }
+            );
+        }
+
+        res.json({ success: true, message: 'Member updated successfully', user });
+    } catch (err) {
+        console.error('Member update error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // VERIFY ADVOCATE
 router.patch('/members/:id/verify', async (req, res) => {
     try {

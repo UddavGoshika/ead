@@ -483,3 +483,87 @@
     background: #2563eb;
     transform: translateY(-1px);
 }
+
+.editBtn {
+    background: #c5a157;
+    border: none;
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.editBtn:hover {
+    background: #d4b46e;
+    transform: translateY(-1px);
+}
+
+.saveBtn {
+    background: #22c55e;
+    border: none;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.saveBtn:hover {
+    background: #16a34a;
+    transform: translateY(-1px);
+}
+
+.editInput,
+.editSelect {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.editInput:focus,
+.editSelect:focus {
+    border-color: #3b82f6;
+}
+
+.avatarWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.externalBtn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
+
+.externalBtn:hover {
+    background: #2563eb;
+    transform: scale(1.1);
+}

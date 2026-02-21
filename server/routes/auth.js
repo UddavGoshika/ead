@@ -468,11 +468,16 @@ router.get('/validate-referral/:code', async (req, res) => {
 
 // FORGOT PASSWORD
 router.post('/forgot-password', async (req, res) => {
-    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const identifier = req.body.email ? req.body.email.trim().toLowerCase() : '';
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            $or: [
+                { email: identifier },
+                { loginId: identifier }
+            ]
+        });
         if (!user) {
-            return res.status(404).json({ error: 'User with this email does not exist.' });
+            return res.status(404).json({ error: 'User with this email or ID does not exist.' });
         }
 
         // Generate reset token
@@ -483,19 +488,31 @@ router.post('/forgot-password', async (req, res) => {
         user.resetPasswordExpires = expires;
         await user.save();
 
-        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+        // Detect frontend URL based on environment or request
+        let frontendUrl = process.env.FRONTEND_URL;
+        if (!frontendUrl) {
+            const host = req.get('host');
+            // Check if it looks like a dev port (5000) and try to map to vite port (5173)
+            if (host.includes(':5000')) {
+                frontendUrl = `${req.protocol}://${host.replace(':5000', ':5173')}`;
+            } else {
+                frontendUrl = `${req.protocol}://${host}`;
+            }
+        }
+
+        const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
         const mailResult = await sendEmail(
-            email,
-            'Password Reset Request',
-            `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n` +
-            `Please click on the following link, or paste this into your browser to complete the process:\n\n` +
+            user.email,
+            'Password Reset Request - E-Advocate',
+            `You requested a password reset for your E-Advocate account.\n\n` +
+            `Please click the link below to verify your identity and set a new password:\n\n` +
             `${resetUrl}\n\n` +
             `If you did not request this, please ignore this email and your password will remain unchanged.\n`
         );
 
         if (mailResult.success) {
-            res.json({ success: true, message: 'Password reset link sent to your email.' });
+            res.json({ success: true, message: 'Password reset link sent to your registered email.' });
         } else {
             res.status(500).json({ error: 'Failed to send reset email.' });
         }
@@ -505,9 +522,71 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
-// RESET PASSWORD
+// INITIATE VERIFICATION OTP (Called from ResetPassword page)
+router.post('/reset-password/initiate', async (req, res) => {
+    const { token, identifier } = req.body;
+    const cleanId = (identifier || '').trim().toLowerCase();
+
+    try {
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+            $or: [
+                { email: cleanId },
+                { loginId: cleanId }
+            ]
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                error: 'Verification Failed',
+                message: 'The email or Login ID entered does not match our records for this reset link. Please try again or request a new link.'
+            });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Save OTP
+        await Otp.findOneAndUpdate(
+            { email: user.email },
+            { otp, verified: false, createdAt: new Date() },
+            { upsert: true, new: true }
+        );
+
+        const emailHTML = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 30px; border: 1px solid #c5a157; border-radius: 12px; background: #fff;">
+                <h2 style="color: #c5a157; text-align: center;">Verify Your Identity</h2>
+                <p>Hello,</p>
+                <p>Use the verification code below on the password reset page to complete your request. Do not share this OTP with anyone.</p>
+                
+                <div style="background: #fdfaf3; border: 2px dashed #c5a157; padding: 25px; text-align: center; border-radius: 8px; margin: 25px 0;">
+                    <h1 style="color: #1e293b; font-size: 36px; letter-spacing: 12px; margin: 0; font-family: monospace;">${otp}</h1>
+                </div>
+                
+                <p style="color: #64748b; font-size: 14px;"><strong>Validity:</strong> 10 minutes</p>
+                <p style="color: #94a3b8; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+                    This is an automated security email from E-Advocate Services.
+                </p>
+            </div>
+        `;
+
+        await sendEmail(user.email, 'Reset Password Verification Code', `Your OTP is: ${otp}`, emailHTML);
+
+        res.json({
+            success: true,
+            message: 'OTP sent successfully to your registered email.',
+            emailHint: user.email.replace(/(.{3})(.*)(?=@)/, (gp1, gp2, gp3) => gp2 + "*".repeat(gp3.length))
+        });
+    } catch (err) {
+        console.error('Reset Initiate Error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// RESET PASSWORD (With OTP Verification)
 router.post('/reset-password', async (req, res) => {
-    const { token, password } = req.body;
+    const { token, otp, password } = req.body;
     try {
         const user = await User.findOne({
             resetPasswordToken: token,
@@ -515,24 +594,33 @@ router.post('/reset-password', async (req, res) => {
         });
 
         if (!user) {
-            return res.status(400).json({ error: 'Password reset token is invalid or has expired.' });
+            return res.status(400).json({ error: 'TOKEN_EXPIRED', message: 'This reset session has expired or the token is invalid.' });
+        }
+
+        // Verify OTP
+        const otpDoc = await Otp.findOne({ email: user.email, otp });
+        if (!otpDoc) {
+            return res.status(400).json({ error: 'INVALID_OTP', message: 'The verification code (OTP) you entered is incorrect or has expired.' });
         }
 
         // Save new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        user.plainPassword = password;
 
         user.password = hashedPassword;
+        user.plainPassword = password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
 
+        // Clear OTP
+        await Otp.deleteOne({ _id: otpDoc._id });
+
         // Send confirmation email
         await sendEmail(
             user.email,
-            'Your password has been changed',
-            `Hello,\n\nThis is a confirmation that the password for your account ${user.email} has just been changed.\n`
+            'Security Alert: Password Changed',
+            `Hello,\n\nThis is a confirmation that the password for your account ${user.email} was successfully changed.\n\nIf you did not perform this action, please contact support immediately.`
         );
 
         res.json({ success: true, message: 'Password has been reset successfully.' });

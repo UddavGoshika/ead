@@ -49,6 +49,7 @@ export const authService = {
     sendOtp: (email: string, checkUnique?: boolean) => api.post<any>('/auth/send-otp', { email, checkUnique }),
     verifyOtp: (email: string, otp: string) => api.post<any>('/auth/verify-otp', { email, otp }),
     forgotPassword: (email: string) => api.post<any>('/auth/forgot-password', { email }),
+    initiateResetOtp: (data: { token: string, identifier: string }) => api.post<any>('/auth/reset-password/initiate', data),
     resetPassword: (data: any) => api.post<any>('/auth/reset-password', data),
     changePassword: (data: any) => api.post<any>('/auth/change-password', data),
     getProfile: () => api.get<{ success: boolean, user: any }>('/auth/me'),

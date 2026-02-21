@@ -279,7 +279,7 @@ const AuthModal: React.FC = () => {
                                             exit={{ opacity: 0, x: 20 }}
                                         >
                                             <h2>Reset Password</h2>
-                                            <p className={styles.subtitle}>Enter your email to receive a reset link</p>
+                                            <p className={styles.subtitle}>Enter your email or Login ID to receive a reset link</p>
 
                                             {error && (
                                                 <div className={styles.errorBox}>

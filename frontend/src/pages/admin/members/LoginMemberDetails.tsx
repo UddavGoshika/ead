@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./LoginMemberDetails.module.css";
 import axios from "axios";
-import { Loader2, Search, Key, Eye, EyeOff, UserCircle, X } from "lucide-react";
+import { Loader2, Search, Key, Eye, EyeOff, UserCircle, X, Edit2, Save, ExternalLink } from "lucide-react";
 import { toast } from "react-toastify";
 import { formatImageUrl } from "../../../utils/imageHelper";
 import { useAuth } from "../../../context/AuthContext";
@@ -22,6 +22,7 @@ interface LoginDetail {
     lastLogin: string;
     passwordHash: string; // Will show masked or placeholder
     showPassword?: boolean;
+    loginId?: string;
 }
 
 const LoginMemberDetails: React.FC = () => {
@@ -29,6 +30,8 @@ const LoginMemberDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedMember, setSelectedMember] = useState<LoginDetail | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState<Partial<LoginDetail>>({});
     const { impersonate } = useAuth();
 
     // Filters
@@ -59,7 +62,8 @@ const LoginMemberDetails: React.FC = () => {
                     plan: m.plan || 'Free',
                     lastLogin: m.lastActionDate ? new Date(m.lastActionDate).toLocaleString() : 'N/A',
                     passwordHash: m.plainPassword || "Not Saved",
-                    showPassword: false
+                    showPassword: false,
+                    loginId: m.loginId
                 }));
                 setMembers(mapped);
             }
@@ -102,6 +106,30 @@ const LoginMemberDetails: React.FC = () => {
 
     const handleViewDetails = (member: LoginDetail) => {
         setSelectedMember(member);
+        setEditData(member);
+        setIsEditing(false);
+    };
+
+    const handleUpdateMember = async () => {
+        if (!selectedMember) return;
+        try {
+            setLoading(true);
+            const res = await axios.put(`/api/admin/members/${selectedMember.id}`, editData);
+            if (res.data.success) {
+                toast.success("Member updated successfully");
+                setSelectedMember(null);
+                fetchLoginDetails();
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Update failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleViewPublicProfile = (member: LoginDetail) => {
+        const url = `/profile/${member.uniqueId}`;
+        window.open(url, '_blank');
     };
 
     const filteredMembers = members.filter(m => {
@@ -154,6 +182,8 @@ const LoginMemberDetails: React.FC = () => {
                         <option value="Active">Active</option>
                         <option value="Pending">Pending</option>
                         <option value="Blocked">Blocked</option>
+                        <option value="Deactivated">Deactivated</option>
+                        <option value="Rejected">Rejected</option>
                     </select>
 
                     <select value={filterPlan} onChange={(e) => setFilterPlan(e.target.value)}>
@@ -164,7 +194,7 @@ const LoginMemberDetails: React.FC = () => {
                 </div>
             </div>
 
-            {loading ? (
+            {loading && !selectedMember ? (
                 <div className={styles.loading}>
                     <Loader2 className={styles.spinner} />
                     <span>Loading credentials...</span>
@@ -251,7 +281,14 @@ const LoginMemberDetails: React.FC = () => {
                                                 className={styles.actionBtn}
                                                 onClick={() => handleViewDetails(member)}
                                             >
-                                                View Full
+                                                View/Edit
+                                            </button>
+                                            <button
+                                                className={styles.actionBtn}
+                                                style={{ background: '#3b82f6', color: '#fff' }}
+                                                onClick={() => handleViewPublicProfile(member)}
+                                            >
+                                                <ExternalLink size={14} style={{ marginRight: '4px' }} /> Open
                                             </button>
                                             <button
                                                 className={styles.actionBtn}
@@ -274,47 +311,135 @@ const LoginMemberDetails: React.FC = () => {
                 <div className={styles.modalOverlay} onClick={() => setSelectedMember(null)}>
                     <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h2>Member Profile Details</h2>
-                            <button className={styles.closeBtn} onClick={() => setSelectedMember(null)}><X size={24} /></button>
+                            <h2>{isEditing ? "Edit Member Profile" : "Member Profile Details"}</h2>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className={styles.closeBtn} onClick={() => setSelectedMember(null)}><X size={24} /></button>
+                            </div>
                         </div>
                         <div className={styles.modalBody}>
                             <div className={styles.detailGrid}>
                                 <div className={styles.profileSection}>
-                                    <img src={selectedMember.photo} alt={selectedMember.name} className={styles.largeAvatar} />
-                                    <h3>{selectedMember.name}</h3>
+                                    <div className={styles.avatarWrapper}>
+                                        <img src={selectedMember.photo} alt={selectedMember.name} className={styles.largeAvatar} />
+                                        {!isEditing && (
+                                            <button
+                                                className={styles.externalBtn}
+                                                onClick={() => handleViewPublicProfile(selectedMember)}
+                                                title="View Public Profile"
+                                            >
+                                                <ExternalLink size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className={styles.editInput}
+                                            value={editData.name}
+                                            onChange={e => setEditData({ ...editData, name: e.target.value })}
+                                        />
+                                    ) : (
+                                        <h3>{selectedMember.name}</h3>
+                                    )}
                                     <span className={styles.idBadge}>{selectedMember.uniqueId}</span>
                                 </div>
                                 <div className={styles.infoSection}>
                                     <div className={styles.infoGroup}>
                                         <label>Email Address</label>
-                                        <p>{selectedMember.email}</p>
+                                        {isEditing ? (
+                                            <input type="email" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} className={styles.editInput} />
+                                        ) : (
+                                            <p>{selectedMember.email}</p>
+                                        )}
                                     </div>
                                     <div className={styles.infoGroup}>
                                         <label>Phone Number</label>
-                                        <p>{selectedMember.phone}</p>
+                                        {isEditing ? (
+                                            <input type="text" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} className={styles.editInput} />
+                                        ) : (
+                                            <p>{selectedMember.phone}</p>
+                                        )}
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Custom Login ID</label>
+                                        {isEditing ? (
+                                            <input type="text" value={editData.loginId || ''} onChange={e => setEditData({ ...editData, loginId: e.target.value })} className={styles.editInput} placeholder="Assign a custom Login ID" />
+                                        ) : (
+                                            <p>{selectedMember.loginId || 'Not Assigned'}</p>
+                                        )}
                                     </div>
                                     <div className={styles.infoGroup}>
                                         <label>Current Role</label>
-                                        <p style={{ textTransform: 'capitalize' }}>{selectedMember.role.replace('_', ' ')}</p>
+                                        {isEditing ? (
+                                            <select value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} className={styles.editSelect}>
+                                                <option value="advocate">Advocate</option>
+                                                <option value="client">Client</option>
+                                                <option value="legal_provider">Legal Provider</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="teamlead">Team Lead</option>
+                                                <option value="telecaller">Telecaller</option>
+                                                <option value="hr">HR</option>
+                                                <option value="marketer">Marketer</option>
+                                            </select>
+                                        ) : (
+                                            <p style={{ textTransform: 'capitalize' }}>{selectedMember.role.replace('_', ' ')}</p>
+                                        )}
                                     </div>
                                     <div className={styles.infoGroup}>
                                         <label>Account Status</label>
-                                        <p className={`${styles.statusBadge} ${styles[selectedMember.status.toLowerCase()]}`}>{selectedMember.status}</p>
+                                        {isEditing ? (
+                                            <select value={editData.status} onChange={e => setEditData({ ...editData, status: e.target.value })} className={styles.editSelect}>
+                                                <option value="Active">Active</option>
+                                                <option value="Pending">Pending</option>
+                                                <option value="Blocked">Blocked</option>
+                                                <option value="Deactivated">Deactivated</option>
+                                                <option value="Rejected">Rejected</option>
+                                            </select>
+                                        ) : (
+                                            <p className={`${styles.statusBadge} ${styles[selectedMember.status.toLowerCase()]}`}>{selectedMember.status}</p>
+                                        )}
                                     </div>
                                     <div className={styles.infoGroup}>
                                         <label>Subscription Plan</label>
-                                        <p className={`${styles.planBadge} ${selectedMember.isPremium ? styles.premium : styles.free}`}>{selectedMember.plan}</p>
+                                        {isEditing ? (
+                                            <select value={editData.plan} onChange={e => setEditData({ ...editData, plan: e.target.value })} className={styles.editSelect}>
+                                                <option value="Free">Free</option>
+                                                <option value="Pro Lite">Pro Lite</option>
+                                                <option value="Pro">Pro</option>
+                                                <option value="Ultra Pro">Ultra Pro</option>
+                                            </select>
+                                        ) : (
+                                            <p className={`${styles.planBadge} ${selectedMember.isPremium ? styles.premium : styles.free}`}>{selectedMember.plan}</p>
+                                        )}
                                     </div>
-                                    <div className={styles.infoGroup}>
-                                        <label>Last Login Activity</label>
-                                        <p>{selectedMember.lastLogin}</p>
-                                    </div>
+                                    {!isEditing && (
+                                        <div className={styles.infoGroup}>
+                                            <label>Last Login Activity</label>
+                                            <p>{selectedMember.lastLogin}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                         <div className={styles.modalFooter}>
-                            <button className={styles.secondaryBtn} onClick={() => setSelectedMember(null)}>Close</button>
-                            <button className={styles.primaryBtn} onClick={() => handleImpersonate(selectedMember)}>Login as {selectedMember.name}</button>
+                            {isEditing ? (
+                                <>
+                                    <button className={styles.secondaryBtn} onClick={() => setIsEditing(false)}>Cancel</button>
+                                    <button className={styles.saveBtn} onClick={handleUpdateMember} disabled={loading}>
+                                        {loading ? <Loader2 className={styles.spinner} size={16} /> : <Save size={16} style={{ marginRight: '8px' }} />}
+                                        Save Changes
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className={styles.secondaryBtn} onClick={() => setSelectedMember(null)}>Close</button>
+                                    <button className={styles.editBtn} onClick={() => setIsEditing(true)}>
+                                        <Edit2 size={16} style={{ marginRight: '8px' }} />
+                                        Edit Details
+                                    </button>
+                                    <button className={styles.primaryBtn} onClick={() => handleImpersonate(selectedMember)}>Login as {selectedMember.name}</button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
