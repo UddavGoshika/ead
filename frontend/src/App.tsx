@@ -281,10 +281,22 @@ const DashboardRedirect: React.FC = () => {
 
 import GlobalUtilityHandler from './components/shared/GlobalUtilityHandler';
 
+import IntroAnimation from './components/shared/IntroAnimation';
+
 const AppContent: React.FC = () => {
   useRelationshipSync();
+  const [showIntro, setShowIntro] = React.useState(() => {
+    return !sessionStorage.getItem('intro_played');
+  });
+
+  const handleIntroFinish = () => {
+    setShowIntro(false);
+    sessionStorage.setItem('intro_played', 'true');
+  };
+
   return (
     <>
+      {showIntro && <IntroAnimation onFinish={handleIntroFinish} />}
       <GlobalUtilityHandler />
       <CallWindow />
       <RejectionOverlay />

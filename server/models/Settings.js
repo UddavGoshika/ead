@@ -125,7 +125,12 @@ const SettingsSchema = new mongoose.Schema({
     },
     addons: [
         { id: Number, name: String, version: String, image: String, enabled: { type: Boolean, default: true }, identifier: String }
-    ]
+    ],
+    dashboard_promos: {
+        client: { type: String, default: 'UPTO 53% OFF ALL MEMBERSHIP PLANS' },
+        advocate: { type: String, default: 'UPTO 53% OFF ALL MEMBERSHIP PLANS' },
+        legal_provider: { type: String, default: 'UPTO 53% OFF ALL MEMBERSHIP PLANS' }
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', SettingsSchema);

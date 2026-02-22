@@ -9,9 +9,9 @@
 /* Stats Row */
 .statsRow {
     display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 30px;
-    overflow-x: auto;
     padding-bottom: 8px;
 }
 

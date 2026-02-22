@@ -1,5 +1,7 @@
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { formatImageUrl } from '../../../utils/imageHelper';
+import api from '../../../services/api';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
     Coins, LogOut, Wallet, FileText, Briefcase, Gift
@@ -17,6 +19,21 @@ interface Props {
 
 const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onShowTryon }) => {
     const { user, logout } = useAuth();
+    const [promoText, setPromoText] = useState('UPTO 53% OFF ALL MEMBERSHIP PLANS');
+
+    useEffect(() => {
+        const fetchPromo = async () => {
+            try {
+                const res = await api.get('/settings/site');
+                if (res.data.success && res.data.settings.dashboard_promos?.client) {
+                    setPromoText(res.data.settings.dashboard_promos.client);
+                }
+            } catch (err) {
+                console.error('Failed to fetch promo text', err);
+            }
+        };
+        fetchPromo();
+    }, []);
 
     const isPremium = checkIsPremium(user);
     const plan = user?.plan || 'Free';
@@ -71,7 +88,7 @@ const ClientSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onS
                     Upgrade Membership
                 </button>
                 <div className={styles.upgradeText}>
-                    UPTO 53% OFF ALL MEMBERSHIP PLANS
+                    {promoText}
                 </div>
 
                 {!user?.isPremium && !user?.demoUsed && onShowTryon && !localStorage.getItem('hasDismissedPremiumTrial') && (

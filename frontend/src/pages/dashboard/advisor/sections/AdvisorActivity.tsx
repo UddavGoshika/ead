@@ -4,7 +4,7 @@ import { interactionService } from "../../../../services/interactionService";
 import { useAuth } from "../../../../context/AuthContext";
 import { Clock, CheckCircle, Eye, Send, Inbox, Star, UserCheck, MessageSquare, X } from "lucide-react";
 import api from "../../../../services/api";
-import DetailedProfileEnhanced from "../../shared/DetailedProfileEnhanced";
+import LegalAdvisorDetailedProfile from "../components/LegalAdvisorDetailedProfile";
 
 interface AdvisorActivityProps {
     onNavigate?: (page: string) => void;
@@ -245,7 +245,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                                     <img
                                         src={act.partnerImg}
                                         alt={act.partnerName}
-                                        className={`${styles.activityAvatar} ${(act.isBlur || shouldMask) ? styles.blurred : ''}`}
+                                        className={styles.activityAvatar}
                                     />
                                     <div className={styles.activityContent}>
                                         <div className={styles.activityHeader}>
@@ -360,7 +360,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
 
             {/* Client Details Popup - Premium UI */}
             {selectedClient && (
-                <DetailedProfileEnhanced
+                <LegalAdvisorDetailedProfile
                     profileId={selectedClient.resolvedId}
                     isModal={true}
                     onClose={() => setSelectedClient(null)}
@@ -369,7 +369,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                     onSelectForChat={(p) => {
                         onChatSelect?.(p);
                         onNavigate?.('messenger');
-                        setSelectedClient(null); // Close modal when navigating to chat
+                        setSelectedClient(null);
                     }}
                 />
             )}

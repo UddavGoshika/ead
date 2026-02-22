@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { formatImageUrl } from '../../../utils/imageHelper';
+import api from '../../../services/api';
 import {
     User, Newspaper, ArrowUp, Shield, Settings,
-    Coins, LogOut, Briefcase, Lock, Wallet, FileText, Search, Star, Gift
+    Coins, LogOut, Briefcase, Lock, Wallet, FileText, Search, Star, Gift,
+    HelpCircle, ShieldCheck
 } from 'lucide-react';
 import { checkIsPremium } from '../../../utils/planHelper';
 
@@ -17,20 +19,25 @@ interface Props {
 
 const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) => {
     const { user, logout } = useAuth();
+    const [promoText, setPromoText] = useState('PROFESSIONAL PLAN ACTIVE');
+
+    useEffect(() => {
+        const fetchPromo = async () => {
+            try {
+                const res = await api.get('/settings/site');
+                if (res.data.success) {
+                    if (res.data.settings.dashboard_promos?.legal_provider) {
+                        setPromoText(res.data.settings.dashboard_promos.legal_provider);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch promo text', err);
+            }
+        };
+        fetchPromo();
+    }, []);
 
     const menuItems = [
-        // { id: 'edit-profile', label: 'Manage Profile', icon: User },
-        // { id: 'wallet-history', label: 'Wallet & Billing', icon: Wallet },
-        // { id: 'my-subscription', label: 'Pro Benefits', icon: Shield },
-        // { id: 'blogs', label: 'Legal Insights', icon: Newspaper },
-        // { id: 'my-cases', label: 'Active Services', icon: Briefcase },
-        // { id: 'upgrade', label: 'Premium Tiers', icon: ArrowUp },
-        // { id: 'legal-documentation', label: 'Legal Documentation', icon: FileText },
-        // { id: 'account-settings', label: 'Security & Access', icon: Settings },
-        // { id: 'credits', label: 'Service Credits', icon: Coins },
-
-
-
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
         { id: 'search-preferences', label: 'Search Preferences', icon: Search },
         // { id: 'featured-profiles', label: 'Featured Profiles', icon: Star },
@@ -43,18 +50,12 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
         { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
         { id: 'credits', label: 'Credits', icon: Coins },
 
-        { id: 'safety-center', label: 'Safety Center', icon: Shield },
-        { id: 'help-support', label: 'Help & Support', icon: Settings },
+        { id: 'safety-center', label: 'Safety Center', icon: ShieldCheck },
+        { id: 'help-support', label: 'Help & Support', icon: HelpCircle },
 
         { id: 'refer-earn', label: 'Refer & Earn', icon: Gift },
 
         { id: 'account-settings', label: 'Account & Settings', icon: Settings }
-
-
-
-
-
-
     ];
 
     const isPremium = checkIsPremium(user);
@@ -83,7 +84,7 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
                     Elite Membership
                 </button>
                 <div className={styles.upgradeText}>
-                    PROFESSIONAL PLAN ACTIVE
+                    {promoText}
                 </div>
             </div>
 
@@ -125,3 +126,4 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
 };
 
 export default AdvisorSidebar;
+

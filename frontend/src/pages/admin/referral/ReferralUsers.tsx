@@ -244,6 +244,29 @@ const ReferralUserAdmin: React.FC = () => {
         });
     }, [searchTerm, selectedRole, selectedStatus, users]);
 
+    const downloadReport = () => {
+        if (users.length === 0) return alert("No data to export");
+
+        const headers = ["Name", "User ID", "Email", "Phone", "Role", "Referral Code", "Status", "Joined", "Total Earned", "Withdrawn", "Pending"];
+        const rows = users.map(u => [
+            u.name, u.userId, u.email, u.phone, u.role, u.referralCode, u.status, u.joiningDetails,
+            u.totalEarned, u.withdrawn, u.pending
+        ]);
+
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `Referral_Users_Report_${new Date().toISOString().split('T')[0]}.csv`);
+        a.click();
+    };
+
+    const getCount = (role: string) => {
+        if (role === "All") return users.length;
+        return users.filter(u => u.role.toLowerCase().includes(role.toLowerCase().split(' ')[0])).length;
+    };
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -271,7 +294,7 @@ const ReferralUserAdmin: React.FC = () => {
                         />
                     </div>
                     <div className={styles.bulkActions}>
-                        <button className={styles.reportBtn} onClick={() => alert("Global Audit Report Generated")}>
+                        <button className={styles.reportBtn} onClick={downloadReport}>
                             <PieChart size={18} /> Global Report
                         </button>
                     </div>
@@ -289,7 +312,7 @@ const ReferralUserAdmin: React.FC = () => {
                                 >
                                     <span className={styles.blockLabel}>{role}</span>
                                     <span className={styles.blockCount}>
-                                        {role === "All" ? 165 : (MOCK_USERS.filter(u => u.role === role).length || Math.floor(Math.random() * 20))}
+                                        {getCount(role)}
                                     </span>
                                 </div>
                             ))}

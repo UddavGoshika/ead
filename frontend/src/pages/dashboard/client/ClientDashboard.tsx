@@ -325,7 +325,9 @@ const ClientDashboard: React.FC = () => {
                         {/* News Ticker - Behind Profile */}
                         <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: -10, zIndex: 0, opacity: 0.8 }}>
                             <span className={styles.tickerText}>
-                                🚀 LATEST UPDATES: WELCOME TO THE NEW DASHBOARD • FIND YOUR EXPERT ADVOCATE TODAY • 24/7 SUPPORT AVAILABLE • CHECK OUT OUR NEW BLOGS
+                                {notifications.length > 0
+                                    ? notifications.map(n => n.message.toUpperCase()).join(' • ')
+                                    : "🚀 LATEST UPDATES: WELCOME TO THE NEW DASHBOARD • FIND YOUR EXPERT ADVOCATE TODAY • 24/7 SUPPORT AVAILABLE ✨"}
                             </span>
                         </div>
                     </div>

@@ -689,6 +689,24 @@ const WalletHistory: React.FC<{ backToHome?: () => void }> = ({ backToHome }) =>
                                             </div>
                                         </div>
 
+                                        {/* FEE SUMMARY */}
+                                        {withdrawAmount && parseFloat(withdrawAmount) >= 1000 && (
+                                            <div className={styles.taxSummary} style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
+                                                <div className={styles.taxRow} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
+                                                    <span>Requested Amount</span>
+                                                    <span>₹{parseFloat(withdrawAmount).toFixed(2)}</span>
+                                                </div>
+                                                <div className={styles.taxRow} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#ef4444', marginTop: '4px' }}>
+                                                    <span>Platform Fee (19%)</span>
+                                                    <span>- ₹{(parseFloat(withdrawAmount) * 0.19).toFixed(2)}</span>
+                                                </div>
+                                                <div className={styles.taxRow} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', color: '#10b981', marginTop: '8px', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+                                                    <span>Net Payout</span>
+                                                    <span>₹{(parseFloat(withdrawAmount) * 0.81).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* ERROR */}
                                         {withdrawError && (
                                             <div className={styles.errorBox}>

@@ -1,0 +1,179 @@
+.introOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: #050816;
+    /* Deep navy from image */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: opacity 1s ease;
+}
+
+/* Phase 1: Logo and Cinematic Text */
+.logoContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    animation: cinematicFadeOut 1s ease forwards;
+    animation-delay: 5s;
+    /* Longer to allow typing */
+}
+
+.logo {
+    width: 320px;
+    /* Big size as requested */
+    height: auto;
+    opacity: 0;
+    transform: scale(0.8);
+    filter: drop-shadow(0 0 30px rgba(79, 70, 229, 0.3));
+    animation: logoCinematicPop 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.servicesText {
+    color: #fff;
+    font-family: 'Playfair Display', 'Merriweather', serif;
+    /* Serif font as in image */
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    /* Removed gradient/shimmer for clear white text as in image */
+    min-height: 1.2em;
+    /* Prevent layout shift during typing */
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes logoCinematicPop {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+@keyframes cinematicFadeOut {
+    to {
+        opacity: 0;
+        transform: scale(1.05);
+        filter: blur(20px);
+    }
+}
+
+/* Phase 2: Video Pop-up with Glassmorphism */
+.videoContainer {
+    position: absolute;
+    width: 85vw;
+    max-width: 1100px;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 24px;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.9) translateY(40px);
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    box-shadow: 0 0 150px rgba(0, 0, 0, 0.9), 0 0 50px rgba(250, 204, 21, 0.2);
+    animation: videoCinematicEntry 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    /* Removed animation-delay since phase change handles it */
+}
+
+.videoElement {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes videoCinematicEntry {
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Phase 3: The Portal Transition */
+.videoCircle {
+    animation: cinematicZoomToCircle 1.4s cubic-bezier(0.7, 0, 0.3, 1) forwards !important;
+}
+
+@keyframes cinematicZoomToCircle {
+    0% {
+        width: 85vw;
+        height: calc(85vw * 9 / 16);
+        border-radius: 24px;
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.revealSpread {
+    animation: cinematicPortalReveal 2.2s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+    animation-delay: 1.4s;
+}
+
+@keyframes cinematicPortalReveal {
+    0% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 0px, black 0px);
+        mask-image: radial-gradient(circle at center, transparent 0px, black 0px);
+    }
+
+    10% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 50px, black 50px);
+        mask-image: radial-gradient(circle at center, transparent 50px, black 50px);
+    }
+
+    100% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 200%, black 200%);
+        mask-image: radial-gradient(circle at center, transparent 200%, black 200%);
+    }
+}
+
+.skipBtn {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    z-index: 1000000;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: fadeInFixed 1s ease forwards;
+    animation-delay: 5s;
+}
+
+.skipBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(250, 204, 21, 0.5);
+    transform: translateY(-2px);
+}
+
+@keyframes fadeInFixed {
+    to {
+        opacity: 1;
+    }
+}
+
+.introOverlay:global(.revealing) {
+    background: transparent !important;
+    backdrop-filter: none;
+}

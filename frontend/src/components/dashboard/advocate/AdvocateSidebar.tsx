@@ -1,4 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import api from '../../../services/api';
 import { formatImageUrl } from '../../../utils/imageHelper';
 import {
     User, Search, Star, Newspaper, ArrowUp, Shield, Settings,
@@ -17,6 +19,21 @@ interface Props {
 
 const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, onShowTryon }) => {
     const { user, logout } = useAuth();
+    const [promoText, setPromoText] = useState('UPTO 53% OFF ALL MEMBERSHIP PLANS');
+
+    useEffect(() => {
+        const fetchPromo = async () => {
+            try {
+                const res = await api.get('/settings/site');
+                if (res.data.success && res.data.settings.dashboard_promos?.advocate) {
+                    setPromoText(res.data.settings.dashboard_promos.advocate);
+                }
+            } catch (err) {
+                console.error('Failed to fetch promo text', err);
+            }
+        };
+        fetchPromo();
+    }, []);
 
     const menuItems = [
         { id: 'edit-profile', label: 'Edit Profile', icon: User },
@@ -68,7 +85,7 @@ const AdvocateSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage, o
                     Upgrade Membership
                 </button>
                 <div className={styles.upgradeText}>
-                    UPTO 53% OFF ALL MEMBERSHIP PLANS
+                    {promoText}
                 </div>
 
                 {!user?.isPremium && !user?.demoUsed && onShowTryon && !localStorage.getItem('hasDismissedPremiumTrial') && (

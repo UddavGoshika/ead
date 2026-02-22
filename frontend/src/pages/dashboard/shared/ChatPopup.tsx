@@ -81,6 +81,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
 
     // Plan check – same logic as client dashboard (Free = masked; Lite/Pro/Ultra = premium)
     const isPremium = checkIsPremium(user);
+    const isAdmin = user?.role === 'admin' || user?.role === 'ADMIN' || (user?.role as string) === 'super_admin';
+    const shouldMask = (advocate?.isMasked !== false) && !isPremium && !isAdmin;
 
 
     const currentUserId = String(user?.id);
@@ -373,20 +375,20 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate, onClos
                     </button>
                     <div
                         className={styles.profileClickArea}
-                        onClick={() => (isPremium ? setShowDetailedProfile(true) : setShowTrialModal(true))}
+                        onClick={() => ((isPremium || isAdmin) ? setShowDetailedProfile(true) : setShowTrialModal(true))}
                     >
                         <img
                             src={formatImageUrl(displayImage)}
                             alt={displayName}
-                            className={`${styles.avatar} ${!isPremium ? styles.blurredAvatar : ''}`}
+                            className={`${styles.avatar} ${shouldMask ? styles.blurredAvatar : ''}`}
                             onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&auto=format&fit=crop&q=60")}
                         />
                         <div className={styles.titleInfo}>
-                            <h3 title={isPremium ? displayName : undefined} className={!isPremium ? styles.blurredText : ''}>
+                            <h3 title={(isPremium || isAdmin) ? displayName : undefined} className={shouldMask ? styles.blurredText : ''}>
                                 {displayName}
                             </h3>
                             <div className={styles.idStatusRow}>
-                                <span className={`${styles.uniqueId} ${!isPremium ? styles.blurredText : ''}`}>{displayId}</span>
+                                <span className={`${styles.uniqueId} ${shouldMask ? styles.blurredText : ''}`}>{displayId}</span>
                                 <span className={styles.status} style={{ color: profileError ? '#ef4444' : '#10b981' }}>
                                     • {profileError || 'Online'}
                                 </span>

@@ -32,6 +32,7 @@ const LoginMemberDetails: React.FC = () => {
     const [selectedMember, setSelectedMember] = useState<LoginDetail | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<Partial<LoginDetail>>({});
+    const [showEditPassword, setShowEditPassword] = useState(false);
     const { impersonate } = useAuth();
 
     // Filters
@@ -114,7 +115,11 @@ const LoginMemberDetails: React.FC = () => {
         if (!selectedMember) return;
         try {
             setLoading(true);
-            const res = await axios.put(`/api/admin/members/${selectedMember.id}`, editData);
+            const payload: any = { ...editData };
+            if (editData.passwordHash && editData.passwordHash !== selectedMember.passwordHash) {
+                payload.password = editData.passwordHash;
+            }
+            const res = await axios.put(`/api/admin/members/${selectedMember.id}`, payload);
             if (res.data.success) {
                 toast.success("Member updated successfully");
                 setSelectedMember(null);
@@ -410,6 +415,30 @@ const LoginMemberDetails: React.FC = () => {
                                             </select>
                                         ) : (
                                             <p className={`${styles.planBadge} ${selectedMember.isPremium ? styles.premium : styles.free}`}>{selectedMember.plan}</p>
+                                        )}
+                                    </div>
+                                    <div className={styles.infoGroup}>
+                                        <label>Account Password</label>
+                                        {isEditing ? (
+                                            <div className={styles.passwordEditWrapper} style={{ position: 'relative' }}>
+                                                <input
+                                                    type={showEditPassword ? "text" : "password"}
+                                                    value={editData.passwordHash || ''}
+                                                    onChange={e => setEditData({ ...editData, passwordHash: e.target.value })}
+                                                    className={styles.editInput}
+                                                    placeholder="Enter new password"
+                                                    style={{ paddingRight: '40px' }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowEditPassword(!showEditPassword)}
+                                                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                                                >
+                                                    {showEditPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <p className={styles.passDots}>••••••••</p>
                                         )}
                                     </div>
                                     {!isEditing && (

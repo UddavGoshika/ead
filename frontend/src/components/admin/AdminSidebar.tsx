@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { MdLogout } from 'react-icons/md';
+import axios from 'axios';
 import styles from './AdminSidebar.module.css';
 
 import {
@@ -350,7 +351,36 @@ const MenuItem: React.FC<{ item: MenuItem; depth?: number; search: string; colla
 
 const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) => {
     const [search, setSearch] = useState('');
+    const [stats, setStats] = useState<any>(null);
     const { logout, user } = useAuth();
+
+    React.useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await axios.get('/api/admin/stats');
+                if (res.data.success) {
+                    setStats(res.data.stats);
+                }
+            } catch (err) {
+                console.error("Error fetching sidebar stats:", err);
+            }
+        };
+        fetchStats();
+        const interval = setInterval(fetchStats, 30000); // Poll every 30 seconds for real-time updates
+        return () => clearInterval(interval);
+    }, []);
+
+    // Helper to get count for legal docs
+    const getLegalDocBadge = (id: string, defaultBadge: string) => {
+        if (!stats?.legalDocs) return defaultBadge;
+        switch (id) {
+            case "agreements": return stats.legalDocs.agreements.toString();
+            case "affidavits": return stats.legalDocs.affidavits.toString();
+            case "notices": return stats.legalDocs.notices.toString();
+            case "legal-doc-services": return stats.legalDocs.services > 0 ? stats.legalDocs.services.toString() : "0";
+            default: return defaultBadge;
+        }
+    };
 
     const roleToDisplay: Record<string, string> = {
         admin: 'Super Admin',
@@ -375,6 +405,20 @@ const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) 
     };
 
     const roleName = getRoleDisplayName();
+
+    // Map through the schema and inject dynamic badges
+    const dynamicMenuSchema = MENU_SCHEMA.map(item => {
+        if (item.id === 'legal-documentation' && item.children) {
+            return {
+                ...item,
+                children: item.children.map(child => ({
+                    ...child,
+                    badge: getLegalDocBadge(child.id, child.badge || "")
+                }))
+            };
+        }
+        return item;
+    });
 
     return (
         <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}>
@@ -402,7 +446,7 @@ const AdminSidebar: React.FC<Pick<SidebarProps, 'collapsed'>> = ({ collapsed }) 
             )}
 
             <nav className={styles.menuContainer}>
-                {MENU_SCHEMA.map(item => (
+                {dynamicMenuSchema.map(item => (
                     <MenuItem key={item.id} item={item} search={search} collapsed={collapsed} />
                 ))}
             </nav>

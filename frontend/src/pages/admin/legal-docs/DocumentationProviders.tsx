@@ -426,36 +426,39 @@ const DocumentationProviders = () => {
         try {
             setLoading(true);
             const res = await axios.get("/api/admin/members", {
-                params: { role: "legal_provider" }
+                params: { role: "legal_provider", t: Date.now() }
             });
 
             if (res.data.success) {
-                const mapped: DocumentationProvider[] = res.data.members.map((m: any) => {
-                    // Determine status based on verified
-                    let status = "Pending";
-                    if (m.verified) status = "Active";
-                    if (m.status === "Blocked") status = "Blocked";
+                const mapped: DocumentationProvider[] = res.data.members
+                    .filter((m: any) => m.role === 'legal_provider')
+                    .map((m: any) => {
+                        const userId = m.id || m._id;
+                        // Determine status based on verified
+                        let status = "Pending";
+                        if (m.verified) status = "Active";
+                        if (m.status === "Blocked") status = "Blocked";
 
-                    return {
-                        id: m.id || m._id,
-                        adv_id: m.unique_id || `ADV-${m.id.substr(-6).toUpperCase()}`,
-                        name: m.name || "Unknown Advocate",
-                        email: m.email || "N/A",
-                        mobile: m.phone || "N/A",
-                        location: m.officeCity || m.city || "India",
-                        specialization: m.specialization || "General Practice",
-                        experience: m.experience ? `${m.experience} Years` : "N/A",
-                        license_id: m.barCouncil || "N/A",
-                        verified: m.verified || false,
-                        status: status as any,
-                        totalDrafts: Math.floor(Math.random() * 50), // Mock data for now as backend doesn't track this yet
-                        rating: 4.0 + Math.random(), // Mock rating
-                        baseRate: "₹2,500", // Default base rate
-                        estimatedEarnings: Math.floor(Math.random() * 100000),
-                        joinDate: m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-                        legalDocumentation: m.legalDocumentation || []
-                    };
-                });
+                        return {
+                            id: userId,
+                            adv_id: m.unique_id || `SP-${String(userId).slice(-6).toUpperCase()}`,
+                            name: m.name || "Unknown Specialist",
+                            email: m.email || "N/A",
+                            mobile: m.phone || "N/A",
+                            location: m.officeCity || m.city || "India",
+                            specialization: m.specialization || "General Practice",
+                            experience: m.experience ? `${m.experience} Years` : "N/A",
+                            license_id: m.barCouncil || "N/A",
+                            verified: m.verified || false,
+                            status: status as any,
+                            totalDrafts: Math.floor(Math.random() * 50), // Mock data for now as backend doesn't track this yet
+                            rating: 4.0 + Math.random(), // Mock rating
+                            baseRate: "₹2,500", // Default base rate
+                            estimatedEarnings: Math.floor(Math.random() * 100000),
+                            joinDate: m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                            legalDocumentation: m.legalDocumentation || []
+                        };
+                    });
                 setProviders(mapped);
             }
         } catch (err: any) {
@@ -531,7 +534,7 @@ const DocumentationProviders = () => {
         }
 
         return result;
-    }, [searchTerm, selectedStatus, selectedSpec, sortKey, sortDir]);
+    }, [providers, searchTerm, selectedStatus, selectedSpec, selectedService, sortKey, sortDir]);
 
     const paginated = useMemo(() => {
         const start = (currentPage - 1) * pageSize;

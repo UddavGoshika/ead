@@ -8,17 +8,17 @@ import EditProfile from '../shared/EditProfile';
 import AccountSettings from '../shared/AccountSettings';
 import SearchPreferences from '../shared/SearchPreferences';
 import SafetyCenter from '../shared/SafetyCenter';
-import DetailedProfile from '../shared/DetailedProfileEnhanced';
 import HelpSupport from '../shared/HelpSupport';
 import {
     NormalProfiles
 } from './sections/Placeholders';
 import Preservices from '../../../components/footerpages/premiumservices';
 import WalletHistory from '../shared/WalletHistory';
+import DetailedProfile from './sections/ClientAdvocateDetailedProfile';
 import Activity from './sections/Activity';
 import BlogFeed from '../shared/BlogFeed';
 import Messenger from '../shared/Messenger';
-import ChatPopup from '../shared/ChatPopup';
+import ChatPopup from './sections/ClientAdvocateChatPopup';
 import MyCases from './sections/MyCases';
 import FileCase from './sections/FileCase';
 import CreateBlog from './sections/CreateBlog';
@@ -336,7 +336,9 @@ const AdvocateDashboard: React.FC = () => {
                         {/* News Ticker - Behind Profile (99% width, top:10) */}
                         <div className={styles.newsTicker} style={{ position: 'absolute', width: '99%', left: 0, top: -10, zIndex: 0, opacity: 0.8 }}>
                             <span className={styles.tickerText}>
-                                ✨ LATEST NEWS: SOMEONE JUST POSTED A NEW PROFESSIONAL BLOG! BOOST YOUR VISIBILITY TODAY • COMPLETE YOUR PROFILE TO GET MORE LEADS ✨
+                                {notifications.length > 0
+                                    ? notifications.map(n => n.message.toUpperCase()).join(' • ')
+                                    : "✨ WELCOME TO E-ADVOCATE! COMPLETE YOUR PROFILE TO GET MORE LEADS • CHECK OUT OUR NEW BLOGS TODAY ✨"}
                             </span>
                         </div>
                     </div>

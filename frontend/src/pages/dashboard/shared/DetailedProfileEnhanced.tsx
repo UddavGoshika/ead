@@ -53,13 +53,8 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
     const { initiateCall } = useCall();
 
     const isPremium = checkIsPremium(user);
-    const plan = user?.plan || 'Free';
-
-
-    // Safety check: if we're in the advisor dashboard, we ARE an advisor.
-    const isDashboardAdvisor = typeof window !== 'undefined' && window.location.href.includes('/dashboard/advisor');
-    const isAdvisor = user?.role === 'legal_provider' || user?.role === 'advocate' || isDashboardAdvisor;
-    const shouldMask = (advocate?.isMasked !== false) && !isAdvisor;
+    const isAdmin = user?.role === 'admin' || user?.role === 'ADMIN' || (user?.role as string) === 'super_admin';
+    const shouldMask = (advocate?.isMasked !== false) && !isPremium && !isAdmin;
 
     const relationships = useRelationshipStore((state: any) => state.relationships);
     const setRelationship = useRelationshipStore((state: any) => state.setRelationship);
@@ -228,7 +223,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
             showToast?.('Insufficient coins. Please top up.');
             return;
         }
-        const itemsToUnlock = actualRole === 'advocate' ? 'Mobile, Email and License ID' : 'Mobile and Email';
+        const itemsToUnlock = "Mobile and Email";
         if (!confirm(`Spending 1 coin will permanently reveal ${itemsToUnlock}. Proceed?`)) return;
 
         const res = await performAction('unlock_contact');
@@ -345,7 +340,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                             <span className={styles.heroId}>
                                 {shouldMask && (advocate.display_id || advocate.unique_id)
                                     ? (advocate.display_id || advocate.unique_id || '').substring(0, 2) + '*****'
-                                    : (advocate.display_id || advocate.unique_id || 'ID-UNKNOWN')}
+                                    : (advocate.display_id || advocate.unique_id || (actualRole === 'client' ? 'ID-UNKNOWN' : 'ADV-UNKNOWN'))}
                             </span>
                         </div>
 
@@ -405,7 +400,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                         <div className={styles.contentSection}>
                             <div className={styles.sectionHeader}>
                                 <Users size={20} color="#facc15" />
-                                <h3>About {shouldMask && advocate.name ? advocate.name.substring(0, 2) + '*****' : (advocate.firstName || advocate.name?.split(' ')[0] || 'User')}</h3>
+                                <h3>About {shouldMask && advocate.name ? advocate.name.substring(0, 2) + '*****' : (advocate.firstName || advocate.name?.split(' ')[0] || (actualRole === 'client' ? 'Client' : 'Advocate'))}</h3>
                             </div>
                             <p className={styles.aboutText}>
                                 {advocate.bio || "Hi"}
@@ -516,16 +511,9 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                 </div>
                                 <div className={styles.contactInfo}>
                                     <div className={styles.contactValue}>
-                                        {advocate.contactInfo?.mobile ? (
-                                            advocate.contactInfo.mobile
-                                        ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                                                <span className={styles.blurText} style={{ userSelect: 'none' }}>+91 9XXXX XXXXX</span>
-                                                <button className={styles.unlockSmallBtn} onClick={handleUnlock}>
-                                                    <Lock size={12} /> Unlock Details (1 Coin)
-                                                </button>
-                                            </div>
-                                        )}
+                                        <span className={shouldMask ? styles.blurText : ''}>
+                                            {shouldMask ? '+91 9XXXX XXXXX' : (advocate.contactInfo?.mobile || (advocate as any).mobile || (advocate as any).phone || 'N/A')}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -536,14 +524,19 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                 <div className={styles.contactInfo}>
                                     <div className={styles.contactLabel}>Email Address</div>
                                     <div className={styles.contactValue}>
-                                        {advocate.contactInfo?.email ? (
-                                            advocate.contactInfo.email
-                                        ) : (
-                                            <span className={styles.blurText} style={{ userSelect: 'none' }}>exa***@gmail.com</span>
-                                        )}
+                                        <span className={shouldMask ? styles.blurText : ''}>
+                                            {shouldMask ? 'exa***@gmail.com' : (advocate.contactInfo?.email || advocate.email || 'N/A')}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
+
+                            {shouldMask && (
+                                <button className={styles.unlockSmallBtn} onClick={handleUnlock} style={{ width: '100%', marginBottom: '15px' }}>
+                                    <Lock size={12} /> Unlock Mobile & Email (1 Coin)
+                                </button>
+                            )}
+
                             {actualRole === 'advocate' && (
                                 <div className={styles.contactItem}>
                                     <div className={styles.contactIcon}>
@@ -552,8 +545,8 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                     <div className={styles.contactInfo}>
                                         <div className={styles.contactLabel}>License ID</div>
                                         <div className={styles.contactValue}>
-                                            <span className={(!advocate.contactInfo && advocate.isMasked) ? styles.blurText : ''}>
-                                                {advocate.licenseId || 'XXXXXXXXXX'}
+                                            <span className={shouldMask ? styles.blurText : ''}>
+                                                {shouldMask ? 'XXXXXXXXXX' : (advocate.licenseId || 'N/A')}
                                             </span>
                                         </div>
                                     </div>

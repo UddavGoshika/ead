@@ -721,8 +721,9 @@ router.post('/admin/transactions/:orderId/verify', authenticate, async (req, res
                 console.log(`[ADMIN] Approved Wallet Recharge for ${user.email}: +₹${transaction.amount}`);
             } else if (transaction.packageId === 'withdrawal') {
                 // Withdrawal already deducted from balance on request, just notify
-                createNotification('payment', `Withdrawal Request Approved! ₹${transaction.amount} has been processed.`, 'Admin', null, { userId: user._id });
-                console.log(`[ADMIN] Approved Withdrawal for ${user.email}: ₹${transaction.amount}`);
+                const payoutAmount = transaction.metadata?.payoutAmount || (transaction.amount * 0.81);
+                createNotification('payment', `Withdrawal Request Approved! ₹${payoutAmount} (after 19% platform fee) has been processed to your bank.`, 'Admin', null, { userId: user._id });
+                console.log(`[ADMIN] Approved Withdrawal for ${user.email}: ₹${payoutAmount} (Net)`);
             } else if (transaction.packageId) {
                 // Plan upgrade approval
                 user.plan = transaction.packageId;
@@ -799,6 +800,9 @@ router.post('/withdraw', authenticate, async (req, res) => {
         user.walletBalance -= amount;
         await user.save();
 
+        const platformFee = amount * 0.19;
+        const payoutAmount = amount - platformFee;
+
         const transaction = new Transaction({
             userId: user._id,
             orderId: `WTH-${Date.now()}`,
@@ -807,7 +811,13 @@ router.post('/withdraw', authenticate, async (req, res) => {
             gateway: 'Bank Transfer',
             status: 'pending', // Pending Admin Approval
             packageId: 'withdrawal',
-            metadata: { bankDetails, type: 'Payout' }
+            metadata: {
+                bankDetails,
+                type: 'Payout',
+                platformFee,
+                payoutAmount,
+                calculation: `Amount: ${amount}, Fee (19%): ${platformFee}, Payout: ${payoutAmount}`
+            }
         });
 
         await transaction.save();

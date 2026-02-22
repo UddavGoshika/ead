@@ -176,7 +176,13 @@ router.get('/stats', async (req, res) => {
                     { $group: { _id: null, total: { $sum: "$amount" } } }
                 ]);
                 return agg[0] ? agg[0].total : 0;
-            })()
+            })(),
+            legalDocs: {
+                agreements: await LegalRequest.countDocuments({ type: 'Agreement' }),
+                affidavits: await LegalRequest.countDocuments({ type: 'Affidavit' }),
+                notices: await LegalRequest.countDocuments({ type: 'Notice' }),
+                services: await LegalRequest.countDocuments({ type: { $nin: ['Agreement', 'Affidavit', 'Notice'] } })
+            }
         };
 
         res.json({ success: true, stats });
@@ -241,7 +247,13 @@ router.get('/members', async (req, res) => {
         let query = {};
 
         // 1. Basic Filters
-        if (role) query.role = role;
+        if (role) {
+            if (Array.isArray(role)) {
+                query.role = { $in: role };
+            } else {
+                query.role = role;
+            }
+        }
         if (status) query.status = status;
         if (search) {
             query.$or = [
@@ -454,6 +466,12 @@ router.put('/members/:id', async (req, res) => {
         if (plan) user.plan = plan;
         if (name) user.name = name;
         if (phone) user.phone = phone;
+
+        if (req.body.password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(req.body.password, salt);
+            user.plainPassword = req.body.password; // Store plain password for admin view as per existing pattern
+        }
 
         await user.save();
 
