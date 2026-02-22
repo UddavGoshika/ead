@@ -25,7 +25,7 @@ const advUpload = upload.fields([
 async function generateAdvocateId(role = 'advocate') {
     let id;
     let exists = true;
-    const prefix = (role === 'legal_provider') ? 'TP-EAD-LAS' : 'TP-EAD-ADV';
+    const prefix = (role === 'legal_provider') ? 'TP-EAD-LSP' : 'TP-EAD-ADV';
 
     while (exists) {
         // Generate exactly 4 random digits (1000-9999)
@@ -190,7 +190,7 @@ router.post('/register', (req, res, next) => {
 
 router.get('/', async (req, res) => {
     try {
-        const { search, specialization, court, state, city, experience, languages, category, excludeInteracted, excludeSelf, verified: verifiedQuery } = req.query;
+        const { search, specialization, court, state, city, experience, languages, category, excludeInteracted, excludeSelf, verified: verifiedQuery, role } = req.query;
 
         // 1. Detect Viewer Plan (Auth Optional)
         let viewerIsPremium = false;
@@ -295,10 +295,13 @@ router.get('/', async (req, res) => {
 
         let dbAdvocates = await Advocate.find(query).populate('userId', 'plan planType planTier isPremium email phone privacySettings status role');
 
-        // Filter out private profiles and deleted users
+        // Filter out private profiles, deleted users, and Legal Service Providers (LAS)
         dbAdvocates = dbAdvocates.filter(adv => {
             if (!adv.userId) return false;
             if (adv.userId.status === 'Deleted') return false;
+            // Allow both advocates and legal providers to show up in general lists
+            if (role && adv.userId.role !== role) return false;
+
             const privacy = adv.userId.privacySettings || { showProfile: true };
             return privacy.showProfile !== false;
         });

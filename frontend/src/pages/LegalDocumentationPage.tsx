@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import styles from './LegalDocumentationPage.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
-    ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
+    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -413,6 +413,16 @@ const serviceDetails: Record<string, ServiceDetail> = {
         ],
         types: ['Estate Planning', 'Property Transfer', 'Fiduciary Docs'],
         subtypes: ['Individual', 'Joint', 'Corporate Entity']
+    },
+    home: {
+        id: 'home',
+        title: 'All Legal Documentation Specialists',
+        description: 'Browse all verified specialists for agreements, affidavits, and formal legal notices.',
+        howItWorks: ['Select a service category', 'Find a specialist', 'Connect and get drafted'],
+        howToUse: ['Use filters to narrow down', 'Check verified badges'],
+        categories: [],
+        types: [],
+        subtypes: []
     }
 };
 
@@ -584,7 +594,7 @@ const ProviderCard: React.FC<{
                         }
                     }}
                 >
-                    <div className={styles.actionIcon}><Briefcase size={20} /></div>
+                    <div className={styles.actionIcon}><Handshake size={20} /></div>
                     <span>Interest</span>
                 </button>
                 <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onChat(provider); }}>
@@ -607,7 +617,7 @@ const ProviderCard: React.FC<{
                         }
                     }}
                 >
-                    <div className={styles.actionIcon}><Award size={20} /></div>
+                    <div className={styles.actionIcon}><Bookmark size={20} /></div>
                     <span>Shortlist</span>
                 </button>
                 <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onConsult(provider); }}>
@@ -713,13 +723,15 @@ const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose
 const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
     const { isLoggedIn, openAuthModal, user } = useAuth();
     const location = useLocation();
-    const [activeNav, setActiveNav] = useState('home');
+    const [activeNav, setActiveNav] = useState(isEmbedded ? 'agreements' : 'home');
     const [isLoaded, setIsLoaded] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [chatTarget, setChatTarget] = useState<Provider | null>(null);
     const [consultTarget, setConsultTarget] = useState<Provider | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
+    const [realProviders, setRealProviders] = useState<Provider[]>([]);
+    const [isLoadingProviders, setIsLoadingProviders] = useState(false);
     const [filters, setFilters] = useState({
         state: '',
         district: '',
@@ -730,6 +742,59 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
         experience: '',
         search: ''
     });
+
+    useEffect(() => {
+        const fetchRealProviders = async () => {
+            setIsLoadingProviders(true);
+            try {
+                // Fetch only legal_provider role advocates
+                const res = await axios.get('/api/advocates', {
+                    params: {
+                        role: 'legal_provider',
+                        verified: 'true'
+                    }
+                });
+                if (res.data.success && Array.isArray(res.data.advocates)) {
+                    // Map back to our Provider interface
+                    const mapped: Provider[] = res.data.advocates.map((adv: any) => ({
+                        id: adv.id || adv._id,
+                        adv_id: adv.unique_id || adv.display_id,
+                        license_id: adv.bar_council_id || adv.licenseId || 'N/A',
+                        name: adv.name || 'Unknown Specialist',
+                        age: 30,
+                        image_url: adv.image_url || adv.img,
+                        location: adv.location || 'Unknown',
+                        specialization: adv.specialization || 'Legal Services',
+                        experience: adv.experience || '0 Years',
+                        rating: 4.5 + (Math.random() * 0.5),
+                        reviews: Math.floor(Math.random() * 200),
+                        hourly_rate: '₹2,500',
+                        isPremium: adv.isFeatured || adv.isPremium,
+                        isVerified: adv.verified !== false,
+                        specializations: adv.legalDocumentation || adv.specialties || []
+                    }));
+                    setRealProviders(mapped);
+                }
+            } catch (err) {
+                console.error("Error fetching providers:", err);
+            } finally {
+                setIsLoadingProviders(false);
+            }
+        };
+
+        fetchRealProviders();
+    }, []);
+
+    const filteredProviders = realProviders.filter(p => {
+        const matchesSearch = !filters.search || p.name.toLowerCase().includes(filters.search.toLowerCase()) || p.adv_id.toLowerCase().includes(filters.search.toLowerCase());
+        const matchesState = !filters.state || p.location.toLowerCase().includes(filters.state.toLowerCase());
+        const matchesCity = !filters.city || p.location.toLowerCase().includes(filters.city.toLowerCase());
+        const matchesExp = !filters.experience || parseInt(p.experience) >= parseInt(filters.experience);
+        const matchesCat = filters.categories.length === 0 || filters.categories.some(cat => p.specializations?.includes(cat));
+
+        return matchesSearch && matchesState && matchesCity && matchesExp && matchesCat;
+    });
+
 
     // --- Query Form State ---
     const [formData, setFormData] = useState({
@@ -849,7 +914,7 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                         </tr>
                     </thead>
                     <tbody>
-                        {mockProviders.map((p, index) => (
+                        {filteredProviders.map((p, index) => (
                             <tr key={p.id}>
                                 <td>{index + 1}</td>
                                 <td>
@@ -1075,7 +1140,7 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                     <div className={styles.resultsHeader}>
                         <div className={styles.resultsTitleArea}>
                             <h2>Available Specialists</h2>
-                            <p>Found 14 certified advocates for this service</p>
+                            <p>Found {filteredProviders.length} certified advocates for this service</p>
                         </div>
                         <div className={styles.viewToggle}>
                             <button
@@ -1095,17 +1160,25 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
 
                     {viewMode === 'grid' ? (
                         <div className={styles.providersGrid}>
-                            {mockProviders.map(p => (
-                                <ProviderCard
-                                    key={p.id}
-                                    provider={p}
-                                    isLoggedIn={isLoggedIn}
-                                    onLogin={() => openAuthModal('login')}
-                                    onClick={() => setSelectedProvider(p)}
-                                    onChat={(p) => setChatTarget(p)}
-                                    onConsult={(p) => setConsultTarget(p)}
-                                />
-                            ))}
+                            {isLoadingProviders ? (
+                                <div style={{ color: '#fff' }}>Loading real providers...</div>
+                            ) : filteredProviders.length > 0 ? (
+                                filteredProviders.map(p => (
+                                    <ProviderCard
+                                        key={p.id}
+                                        provider={p}
+                                        isLoggedIn={isLoggedIn}
+                                        onLogin={() => openAuthModal('login')}
+                                        onClick={() => setSelectedProvider(p)}
+                                        onChat={(p) => setChatTarget(p)}
+                                        onConsult={(p) => setConsultTarget(p)}
+                                    />
+                                ))
+                            ) : (
+                                <div style={{ color: '#94a3b8', gridColumn: '1/-1', textAlign: 'center', padding: '40px' }}>
+                                    No specialists found matching your search criteria.
+                                </div>
+                            )}
                         </div>
                     ) : renderProviderTable()}
                 </div>
