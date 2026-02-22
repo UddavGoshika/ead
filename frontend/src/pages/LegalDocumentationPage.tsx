@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import styles from './LegalDocumentationPage.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
-    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
+    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -544,8 +544,8 @@ const ProviderCard: React.FC<{
 
                 {/* Top Right Badges */}
                 <div className={styles.topBadgesContainer}>
-                    <div className={styles.topIdBadge}>
-                        <span>{adv_id}</span>
+                    <div className={styles.topIdBadge} style={{ width: 'auto', padding: '4px 10px' }}>
+                        <span style={{ whiteSpace: 'nowrap' }}>{adv_id}</span>
                         <div className={styles.checkInner}>
                             <CheckCircle2 size={12} />
                         </div>
@@ -561,15 +561,15 @@ const ProviderCard: React.FC<{
                 {/* Bottom Overlay Details */}
                 <div className={styles.imageOverlay}>
                     <div className={styles.overlayMain}>
-                        <h3>{name}, {age}</h3>
+                        <h3>{name}{age ? `, ${age}` : ''}</h3>
                         <p className={styles.overlayLoc}>{location}</p>
                         <p className={styles.overlayExp}>{experience} experience</p>
                     </div>
 
                     <div className={styles.overlayBadges}>
-                        <div className={styles.licenseBadge}>
-                            <Lock size={12} className={styles.shieldIcon} />
-                            <span>{license_id}</span>
+                        <div className={styles.licenseBadge} style={{ opacity: 1, background: 'rgba(0,0,0,0.6)' }}>
+                            <Shield size={12} className={styles.shieldIcon} color="#4ade80" />
+                            <span style={{ letterSpacing: '0.5px' }}>{license_id}</span>
                         </div>
                     </div>
                 </div>
@@ -595,7 +595,7 @@ const ProviderCard: React.FC<{
                     }}
                 >
                     <div className={styles.actionIcon}><Handshake size={20} /></div>
-                    <span>Interest</span>
+                    <span>Interested</span>
                 </button>
                 <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onChat(provider); }}>
                     <div className={styles.actionIcon}><MessageCircle size={20} /></div>

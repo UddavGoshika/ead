@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import styles from './DashboardLegalDocs.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
-    ArrowRight, Home, MapPin, Search, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Lock, X
+    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X, Mail, Activity as ActivityIcon, Phone, Send, Inbox, CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -504,8 +504,8 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
 
                 {/* Top Right Badges */}
                 <div className={styles.topBadgesContainer}>
-                    <div className={styles.topIdBadge}>
-                        <span>{adv_id}</span>
+                    <div className={styles.topIdBadge} style={{ width: 'auto', padding: '4px 10px' }}>
+                        <span style={{ whiteSpace: 'nowrap' }}>{adv_id}</span>
                         {provider.verified === true ? (
                             <div className={styles.checkInner} title="Verified Specialist">
                                 <CheckCircle2 size={12} />
@@ -533,9 +533,9 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                     </div>
 
                     <div className={styles.overlayBadges}>
-                        <div className={styles.licenseBadge}>
-                            <Lock size={12} className={styles.shieldIcon} />
-                            <span>{license_id}</span>
+                        <div className={styles.licenseBadge} style={{ opacity: 1, background: 'rgba(0,0,0,0.6)' }}>
+                            <Shield size={12} className={styles.shieldIcon} color="#4ade80" />
+                            <span style={{ letterSpacing: '0.5px' }}>{license_id}</span>
                         </div>
                     </div>
                 </div>
@@ -568,8 +568,8 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                         }
                     }}
                 >
-                    <div className={styles.actionIcon}><Briefcase size={20} /></div>
-                    <span>{isAlreadyInterested ? 'Interested' : 'Interest'}</span>
+                    <div className={styles.actionIcon}><Handshake size={20} /></div>
+                    <span>Interested</span>
                 </button>
                 <button className={styles.actionItem} onClick={(e) => { e.stopPropagation(); !isLoggedIn ? onLogin() : onChat(provider); }}>
                     <div className={styles.actionIcon}><MessageCircle size={20} /></div>
@@ -593,7 +593,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
                         }
                     }}
                 >
-                    <div className={styles.actionIcon}><Award size={20} /></div>
+                    <div className={styles.actionIcon}><Bookmark size={20} /></div>
                     <span>Shortlist</span>
                 </button>
                 <button
@@ -714,38 +714,47 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
     const { isLoggedIn, openAuthModal, user } = useAuth();
     const location = useLocation();
     const [activeNav, setActiveNav] = useState('home');
+    const [activeSubNav, setActiveSubNav] = useState('sent'); // for Messages / Activity tabs
     const [isLoaded, setIsLoaded] = useState(false);
     const [providers, setProviders] = useState<Advocate[]>([]);
+    const [allActivities, setAllActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<Advocate | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [chatTarget, setChatTarget] = useState<Advocate | null>(null);
     const [consultTarget, setConsultTarget] = useState<Advocate | null>(null);
     const [sentInteractions, setSentInteractions] = useState<Set<string>>(new Set());
+    const [payingFor, setPayingFor] = useState<Advocate | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (isLoggedIn && user?.id) {
-            interactionService.getAllActivities(String(user.id))
-                .then(activities => {
-                    const ids = new Set<string>();
-                    activities.forEach((act: any) => {
-                        const tId = String(act.partnerUserId || act.receiver || act.sender);
-                        if (act.isSender) {
-                            ids.add(tId + ':' + act.type);
-                            if (act.status === 'accepted') {
-                                ids.add(tId + ':interest');
-                                ids.add(tId + ':meet_request');
-                            }
-                        } else if (act.status === 'accepted') {
-                            ids.add(tId + ':interest');
-                            ids.add(tId + ':meet_request');
-                        }
-                    });
-                    setSentInteractions(ids);
-                })
-                .catch(console.error);
+    const fetchAllActivities = async () => {
+        if (!isLoggedIn || !user?.id) return;
+        try {
+            const activities = await interactionService.getAllActivities(String(user.id));
+            setAllActivities(activities);
+
+            const ids = new Set<string>();
+            activities.forEach((act: any) => {
+                const tId = String(act.partnerUserId || act.receiver || act.sender);
+                if (act.isSender) {
+                    ids.add(tId + ':' + act.type);
+                    if (act.status === 'accepted') {
+                        ids.add(tId + ':interest');
+                        ids.add(tId + ':meet_request');
+                    }
+                } else if (act.status === 'accepted') {
+                    ids.add(tId + ':interest');
+                    ids.add(tId + ':meet_request');
+                }
+            });
+            setSentInteractions(ids);
+        } catch (err) {
+            console.error("Error fetching activities:", err);
         }
+    };
+
+    useEffect(() => {
+        fetchAllActivities();
     }, [isLoggedIn, user]);
 
     // Support Form State
@@ -915,6 +924,10 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
         { id: 'affidavits', label: 'Affidavits', icon: <ClipboardCheck size={18} /> },
         { id: 'notices', label: 'Legal Notices', icon: <Scale size={18} /> },
         { id: 'legal-docs', label: 'Legal Document Services', icon: <ScrollText size={18} /> },
+        ...(isLoggedIn ? [
+            { id: 'messages', label: 'Messages', icon: <Mail size={18} /> },
+            { id: 'activity', label: 'Activity', icon: <ActivityIcon size={18} /> },
+        ] : [])
     ];
 
     const currentDetail = serviceDetails[activeNav];
@@ -1322,6 +1335,161 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
         );
     };
 
+    const renderPaymentModal = (p: Advocate) => {
+        const baseRate = 2500; // Simulated static rate or p.hourly_rate
+        const platformFee = Math.round(baseRate * 0.19);
+        const total = baseRate + platformFee;
+
+        return (
+            <div className={styles.popupOverlay} onClick={() => setPayingFor(null)}>
+                <motion.div
+                    className={styles.paymentModal}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <div className={styles.popupHeader}>
+                        <h3>Service Payment</h3>
+                        <button onClick={() => setPayingFor(null)}><X size={20} /></button>
+                    </div>
+                    <div className={styles.paymentContent}>
+                        <div className={styles.paymentProviderInfo}>
+                            <img src={p.profilePicPath ? formatImageUrl(p.profilePicPath) : p.image_url} alt="" />
+                            <div>
+                                <h4>{p.name || 'Specialist'}</h4>
+                                <p>Legal Document Specialist</p>
+                            </div>
+                        </div>
+                        <div className={styles.feeBreakdown}>
+                            <div className={styles.feeRow}>
+                                <span>Service Charges</span>
+                                <span>₹{baseRate.toLocaleString()}</span>
+                            </div>
+                            <div className={styles.feeRow}>
+                                <span>Platform Fee (19%)</span>
+                                <span>₹{platformFee.toLocaleString()}</span>
+                            </div>
+                            <div className={styles.totalRow}>
+                                <span>Total Amount</span>
+                                <span>₹{total.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <button
+                            className={styles.payNowBtn}
+                            onClick={() => {
+                                alert(`Payment of ₹${total.toLocaleString()} successful! 19% platform fee (₹${platformFee.toLocaleString()}) has been deducted.`);
+                                setPayingFor(null);
+                            }}
+                        >
+                            <CreditCard size={18} /> Pay Now (₹{total.toLocaleString()})
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    };
+
+    const renderMessagesView = () => {
+        // Filter sub-tabs
+        const filtered = allActivities.filter(act => {
+            if (activeSubNav === 'sent') return act.isSender && (act.type === 'chat' || act.type === 'message_sent');
+            if (activeSubNav === 'received') return !act.isSender && (act.type === 'chat' || act.type === 'message_sent');
+            if (activeSubNav === 'accepted') return act.status === 'accepted';
+            if (activeSubNav === 'calls') return act.type === 'call';
+            return false;
+        });
+
+        return (
+            <motion.div className={styles.dashboardView} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className={styles.dashboardHeader}>
+                    <h2>Messages & Communications</h2>
+                    <div className={styles.subTabNav}>
+                        <button className={activeSubNav === 'sent' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('sent')}><Send size={14} /> Sent</button>
+                        <button className={activeSubNav === 'received' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('received')}><Inbox size={14} /> Received</button>
+                        <button className={activeSubNav === 'accepted' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('accepted')}><CheckCircle2 size={14} /> Accepted</button>
+                        <button className={activeSubNav === 'calls' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('calls')}><Phone size={14} /> Calls</button>
+                    </div>
+                </div>
+
+                <div className={styles.activityGrid}>
+                    {filtered.length > 0 ? filtered.map(act => (
+                        <div key={act._id} className={styles.activityCard}>
+                            <div className={styles.activityTypeBadge}>{act.type}</div>
+                            <h4>{act.partnerName}</h4>
+                            <p>{act.details?.service || 'Communication Thread'}</p>
+                            <span className={styles.activityDate}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                            <button className={styles.activityActionBtn}>Open Conversation</button>
+                        </div>
+                    )) : (
+                        <div className={styles.noActivity}>No items found in {activeSubNav} messages.</div>
+                    )}
+                </div>
+            </motion.div>
+        );
+    };
+
+    const renderActivityView = () => {
+        const filtered = allActivities.filter(act => {
+            if (activeSubNav === 'interest') return act.isSender && act.type === 'interest';
+            if (activeSubNav === 'accepted') return act.status === 'accepted';
+            if (activeSubNav === 'shortlisted') return act.type === 'shortlist';
+            if (activeSubNav === 'consultation') return act.type === 'meet_request' || act.type === 'consultation';
+            return false;
+        });
+
+        return (
+            <motion.div className={styles.dashboardView} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className={styles.dashboardHeader}>
+                    <h2>Your Legal Activity</h2>
+                    <div className={styles.subTabNav}>
+                        <button className={activeSubNav === 'interest' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('interest')}><Handshake size={14} /> Interest Sent</button>
+                        <button className={activeSubNav === 'accepted' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('accepted')}><CheckCircle2 size={14} /> Accepted</button>
+                        <button className={activeSubNav === 'shortlisted' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('shortlisted')}><Bookmark size={14} /> Shortlisted</button>
+                        <button className={activeSubNav === 'consultation' ? styles.subTabActive : ''} onClick={() => setActiveSubNav('consultation')}><Clock size={14} /> Consultation</button>
+                    </div>
+                </div>
+
+                <div className={styles.activityGrid}>
+                    {filtered.length > 0 ? filtered.map(act => (
+                        <div key={act._id} className={styles.activityCard}>
+                            <div className={styles.activityMeta}>
+                                <div className={styles.partnerInfo}>
+                                    <div className={styles.partnerName}>{act.partnerName}</div>
+                                    <div className={styles.partnerId}>{act.partnerUniqueId}</div>
+                                </div>
+                                <div className={`${styles.statusBadge} ${styles[act.status]}`}>{act.status}</div>
+                            </div>
+                            <div className={styles.activityBody}>
+                                <p>Service: {act.details?.service || 'General Assistance'}</p>
+                                <span className={styles.activityDate}>{new Date(act.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <div className={styles.activityFooter}>
+                                {act.status === 'accepted' && (
+                                    <button
+                                        className={styles.payProviderBtn}
+                                        onClick={() => {
+                                            const mockAdv: any = {
+                                                id: act.partnerUserId,
+                                                name: act.partnerName,
+                                                unique_id: act.partnerUniqueId,
+                                                image_url: act.partnerImg
+                                            };
+                                            setPayingFor(mockAdv);
+                                        }}
+                                    >
+                                        <CreditCard size={14} /> Pay Service Provider
+                                    </button>
+                                )}
+                                <button className={styles.viewDetailsBtn} onClick={() => alert("Detailed logs loading...")}>View History</button>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className={styles.noActivity}>No items found in {activeSubNav}.</div>
+                    )}
+                </div>
+            </motion.div>
+        );
+    };
     const renderHomeView = () => (
         <motion.div
             key="home"
@@ -1640,93 +1808,97 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
 
             <div className={styles.mainContent} ref={contentRef}>
                 <AnimatePresence mode="wait">
-                    {activeNav === 'home' ? renderHomeView() : (isLoaded && renderServiceView())}
+                    {activeNav === 'home' ? renderHomeView() :
+                        activeNav === 'messages' ? renderMessagesView() :
+                            activeNav === 'activity' ? renderActivityView() :
+                                (isLoaded && renderServiceView())}
                 </AnimatePresence>
 
-                {/* Task 3 & 4: Full Grid and Bottom Support */}
-                <div className={styles.taskExtensions}>
-                    <section className={styles.bottomSupportSection}>
-                        <div className={styles.supportGrid}>
-                            <div className={styles.queryFormCard}>
-                                <h3>Submit a Legal Query</h3>
-                                <p>Our experts will get back to you within 24 hours.</p>
-                                <form className={styles.supportForm} onSubmit={handleQuerySubmit}>
-                                    <div className={styles.formRow}>
+                {(activeNav === 'home' || !['messages', 'activity'].includes(activeNav)) && (
+                    <div className={styles.taskExtensions}>
+                        <section className={styles.bottomSupportSection}>
+                            <div className={styles.supportGrid}>
+                                <div className={styles.queryFormCard}>
+                                    <h3>Submit a Legal Query</h3>
+                                    <p>Our experts will get back to you within 24 hours.</p>
+                                    <form className={styles.supportForm} onSubmit={handleQuerySubmit}>
+                                        <div className={styles.formRow}>
+                                            <input
+                                                type="text"
+                                                placeholder="Full Name"
+                                                value={queryForm.name}
+                                                onChange={(e) => setQueryForm({ ...queryForm, name: e.target.value })}
+                                                required
+                                            />
+                                            <input
+                                                type="tel"
+                                                placeholder="Phone Number"
+                                                value={queryForm.phone}
+                                                onChange={(e) => setQueryForm({ ...queryForm, phone: e.target.value })}
+                                                required
+                                            />
+                                        </div>
                                         <input
-                                            type="text"
-                                            placeholder="Full Name"
-                                            value={queryForm.name}
-                                            onChange={(e) => setQueryForm({ ...queryForm, name: e.target.value })}
+                                            type="email"
+                                            placeholder="Email Address"
+                                            value={queryForm.email}
+                                            onChange={(e) => setQueryForm({ ...queryForm, email: e.target.value })}
                                             required
                                         />
-                                        <input
-                                            type="tel"
-                                            placeholder="Phone Number"
-                                            value={queryForm.phone}
-                                            onChange={(e) => setQueryForm({ ...queryForm, phone: e.target.value })}
+                                        <textarea
+                                            placeholder="Describe your legal requirement or query..."
+                                            rows={4}
+                                            value={queryForm.message}
+                                            onChange={(e) => setQueryForm({ ...queryForm, message: e.target.value })}
                                             required
-                                        />
-                                    </div>
-                                    <input
-                                        type="email"
-                                        placeholder="Email Address"
-                                        value={queryForm.email}
-                                        onChange={(e) => setQueryForm({ ...queryForm, email: e.target.value })}
-                                        required
-                                    />
-                                    <textarea
-                                        placeholder="Describe your legal requirement or query..."
-                                        rows={4}
-                                        value={queryForm.message}
-                                        onChange={(e) => setQueryForm({ ...queryForm, message: e.target.value })}
-                                        required
-                                    ></textarea>
-                                    <button
-                                        type="submit"
-                                        className={styles.formSubmitBtn}
-                                        disabled={submittingQuery}
-                                    >
-                                        {submittingQuery ? 'Sending...' : 'Send Message'}
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div className={styles.fraudAlertCard}>
-                                <div className={styles.alertHeader}>
-                                    <div className={styles.alertIcon}><Zap size={32} /></div>
-                                    <h3>Fraud Alert & Safety</h3>
+                                        ></textarea>
+                                        <button
+                                            type="submit"
+                                            className={styles.formSubmitBtn}
+                                            disabled={submittingQuery}
+                                        >
+                                            {submittingQuery ? 'Sending...' : 'Send Message'}
+                                        </button>
+                                    </form>
                                 </div>
-                                <div className={styles.alertContent}>
-                                    <p className={styles.warningText}>
-                                        <strong>Important:</strong> E-Advocate Services never asks for sensitive otp or bank details over phone.
-                                        Always verify the advocate's unique ID on our portal before making any payments.
-                                    </p>
-                                    <ul className={styles.safetyList}>
-                                        <li>Pay only through secured gateway.</li>
-                                        <li>Ask for a digitally signed receipt.</li>
-                                        <li>Report suspicious activity immediately.</li>
-                                    </ul>
-                                    <div className={styles.contactDetails}>
-                                        <div className={styles.contactItem}>
-                                            <Clock size={18} />
-                                            <span>Support:+91 70937 04706
 
-                                            </span>
-                                        </div>
-                                        <div className={styles.contactItem}>
-                                            <MessageCircle size={18} />
-                                            <span>Email: support@tatitoprojects.com
+                                <div className={styles.fraudAlertCard}>
+                                    <div className={styles.alertHeader}>
+                                        <div className={styles.alertIcon}><Zap size={32} /></div>
+                                        <h3>Fraud Alert & Safety</h3>
+                                    </div>
+                                    <div className={styles.alertContent}>
+                                        <p className={styles.warningText}>
+                                            <strong>Important:</strong> E-Advocate Services never asks for sensitive otp or bank details over phone.
+                                            Always verify the advocate's unique ID on our portal before making any payments.
+                                        </p>
+                                        <ul className={styles.safetyList}>
+                                            <li>Pay only through secured gateway.</li>
+                                            <li>Ask for a digitally signed receipt.</li>
+                                            <li>Report suspicious activity immediately.</li>
+                                        </ul>
+                                        <div className={styles.contactDetails}>
+                                            <div className={styles.contactItem}>
+                                                <Clock size={18} />
+                                                <span>Support:+91 70937 04706
+
+                                                </span>
+                                            </div>
+                                            <div className={styles.contactItem}>
+                                                <MessageCircle size={18} />
+                                                <span>Email: support@tatitoprojects.com
 
 
 
-                                            </span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
-                </div>
+                        </section>
+                    </div>
+                )}
             </div>
             {/* NEW POPUPS */}
             <AnimatePresence>
@@ -1858,6 +2030,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                     </motion.div>
                 )}
             </AnimatePresence>
+            {payingFor && renderPaymentModal(payingFor)}
         </div>
     );
 };

@@ -368,13 +368,13 @@ router.get('/', async (req, res) => {
                 specialties: adv.practice?.specialization ? [adv.practice.specialization] : [],
                 legalDocumentation: Array.isArray(adv.legalDocumentation) ? adv.legalDocumentation : [],
                 verified: adv.verified === true,
-                bio: shouldMask ? '' : (adv.career?.bio || ''),
+                bio: (shouldMask && user?.role !== 'legal_provider') ? '' : (adv.career?.bio || ''),
                 image_url: displayImage,
                 isFeatured: isPremium,
-                isMasked: shouldMask,
+                isMasked: (shouldMask && user?.role !== 'legal_provider'),
                 specialization: adv.practice?.specialization || 'Legal Services',
                 category: adv.practice?.specialization || 'General',
-                bar_council_id: shouldMask ? 'XXXXXXXXXX' : (adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A')
+                bar_council_id: (shouldMask && user?.role !== 'legal_provider') ? 'XXXXXXXXXX' : (adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A')
             };
         });
 

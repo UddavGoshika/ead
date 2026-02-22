@@ -375,17 +375,20 @@
 }
 
 .topIdBadge {
-    background: rgba(6, 11, 26, 0.82);
+    background: rgba(6, 11, 26, 0.95);
     backdrop-filter: blur(10px);
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 12px;
     color: #fff;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid rgba(218, 165, 32, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+    width: auto;
+    max-width: none;
 }
 
 .topSpecTags {
@@ -2138,3 +2141,39 @@
         overflow: hidden;
     }
 }
+/* NEW DASHBOARD VIEWS */
+.dashboardView { padding: 60px 40px; }
+.dashboardHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 30px; }
+.dashboardHeader h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #fff; margin: 0; }
+.subTabNav { display: flex; gap: 10px; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05); }
+.subTabNav button { background: transparent; border: none; color: #94a3b8; padding: 10px 20px; border-radius: 100px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+.subTabActive { background: #daa520 !important; color: #000 !important; }
+.activityGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+.activityCard { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 25px; position: relative; transition: all 0.3s; }
+.activityCard:hover { border-color: #daa520; background: rgba(255,255,255,0.05); transform: translateY(-5px); }
+.activityTypeBadge { position: absolute; top: 20px; right: 20px; background: rgba(218, 165, 32, 0.1); color: #daa520; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; }
+.activityCard h4 { font-size: 1.3rem; color: #fff; margin: 0 0 10px 0; }
+.activityCard p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; }
+.activityDate { display: block; font-size: 0.75rem; color: #64748b; margin-top: 15px; }
+.activityActionBtn, .viewDetailsBtn { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+.activityActionBtn:hover, .viewDetailsBtn:hover { background: rgba(255,255,255,0.1); }
+.noActivity { grid-column: 1 / -1; text-align: center; padding: 100px 0; color: #64748b; font-style: italic; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); }
+.activityMeta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.partnerName { font-weight: 700; color: #fff; font-size: 1.2rem; }
+.partnerId { font-size: 0.75rem; color: #daa520; font-weight: 600; }
+.statusBadge { padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+.statusBadge.accepted { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.statusBadge.pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.activityFooter { display: flex; gap: 10px; margin-top: 25px; }
+.payProviderBtn { flex: 2; background: #daa520; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.3s; }
+.payProviderBtn:hover { transform: scale(1.02); background: #e5af2d; }
+.paymentModal { background: #060b1a; width: 100%; max-width: 500px; border-radius: 32px; border: 1px solid rgba(218, 165, 32, 0.3); padding: 40px; box-shadow: 0 40px 80px rgba(0,0,0,0.9); }
+.paymentProviderInfo { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 20px; }
+.paymentProviderInfo img { width: 60px; height: 60px; border-radius: 15px; object-fit: cover; }
+.paymentProviderInfo h4 { color: #fff; margin: 0 0 5px 0; font-size: 1.2rem; }
+.paymentProviderInfo p { color: #94a3b8; font-size: 0.85rem; margin: 0; }
+.feeBreakdown { display: flex; flex-direction: column; gap: 15px; margin-bottom: 35px; }
+.feeRow { display: flex; justify-content: space-between; color: #94a3b8; font-size: 0.95rem; }
+.totalRow { display: flex; justify-content: space-between; padding-top: 15px; border-top: 1px solid rgba(218, 165, 32, 0.2); color: #fff; font-size: 1.3rem; font-weight: 800; }
+.payNowBtn { width: 100%; background: #daa520; color: #000; border: none; padding: 18px; border-radius: 15px; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; }
+.payNowBtn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(218, 165, 32, 0.2); }

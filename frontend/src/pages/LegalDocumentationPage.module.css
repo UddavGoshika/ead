@@ -377,15 +377,18 @@
 .topIdBadge {
     background: rgba(6, 11, 26, 0.82);
     backdrop-filter: blur(10px);
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 12px;
     color: #fff;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 800;
     display: flex;
     align-items: center;
     gap: 8px;
-    border: 1px solid rgba(218, 165, 32, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    width: auto;
+    max-width: none;
 }
 
 .topSpecTags {
