@@ -36,30 +36,43 @@ const CallWindow: React.FC = () => {
     const plan = (user?.plan || 'Free').toLowerCase();
     const isPremium = user?.isPremium || (plan !== 'free' && plan !== '');
 
-    // Correctly identify the other person in the call
+    // Correctly identify the other person in the call (Robust resolution)
     const getPartner = () => {
         if (!activeCall || !user) return null;
-        const currentUserId = String(user.id);
-        const callerId = typeof activeCall.caller === 'object' ? String(activeCall.caller._id) : String(activeCall.caller);
 
-        return currentUserId === callerId ? activeCall.receiver : activeCall.caller;
+        const currentUserId = String(user.id || user._id);
+        const callerId = String(activeCall.caller?._id || activeCall.caller);
+        const receiverId = String(activeCall.receiver?._id || activeCall.receiver);
+
+        // If I am the caller, return receiver. Otherwise return caller.
+        const partnerData = currentUserId === callerId ? activeCall.receiver : activeCall.caller;
+        return typeof partnerData === 'object' ? partnerData : { name: 'Partner', unique_id: 'ID Hidden' };
     };
 
     const partner = getPartner();
-    const incomingPartner = incomingCall ? incomingCall.caller : null;
+    const incomingPartner = incomingCall?.caller;
+
+    // Robust Video Syncing
+    useEffect(() => {
+        const localVideo = localVideoRef.current;
+        if (localVideo && localStream) {
+            if (localVideo.srcObject !== localStream) {
+                localVideo.srcObject = localStream;
+                localVideo.play().catch(e => console.warn('[CallWindow] Local play error:', e));
+            }
+        }
+    }, [localStream, callStatus, activeCall, incomingCall]);
 
     useEffect(() => {
-        if (localVideoRef.current && localStream) {
-            localVideoRef.current.srcObject = localStream;
+        const remoteVideo = remoteVideoRef.current;
+        if (remoteVideo && remoteStream) {
+            if (remoteVideo.srcObject !== remoteStream) {
+                remoteVideo.srcObject = remoteStream;
+                remoteVideo.muted = !isSpeakerOn;
+                remoteVideo.play().catch(e => console.warn('[CallWindow] Remote play error:', e));
+            }
         }
-    }, [localStream, callStatus]);
-
-    useEffect(() => {
-        if (remoteVideoRef.current && remoteStream) {
-            remoteVideoRef.current.srcObject = remoteStream;
-            remoteVideoRef.current.muted = !isSpeakerOn;
-        }
-    }, [remoteStream, callStatus, isSpeakerOn]);
+    }, [remoteStream, callStatus, isSpeakerOn, activeCall]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -112,6 +125,25 @@ const CallWindow: React.FC = () => {
                     </div>
                 </div>
                 {showPremiumModal && <PremiumTryonModal onClose={() => setShowPremiumModal(false)} />}
+            </div>
+        );
+    }
+
+    // FAILED CONNECTION UI
+    if (callStatus === 'failed') {
+        return (
+            <div className={styles.overlay}>
+                <div className={styles.incomingPopup} style={{ border: '2px solid #ef4444' }}>
+                    <div className={styles.pulseWrapper} style={{ background: '#fee2e2' }}>
+                        <X size={48} color="#ef4444" />
+                    </div>
+                    <h2 className={styles.callTypeTitle} style={{ color: '#ef4444' }}>Connection Failed</h2>
+                    <p className={styles.callerName}>Lost signal or network error</p>
+                    <p className={styles.callerId}>The call could not be established</p>
+                    <div className={styles.actionButtons}>
+                        <button className={styles.rejectBtn} onClick={endCall}>Close</button>
+                    </div>
+                </div>
             </div>
         );
     }

@@ -204,10 +204,13 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 { urls: 'stun:stun2.l.google.com:19302' },
                 { urls: 'stun:stun3.l.google.com:19302' },
                 { urls: 'stun:stun4.l.google.com:19302' },
-                { urls: 'stun:stun.metered.ca:80' }, // Alternative STUN for better reliability
-                // For 100% production reliability, a TURN server (like Xirsys/Metered) should be added here
+                { urls: 'stun:stun.services.mozilla.com' },
+                { urls: 'stun:stun.ekiga.net' },
+                { urls: 'stun:stun.metered.ca:80' },
             ],
             iceCandidatePoolSize: 10,
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require',
         });
 
         pc.onicecandidate = (event) => {
@@ -219,13 +222,28 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pc.ontrack = (event) => {
             console.log('[CallContext] Received remote track:', event.track.kind);
             if (event.streams && event.streams[0]) {
-                setRemoteStream(event.streams[0]);
+                // Create a new MediaStream instance to force React state update if the object reference matters
+                setRemoteStream(new MediaStream(event.streams[0].getTracks()));
+            } else {
+                setRemoteStream(prev => {
+                    const stream = prev || new MediaStream();
+                    stream.addTrack(event.track);
+                    return new MediaStream(stream.getTracks());
+                });
             }
         };
 
         pc.onconnectionstatechange = () => {
             console.log('[CallContext] PC State:', pc.connectionState);
-            if (pc.connectionState === 'failed') cleanupCall();
+            if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                console.warn('[CallContext] Connection lost or failed. Attempting to keep UI alive for 3s...');
+                setCallStatus('failed');
+                setTimeout(() => {
+                    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                        cleanupCall();
+                    }
+                }, 3000);
+            }
         };
 
         peerConnection.current = pc;

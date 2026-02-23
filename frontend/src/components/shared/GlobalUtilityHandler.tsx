@@ -1,17 +1,32 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useSocketStore } from '../../store/useSocketStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wifi, WifiOff, X, Play, RotateCcw } from 'lucide-react';
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 const GlobalUtilityHandler: React.FC = () => {
-    const { isLoggedIn, logout } = useAuth();
+    const { isLoggedIn, logout, user } = useAuth(); // Added 'user'
     const { showToast } = useToast();
+    const { initialize: initializeSocket, disconnect: disconnectSocket } = useSocketStore(); // Added this line
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [showGame, setShowGame] = useState(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // --- SOCKET INITIALIZATION ---
+    useEffect(() => {
+        if (isLoggedIn && user) {
+            const id = user.id || user._id;
+            if (id) {
+                console.log('[GlobalUtilityHandler] Initializing Global Socket for user:', id);
+                initializeSocket(String(id));
+            }
+        } else {
+            disconnectSocket();
+        }
+    }, [isLoggedIn, user?.id, user?._id, initializeSocket, disconnectSocket]);
 
     // --- NETWORK STATUS ---
     useEffect(() => {
