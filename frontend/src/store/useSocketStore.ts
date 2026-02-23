@@ -1,7 +1,17 @@
 import { create } from 'zustand';
 import io from 'socket.io-client';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const getSocketUrl = () => {
+    const envUrl = import.meta.env.VITE_BACKEND_URL;
+    if (envUrl) return envUrl;
+    const { hostname, protocol, origin } = window.location;
+    if (hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname)) {
+        return `${protocol}//${hostname}:5000`;
+    }
+    return origin;
+};
+
+const API_BASE_URL = getSocketUrl();
 
 interface SocketState {
     socket: any | null;

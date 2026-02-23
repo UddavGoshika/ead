@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { callService, type Call } from '../services/callService';
+import { useSocketStore } from '../store/useSocketStore';
 
 interface CallContextType {
     activeCall: Call | null;
@@ -25,24 +25,9 @@ interface CallContextType {
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
-const getSocketUrl = () => {
-    const envUrl = import.meta.env.VITE_BACKEND_URL;
-    if (envUrl) return envUrl;
-
-    const { hostname, protocol, origin } = window.location;
-
-    // If we're on localhost or an IP address, the backend is likely on port 5000
-    if (hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname)) {
-        return `${protocol}//${hostname}:5000`;
-    }
-
-    return origin; // Fallback to current origin (Production)
-};
-
-const SOCKET_URL = getSocketUrl();
-
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
+    const { socket: globalSocket } = useSocketStore();
 
     // State for UI
     const [activeCall, setActiveCall] = useState<Call | null>(null);
@@ -56,10 +41,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed'>('idle');
 
     // Refs for internal logic (Stable between renders)
-    const socket = useRef<Socket | null>(null);
     const peerConnection = useRef<RTCPeerConnection | null>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
-    const iceCandidatesQueue = useRef<RTCIceCandidateInit[]>([]);
+    const iceCandidatesQueue = useRef<any[]>([]);
     const timerRef = useRef<any>(null);
     const callTimeoutRef = useRef<any>(null);
 
@@ -106,18 +90,17 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsVideoMuted(false);
     }, []); // Zero dependencies = Stable reference
 
-    // Socket Event Loop (Depends only on user ID and Stable cleanup)
+    // Socket Event Loop (Depends only on globalSocket and user)
     useEffect(() => {
-        if (!user) return;
+        if (!globalSocket || !user) return;
+
+        const socket = globalSocket;
         const userId = user.id || user._id;
-        if (!userId) return;
 
-        console.log('[CallContext] Initializing Socket for user:', userId);
-        socket.current = io(SOCKET_URL);
-        socket.current.emit('register', String(userId));
+        console.log('[CallContext] Subscribing to Call Events for user:', userId);
 
-        socket.current.on('incoming-call', ({ from, offer, type, callerInfo }) => {
-            console.log('[CallContext] Incoming call event from:', from);
+        const onIncomingCall = ({ from, offer, type, callerInfo }: any) => {
+            console.log('[CallContext] SIGNAL: Incoming call from:', from);
             if (callerInfo) {
                 setIncomingCall({
                     _id: callerInfo.callId,
@@ -131,10 +114,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 });
                 setCallStatus('ringing');
             }
-        });
+        };
 
-        socket.current.on('call-answered', async ({ answer }) => {
-            console.log('[CallContext] Recipient answered. Establishing connection...');
+        const onCallAnswered = async ({ answer }: any) => {
+            console.log('[CallContext] SIGNAL: Recipient answered. Connecting WebRTC...');
             if (callTimeoutRef.current) {
                 clearTimeout(callTimeoutRef.current);
                 callTimeoutRef.current = null;
@@ -146,36 +129,36 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 try {
                     await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
 
-                    // Process ICE candidates
+                    // Flush queued ICE candidates
                     while (iceCandidatesQueue.current.length > 0) {
                         const candidate = iceCandidatesQueue.current.shift();
                         if (candidate) await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
                     }
 
-                    // Connected timer
-                    if (timerRef.current) clearInterval(timerRef.current);
+                    // Start duration timer
                     setCallDuration(0);
+                    if (timerRef.current) clearInterval(timerRef.current);
                     timerRef.current = setInterval(() => {
                         setCallDuration(prev => prev + 1);
                     }, 1000);
                 } catch (e) {
-                    console.error('[CallContext] SDP Answer Error:', e);
+                    console.error('[CallContext] Connection Error:', e);
                 }
             }
-        });
+        };
 
-        socket.current.on('ringing', () => {
-            console.log('[CallContext] Recipient reachable, status -> RINGING');
+        const onRinging = () => {
+            console.log('[CallContext] SIGNAL: Recipient ringing');
             setCallStatus('ringing');
-        });
+        };
 
-        socket.current.on('user-offline', () => {
-            console.warn('[CallContext] Recipient is currently offline');
-            alert('The user is currently offline.');
+        const onUserOffline = () => {
+            console.warn('[CallContext] SIGNAL: Recipient is offline');
+            alert('The user is currently offline or has disconnected.');
             cleanupCall();
-        });
+        };
 
-        socket.current.on('ice-candidate', async ({ candidate }) => {
+        const onIceCandidate = async ({ candidate }: any) => {
             if (peerConnection.current?.remoteDescription) {
                 try {
                     await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
@@ -185,33 +168,35 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
                 iceCandidatesQueue.current.push(candidate);
             }
-        });
+        };
 
-        socket.current.on('hangup', () => {
-            console.log('[CallContext] Remote hangup signal received');
+        const onHangup = () => {
+            console.log('[CallContext] SIGNAL: Hangup received');
             cleanupCall();
-        });
+        };
 
-        socket.current.on('new-message', (data) => {
-            console.log('[CallContext] Received real-time message:', data);
-            window.dispatchEvent(new CustomEvent('socket-message', { detail: data }));
-        });
-
-        socket.current.on('new-notification', (data) => {
-            console.log('[CallContext] Received real-time notification:', data);
-            // Dispatch a custom event so dashboards can listen without depending on CallContext
-            window.dispatchEvent(new CustomEvent('socket-notification', { detail: data }));
-        });
+        // Attach listeners
+        socket.on('incoming-call', onIncomingCall);
+        socket.on('call-answered', onCallAnswered);
+        socket.on('ringing', onRinging);
+        socket.on('user-offline', onUserOffline);
+        socket.on('ice-candidate', onIceCandidate);
+        socket.on('hangup', onHangup);
 
         return () => {
-            console.log('[CallContext] Cleaning up context effect...');
-            cleanupCall();
-            socket.current?.disconnect();
+            console.log('[CallContext] Cleaning up Socket listeners (preserving state)');
+            socket.off('incoming-call', onIncomingCall);
+            socket.off('call-answered', onCallAnswered);
+            socket.off('ringing', onRinging);
+            socket.off('user-offline', onUserOffline);
+            socket.off('ice-candidate', onIceCandidate);
+            socket.off('hangup', onHangup);
+            // NOTE: We DO NOT call cleanupCall() here anymore. 
+            // This prevents calls from cutting when the socket briefly reconnects or user state updates.
         };
-    }, [user?.id, user?._id, cleanupCall]); // cleanupCall is stable now, no more loops!
+    }, [globalSocket, user?.id, user?._id]);
 
     const createPeerConnection = (targetUserId: string) => {
-        // Robust ICE Servers for Production
         const pc = new RTCPeerConnection({
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -219,15 +204,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 { urls: 'stun:stun2.l.google.com:19302' },
                 { urls: 'stun:stun3.l.google.com:19302' },
                 { urls: 'stun:stun4.l.google.com:19302' },
-                // Note: For 100% reliability in production (especially on mobile/corporate networks), 
-                // you MUST include a TURN server here. Public STUN servers only handle basic NAT traversal.
+                { urls: 'stun:stun.metered.ca:80' }, // Alternative STUN for better reliability
+                // For 100% production reliability, a TURN server (like Xirsys/Metered) should be added here
             ],
             iceCandidatePoolSize: 10,
         });
 
         pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                socket.current?.emit('ice-candidate', { to: String(targetUserId), candidate: event.candidate });
+            if (event.candidate && globalSocket) {
+                globalSocket.emit('ice-candidate', { to: String(targetUserId), candidate: event.candidate });
             }
         };
 
@@ -248,15 +233,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const initiateCall = async (receiverId: string, type: 'audio' | 'video') => {
-        if (isCalling || activeCall || incomingCall) return;
+        if (isCalling || activeCall || incomingCall || !globalSocket) return;
 
         try {
             console.log(`[CallContext] Starting ${type} call to ${receiverId}...`);
             setActiveCall(null);
             setIsCalling(true);
-            setCallStatus('calling'); // Starts as CALLING (Dynamic)
+            setCallStatus('calling');
 
-            // 1. Media First (Verify hardware before signaling)
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
                 video: type === 'video'
@@ -264,18 +248,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLocalStream(stream);
             localStreamRef.current = stream;
 
-            // 2. Open internal Call Record
             const call = await callService.initiateCall(String(user?.id), receiverId, type);
             setActiveCall(call);
 
-            // 3. Signaling setup
             const pc = createPeerConnection(receiverId);
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
             const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: type === 'video' });
             await pc.setLocalDescription(offer);
 
-            // 4. Send signal
             const currentUserId = user?.id || user?._id;
             const callerInfo = {
                 _id: String(currentUserId),
@@ -286,33 +267,31 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 roomName: call.roomName
             };
 
-            socket.current?.emit('call-user', { to: receiverId, offer, from: String(currentUserId), type, callerInfo });
+            globalSocket.emit('call-user', { to: receiverId, offer, from: String(currentUserId), type, callerInfo });
 
-            // 5. Timeout
             callTimeoutRef.current = setTimeout(() => {
                 if (callStatus !== 'connected') {
-                    console.warn('[CallContext] Call timed out out after 45s');
+                    console.warn('[CallContext] Call timed out after 45s');
                     endCall();
                 }
             }, 45000);
 
         } catch (err: any) {
-            console.error('[CallContext] Media Permission Error:', err);
-            alert('Hardware access denied. Please allow camera/microphone permissions in your browser settings.');
+            console.error('[CallContext] Call Error:', err);
+            const msg = err.name === 'NotAllowedError'
+                ? 'Camera/Microphone access denied. Please allow permissions in your browser to make calls.'
+                : 'Could not start the call. Please check your hardware and try again.';
+            alert(msg);
             cleanupCall();
         }
     };
 
-    const [isAccepting, setIsAccepting] = useState(false);
-
     const acceptCall = async () => {
-        if (!incomingCall || !incomingCall.offer || isAccepting) return;
+        if (!incomingCall || !incomingCall.offer || !globalSocket) return;
 
         try {
-            setIsAccepting(true);
             console.log('[CallContext] Accepting call from:', incomingCall.caller.name);
 
-            // 1. Media First
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
                 video: incomingCall.type === 'video'
@@ -320,7 +299,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLocalStream(stream);
             localStreamRef.current = stream;
 
-            // 2. Setup Peer
             const pc = createPeerConnection(String(incomingCall.caller._id));
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
@@ -328,9 +306,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
-            socket.current?.emit('answer-call', { to: String(incomingCall.caller._id), answer });
+            globalSocket.emit('answer-call', { to: String(incomingCall.caller._id), answer });
 
-            // 3. Finalize Status
             setCallStatus('connected');
             setActiveCall(incomingCall);
             setIncomingCall(null);
@@ -343,28 +320,52 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             await callService.updateCallStatus(incomingCall._id, 'accepted').catch(() => { });
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('[CallContext] Accept Call Error:', err);
-            alert('Could not access microphone or camera. Hardware might be in use by another application.');
+            const msg = err.name === 'NotAllowedError'
+                ? 'Camera/Microphone access was denied. Please enable permissions in your browser.'
+                : 'Could not connect to media devices. They might be in use by another app.';
+            alert(msg);
             cleanupCall();
-        } finally {
-            setIsAccepting(false);
         }
     };
 
     const rejectCall = async () => {
-        if (!incomingCall) return;
-        socket.current?.emit('hangup', { to: String(incomingCall.caller._id) });
+        if (!incomingCall || !globalSocket) return;
+
+        const targetId = incomingCall.caller?._id || incomingCall.caller;
+        if (targetId) {
+            console.log('[CallContext] Rejecting call. Notifying:', targetId);
+            globalSocket.emit('hangup', { to: String(targetId) });
+        }
+
         await callService.updateCallStatus(incomingCall._id, 'rejected').catch(() => { });
         cleanupCall();
     };
 
     const endCall = async () => {
         const currentUserId = user?.id || user?._id;
-        let targetId = activeCall ? (String(currentUserId) === String(activeCall.caller._id) ? (activeCall.receiver._id || activeCall.receiver) : (activeCall.caller._id || activeCall.caller)) : incomingCall?.caller._id;
+        console.log('[CallContext] Ending call. currentUserId:', currentUserId);
 
-        if (targetId) socket.current?.emit('hangup', { to: String(targetId) });
-        if (activeCall?._id) await callService.updateCallStatus(activeCall._id, 'ended').catch(() => { });
+        let targetId: string | null = null;
+        if (activeCall) {
+            const callerId = activeCall.caller?._id || activeCall.caller;
+            const receiverId = activeCall.receiver?._id || activeCall.receiver;
+            targetId = String(currentUserId) === String(callerId) ? String(receiverId) : String(callerId);
+        } else if (incomingCall) {
+            targetId = String(incomingCall.caller?._id || incomingCall.caller);
+        }
+
+        if (targetId && globalSocket) {
+            console.log('[CallContext] Sending hangup signal to:', targetId);
+            globalSocket.emit('hangup', { to: targetId });
+        }
+
+        if (activeCall?._id) {
+            await callService.updateCallStatus(activeCall._id, 'ended').catch(err => {
+                console.error('[CallContext] Failed to update call status on server:', err);
+            });
+        }
 
         cleanupCall();
     };
@@ -389,33 +390,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setIsOnHold(prev => {
             const newHoldState = !prev;
-
             if (newHoldState) {
-                // ENTERING HOLD: Save state and mute everything
                 preHoldState.current = { audio: isAudioMuted, video: isVideoMuted };
-
-                // Mute Audio
                 if (localStream) localStream.getAudioTracks().forEach(t => { t.enabled = false; });
                 setIsAudioMuted(true);
-
-                // Mute Video
                 if (localStream) localStream.getVideoTracks().forEach(t => { t.enabled = false; });
                 setIsVideoMuted(true);
             } else {
-                // EXITING HOLD: Restore state
                 const { audio, video } = preHoldState.current;
-
-                // Restore Audio
-                if (!audio && localStream) { // If it was NOT muted
-                    localStream.getAudioTracks().forEach(t => { t.enabled = true; });
-                    setIsAudioMuted(false);
-                }
-
-                // Restore Video
-                if (!video && localStream) { // If it was NOT muted
-                    localStream.getVideoTracks().forEach(t => { t.enabled = true; });
-                    setIsVideoMuted(false);
-                }
+                if (!audio && localStream) { localStream.getAudioTracks().forEach(t => { t.enabled = true; }); setIsAudioMuted(false); }
+                if (!video && localStream) { localStream.getVideoTracks().forEach(t => { t.enabled = true; }); setIsVideoMuted(false); }
             }
             return newHoldState;
         });
