@@ -20,7 +20,7 @@ interface CallContextType {
     isVideoMuted: boolean;
     isOnHold: boolean;
     callDuration: number;
-    callStatus: 'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed';
+    callStatus: 'idle' | 'calling' | 'ringing' | 'connected' | 'unstable' | 'ended' | 'failed';
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -38,7 +38,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isAudioMuted, setIsAudioMuted] = useState(false);
     const [isVideoMuted, setIsVideoMuted] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
-    const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed'>('idle');
+    const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'ringing' | 'connected' | 'unstable' | 'ended' | 'failed'>('idle');
 
     // Refs for internal logic (Stable between renders)
     const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -102,6 +102,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const onIncomingCall = ({ from, offer, type, callerInfo }: any) => {
             console.log('[CallContext] SIGNAL: Incoming call from:', from);
             if (callerInfo) {
+                // RESET QUEUE FOR NEW INCOMING SESSION
+                iceCandidatesQueue.current = [];
+
                 setIncomingCall({
                     _id: callerInfo.callId,
                     caller: callerInfo,
@@ -159,13 +162,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         const onIceCandidate = async ({ candidate }: any) => {
-            if (peerConnection.current?.remoteDescription) {
+            console.log('[CallContext] SIGNAL: Received remote ICE candidate');
+            if (peerConnection.current && peerConnection.current.remoteDescription) {
                 try {
                     await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
                 } catch (e) {
                     console.error('[CallContext] ICE Candidate Error:', e);
                 }
             } else {
+                console.log('[CallContext] PC not ready, queuing ICE candidate');
                 iceCandidatesQueue.current.push(candidate);
             }
         };
@@ -202,11 +207,27 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
                 { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' },
-                { urls: 'stun:stun.services.mozilla.com' },
-                { urls: 'stun:stun.ekiga.net' },
-                { urls: 'stun:stun.metered.ca:80' },
+                { urls: 'stun:stun.relay.metered.ca:80' },
+                {
+                    urls: "turn:global.relay.metered.ca:80",
+                    username: "5fbb4941fc8abbc3d64531ea",
+                    credential: "SVfMgj92CtGZpxzc",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:80?transport=tcp",
+                    username: "5fbb4941fc8abbc3d64531ea",
+                    credential: "SVfMgj92CtGZpxzc",
+                },
+                {
+                    urls: "turn:global.relay.metered.ca:443",
+                    username: "5fbb4941fc8abbc3d64531ea",
+                    credential: "SVfMgj92CtGZpxzc",
+                },
+                {
+                    urls: "turns:global.relay.metered.ca:443?transport=tcp",
+                    username: "5fbb4941fc8abbc3d64531ea",
+                    credential: "SVfMgj92CtGZpxzc",
+                },
             ],
             iceCandidatePoolSize: 10,
             bundlePolicy: 'max-bundle',
@@ -222,7 +243,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pc.ontrack = (event) => {
             console.log('[CallContext] Received remote track:', event.track.kind);
             if (event.streams && event.streams[0]) {
-                // Create a new MediaStream instance to force React state update if the object reference matters
                 setRemoteStream(new MediaStream(event.streams[0].getTracks()));
             } else {
                 setRemoteStream(prev => {
@@ -234,15 +254,31 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         pc.onconnectionstatechange = () => {
-            console.log('[CallContext] PC State:', pc.connectionState);
-            if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-                console.warn('[CallContext] Connection lost or failed. Attempting to keep UI alive for 3s...');
-                setCallStatus('failed');
+            console.log('[CallContext] PC State Change:', pc.connectionState);
+
+            if (pc.connectionState === 'connected') {
+                setCallStatus('connected');
+                // Potential placeholder for any 'connection success' triggers
+            } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+                console.warn('[CallContext] Connection unstable/failed. State:', pc.connectionState);
+
+                // Set status to unstable so UI can show a warning instead of just failing
+                setCallStatus('unstable');
+
+                // We give it 15 seconds before we truly give up.
                 setTimeout(() => {
-                    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-                        cleanupCall();
+                    const currentState = pc.connectionState;
+                    if (currentState === 'failed' || currentState === 'disconnected') {
+                        console.error('[CallContext] Real-time connection could not be recovered after 15s');
+                        setCallStatus('failed');
+                        // We wait another 5s showing the error before closing the UI
+                        setTimeout(() => {
+                            if (callStatus === 'failed') cleanupCall();
+                        }, 5000);
+                    } else if (currentState === 'connected') {
+                        setCallStatus('connected');
                     }
-                }, 3000);
+                }, 15000);
             }
         };
 
@@ -265,6 +301,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             setLocalStream(stream);
             localStreamRef.current = stream;
+
+            // CLEAR QUEUE FOR NEW CALL
+            iceCandidatesQueue.current = [];
 
             const call = await callService.initiateCall(String(user?.id), receiverId, type);
             setActiveCall(call);
@@ -321,6 +360,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
             await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
+
+            // Drain ICE Candidate queue immediately to find a path
+            console.log('[CallContext] Flushing queued ICE candidates for receiver:', iceCandidatesQueue.current.length);
+            while (iceCandidatesQueue.current.length > 0) {
+                const candidate = iceCandidatesQueue.current.shift();
+                if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch((e: any) => console.warn('[CallContext] Early ICE add error:', e));
+            }
+
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 

@@ -129,6 +129,25 @@ const CallWindow: React.FC = () => {
         );
     }
 
+    // UNSTABLE CONNECTION UI
+    if (callStatus === 'unstable') {
+        return (
+            <div className={styles.overlay}>
+                <div className={styles.incomingPopup} style={{ border: '2px solid #facc15' }}>
+                    <div className={styles.pulseWrapper} style={{ background: '#fef3c7' }}>
+                        < Star size={48} color="#facc15" fill="currentColor" />
+                    </div>
+                    <h2 className={styles.callTypeTitle} style={{ color: '#854d0e' }}>Signal Weak</h2>
+                    <p className={styles.callerName}>Connection unstable</p>
+                    <p className={styles.callerId}>Attempting to reconnect...</p>
+                    <div className={styles.actionButtons}>
+                        <button className={styles.rejectBtn} onClick={endCall}>Hang up</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // FAILED CONNECTION UI
     if (callStatus === 'failed') {
         return (
@@ -248,6 +267,19 @@ const CallWindow: React.FC = () => {
                         <div className={styles.audioStatusLine}>
                             <div className={styles.pulseDot}></div>
                             <span>Voice Call Connected</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* SYNCHRONIZING OVERLAY (When connected but tracks haven't arrived) */}
+                {callStatus === 'connected' && (!remoteStream || remoteStream.getTracks().length === 0) && (
+                    <div className={styles.premiumTeaseOverlay} style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}>
+                        <div className={styles.teaseContent}>
+                            <div className={styles.pulseWrapper} style={{ background: 'rgba(255,255,255,0.1)', marginBottom: '20px' }}>
+                                <div className={styles.pulseDot}></div>
+                            </div>
+                            <h3>Synchronizing...</h3>
+                            <p>Establishing encrypted media flow...</p>
                         </div>
                     </div>
                 )}
