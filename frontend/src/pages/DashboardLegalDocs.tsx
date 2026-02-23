@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import styles from './DashboardLegalDocs.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
-    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X, Mail, Activity as ActivityIcon, Phone, Send, Inbox, CreditCard
+    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X, Mail, Activity as ActivityIcon, Phone, Send, Inbox, CreditCard, Video, Paperclip
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,7 @@ import api, { advocateService } from '../services/api';
 import { LOCATION_DATA_RAW } from '../components/layout/statesdis';
 import { formatImageUrl } from '../utils/imageHelper';
 import type { Advocate } from '../types';
+import { useCall } from '../context/CallContext';
 
 // --- Types ---
 
@@ -611,9 +612,56 @@ const ProviderCard: React.FC<ProviderCardProps> = ({
 
 const ChatPopup: React.FC<{ provider: Advocate; service: string; onClose: () => void }> = ({ provider, service, onClose }) => {
     const [msg, setMsg] = useState('');
+    const [history, setHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const { user } = useAuth();
+    const { initiateCall } = useCall();
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const name = provider.name || `${provider.firstName} ${provider.lastName}`;
     const image_url = provider.profilePicPath ? formatImageUrl(provider.profilePicPath) : provider.image_url;
+    const currentUserId = String(user?.id || (user as any)?._id);
+    const targetId = String(provider.userId?._id || provider.userId || provider.id || (provider as any)._id);
+
+    const fetchHistory = async () => {
+        if (!currentUserId || !targetId) return;
+        try {
+            const msgs = await interactionService.getConversationMessages(currentUserId, targetId);
+            setHistory(msgs);
+        } catch (err) {
+            console.error("Failed to fetch chat history:", err);
+        }
+    };
+
+    useEffect(() => {
+        setLoadingHistory(true);
+        fetchHistory().finally(() => setLoadingHistory(false));
+        const interval = setInterval(fetchHistory, 3000);
+        return () => clearInterval(interval);
+    }, [currentUserId, targetId]);
+
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [history]);
+
+    const handleSend = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return alert("Please login to send messages");
+        if (!msg.trim()) return;
+
+        try {
+            const sent = await interactionService.sendMessage(currentUserId, targetId, msg);
+            setHistory(prev => [...prev, sent]);
+            setMsg('');
+            interactionService.recordActivity('advocate', targetId, 'chat', currentUserId).catch(console.error);
+        } catch (err) {
+            console.error("Chat error:", err);
+            alert("Could not send message.");
+        }
+    };
 
     return (
         <div className={styles.popupOverlay} onClick={onClose}>
@@ -622,37 +670,56 @@ const ChatPopup: React.FC<{ provider: Advocate; service: string; onClose: () => 
                     <div className={styles.popupProviderInfo}>
                         <img src={image_url} alt="" />
                         <div>
-                            <h4>Chat with {name}</h4>
-                            <p>Ref: {service}</p>
+                            <h4>{name}</h4>
+                            <p>{service}</p>
                         </div>
                     </div>
-                    <button onClick={onClose}><X size={20} />X</button>
+                    <div className={styles.headerActionGroup}>
+                        <button className={styles.headerCallBtn} onClick={() => initiateCall(targetId, 'audio')} title="Voice Call">
+                            <Phone stroke="currentColor" strokeWidth={2.5} />
+                        </button>
+                        <button className={styles.headerCallBtn} onClick={() => initiateCall(targetId, 'video')} title="Video Call">
+                            <Video stroke="currentColor" strokeWidth={2.5} />
+                        </button>
+                        <button onClick={onClose} className={styles.closeBtn} title="Close Chat">
+                            <X stroke="currentColor" strokeWidth={2.5} />
+                        </button>
+                    </div>
                 </div>
-                <div className={styles.chatMessages}>
-                    <div className={styles.systemNote}>Logged in messenger: {service} service initiated</div>
-                </div>
-                <form className={styles.chatInput} onSubmit={async e => {
-                    e.preventDefault();
-                    if (!user) return alert("Please login to send messages");
-                    const currentUserId = String(user.id || (user as any)._id);
-                    const targetId = String(provider.userId?._id || provider.userId || provider.id || (provider as any)._id);
 
-                    if (msg.trim()) {
-                        try {
-                            await interactionService.sendMessage(currentUserId, targetId, msg);
-                            alert(`Message sent to ${name} regarding ${service}`);
-                            setMsg('');
-                            onClose();
-                            // Background task
-                            interactionService.recordActivity('advocate', targetId, 'chat', currentUserId).catch(console.error);
-                        } catch (err) {
-                            console.error("Chat error:", err);
-                            alert("Failed to send message. Please try again.");
-                        }
-                    }
-                }}>
-                    <input type="text" placeholder="Type message..." value={msg} onChange={e => setMsg(e.target.value)} />
-                    <button type="submit"><Zap size={18} /></button>
+                <div className={styles.chatMessages} ref={scrollRef}>
+                    <div className={styles.systemNote}>Consultation regarding {service} started</div>
+                    {loadingHistory && <div className={styles.systemNote}>Loading conversation...</div>}
+                    {history.map((m, idx) => (
+                        <div key={idx} className={`${styles.chatMsg} ${m.senderId === currentUserId ? styles.sentMsg : styles.receivedMsg}`}>
+                            {m.text}
+                            <span className={styles.msgTimeSmall}>
+                                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                <form className={styles.chatInput} onSubmit={handleSend}>
+                    <div className={styles.fileUploadWrap}>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                    alert(`Uploading ${file.name}... (Backend integration pending)`);
+                                    // Here you would typically upload the file to a CDN/Server
+                                }
+                            }}
+                        />
+                        <button type="button" className={styles.fileUploadBtn} onClick={() => fileInputRef.current?.click()}>
+                            <Paperclip stroke="currentColor" strokeWidth={2.5} />
+                        </button>
+                    </div>
+                    <input type="text" placeholder="Write your response..." value={msg} onChange={e => setMsg(e.target.value)} />
+                    <button type="submit"><Send stroke="currentColor" strokeWidth={2.5} /></button>
                 </form>
             </motion.div>
         </div>
@@ -725,13 +792,53 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
     const [consultTarget, setConsultTarget] = useState<Advocate | null>(null);
     const [sentInteractions, setSentInteractions] = useState<Set<string>>(new Set());
     const [payingFor, setPayingFor] = useState<Advocate | null>(null);
+    const [activeCallSubTab, setActiveCallSubTab] = useState<'all' | 'voice' | 'video'>('all');
     const contentRef = useRef<HTMLDivElement>(null);
+
+    const handlePartnerProfilePopup = async (pid: string, uniqueId?: string) => {
+        // 1. Try finding in existing providers
+        const found = providers.find(p =>
+            String(p.id) === String(pid) ||
+            String((p as any)._id) === String(pid) ||
+            String((p as any).userId?._id || (p as any).userId) === String(pid) ||
+            (uniqueId && p.unique_id === uniqueId)
+        );
+        if (found) {
+            setSelectedProvider(found);
+            return;
+        }
+
+        // 2. Otherwise fetch by ID
+        try {
+            setLoading(true);
+            const res = await advocateService.getAdvocateById(uniqueId || pid);
+            if (res.data.success && res.data.advocate) {
+                setSelectedProvider(res.data.advocate);
+            } else {
+                alert("Profile details not found.");
+            }
+        } catch (err) {
+            console.error("Error fetching partner profile:", err);
+            alert("Could not load profile details.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchAllActivities = async () => {
         if (!isLoggedIn || !user?.id) return;
         try {
             const activities = await interactionService.getAllActivities(String(user.id));
-            setAllActivities(activities);
+
+            // Filter to show ONLY legal documentation related activities (LSP profiles or Doc specialists)
+            const filteredActivities = activities.filter((act: any) => {
+                const uid = String(act.partnerUniqueId || '');
+                const role = String(act.partnerRole || '').toLowerCase();
+                // Heuristic: LSP IDs are documentation providers, others are checked by role/ID keywords
+                return uid.includes('LSP') || role.includes('provider') || role.includes('documentation') || uid.includes('LDP');
+            });
+
+            setAllActivities(filteredActivities);
 
             const ids = new Set<string>();
             activities.forEach((act: any) => {
@@ -1274,7 +1381,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                                 const isVerified = (p as any).verified === true;
 
                                                 return (
-                                                    <tr key={p.unique_id}>
+                                                    <tr key={p.unique_id} onClick={() => setSelectedProvider(p)} style={{ cursor: 'pointer' }}>
                                                         <td>{index + 1}</td>
                                                         <td>
                                                             <div className={styles.providerInfoCell}>
@@ -1390,13 +1497,39 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
     };
 
     const renderMessagesView = () => {
-        // Filter sub-tabs
-        const filtered = allActivities.filter(act => {
-            if (activeSubNav === 'sent') return act.isSender && (act.type === 'chat' || act.type === 'message_sent');
-            if (activeSubNav === 'received') return !act.isSender && (act.type === 'chat' || act.type === 'message_sent');
-            if (activeSubNav === 'accepted') return act.status === 'accepted';
-            if (activeSubNav === 'calls') return act.type === 'call';
-            return false;
+        // Step 1: Group all communication activities by Partner ID
+        const partnersMap = new Map<string, any[]>();
+        allActivities.forEach(act => {
+            const pid = act.partnerUserId;
+            const isMsg = act.type === 'chat' || act.type === 'message_sent' || act.type === 'call' || act.type === 'meet_request';
+            if (isMsg) {
+                if (!partnersMap.has(pid)) partnersMap.set(pid, []);
+                partnersMap.get(pid)!.push(act);
+            }
+        });
+
+        // Step 2: Determine "Best State" for messages
+        const deduplicated = Array.from(partnersMap.values()).map(acts => {
+            // Priority: Call > Accepted > Sent/Received
+            const call = acts.find(a => a.type === 'call' || a.type === 'meet_request');
+            if (call) return { ...call, bestMsgTab: 'calls' };
+
+            const accepted = acts.find(a => a.status === 'accepted');
+            if (accepted) return { ...accepted, bestMsgTab: 'accepted' };
+
+            const received = acts.find(a => !a.isSender);
+            if (received) return { ...received, bestMsgTab: 'received' };
+
+            return { ...acts[0], bestMsgTab: 'sent' };
+        });
+
+        const filtered = deduplicated.filter(act => {
+            if (activeSubNav === 'calls') {
+                if (act.bestMsgTab !== 'calls') return false;
+                if (activeCallSubTab === 'all') return true;
+                return act.details?.callType === activeCallSubTab;
+            }
+            return act.bestMsgTab === activeSubNav;
         });
 
         return (
@@ -1411,16 +1544,99 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                     </div>
                 </div>
 
-                <div className={styles.activityGrid}>
-                    {filtered.length > 0 ? filtered.map(act => (
-                        <div key={act._id} className={styles.activityCard}>
-                            <div className={styles.activityTypeBadge}>{act.type}</div>
-                            <h4>{act.partnerName}</h4>
-                            <p>{act.details?.service || 'Communication Thread'}</p>
-                            <span className={styles.activityDate}>{new Date(act.timestamp).toLocaleDateString()}</span>
-                            <button className={styles.activityActionBtn}>Open Conversation</button>
-                        </div>
-                    )) : (
+                {activeSubNav === 'calls' && (
+                    <div className={styles.subTabNav} style={{ marginTop: '-20px', marginBottom: '40px', background: 'rgba(255,255,255,0.01)' }}>
+                        <button className={activeCallSubTab === 'all' ? styles.subTabActive : ''} onClick={() => setActiveCallSubTab('all')}>All Calls</button>
+                        <button className={activeCallSubTab === 'voice' ? styles.subTabActive : ''} onClick={() => setActiveCallSubTab('voice')}>Voice</button>
+                        <button className={activeCallSubTab === 'video' ? styles.subTabActive : ''} onClick={() => setActiveCallSubTab('video')}>Video</button>
+                    </div>
+                )}
+
+                <div className={activeSubNav === 'calls' ? styles.callList : styles.messageList}>
+                    {filtered.length > 0 ? filtered.map(act => {
+                        const isCall = activeSubNav === 'calls';
+                        const time = new Date(act.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const date = new Date(act.timestamp || Date.now()).toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        const advObj = {
+                            id: act.partnerUserId,
+                            unique_id: act.partnerUniqueId,
+                            name: act.partnerName,
+                            image_url: act.partnerImg,
+                            location: act.partnerLocation || 'Verified Zone'
+                        } as any;
+
+                        if (isCall) {
+                            return (
+                                <div key={act._id} className={styles.callItem}>
+                                    <img
+                                        src={act.partnerImg ? formatImageUrl(act.partnerImg) : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}
+                                        className={styles.callAvatar}
+                                        onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}
+                                        alt=""
+                                    />
+                                    <div className={styles.messageInfo}>
+                                        <div className={styles.messageTop}>
+                                            <span className={styles.messageName} onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}>
+                                                {act.partnerName}
+                                            </span>
+                                        </div>
+                                        <div className={styles.callStatusGroup}>
+                                            <span className={styles.messageMeta}>{act.partnerUniqueId}</span>
+                                            <span className={styles.messageMeta}>•</span>
+                                            <span className={`${styles.callStatusLabel} ${act.isSender ? styles.outgoing : styles.incoming}`}>
+                                                {act.isSender ? <Phone size={10} style={{ transform: 'rotate(135deg)' }} /> : <Phone size={10} />}
+                                                {act.isSender ? 'OUTGOING' : 'INCOMING'}
+                                            </span>
+                                        </div>
+                                        <div className={styles.callTypeDesc}>
+                                            <Phone size={14} />
+                                            <span>{act.details?.callType === 'video' ? 'VIDEO CALL' : 'AUDIO CALL'} - {act.status === 'accepted' ? 'COMPLETED' : 'RINGING'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.messageTime} style={{ position: 'static', marginRight: '40px', color: '#64748b' }}>
+                                        {date}, {time}
+                                    </div>
+
+                                    <div className={styles.callActions}>
+                                        <button className={styles.callActionBtn} onClick={(e) => { e.stopPropagation(); setConsultTarget(advObj); }}><Phone size={18} /></button>
+                                        <button className={styles.callActionBtn} onClick={(e) => { e.stopPropagation(); setConsultTarget(advObj); }}><Video size={18} /></button>
+                                        <button className={styles.callActionBtn} onClick={(e) => { e.stopPropagation(); setChatTarget(advObj); }}><MessageCircle size={18} /></button>
+                                        <button className={styles.callActionBtn} onClick={(e) => { e.stopPropagation(); }}><Clock size={18} /></button>
+                                        <button className={styles.callActionBtn} onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}><Info size={18} /></button>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // Message List UI
+                        return (
+                            <div key={act._id} className={styles.messageItem} onClick={() => setChatTarget(advObj)}>
+                                <img
+                                    src={act.partnerImg ? formatImageUrl(act.partnerImg) : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}
+                                    className={styles.messageAvatar}
+                                    onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}
+                                    alt=""
+                                />
+                                <div className={styles.messageInfo}>
+                                    <div className={styles.messageTop}>
+                                        <span className={styles.messageName} onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}>
+                                            {act.partnerName}
+                                        </span>
+                                    </div>
+                                    <div className={styles.messageMeta}>
+                                        <span>{act.partnerUniqueId}</span>
+                                        <span>•</span>
+                                        <span>{act.partnerLocation || 'Nagari Andhra Pradesh'}</span>
+                                    </div>
+                                    <div className={styles.messagePreview}>
+                                        {act.message || act.lastMessage || (act.type === 'interest' ? 'Expressed interest in your profile' : 'Started a conversation')}
+                                    </div>
+                                </div>
+                                <div className={styles.messageTime}>{time}</div>
+                            </div>
+                        );
+                    }) : (
                         <div className={styles.noActivity}>No items found in {activeSubNav} messages.</div>
                     )}
                 </div>
@@ -1429,13 +1645,33 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
     };
 
     const renderActivityView = () => {
-        const filtered = allActivities.filter(act => {
-            if (activeSubNav === 'interest') return act.isSender && act.type === 'interest';
-            if (activeSubNav === 'accepted') return act.status === 'accepted';
-            if (activeSubNav === 'shortlisted') return act.type === 'shortlist';
-            if (activeSubNav === 'consultation') return act.type === 'meet_request' || act.type === 'consultation';
-            return false;
+        // Step 1: Group all activities by Partner ID
+        const partnersMap = new Map<string, any[]>();
+        allActivities.forEach(act => {
+            const pid = act.partnerUserId;
+            if (!partnersMap.has(pid)) partnersMap.set(pid, []);
+            partnersMap.get(pid)!.push(act);
         });
+
+        // Step 2: Determine "Best State" for each partner across Activity view
+        const deduplicated = Array.from(partnersMap.values()).map(acts => {
+            // Priority: Accepted (Interest) > Consultation > Interest (Pending) > Shortlisted
+            const accepted = acts.find(a => a.status === 'accepted' && a.isSender && a.type === 'interest');
+            if (accepted) return { ...accepted, bestActTab: 'accepted' };
+
+            const consult = acts.find(a => a.type === 'meet_request' || a.type === 'consultation');
+            if (consult) return { ...consult, bestActTab: 'consultation' };
+
+            const interest = acts.find(a => a.isSender && a.type === 'interest');
+            if (interest) return { ...interest, bestActTab: 'interest' };
+
+            const shortlist = acts.find(a => a.type === 'shortlist');
+            if (shortlist) return { ...shortlist, bestActTab: 'shortlisted' };
+
+            return { ...acts[0], bestActTab: 'interest' };
+        });
+
+        const filtered = deduplicated.filter(act => act.bestActTab === activeSubNav);
 
         return (
             <motion.div className={styles.dashboardView} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -1451,36 +1687,40 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
 
                 <div className={styles.activityGrid}>
                     {filtered.length > 0 ? filtered.map(act => (
-                        <div key={act._id} className={styles.activityCard}>
-                            <div className={styles.activityMeta}>
-                                <div className={styles.partnerInfo}>
-                                    <div className={styles.partnerName}>{act.partnerName}</div>
-                                    <div className={styles.partnerId}>{act.partnerUniqueId}</div>
+                        <div key={act._id} className={styles.activityCard} onClick={() => handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId)} style={{ cursor: 'pointer' }}>
+                            <div className={styles.activityImageWrapper}>
+                                <img src={act.partnerImg ? formatImageUrl(act.partnerImg) : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'} className={styles.activityImage} alt="" />
+                                <div className={styles.activityTypeBadge}>{act.status || act.type}</div>
+                            </div>
+                            <div className={styles.activityCardContent}>
+                                <div>
+                                    <h4>{act.partnerName}</h4>
+                                    <div className={styles.activitySub}>
+                                        <span className={styles.pIdSmall}>{act.partnerUniqueId}</span>
+                                        <span className={styles.pLocSmall}><MapPin size={10} /> {act.partnerLocation || 'Authorized Zone'}</span>
+                                    </div>
+                                    <span className={styles.activityDate}>{new Date(act.timestamp || Date.now()).toLocaleDateString()}</span>
                                 </div>
-                                <div className={`${styles.statusBadge} ${styles[act.status]}`}>{act.status}</div>
-                            </div>
-                            <div className={styles.activityBody}>
-                                <p>Service: {act.details?.service || 'General Assistance'}</p>
-                                <span className={styles.activityDate}>{new Date(act.timestamp).toLocaleDateString()}</span>
-                            </div>
-                            <div className={styles.activityFooter}>
-                                {act.status === 'accepted' && (
-                                    <button
-                                        className={styles.payProviderBtn}
-                                        onClick={() => {
-                                            const mockAdv: any = {
-                                                id: act.partnerUserId,
-                                                name: act.partnerName,
-                                                unique_id: act.partnerUniqueId,
-                                                image_url: act.partnerImg
-                                            };
-                                            setPayingFor(mockAdv);
-                                        }}
-                                    >
-                                        <CreditCard size={14} /> Pay Service Provider
-                                    </button>
-                                )}
-                                <button className={styles.viewDetailsBtn} onClick={() => alert("Detailed logs loading...")}>View History</button>
+                                <div className={styles.activityFooter}>
+                                    {act.status === 'accepted' && (
+                                        <button
+                                            className={styles.payProviderBtn}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const mockAdv: any = {
+                                                    id: act.partnerUserId,
+                                                    name: act.partnerName,
+                                                    unique_id: act.partnerUniqueId,
+                                                    image_url: act.partnerImg
+                                                };
+                                                setPayingFor(mockAdv);
+                                            }}
+                                        >
+                                            <CreditCard size={14} /> Pay
+                                        </button>
+                                    )}
+                                    <button className={styles.viewDetailsBtn} onClick={(e) => { e.stopPropagation(); handlePartnerProfilePopup(act.partnerUserId, act.partnerUniqueId); }}>Details</button>
+                                </div>
                             </div>
                         </div>
                     )) : (
@@ -1794,6 +2034,8 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                 onClick={() => {
                                     setIsLoaded(false);
                                     setActiveNav(item.id);
+                                    if (item.id === 'messages') setActiveSubNav('sent');
+                                    if (item.id === 'activity') setActiveSubNav('interest');
                                     setTimeout(() => setIsLoaded(true), 100);
                                     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
@@ -1949,44 +2191,94 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                             <div style={{ padding: '60px' }}>
                                 {/* Detailed Profile View for All Users */}
                                 <div style={{ display: 'flex', gap: '40px' }}>
-                                    <img
-                                        src={selectedProvider.profilePicPath ? formatImageUrl(selectedProvider.profilePicPath) : selectedProvider.image_url}
-                                        style={{ width: '200px', height: '200px', borderRadius: '24px', objectFit: 'cover' }}
-                                    />
-                                    <div>
-                                        <h1 style={{ fontSize: '3rem', fontFamily: 'Playfair Display' }}>{selectedProvider.name || `${selectedProvider.firstName} ${selectedProvider.lastName}`}</h1>
-                                        <p style={{ color: '#daa520', fontSize: '1.2rem', fontWeight: 'bold' }}>{selectedProvider.specialization || (selectedProvider.practice as any)?.specialization || 'Legal Specialist'}</p>
-                                        <p style={{ color: '#94a3b8' }}>{typeof selectedProvider.location === 'object' ? (selectedProvider.location as any).city : selectedProvider.location} • {selectedProvider.experience || '10+ years'} experience</p>
+                                    <div style={{ position: 'relative' }}>
+                                        <img
+                                            src={selectedProvider.profilePicPath ? formatImageUrl(selectedProvider.profilePicPath) : selectedProvider.image_url}
+                                            style={{ width: '220px', height: '220px', borderRadius: '24px', objectFit: 'cover', border: '2px solid rgba(218, 165, 32, 0.3)' }}
+                                            alt={selectedProvider.name}
+                                        />
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-10px', background: '#daa520', color: '#000', padding: '5px 12px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '900', letterSpacing: '1px' }}>
+                                            {selectedProvider.unique_id || 'VERIFIED'}
+                                        </div>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div>
+                                                <h1 style={{ fontSize: '3.5rem', fontFamily: 'Playfair Display', margin: 0, color: '#fff' }}>
+                                                    {selectedProvider.name || `${selectedProvider.firstName} ${selectedProvider.lastName}`}
+                                                </h1>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
+                                                    <p style={{ color: '#daa520', fontSize: '1.2rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
+                                                        {selectedProvider.specialization || (selectedProvider.practice as any)?.specialization || 'Legal Specialist'}
+                                                    </p>
+                                                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)' }}></span>
+                                                    <p style={{ color: '#94a3b8', margin: 0, fontSize: '1rem' }}>
+                                                        <MapPin size={14} style={{ marginRight: '5px' }} />
+                                                        {typeof selectedProvider.location === 'object' ? (selectedProvider.location as any).city : selectedProvider.location}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '2rem', fontWeight: '800', color: '#fff' }}>{selectedProvider.experience || '12+'}</div>
+                                                <div style={{ fontSize: '0.7rem', color: '#daa520', fontWeight: '900', textTransform: 'uppercase' }}>Years Experience</div>
+                                            </div>
+                                        </div>
 
-                                        {/* Masked Contact Info */}
-                                        <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px' }}>
-                                            <h4 style={{ margin: '0 0 10px 0', color: '#fff' }}>Contact Information</h4>
-                                            <div style={{ display: 'flex', gap: '20px', color: '#ccc' }}>
-                                                <div>
-                                                    <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Email</span>
-                                                    <span>
-                                                        {(selectedProvider.contactInfo?.email || selectedProvider.email || 'N/A')}
+                                        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: '1.6', marginTop: '20px', maxWidth: '800px' }}>
+                                            {selectedProvider.bio || 'Professional legal consultant specializing in comprehensive documentation, contract drafting, and statutory compliance. Committed to providing precise and legally bulletproof solutions for corporate and individual clients.'}
+                                        </p>
+
+                                        {/* Premium Multi-Specialization Tags */}
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '20px' }}>
+                                            {(selectedProvider.specialties || [selectedProvider.specialization || 'Documentation']).map((spec: string) => (
+                                                <span key={spec} style={{ background: 'rgba(218, 165, 32, 0.1)', border: '1px solid rgba(218, 165, 32, 0.2)', color: '#daa520', padding: '4px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                                                    {spec}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        {/* Professional Contact Info Section */}
+                                        <div style={{ marginTop: '35px', background: 'rgba(255,255,255,0.03)', padding: '24px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(218, 165, 32, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#daa520' }}>
+                                                    <Shield size={18} />
+                                                </div>
+                                                <h4 style={{ margin: 0, color: '#fff', fontSize: '1.1rem', letterSpacing: '0.5px' }}>Verified Contact Details</h4>
+                                            </div>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px' }}>
+                                                <div style={{ position: 'relative', paddingLeft: '15px', borderLeft: '2px solid rgba(218, 165, 32, 0.3)' }}>
+                                                    <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>Professional Email</span>
+                                                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>
+                                                        {selectedProvider.contactInfo?.email || selectedProvider.email || (selectedProvider as any).userId?.email || 'N/A'}
                                                     </span>
                                                 </div>
-                                                <div>
-                                                    <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>Phone</span>
-                                                    <span>
-                                                        {(selectedProvider.contactInfo?.mobile || selectedProvider.phone || 'N/A')}
+                                                <div style={{ position: 'relative', paddingLeft: '15px', borderLeft: '2px solid rgba(218, 165, 32, 0.3)' }}>
+                                                    <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>Phone / WhatsApp</span>
+                                                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>
+                                                        {selectedProvider.contactInfo?.mobile || selectedProvider.phone || (selectedProvider as any).userId?.phone || 'N/A'}
                                                     </span>
                                                 </div>
-                                                <div>
-                                                    <span style={{ color: '#888', display: 'block', fontSize: '0.8rem' }}>License ID</span>
-                                                    <span>
-                                                        {(selectedProvider.licenseId || (selectedProvider as any).bar_council_id || 'BCI-VERIFIED')}
+                                                <div style={{ position: 'relative', paddingLeft: '15px', borderLeft: '2px solid rgba(218, 165, 32, 0.3)' }}>
+                                                    <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px' }}>Bar Council License</span>
+                                                    <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '600' }}>
+                                                        {selectedProvider.licenseId || (selectedProvider as any).bar_council_id || 'BCI-VERIFIED'}
                                                     </span>
                                                 </div>
                                             </div>
 
+                                            <div style={{ display: 'flex', gap: '15px', marginTop: '25px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: '700', marginRight: '10px' }}>Direct Connect:</div>
+                                                <MessageCircle size={18} style={{ color: '#4ade80', cursor: 'pointer' }} />
+                                                <Phone size={18} style={{ color: '#60a5fa', cursor: 'pointer' }} />
+                                                <Mail size={18} style={{ color: '#f87171', cursor: 'pointer' }} />
+                                                <FileText size={18} style={{ color: '#daa520', cursor: 'pointer' }} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className={styles.modalActionBar}>
+                                <div className={styles.modalActionBar} style={{ marginTop: '40px' }}>
                                     <button
                                         className={`${styles.modalActionBtn} ${(sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest') || sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':superInterest')) ? styles.actionDisabled : ''}`}
                                         disabled={sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':interest') || sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':superInterest')}
@@ -2014,7 +2306,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                     </button>
                                     <button className={styles.modalActionBtnPrimary} onClick={() => { !isLoggedIn ? openAuthModal('login') : setChatTarget(selectedProvider); }}>
                                         <MessageCircle size={20} />
-                                        <span>Direct Chat</span>
+                                        <span>Instant Message</span>
                                     </button>
                                     <button
                                         className={`${styles.modalActionBtn} ${sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request') ? styles.actionDisabled : ''}`}
@@ -2022,7 +2314,7 @@ const DashboardLegalDocs: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = f
                                         onClick={() => { !isLoggedIn ? openAuthModal('login') : setConsultTarget(selectedProvider); }}
                                     >
                                         <Clock size={20} />
-                                        <span>{sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request') ? 'Booking Sent' : 'Book Consultation'}</span>
+                                        <span>{sentInteractions.has(String(selectedProvider.userId?._id || selectedProvider.userId || selectedProvider.id) + ':meet_request') ? 'Booking Sent' : 'Schedule Consultation'}</span>
                                     </button>
                                 </div>
                             </div>

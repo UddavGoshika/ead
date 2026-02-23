@@ -25,6 +25,7 @@ import type { Advocate } from "../../../../types";
 import LegalAdvisorDetailedProfile from "./LegalAdvisorDetailedProfile";
 import { formatImageUrl } from "../../../../utils/imageHelper";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "../../../../context/ToastContext";
 
 interface MessengerProps {
     view?: 'list' | 'chat';
@@ -45,6 +46,7 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
     const [messages, setMessages] = useState<Message[]>([]);
     const chatEndRef = useRef<HTMLDivElement>(null);
     const { initiateCall } = useCall();
+    const { showToast } = useToast();
 
     const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
     const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -107,7 +109,9 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
             return {
                 ...item,
                 type: finalType,
-                lastMessage: { text: displayMsg }
+                lastMessage: { text: displayMsg },
+                partnerId: item.isSender ? item.receiver : item.sender,
+                partnerUserId: item.isSender ? item.receiver : item.sender
             };
         });
     };
@@ -235,8 +239,31 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
         if (onSelectForChat) onSelectForChat(conv.advocate); else setSelectedConversation(conv);
     };
 
-    const handleCall = async (targetUserId: string, type: 'audio' | 'video') => {
-        try { await initiateCall(targetUserId, type); } catch (err) { console.error("Call failed:", err); }
+    const handleCall = async (partner: any, type: 'audio' | 'video') => {
+        const targetId = partner?.partnerUserId || partner?.userId?._id || partner?.userId || partner?.id || partner?._id;
+        if (!targetId) {
+            showToast("Could not resolve partner ID for call");
+            return;
+        }
+        try {
+            await initiateCall(String(targetId), type);
+        } catch (err) {
+            console.error("Call failed:", err);
+            showToast("Failed to initiate call");
+        }
+    };
+
+    const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await interactionService.respondToActivity(activityId, status);
+            showToast(`Interest ${status === 'accepted' ? 'Accepted' : 'Declined'} successfully!`);
+            queryClient.invalidateQueries({ queryKey: ['activities', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+        } catch (err) {
+            console.error("Failed to respond:", err);
+            showToast("Failed to update status.");
+        }
     };
 
     const handleSendPaymentRequest = async () => {
@@ -280,8 +307,8 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
                             </div>
                         </div>
                         <div className={styles.headerActions}>
-                            <button className={styles.headerActionBtn} onClick={() => handleCall(String(activeConv?.advocate.id || selectedAdvocate?.id), 'audio')}><Phone size={18} /></button>
-                            <button className={styles.headerActionBtn} onClick={() => handleCall(String(activeConv?.advocate.id || selectedAdvocate?.id), 'video')}><Video size={18} /></button>
+                            <button className={styles.headerActionBtn} onClick={() => handleCall(activeConv?.advocate || selectedAdvocate, 'audio')}><Phone size={18} /></button>
+                            <button className={styles.headerActionBtn} onClick={() => handleCall(activeConv?.advocate || selectedAdvocate, 'video')}><Video size={18} /></button>
                             <button className={styles.headerActionBtn} onClick={() => setIsMoreOpen(!isMoreOpen)}><MoreVertical size={18} /></button>
                         </div>
                     </header>
@@ -337,18 +364,17 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
                         )}
                     </div>
                 )}
-
                 {activeTab === 'received' && (
                     <div className={styles.conversationList}>
                         {receivedInterests.map(act => (
-                            <div key={act._id} className={styles.convItem} onClick={() => handleSelectConversation({ advocate: { id: act.sender, name: act.partnerName, unique_id: act.partnerUniqueId, profilePic: act.partnerImg } as any, unreadCount: 0 })}>
+                            <div key={act._id} className={styles.convItem} onClick={() => handleSelectConversation({ advocate: { id: act.sender, partnerUserId: act.sender, name: act.partnerName, unique_id: act.partnerUniqueId, profilePic: act.partnerImg } as any, unreadCount: 0 })}>
                                 <img src={formatImageUrl(act.partnerImg)} className={styles.convAvatar} alt={act.partnerName} />
                                 <div className={styles.convDetails}>
                                     <div className={styles.convTitleRow}><h4>{act.partnerName}</h4><span>{new Date(act.timestamp).toLocaleDateString()}</span></div>
                                     <div className={styles.convSub}><span>{act.partnerUniqueId}</span><span>•</span><span style={{ color: '#facc15' }}>INTEREST RECEIVED</span></div>
                                     <div className={styles.actButtons}>
-                                        <button className={styles.acceptBtn} onClick={(e) => { e.stopPropagation(); handleInteraction({ id: act.sender, name: act.partnerName, role: act.partnerRole || 'client' }, 'accept'); }}>Accept</button>
-                                        <button className={styles.declineBtn} onClick={(e) => { e.stopPropagation(); handleInteraction({ id: act.sender, role: act.partnerRole || 'client' }, 'decline'); }}>Decline</button>
+                                        <button className={styles.acceptBtn} onClick={(e) => handleResponse(act._id, 'accepted', e)}>Accept</button>
+                                        <button className={styles.declineBtn} onClick={(e) => handleResponse(act._id, 'declined', e)}>Decline</button>
                                     </div>
                                 </div>
                             </div>
