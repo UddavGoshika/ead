@@ -23,7 +23,8 @@ const CallWindow: React.FC = () => {
         isVideoMuted,
         isOnHold,
         callStatus,
-        callDuration
+        callDuration,
+        connectionType
     } = useCall();
 
     const { user } = useAuth();
@@ -215,7 +216,15 @@ const CallWindow: React.FC = () => {
                     <div className={styles.partnerTopInfo}>
                         <div className={styles.partnerMiniInfo}>
                             <h2 className={styles.partnerName}>{partner?.name || 'Expert'}</h2>
-                            <p className={styles.partnerId}>{partner?.unique_id || 'ID Verified'}</p>
+                            <p className={styles.partnerId}>
+                                {partner?.unique_id || 'ID Verified'}
+                                {callStatus === 'connected' && (
+                                    <span className={styles.connectionBadge} title={`Connected via ${connectionType}`}>
+                                        <Lock size={10} style={{ marginRight: '4px', color: connectionType === 'TURN' ? '#facc15' : '#4ade80' }} />
+                                        {connectionType}
+                                    </span>
+                                )}
+                            </p>
                         </div>
                         <span className={styles.callTimer}>{formatTime(callDuration)}</span>
                     </div>

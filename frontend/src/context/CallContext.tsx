@@ -21,6 +21,7 @@ interface CallContextType {
     isOnHold: boolean;
     callDuration: number;
     callStatus: 'idle' | 'calling' | 'ringing' | 'connected' | 'unstable' | 'ended' | 'failed';
+    connectionType: 'STUN' | 'TURN' | 'Host' | 'Waiting...';
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -39,6 +40,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isVideoMuted, setIsVideoMuted] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
     const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'ringing' | 'connected' | 'unstable' | 'ended' | 'failed'>('idle');
+    const [connectionType, setConnectionType] = useState<'STUN' | 'TURN' | 'Host' | 'Waiting...'>('Waiting...');
 
     // Refs for internal logic (Stable between renders)
     const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -258,11 +260,36 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (pc.connectionState === 'connected') {
                 setCallStatus('connected');
-                // Potential placeholder for any 'connection success' triggers
+
+                // Monitor connection type (STUN/TURN/Host)
+                const statsInterval = setInterval(async () => {
+                    if (!pc || pc.connectionState !== 'connected') {
+                        clearInterval(statsInterval);
+                        return;
+                    }
+
+                    try {
+                        const stats = await pc.getStats();
+                        stats.forEach(report => {
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.nominated) {
+                                const localCandidate = stats.get(report.localCandidateId);
+                                if (localCandidate) {
+                                    const type = localCandidate.candidateType;
+                                    const mapped = type === 'relay' ? 'TURN' : type === 'srflx' ? 'STUN' : 'Host';
+                                    console.log('[CallContext] Active Connection Type:', mapped);
+                                    setConnectionType(mapped);
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        console.warn('[CallContext] Stats error:', e);
+                    }
+                }, 2000);
+
             } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
                 console.warn('[CallContext] Connection unstable/failed. State:', pc.connectionState);
 
-                // Set status to unstable so UI can show a warning instead of just failing
+                // If it's unstable, keep showing the last known type or reset if needed
                 setCallStatus('unstable');
 
                 // We give it 15 seconds before we truly give up.
@@ -271,6 +298,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     if (currentState === 'failed' || currentState === 'disconnected') {
                         console.error('[CallContext] Real-time connection could not be recovered after 15s');
                         setCallStatus('failed');
+                        setConnectionType('Waiting...');
                         // We wait another 5s showing the error before closing the UI
                         setTimeout(() => {
                             if (callStatus === 'failed') cleanupCall();
@@ -295,10 +323,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsCalling(true);
             setCallStatus('calling');
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: type === 'video'
-            });
+            const constraints = {
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                video: type === 'video' ? {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    frameRate: { max: 24 }
+                } : false
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStream(stream);
             localStreamRef.current = stream;
 
@@ -311,7 +345,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const pc = createPeerConnection(receiverId);
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-            const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: type === 'video' });
+            const offer = await pc.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: type === 'video'
+            });
             await pc.setLocalDescription(offer);
 
             const currentUserId = user?.id || user?._id;
@@ -349,10 +386,16 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             console.log('[CallContext] Accepting call from:', incomingCall.caller.name);
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: incomingCall.type === 'video'
-            });
+            const constraints = {
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+                video: incomingCall.type === 'video' ? {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    frameRate: { max: 24 }
+                } : false
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStream(stream);
             localStreamRef.current = stream;
 
@@ -474,7 +517,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <CallContext.Provider value={{
             activeCall, incomingCall, initiateCall, acceptCall, rejectCall, endCall,
             isCalling, localStream, remoteStream, toggleAudio, toggleVideo, toggleHold,
-            isAudioMuted, isVideoMuted, isOnHold, callDuration, callStatus
+            isAudioMuted, isVideoMuted, isOnHold, callDuration, callStatus, connectionType
         }}>
             {children}
         </CallContext.Provider>
