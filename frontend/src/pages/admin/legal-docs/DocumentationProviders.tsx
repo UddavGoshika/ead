@@ -295,6 +295,7 @@
 
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import styles from "./LegalDocAdmin.module.css";
 import {
     Search,
@@ -340,7 +341,7 @@ interface DocumentationProvider {
     experience: string;
     license_id: string;
     verified: boolean;
-    status: "Active" | "Pending" | "Blocked";
+    status: "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted";
     totalDrafts: number;
     rating: number;
     baseRate: string;
@@ -398,19 +399,20 @@ const DocumentationProviders = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { statusFilter } = useParams();
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedStatus, setSelectedStatus] = useState<"All" | "Active" | "Pending" | "Blocked">("All");
+    const [selectedStatus, setSelectedStatus] = useState<"All" | "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted">("All");
     const [selectedSpec, setSelectedSpec] = useState("All");
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [sortKey, setSortKey] = useState<SortKey>(null);
     const [sortDir, setSortDir] = useState<SortDirection>("asc");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | null>(null);
+    const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | "deactivated" | "deleted" | null>(null);
     const [selectedService, setSelectedService] = useState("All");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [selectedProvider, setSelectedProvider] = useState<DocumentationProvider | null>(null);
-    const { impersonate } = useAuth();
+    const { impersonate, openLegalProviderReg } = useAuth();
 
     const serviceTypes = [
         { id: "All", label: "All" },
@@ -426,7 +428,7 @@ const DocumentationProviders = () => {
         try {
             setLoading(true);
             const res = await axios.get("/api/admin/members", {
-                params: { role: "legal_provider", t: Date.now() }
+                params: { role: "legal_provider", context: selectedStatus.toLowerCase(), t: Date.now() }
             });
 
             if (res.data.success) {
@@ -434,10 +436,9 @@ const DocumentationProviders = () => {
                     .filter((m: any) => m.role === 'legal_provider')
                     .map((m: any) => {
                         const userId = m.id || m._id;
-                        // Determine status based on verified
-                        let status = "Pending";
-                        if (m.verified) status = "Active";
-                        if (m.status === "Blocked") status = "Blocked";
+                        // Use actual status from backend, fallback to determined
+                        let status = m.status || "Pending";
+                        if (m.verified && status === "Pending") status = "Active";
 
                         return {
                             id: userId,
@@ -470,8 +471,18 @@ const DocumentationProviders = () => {
     };
 
     useEffect(() => {
+        if (statusFilter) {
+            const filterMap: Record<string, any> = {
+                'blocked': 'Blocked',
+                'deactivated': 'Deactivated',
+                'deleted': 'Deleted'
+            };
+            setSelectedStatus(filterMap[statusFilter] || 'All');
+        } else {
+            setSelectedStatus('Active');
+        }
         fetchProviders();
-    }, []);
+    }, [statusFilter]);
 
     // ────────────────────────────────────────────────
     // Filtering + Sorting + Pagination
@@ -548,6 +559,8 @@ const DocumentationProviders = () => {
         const active = providers.filter((p) => p.status === "Active").length;
         const pending = providers.filter((p) => p.status === "Pending").length;
         const blocked = providers.filter((p) => p.status === "Blocked").length;
+        const deactivated = providers.filter((p) => p.status === "Deactivated").length;
+        const deleted = providers.filter((p) => p.status === "Deleted").length;
 
         // Service Counts
         const serviceCounts = {
@@ -558,7 +571,7 @@ const DocumentationProviders = () => {
             'legal-docs': providers.filter(p => p.legalDocumentation?.includes('legal-docs')).length
         };
 
-        return { total, active, pending, blocked, serviceCounts };
+        return { total, active, pending, blocked, deactivated, deleted, serviceCounts };
     }, [providers]);
 
     const modalData = useMemo(() => {
@@ -570,6 +583,10 @@ const DocumentationProviders = () => {
                 return providers.filter((p) => p.status === "Pending");
             case "blocked":
                 return providers.filter((p) => p.status === "Blocked");
+            case "deactivated":
+                return providers.filter((p) => p.status === "Deactivated");
+            case "deleted":
+                return providers.filter((p) => p.status === "Deleted");
             default:
                 return providers; // all
         }
@@ -688,7 +705,7 @@ const DocumentationProviders = () => {
                     </p>
                 </div>
                 <div className={styles.headerActions}>
-                    <button className={styles.primaryBtn}>
+                    <button className={styles.primaryBtn} onClick={openLegalProviderReg}>
                         <Plus size={18} /> Register New Specialist
                     </button>
                 </div>
@@ -740,6 +757,26 @@ const DocumentationProviders = () => {
                         </p>
                     </div>
                 </div>
+
+                <div className={styles.summaryCard} onClick={() => setModalFilter("deactivated")}>
+                    <ShieldAlert size={32} color="#f59e0b" />
+                    <div>
+                        <h4>Deactivated</h4>
+                        <p className={styles.summaryNumber} style={{ color: "#f59e0b" }}>
+                            {summary.deactivated}
+                        </p>
+                    </div>
+                </div>
+
+                <div className={styles.summaryCard} onClick={() => setModalFilter("deleted")}>
+                    <Trash2 size={32} color="#94a3b8" />
+                    <div>
+                        <h4>Deleted</h4>
+                        <p className={styles.summaryNumber} style={{ color: "#94a3b8" }}>
+                            {summary.deleted}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Filters */}
@@ -763,7 +800,7 @@ const DocumentationProviders = () => {
                     <div className={styles.pillGroup}>
                         <label><Filter size={14} /> Status</label>
                         <div className={styles.pillList}>
-                            {["All", "Active", "Pending", "Blocked"].map((s) => (
+                            {["All", "Active", "Pending", "Blocked", "Deactivated", "Deleted"].map((s) => (
                                 <button
                                     key={s}
                                     className={`${styles.pill} ${selectedStatus === s ? styles.activePill : ""}`}
@@ -928,25 +965,31 @@ const DocumentationProviders = () => {
 
                                                             <div className={styles.menuDivider}>Status Management</div>
 
-                                                            {p.status !== 'Active' && (
+                                                            {p.status === 'Blocked' ? (
                                                                 <button onClick={() => handleUpdateStatus(p.id, 'Active')}>
-                                                                    <CheckCircle size={14} style={{ color: '#22c55e' }} /> Mark as Active
+                                                                    <UserCheck size={14} style={{ color: '#22c55e' }} /> Unblock Specialist
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    style={{ color: "#ef4444" }}
+                                                                    onClick={() => handleUpdateStatus(p.id, 'Blocked')}
+                                                                >
+                                                                    <Ban size={14} /> Block / Suspend
                                                                 </button>
                                                             )}
 
-                                                            <button
-                                                                style={{ color: "#ef4444" }}
-                                                                onClick={() => handleUpdateStatus(p.id, 'Blocked')}
-                                                            >
-                                                                <Ban size={14} /> Block / Suspend
-                                                            </button>
-
-                                                            <button
-                                                                style={{ color: "#f59e0b" }}
-                                                                onClick={() => handleUpdateStatus(p.id, 'Deactivated')}
-                                                            >
-                                                                <ShieldAlert size={14} /> Deactivate Account
-                                                            </button>
+                                                            {p.status === 'Deactivated' ? (
+                                                                <button onClick={() => handleUpdateStatus(p.id, 'Active')}>
+                                                                    <CheckCircle size={14} style={{ color: '#22c55e' }} /> Activate Account
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    style={{ color: "#f59e0b" }}
+                                                                    onClick={() => handleUpdateStatus(p.id, 'Deactivated')}
+                                                                >
+                                                                    <ShieldAlert size={14} /> Deactivate Account
+                                                                </button>
+                                                            )}
 
                                                             <div className={styles.menuDivider}>Verification</div>
                                                             <button onClick={() => handleVerify(p.id, !p.verified)}>
@@ -954,12 +997,18 @@ const DocumentationProviders = () => {
                                                             </button>
 
                                                             <div className={styles.menuDivider}>Account</div>
-                                                            <button
-                                                                style={{ color: "#ef4444", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "4px", paddingTop: "8px" }}
-                                                                onClick={() => handleDelete(p.id)}
-                                                            >
-                                                                <Trash2 size={14} /> Delete Member
-                                                            </button>
+                                                            {p.status === 'Deleted' ? (
+                                                                <button onClick={() => handleUpdateStatus(p.id, 'Active')}>
+                                                                    <MdSyncAlt size={14} style={{ color: '#10b981' }} /> Restore Member
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    style={{ color: "#ef4444", borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "4px", paddingTop: "8px" }}
+                                                                    onClick={() => handleDelete(p.id)}
+                                                                >
+                                                                    <Trash2 size={14} /> Delete Member
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

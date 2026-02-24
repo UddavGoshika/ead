@@ -741,6 +741,11 @@ const PremiumPackages: React.FC = () => {
                                                         <h4>{tier.name}</h4>
                                                     </div>
                                                     <div className={styles.tierPrice}>
+                                                        {tier.originalPrice && tier.originalPrice > tier.price ? (
+                                                            <span className={styles.originalPriceStrikethrough}>
+                                                                ₹{tier.originalPrice.toLocaleString()}
+                                                            </span>
+                                                        ) : null}
                                                         <span className={styles.priceAmount}>₹{tier.price.toLocaleString()}</span>
                                                         <span className={styles.pricePeriod}>/month</span>
                                                     </div>
@@ -967,34 +972,22 @@ const PremiumPackages: React.FC = () => {
 
                                             <div className={styles.tierEditGrid}>
                                                 <div className={styles.inputGroup}>
-                                                    <label>Price (₹)</label>
+                                                    <label>Original Price (₹)</label>
                                                     <input
                                                         type="number"
-                                                        value={tier.price}
-                                                        onChange={(e) => updateTier(idx, "price", Number(e.target.value))}
-                                                        className={styles.formInput}
-                                                    />
-                                                </div>
-
-                                                <div className={styles.inputGroup}>
-                                                    <label>Discount (%)</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="100"
-                                                        placeholder="0"
-                                                        value={tier.discount || 0}
+                                                        placeholder="Base price before discount"
+                                                        value={tier.originalPrice || tier.price || 0}
                                                         onChange={(e) => {
-                                                            const discount = Number(e.target.value);
+                                                            const original = Number(e.target.value);
+                                                            const discount = tier.discount || 0;
+                                                            const final = Math.round(original * (1 - discount / 100));
+
                                                             const updatedTiers = [...formData.tiers];
-                                                            const currentTier = { ...updatedTiers[idx], discount: discount };
-
-                                                            // Auto-calculate original price if discount is present
-                                                            if (discount > 0 && currentTier.price > 0) {
-                                                                currentTier.originalPrice = Math.round(currentTier.price / (1 - discount / 100));
-                                                            }
-
-                                                            updatedTiers[idx] = currentTier;
+                                                            updatedTiers[idx] = {
+                                                                ...updatedTiers[idx],
+                                                                originalPrice: original,
+                                                                price: final
+                                                            };
                                                             setFormData({ ...formData, tiers: updatedTiers });
                                                         }}
                                                         className={styles.formInput}
@@ -1002,19 +995,86 @@ const PremiumPackages: React.FC = () => {
                                                 </div>
 
                                                 <div className={styles.inputGroup}>
-                                                    <label>Original Price (₹)</label>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Auto-calculated"
-                                                        value={tier.originalPrice || ''}
-                                                        onChange={(e) => updateTier(idx, "originalPrice", Number(e.target.value))}
-                                                        className={styles.formInput}
-                                                    />
-                                                    {tier.discount && tier.discount > 0 && (
-                                                        <small style={{ color: '#10b981', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
-                                                            Save ₹{(tier.originalPrice || 0) - tier.price} ({tier.discount}% OFF)
+                                                    <label>Discount (%)</label>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            max="100"
+                                                            placeholder="0"
+                                                            value={tier.discount || 0}
+                                                            onChange={(e) => {
+                                                                const discount = Number(e.target.value);
+                                                                const original = tier.originalPrice || tier.price || 0;
+                                                                const final = Math.round(original * (1 - discount / 100));
+
+                                                                const updatedTiers = [...formData.tiers];
+                                                                updatedTiers[idx] = {
+                                                                    ...updatedTiers[idx],
+                                                                    discount: discount,
+                                                                    price: final,
+                                                                    originalPrice: original
+                                                                };
+                                                                setFormData({ ...formData, tiers: updatedTiers });
+                                                            }}
+                                                            className={styles.formInput}
+                                                        />
+                                                        <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }}>%</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className={styles.inputGroup}>
+                                                    <label>After Discount Price (Final ₹)</label>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Calculated automatically"
+                                                            value={tier.price}
+                                                            onChange={(e) => {
+                                                                const final = Number(e.target.value);
+                                                                const original = tier.originalPrice || tier.price || final;
+                                                                let discount = 0;
+                                                                if (original > final && original > 0) {
+                                                                    discount = Math.round(((original - final) / original) * 100);
+                                                                }
+
+                                                                const updatedTiers = [...formData.tiers];
+                                                                updatedTiers[idx] = {
+                                                                    ...updatedTiers[idx],
+                                                                    price: final,
+                                                                    discount: discount,
+                                                                    originalPrice: original
+                                                                };
+                                                                setFormData({ ...formData, tiers: updatedTiers });
+                                                            }}
+                                                            className={styles.formInput}
+                                                            style={{
+                                                                borderColor: (tier.discount && tier.discount > 0) ? '#10b981' : '',
+                                                                background: (tier.discount && tier.discount > 0) ? 'rgba(16, 185, 129, 0.05)' : ''
+                                                            }}
+                                                        />
+                                                        {(tier.discount && tier.discount > 0) ? (
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                right: '-10px',
+                                                                top: '-15px',
+                                                                background: '#10b981',
+                                                                color: '#fff',
+                                                                fontSize: '10px',
+                                                                padding: '2px 8px',
+                                                                borderRadius: '10px',
+                                                                fontWeight: 'bold',
+                                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                            }}>
+                                                                {tier.discount}% OFF
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                    {(tier.originalPrice && tier.originalPrice > tier.price) ? (
+                                                        <small style={{ color: '#10b981', fontSize: '0.7rem', marginTop: '4px', display: 'block', fontWeight: 600 }}>
+                                                            Save ₹{(tier.originalPrice - tier.price).toLocaleString()} on this tier
                                                         </small>
-                                                    )}
+                                                    ) : null}
                                                 </div>
 
                                                 <div className={styles.inputGroup}>
@@ -1209,6 +1269,11 @@ const PremiumPackages: React.FC = () => {
                                                         <h4>{tier.name || "Untitled Tier"}</h4>
                                                     </div>
                                                     <div className={styles.tierPrice}>
+                                                        {tier.originalPrice && tier.originalPrice > tier.price ? (
+                                                            <span className={styles.originalPriceStrikethrough}>
+                                                                ₹{tier.originalPrice.toLocaleString()}
+                                                            </span>
+                                                        ) : null}
                                                         <span className={styles.priceAmount}>₹{(tier.price || 0).toLocaleString()}</span>
                                                         <span className={styles.pricePeriod}>/month</span>
                                                     </div>

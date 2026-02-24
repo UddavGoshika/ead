@@ -1264,6 +1264,17 @@ router.get('/transactions', async (req, res) => {
                 }
             }
 
+            let tier = (t.metadata && t.metadata.tier);
+            let pkg = t.packageId || 'Custom';
+
+            // Try to extract tier from packageId if missing (e.g., pro_platinum)
+            if (!tier && pkg.includes('_')) {
+                const parts = pkg.split('_');
+                if (parts.length > 1) {
+                    tier = parts[parts.length - 1]; // usually the last part
+                }
+            }
+
             return {
                 id: t._id,
                 memberName: profile ? (profile.name || `${profile.firstName} ${profile.lastName}`) : 'Unknown',
@@ -1271,8 +1282,8 @@ router.get('/transactions', async (req, res) => {
                 email: user ? user.email : 'N/A',
                 mobile: profile ? (profile.mobile || 'N/A') : 'N/A',
                 role: user ? user.role : 'N/A',
-                packageName: t.packageId || 'Custom',
-                subPackage: (t.metadata && t.metadata.tier) || 'Standard',
+                packageName: pkg,
+                subPackage: tier || 'Standard',
                 paymentMethod: t.gateway || 'N/A',
                 amount: `₹${t.amount.toLocaleString()}`,
                 discount: t.metadata && t.metadata.discount ? `₹${t.metadata.discount}` : '₹0.00',
@@ -1280,7 +1291,8 @@ router.get('/transactions', async (req, res) => {
                 netAmount: `₹${t.amount.toLocaleString()}`,
                 status: t.status.charAt(0).toUpperCase() + t.status.slice(1),
                 transactionId: t.paymentId || t.orderId,
-                transactionDate: t.createdAt.toLocaleString()
+                transactionDate: t.createdAt.toLocaleString(),
+                createdAt: t.createdAt // Send raw date for accurate filtering
             };
         }));
 

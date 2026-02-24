@@ -47,7 +47,7 @@ const AdvisorSidebar: React.FC<Props> = ({ isOpen, showsidePage, currentPage }) 
         { id: 'my-subscription', label: 'My Subscription', icon: Shield },
 
         { id: 'wallet-history', label: 'Wallet & History', icon: Wallet },
-        { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
+        // { id: 'upgrade', label: 'Upgrade', icon: ArrowUp },
         { id: 'credits', label: 'Credits', icon: Coins },
 
         { id: 'safety-center', label: 'Safety Center', icon: ShieldCheck },

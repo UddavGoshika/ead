@@ -24,6 +24,7 @@ interface Payment {
     status: PaymentStatus;
     transactionId: string;
     transactionDate: string;
+    createdAt?: string;
 }
 
 interface Props {
@@ -76,7 +77,8 @@ const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" })
                             netAmount: t.netAmount,
                             status: t.status === 'Success' ? 'Paid' : t.status,
                             transactionId: t.transactionId,
-                            transactionDate: t.transactionDate
+                            transactionDate: t.transactionDate,
+                            createdAt: t.createdAt
                         };
                     });
                 setPayments(formattedPayments);
@@ -94,16 +96,20 @@ const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" })
         const sInput = (sub || "").toLowerCase();
 
         let finalPkg = "";
-        let finalSub = sInput.charAt(0).toUpperCase() + sInput.slice(1).replace(/_/g, ' ');
+        let finalSub = sInput ? (sInput.charAt(0).toUpperCase() + sInput.slice(1).replace(/_/g, ' ')) : "";
 
         if (pInput.includes("lite")) finalPkg = "Pro Lite";
         else if (pInput.includes("ultra")) finalPkg = "Ultra Pro";
         else if (pInput.includes("pro")) finalPkg = "Pro";
-        else if (pInput === "standard") finalPkg = "";
         else if (pInput === "free") finalPkg = "Free Plan";
-        else finalPkg = pkg;
+        else if (pInput) {
+            // Capitalize first letter of each word
+            finalPkg = pInput.split(/[\s_]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        } else {
+            finalPkg = "Package";
+        }
 
-        if (sInput === "standard" || sInput === "") finalSub = "-";
+        if (finalSub === "Standard" || !finalSub) finalSub = "-";
 
         return { finalPkg, finalSub };
     };
@@ -121,9 +127,27 @@ const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" })
             const matchesStatus = selectedStatus === "All" || p.status === selectedStatus;
             const matchesRole = selectedRole === "All" || p.role === selectedRole;
 
-            return matchesSearch && matchesCategory && matchesLevel && matchesStatus && matchesRole;
+            // Date filtering
+            let matchesDate = true;
+            if (dateRange.start || dateRange.end) {
+                const dateToCompare = p.createdAt ? new Date(p.createdAt) : new Date(p.transactionDate);
+
+                if (dateRange.start) {
+                    const start = new Date(dateRange.start);
+                    start.setHours(0, 0, 0, 0);
+                    if (dateToCompare < start) matchesDate = false;
+                }
+
+                if (dateRange.end && matchesDate) {
+                    const end = new Date(dateRange.end);
+                    end.setHours(23, 59, 59, 999);
+                    if (dateToCompare > end) matchesDate = false;
+                }
+            }
+
+            return matchesSearch && matchesCategory && matchesLevel && matchesStatus && matchesRole && matchesDate;
         });
-    }, [payments, searchTerm, filterCategory, filterLevel, selectedStatus, selectedRole]);
+    }, [payments, searchTerm, filterCategory, filterLevel, selectedStatus, selectedRole, dateRange]);
 
     const openModal = (type: 'view' | 'invoice', payment: Payment) => {
         setSelectedPayment(payment);
@@ -219,7 +243,7 @@ const PackagePaymentList: React.FC<Props> = ({ title = "Package Payment List" })
                         {title !== "Free Members" && (
                             <div className={styles.packageBlockFilters}>
                                 {[
-                                    { name: 'Free', sub: 'Basic Access', levels: [] },
+                                    // { name: 'Free', sub: 'Basic Access', levels: [] },
                                     { name: 'Pro Lite', sub: 'Standard Premium', levels: ['Silver', 'Gold', 'Platinum'] },
                                     { name: 'Pro', sub: 'Advanced Features', levels: ['Silver', 'Gold', 'Platinum'] },
                                     { name: 'Ultra Pro', sub: 'Executive Support', levels: ['Silver', 'Gold', 'Platinum'] }

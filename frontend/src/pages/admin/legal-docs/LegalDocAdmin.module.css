@@ -322,6 +322,16 @@
     color: #ef4444;
 }
 
+.statusBadge.deactivated {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.statusBadge.deleted {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+}
+
 .rowActions {
     display: flex;
     gap: 8px;

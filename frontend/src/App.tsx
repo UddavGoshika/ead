@@ -382,6 +382,7 @@ const AppContent: React.FC = () => {
           <Route path="package-payments" element={<PackagePayments />} />
 
           <Route path="legal-docs/providers" element={<DocumentationProviders />} />
+          <Route path="legal-docs/providers/:statusFilter" element={<DocumentationProviders />} />
           <Route path="legal-docs/agreements" element={<AgreementsList />} />
           <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
           <Route path="legal-docs/notices" element={<NoticesList />} />

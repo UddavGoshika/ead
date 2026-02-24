@@ -106,6 +106,9 @@ export const MENU_SCHEMA: MenuItem[] = [
             { id: "affidavits", name: "Affidavits", path: "/admin/legal-docs/affidavits", badge: "3892" },
             { id: "notices", name: "Notices", path: "/admin/legal-docs/notices", badge: "5120" },
             { id: "legal-doc-services", name: "Legal Document Services", path: "/admin/legal-docs/services", badge: "New" },
+            { id: "blocked-providers", name: "Blocked Providers", path: "/admin/legal-docs/providers/blocked" },
+            { id: "deactivated-providers", name: "Deactivated Providers", path: "/admin/legal-docs/providers/deactivated" },
+            { id: "deleted-providers", name: "Deleted Providers", path: "/admin/legal-docs/providers/deleted" },
         ],
     },
     {
