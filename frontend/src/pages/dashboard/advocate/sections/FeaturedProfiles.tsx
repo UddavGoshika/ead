@@ -235,14 +235,26 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                                         client={profile}
                                         variant="featured"
                                         isPremium={isPremium}
-                                        onAction={async (action, data) => handleInteraction(profile, action, data)}
+                                        onAction={async (action, data) => {
+                                            if (action === 'openFullChatPage') {
+                                                onSelectForChat(profile);
+                                                return;
+                                            }
+                                            handleInteraction(profile, action, data);
+                                        }}
                                     />
                                 ) : (
                                     <AdvocateCard
                                         advocate={profile}
                                         variant="featured"
                                         isPremium={isPremium}
-                                        onAction={async (action, data) => handleInteraction(profile, action, data)}
+                                        onAction={async (action, data) => {
+                                            if (action === 'openFullChatPage') {
+                                                onSelectForChat(profile);
+                                                return;
+                                            }
+                                            handleInteraction(profile, action, data);
+                                        }}
                                     />
                                 )}
                             </div>

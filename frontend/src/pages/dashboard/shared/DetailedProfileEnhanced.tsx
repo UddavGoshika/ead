@@ -381,7 +381,7 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                             </button>
                             <button className={styles.commBtn} onClick={handleMeet}>
                                 <MapPin size={18} />
-                                In-Person Consultation
+                                Consulting
                             </button>
                         </div>
                     </div>

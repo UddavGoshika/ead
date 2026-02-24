@@ -198,6 +198,10 @@ const FeaturedProfiles: React.FC<Props> = ({ showDetailedProfile, showToast, sho
                                         variant="featured"
                                         isPremium={isPremium}
                                         onAction={async (action, data) => {
+                                            if (action === 'openFullChatPage') {
+                                                onSelectForChat(adv);
+                                                return;
+                                            }
                                             if (action === 'view_profile') {
                                                 showDetailedProfile(adv.unique_id);
                                                 return;

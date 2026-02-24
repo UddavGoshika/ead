@@ -169,6 +169,14 @@ const ProviderDashboard: React.FC = () => {
             <AdvocateBottomNav bottomNavClick={bottomNavClick} currentPage={currentPage} />
 
             {sidebarOpen && <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />}
+
+            {activeChatAdvocate && (
+                <ChatPopup
+                    key={(activeChatAdvocate as any).unique_id || (activeChatAdvocate as any).partnerUserId || (activeChatAdvocate as any).userId?._id || (activeChatAdvocate as any).userId || (activeChatAdvocate as any)._id || activeChatAdvocate.id}
+                    advocate={activeChatAdvocate}
+                    onClose={() => setActiveChatAdvocate(null)}
+                />
+            )}
         </div>
     );
 };

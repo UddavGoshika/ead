@@ -89,6 +89,10 @@ export const useInteractions = (showToast?: (msg: string) => void) => {
                 if (showToast) showToast(`Message sent to ${profileName}`);
                 queryClient.invalidateQueries({ queryKey: ['activities', userId] });
                 queryClient.invalidateQueries({ queryKey: ['conversations', userId] });
+            } else if (action === 'meet_request') {
+                res = await interactionService.recordActivity(targetRole, targetId, 'meet_request', userId);
+                if (showToast) showToast(`Consultation request sent to ${profileName}`);
+                queryClient.invalidateQueries({ queryKey: ['activities', userId] });
             } else if (action === 'interaction_complete') {
                 hideProfile(targetId);
                 setRelationship(targetId, 'INTEREST_SENT', 'sender');

@@ -55,6 +55,7 @@ const Activity = ({ onSelectForChat, showToast }: { onSelectForChat?: (partner: 
             if (s === 'declined') return { priority: 5, category: 'declined' };
             if (s === 'blocked') return { priority: 6, category: 'blocked' };
             if (s === 'ignored') return { priority: 7, category: 'ignored' };
+            if (s === 'meet_request') return isSender ? { priority: 3, category: 'sent' } : { priority: 2, category: 'received' };
             if (['removed', 'cancelled', 'shortlist_removed', 'unblocked'].includes(s)) return { priority: 999, category: 'removed' };
             return { priority: 999, category: 'other' };
         };
