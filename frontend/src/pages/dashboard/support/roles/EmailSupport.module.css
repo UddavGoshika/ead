@@ -135,7 +135,7 @@
 
 .mainContainer {
     flex: 1;
-    padding: 24px 40px;
+    padding: 16px 32px;
     overflow-y: auto;
 }
 
@@ -666,7 +666,7 @@
 
 .pageContent {
     animation: fadeIn 0.3s ease-out;
-    margin-top: 32px;
+    margin-top: 16px;
 }
 
 @keyframes fadeIn {

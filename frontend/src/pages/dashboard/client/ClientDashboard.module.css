@@ -162,7 +162,7 @@
 .contentBody {
     flex: 1;
     padding: 30px;
-    padding-bottom: 120px;
+    padding-bottom: 150px;
     position: relative;
     min-height: calc(100vh - 80px);
     /* Ensure enough height for overlay */
@@ -306,24 +306,52 @@
 }
 
 .badgePlan {
-    background: rgba(250, 204, 21, 0.1);
-    border: 1px solid rgba(250, 204, 21, 0.3);
-    padding: 6px 12px;
-    border-radius: 8px;
-    color: #facc15;
+    font-size: 11px;
     font-weight: 700;
-    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #fbfbfc;
+    padding: 4px 14px;
+    border-radius: 6px;
+    letter-spacing: 1.2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-right: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: default;
 }
 
+.badgePlan::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent);
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%) rotate(45deg);
+    }
+
+    100% {
+        transform: translateX(100%) rotate(45deg);
+    }
+}
 
 .freeBadge {
-    background: rgba(250, 204, 21, 0.1);
-    color: #facc15;
-    border-color: rgba(250, 204, 21, 0.3);
+    background: rgba(100, 116, 139, 0.1);
+    color: #fbfbfc;
+    border-color: rgba(148, 163, 184, 0.2);
 }
 
 .liteBadge {

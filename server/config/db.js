@@ -10,7 +10,9 @@ const connectDB = async () => {
             process.exit(1);
         }
 
-        const conn = await mongoose.connect(uri);
+        const conn = await mongoose.connect(uri, {
+            family: 4 // Force IPv4 to avoid DNS/IPv6 resolution issues
+        });
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(`❌ Error: ${error.message}`);

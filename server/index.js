@@ -108,6 +108,8 @@ const io = new Server(server, {
 });
 
 const userSockets = new Map(); // userId -> socketId
+const agentOnlineStatus = new Map(); // userId -> {status, lastSeen}
+const typingStates = new Map(); // sessionId -> Set of userIds typing
 
 // Expose io and sockets to app
 app.set('io', io);
@@ -122,14 +124,73 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} registered with socket ${socket.id}`);
     });
 
+    // --- AGENT & DASHBOARD HANDLERS ---
+    socket.on('support:agent-online', ({ userId, status }) => {
+        agentOnlineStatus.set(userId, { status, lastSeen: Date.now() });
+        broadcastAgentMetrics();
+    });
+
+    socket.on('support:get-metrics', () => {
+        socket.emit('support:metrics-update', calculateMetrics());
+    });
+
+    const broadcastAgentMetrics = () => {
+        const metrics = calculateMetrics();
+        io.emit('support:metrics-update', metrics);
+    };
+
+    const calculateMetrics = () => {
+        const onlineAgents = Array.from(agentOnlineStatus.values()).filter(a => a.status === 'online').length;
+        return {
+            onlineAgents,
+            activeChats: 0, // In a real app, count from DB or memory
+            totalWaitTime: 0,
+            avgWaitTime: "45s",
+            serverStatus: 'healthy',
+            timestamp: Date.now()
+        };
+    };
+
+    // --- CHAT LIVE WORKSPACE HANDLERS ---
+    socket.on('support:typing-start', ({ sessionId, userId, userName }) => {
+        if (!typingStates.has(sessionId)) typingStates.set(sessionId, new Set());
+        typingStates.get(sessionId).add(userId);
+
+        socket.to(sessionId).emit('support:typing-update', {
+            sessionId,
+            isTyping: true,
+            userId,
+            userName
+        });
+    });
+
+    socket.on('support:typing-stop', ({ sessionId, userId }) => {
+        if (typingStates.has(sessionId)) {
+            typingStates.get(sessionId).delete(userId);
+        }
+        socket.to(sessionId).emit('support:typing-update', {
+            sessionId,
+            isTyping: false,
+            userId
+        });
+    });
+
+    socket.on('support:join-room', (sessionId) => {
+        socket.join(sessionId);
+        console.log(`Socket ${socket.id} joined chat room: ${sessionId}`);
+    });
+
+    socket.on('support:leave-room', (sessionId) => {
+        socket.leave(sessionId);
+    });
+
+    // --- CALL HANDLERS ---
     socket.on('call-user', ({ to, offer, from, type, callerInfo }) => {
         const targetSocketId = userSockets.get(to);
         if (targetSocketId) {
             io.to(targetSocketId).emit('incoming-call', { from, offer, type, callerInfo });
-            // Let the caller know it's ringing
             socket.emit('ringing');
         } else {
-            // Let the caller know the user is offline
             socket.emit('user-offline');
         }
     });
@@ -156,11 +217,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        let disconnectedUserId = null;
         for (const [userId, socketId] of userSockets.entries()) {
             if (socketId === socket.id) {
+                disconnectedUserId = userId;
                 userSockets.delete(userId);
                 break;
             }
+        }
+        if (disconnectedUserId) {
+            agentOnlineStatus.delete(disconnectedUserId);
+            broadcastAgentMetrics();
         }
         console.log('User disconnected:', socket.id);
     });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './EmailSupport.module.css';
 import api from '../../../../services/api';
 import {
@@ -10,10 +10,11 @@ import {
     HelpCircle, LogOut, Bell, Minus, Maximize2, X,
     Type, Paperclip, Link, Smile, ImageIcon, Lock,
     Trash2, MoreVertical, Plus, Globe, Clock, Activity, AlertCircle, ChevronRight, ChevronLeft, Star, Tag, Inbox, Info, Reply, Forward,
-    ArrowLeft, Menu as MenuIcon, LayoutGrid, Square, Archive
+    ArrowLeft, Menu as MenuIcon, LayoutGrid, Square, Archive, Zap
 } from 'lucide-react';
 import gmailStyles from '../../../staff/roles/GmailMailbox.module.css';
 import { useAuth } from '../../../../context/AuthContext';
+import StaffLayout from '../../../../layouts/StaffLayout';
 
 interface Email {
     id: string;
@@ -31,6 +32,7 @@ interface Ticket {
     priority?: string;
     createdAt: string;
     updatedAt?: string;
+    folder?: string;
     messages: { sender: string; text: string; timestamp: string }[];
 }
 
@@ -140,12 +142,51 @@ const Badge: React.FC<{ children: React.ReactNode, color?: string }> = ({ childr
 };
 
 const EmailSupport: React.FC = () => {
+    const [syncLogs, setSyncLogs] = useState<string[]>([]);
+    const [showSyncConsole, setShowSyncConsole] = useState(false);
+
+    // Acknowledgments for segment tracking
+    console.log("[Segment: Lifecycle] EmailSupport Component Initialized.");
     const navigate = useNavigate();
     const { logout, user } = useAuth();
-    const [activePage, setActivePage] = useState<'Emailing' | 'Dashboard' | 'Audit logs' | 'Profiles' | 'Queries' | 'Chat Hub' | 'Settings' | 'Resource Plan' | 'Users' | 'Tasks' | 'Analytics' | 'Activity Log'>('Emailing');
-    const [currentView, setCurrentView] = useState<'Emailing' | 'Users' | 'Tasks' | 'Analytics' | 'Activity Log'>('Emailing');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activePage = (searchParams.get('view') || 'Emailing') as any;
+    const setActivePage = (page: string) => setSearchParams({ view: page });
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [currentFolder, setCurrentFolder] = useState('Dashboard');
+    const [currentFolder, setCurrentFolder] = useState('Inbox');
+    const [allActivities, setAllActivities] = useState<any[]>([]);
+    const [agentLogs, setAgentLogs] = useState<any[]>([]);
+    const [analyticsData, setAnalyticsData] = useState<any>(null);
+    const [realUsers, setRealUsers] = useState<any[]>([]);
+    const [starredIds, setStarredIds] = useState<string[]>([]);
+    const [ticketFolders, setTicketFolders] = useState<Record<string, string>>({});
+    const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
+
+    // Acknowledgment Segment: Initialization & Lifecycle
+    useEffect(() => {
+        console.log("[Segment: Initialization] Email Support Component Ready.");
+        fetchData();
+        fetchAgentLogs();
+
+        // Real-time listener for new emails
+        const handleNewEmail = () => {
+            console.log('✅ [Segment: Real-time] New email notification received via socket');
+            fetchData();
+        };
+
+        window.addEventListener('support:new-email', handleNewEmail);
+
+        // Polling as a fallback (every 60s)
+        const interval = setInterval(() => {
+            console.log("[Segment: Auto-Sync] Triggering background synchronization...");
+            handleSync(false);
+        }, 60000);
+
+        return () => {
+            window.removeEventListener('support:new-email', handleNewEmail);
+            clearInterval(interval);
+        };
+    }, []);
 
     const roleToDisplay: Record<string, string> = {
         admin: 'Super Admin',
@@ -196,6 +237,10 @@ const EmailSupport: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [replyText, setReplyText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [to, setTo] = useState('');
+    const [subject, setSubject] = useState('');
+    const [body, setBody] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     // Compose Window State
     const [isMinimized, setIsMinimized] = useState(false);
@@ -266,23 +311,10 @@ const EmailSupport: React.FC = () => {
         'PRO': 'Silver',
         'ULTRA PRO': 'Silver'
     });
-    const [starredIds, setStarredIds] = useState<string[]>([]);
-    const [ticketFolders, setTicketFolders] = useState<{ [key: string]: string }>({}); // Track folder location per ticket
     const [activeMenu, setActiveMenu] = useState<string | null>(null); // 'toolbar' | 'header'
-    const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]); // Multi-select state
-
-    // Compose State (Global Popup)
-    const [to, setTo] = useState('');
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
-    const [agentLogs, setAgentLogs] = useState<any[]>([]);
-
-    const [realUsers, setRealUsers] = useState<any[]>([]);
-    const [allActivities, setAllActivities] = useState<any[]>([]);
-    const [analyticsData, setAnalyticsData] = useState<any>(null);
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     const fetchData = async () => {
+        console.log("[Segment: Data Fetch] Requesting comprehensive support metrics...");
         setLoading(true);
         try {
             const [ticketRes, statRes, activityRes, analyticsRes, userRes] = await Promise.all([
@@ -290,21 +322,26 @@ const EmailSupport: React.FC = () => {
                 api.get('/support/stats'),
                 api.get('/support/activities', { params: { limit: 50 } }),
                 api.get('/support/analytics'),
-                api.get('/admin/members', { params: { limit: 20 } }).catch(() => ({ data: { success: false } })) // Admin check
+                api.get('/admin/members', { params: { limit: 20 } }).catch(() => ({ data: { success: false } }))
             ]);
 
-            if (ticketRes.data.success) setTickets(ticketRes.data.tickets);
-            if (statRes.data.success) setStats(statRes.data.stats);
+            if (ticketRes.data.success) {
+                console.log(`✅ [Segment: Data Fetch] Tickets retrieved: ${ticketRes.data.tickets.length}`);
+                setTickets(ticketRes.data.tickets);
+            }
+            if (statRes.data.success) {
+                console.log(`✅ [Segment: Data Fetch] Stats synchronized.`);
+                setStats(statRes.data.stats);
+            }
             if (activityRes.data.success) setAllActivities(activityRes.data.logs);
             if (analyticsRes.data.success) setAnalyticsData(analyticsRes.data.analytics);
             if (userRes.data.success) setRealUsers(userRes.data.members);
             else if (!userRes.data.members) {
-                // Fallback to staff only if admin listing fails
                 const staffRes = await api.get('/support/agents/email-support');
                 if (staffRes.data.success) setRealUsers(staffRes.data.agents);
             }
         } catch (err) {
-            console.error("Failed to fetch support data:", err);
+            console.error("❌ [Segment: Data Fetch] Segment failure:", err);
         } finally {
             setLoading(false);
         }
@@ -312,14 +349,14 @@ const EmailSupport: React.FC = () => {
 
     const fetchAgentLogs = async () => {
         if (!user) return;
+        console.log("[Segment: Logs] Fetching agent-specific audit trail...");
         setLoading(true);
         try {
-            // Fetch logs specifically for this agent and ensure no duplicates
             const res = await api.get('/support/activities', {
                 params: { agentId: user.loginId || user.id, limit: 100 }
             });
             if (res.data.success) {
-                // Deduplicate by _id just in case
+                console.log(`✅ [Segment: Logs] Retrieved ${res.data.logs.length} activity records.`);
                 const uniqueLogs = res.data.logs.reduce((acc: any[], curr: any) => {
                     if (!acc.find(l => l._id === curr._id)) acc.push(curr);
                     return acc;
@@ -327,34 +364,12 @@ const EmailSupport: React.FC = () => {
                 setAgentLogs(uniqueLogs);
             }
         } catch (err) {
-            console.error("Failed to fetch agent logs", err);
+            console.error("❌ [Segment: Logs] Audit trail fetch failed:", err);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchData();
-
-        // Real-time listener for new emails
-        const handleNewEmail = () => {
-            console.log('[Support] New email notification received via socket');
-            fetchData();
-        };
-
-        // Custom event for socket updates if being relayed through window events
-        window.addEventListener('support:new-email', handleNewEmail);
-
-        // Polling as a fallback for lowest latency (every 60s)
-        const interval = setInterval(() => {
-            handleSync(false); // Silent sync
-        }, 60000);
-
-        return () => {
-            window.removeEventListener('support:new-email', handleNewEmail);
-            clearInterval(interval);
-        };
-    }, []);
 
     useEffect(() => {
         if (activePage === 'Audit logs') {
@@ -421,23 +436,32 @@ const EmailSupport: React.FC = () => {
 
     // Sub-Page Renderers
     const handleSync = async (isManual = true) => {
+        console.log(`[Segment: Email Sync] ${isManual ? 'Manual' : 'Automated'} sync initiated.`);
         setLoading(isManual);
         try {
             const res = await api.get('/support/sync');
             if (isManual) {
-                if (res.data.success && res.data.count > 0) {
-                    alert(`Inbox Updated: ${res.data.count} new message(s) retrieved.`);
-                    fetchData();
+                if (res.data.success) {
+                    console.log(`✅ [Segment: Email Sync] Process completed with ${res.data.count} updates.`);
+                    setSyncLogs(res.data.logs || []);
+                    if (res.data.count > 0) {
+                        alert(`Inbox Updated: ${res.data.count} new message(s) retrieved.`);
+                        fetchData();
+                    } else {
+                        setShowSyncConsole(true);
+                    }
                 } else if (res.data.error) {
+                    console.warn(`⚠️ [Segment: Email Sync] Warning: ${res.data.error}`);
+                    setSyncLogs(res.data.logs || []);
+                    setShowSyncConsole(true);
                     alert('Sync Warning: ' + res.data.error);
-                } else {
-                    alert('Inbox is up to date.');
                 }
             } else if (res.data.success && res.data.count > 0) {
-                fetchData(); // Silent refresh
+                console.log(`✅ [Segment: Email Sync] Silent sync retrieved ${res.data.count} items.`);
+                fetchData();
             }
         } catch (err) {
-            console.error("Sync Failed", err);
+            console.error("❌ [Segment: Email Sync] Critical failure:", err);
         } finally {
             setLoading(false);
         }
@@ -502,25 +526,30 @@ const EmailSupport: React.FC = () => {
         setStarredIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
     };
 
-    const getFolder = (id: string) => ticketFolders[id] || 'Inbox';
+    const getFolder = (t: Ticket) => t.folder || ticketFolders[t.id] || 'Inbox';
 
     const filteredTickets = tickets.filter(t => {
-        const folder = getFolder(t.id);
+        const folder = getFolder(t);
         const matchesSearch = t.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
             t.user.toLowerCase().includes(searchQuery.toLowerCase());
 
         if (!matchesSearch) return false;
 
-        if (currentFolder === 'Inbox') {
-            // Only show in inbox if it's NOT just an outgoing email with no reply
-            const hasUserMsg = t.messages.some(m => !(['Staff', 'Agent', 'Support', 'E-Advocate'].some(id => m.sender.includes(id))));
-            return folder === 'Inbox' && hasUserMsg;
+        if (folder === 'Bin' || folder === 'Spam') {
+            if (currentFolder === folder) return matchesSearch;
+            return false;
         }
-        if (currentFolder === 'Starred') return starredIds.includes(t.id) && folder !== 'Bin';
-        if (currentFolder === 'Important') return t.status === 'New Reply' && folder !== 'Bin';
-        if (currentFolder === 'Sent') return folder === 'Sent' || (folder === 'Inbox' && t.messages.length > 0);
-        if (currentFolder === 'Bin') return folder === 'Bin';
-        if (currentFolder === 'Spam') return folder === 'Spam';
+
+        if (currentFolder === 'Inbox') {
+            const hasUserMsg = t.messages.some(m => !(['Staff', 'Agent', 'Support', 'E-Advocate'].some(id => m.sender.includes(id))));
+            const isActiveStatus = ['Open', 'New Reply', 'In Progress'].includes(t.status);
+            return folder === 'Inbox' && (hasUserMsg || isActiveStatus);
+        }
+        if (currentFolder === 'Starred') return starredIds.includes(t.id);
+        if (currentFolder === 'Important') return t.status === 'New Reply';
+        if (currentFolder === 'Sent') {
+            return t.messages.some(m => ['Staff', 'Agent', 'Support', 'E-Advocate'].some(role => m.sender.includes(role)));
+        }
 
         return false;
     });
@@ -541,14 +570,17 @@ const EmailSupport: React.FC = () => {
     const getFolderCounts = () => {
         const counts = { Inbox: 0, Starred: 0, Sent: 0, Important: 0, Bin: 0 };
         tickets.forEach(t => {
-            const folder = getFolder(t.id);
-            const hasUserMsg = t.messages.some(m => !(['Staff', 'Agent', 'Support', 'E-Advocate'].some(id => m.sender.includes(id))));
+            const folder = getFolder(t);
+            if (folder === 'Bin') { counts.Bin++; return; }
+            if (folder === 'Spam') return;
 
-            if (folder === 'Inbox' && hasUserMsg) counts.Inbox++;
-            if (starredIds.includes(t.id) && folder !== 'Bin') counts.Starred++;
-            if (folder === 'Sent') counts.Sent++;
-            if (t.status === 'New Reply' && folder !== 'Bin') counts.Important++;
-            if (folder === 'Bin') counts.Bin++;
+            const hasUserMsg = t.messages.some(m => !(['Staff', 'Agent', 'Support', 'E-Advocate'].some(id => m.sender.includes(id))));
+            const isActiveStatus = ['Open', 'New Reply', 'In Progress'].includes(t.status);
+
+            if (folder === 'Inbox' && (hasUserMsg || isActiveStatus)) counts.Inbox++;
+            if (starredIds.includes(t.id)) counts.Starred++;
+            if (t.messages.some(m => ['Staff', 'Agent', 'Support', 'E-Advocate'].some(role => m.sender.includes(role)))) counts.Sent++;
+            if (t.status === 'New Reply') counts.Important++;
         });
         return counts;
     };
@@ -598,308 +630,303 @@ const EmailSupport: React.FC = () => {
     };
 
     const renderPageContent = () => {
-        switch (activePage) {
-            case 'Emailing':
-                if (currentFolder === 'Dashboard') {
-                    return (
-                        <div className={styles.pageContent} style={{ marginTop: '0' }}>
-                            {/* Performance Analytics Section */}
-                            <div style={{ display: 'flex', gap: '24px' }}>
-                                <div style={{ flex: 2, background: '#0f172a', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <h3 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '800' }}>Performance Analytics</h3>
-                                    <div style={{ height: '300px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px' }}>
-                                        {analyticsData ? (
-                                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100%', padding: '0 20px' }}>
-                                                {analyticsData.dailyStats?.map((day: any) => {
-                                                    const maxSent = Math.max(...analyticsData.dailyStats.map((d: any) => d.sent), 10);
-                                                    return (
-                                                        <div key={day._id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                                            <div
-                                                                title={`Sent: ${day.sent}`}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    background: '#3b82f6',
-                                                                    height: `${(day.sent / maxSent) * 100}%`,
-                                                                    borderRadius: '4px 4px 0 0',
-                                                                    minHeight: '4px',
-                                                                    transition: 'height 0.3s ease'
-                                                                }}
-                                                            ></div>
-                                                            <div style={{ fontSize: '10px', color: '#64748b' }}>{day._id.split('-')[2]}</div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>
-                                                Metrics Syncing...
-                                            </div>
-                                        )}
+        if (activePage === 'Analytics' || activePage === 'Dashboard') {
+            const totalSentEmails = analyticsData?.dailyStats?.reduce((acc: any, curr: any) => acc + curr.sent, 0) || folderCounts.Sent;
+
+            return (
+                <div className={styles.pageContent}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '16px' }}>
+                        {[
+                            { label: 'Sent Today', value: analyticsData?.dailyStats?.[0]?.sent || 0, color: '#facc15', trend: 'Live', icon: Send },
+                            { label: 'Total Sent', value: totalSentEmails || 0, color: '#3b82f6', trend: 'Logs', icon: Globe },
+                            { label: 'Members', value: stats.totalUsers || 0, color: '#f59e0b', trend: 'Pop', icon: Users },
+                            { label: 'Resolved', value: stats.solvedTickets || 0, color: '#10b981', trend: 'Solved', icon: ShieldCheck },
+                            { label: 'Pending', value: stats.openTickets || 0, color: '#ef4444', trend: 'Wait', icon: Clock },
+                            { label: 'Response', value: '1.2h', color: '#8b5cf6', trend: 'Avg', icon: Zap },
+                            { label: 'Health', value: '100%', color: '#6366f1', trend: 'Stable', icon: Activity }
+                        ].map(stat => (
+                            <div
+                                key={stat.label}
+                                style={{
+                                    background: '#0b0f19',
+                                    padding: '8px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    height: '85px',
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'pointer',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.borderColor = stat.color + '60';
+                                    e.currentTarget.style.background = '#0f172a';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                                    e.currentTarget.style.background = '#0b0f19';
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 }}>
+                                    <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.6px', lineHeight: '1' }}>{stat.label}</div>
+                                    <stat.icon size={14} color={stat.color} style={{ opacity: 0.6 }} />
+                                </div>
+                                <div style={{ zIndex: 1 }}>
+                                    <div style={{ fontSize: '28px', fontWeight: '950', color: '#fff', lineHeight: '1', fontFamily: 'monospace' }}>{stat.value}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: stat.color }}></div>
+                                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '800' }}>{stat.trend}</span>
                                     </div>
                                 </div>
-                                <div style={{ flex: 1, background: '#0f172a', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <h3 style={{ marginBottom: '24px', fontSize: '18px', fontWeight: '800' }}>Quick Actions</h3>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <button className={styles.navItem} onClick={() => { setIsComposeOpen(true); setSubject('[Broadcast] '); }} style={{ background: 'rgba(255,255,255,0.03)', justifyContent: 'flex-start' }}><Plus size={16} /> New Broadcast</button>
-                                        <button className={styles.navItem} onClick={() => setActivePage('Analytics')} style={{ background: 'rgba(255,255,255,0.03)', justifyContent: 'flex-start' }}><Activity size={16} /> Performance Review</button>
-                                        <button className={styles.navItem} onClick={() => handleSync(true)} style={{ background: 'rgba(255,255,255,0.03)', justifyContent: 'flex-start' }}><RotateCcw size={16} /> Force Sync Inbox</button>
+                                {/* Subtle Background Accent */}
+                                <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '40px', height: '40px', background: stat.color, filter: 'blur(30px)', opacity: 0.05 }}></div>
+                            </div>
+                        ))}
+                    </div>
+                    {activePage === 'Dashboard' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ background: '#0b0f19', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <h3 style={{ fontSize: '13px', fontWeight: '800', marginBottom: '12px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Briefcase size={14} color="#3b82f6" /> Distribution Metrics
+                                </h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {[
+                                        { key: 'Inbox', val: folderCounts.Inbox, color: '#3b82f6' },
+                                        { key: 'Starred', val: folderCounts.Starred, color: '#facc15' },
+                                        { key: 'Sent', val: folderCounts.Sent, color: '#10b981' },
+                                        { key: 'Important', val: folderCounts.Important, color: '#ef4444' },
+                                        { key: 'Bin', val: folderCounts.Bin, color: '#64748b' },
+                                        { key: 'Total Users', val: stats.totalUsers, color: '#8b5cf6' }
+                                    ].map(item => (
+                                        <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>{item.key}</div>
+                                            <div style={{ fontSize: '12px', fontWeight: '800', color: item.color }}>{item.val}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div style={{ background: '#0b0f19', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <h3 style={{ fontSize: '13px', fontWeight: '800', marginBottom: '12px', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Activity size={14} color="#10b981" /> Resolution Profile
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>Solved Tickets</span>
+                                        <span style={{ fontSize: '13px', fontWeight: '800', color: '#10b981' }}>{stats.solvedTickets}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>Overall Success</span>
+                                        <span style={{ fontSize: '13px', fontWeight: '800', color: '#f59e0b' }}>{stats.totalTickets > 0 ? ((stats.solvedTickets / stats.totalTickets) * 100).toFixed(1) : '0'}%</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${stats.totalTickets > 0 ? (stats.solvedTickets / stats.totalTickets) * 100 : 0}%`, height: '100%', background: '#10b981' }}></div>
+                                    </div>
+                                    <div style={{ marginTop: '4px', padding: '8px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                        <p style={{ margin: 0, fontSize: '10px', color: '#3b82f6', fontWeight: '600', textAlign: 'center' }}>SMTP/IMAP RELAY STABLE</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    );
-                }
+                    )}
 
-                if (currentFolder === 'Audit logs') {
-                    return (
-                        <div className={styles.pageContent}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Personal Activity Forensic Trail</h2>
-                                <button className={styles.goldActionBtn} onClick={fetchAgentLogs}><RotateCcw size={14} /> Refresh Logs</button>
-                            </div>
+                    <div style={{ background: '#0b0f19', padding: '32px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px' }}>
+                        <div style={{ marginBottom: '24px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '800' }}>Recent Performance Trends (Analytics)</h3>
+                            <p style={{ color: '#64748b', fontSize: '13px' }}>Daily transmission and system health metrics.</p>
+                        </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '32px' }}>
-                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', marginBottom: '12px', letterSpacing: '1px' }}>AGENT IDENTITY</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #facc15, #f59e0b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: '900', fontSize: '12px' }}>
-                                            {user?.name?.charAt(0).toUpperCase() || 'A'}
-                                        </div>
-                                        <div>
-                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>{user?.name || 'Staff Member'}</div>
-                                            <div style={{ fontSize: '10px', color: '#64748b', fontFamily: 'monospace' }}>#{String(user?.loginId || user?.id || '').substring(0, 8)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', marginBottom: '12px', letterSpacing: '1px' }}>DEPARTMENTAL ROLE</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Badge color="purple">{user?.role?.replace('_', ' ').toUpperCase() || 'SUPPORT'}</Badge>
-                                        <div style={{ fontSize: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></div> Online
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '800', marginBottom: '12px', letterSpacing: '1px' }}>TOTAL LOGS RECORDED</div>
-                                    <div style={{ fontSize: '20px', fontWeight: '900', color: '#fff' }}>{agentLogs.length} Records</div>
-                                </div>
-                            </div>
-
-                            <div className={styles.logTableContainer}>
-                                <table className={styles.logTable}>
-                                    <thead>
-                                        <tr>
-                                            <th>TIME</th>
-                                            <th>RECIPIENT / SUBJECT</th>
-                                            <th>TYPE</th>
-                                            <th>STATUS</th>
-                                            <th>IP / DEVICE</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {loading ? (
-                                            <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}>Analyzing secure logs...</td></tr>
-                                        ) : agentLogs.length === 0 ? (
-                                            <tr><td colSpan={5} style={{ textAlign: 'center', padding: '40px' }}>No recorded activity found for this session.</td></tr>
-                                        ) : agentLogs.map(log => (
-                                            <tr key={log._id}>
-                                                <td>{new Date(log.timestamp).toLocaleString()}</td>
-                                                <td>
-                                                    <div style={{ fontWeight: '700', color: '#fff' }}>{log.recipient}</div>
-                                                    <div style={{ fontSize: '12px', color: '#64748b' }}>{log.subject}</div>
-                                                </td>
-                                                <td>{log.action}</td>
-                                                <td>
-                                                    <span style={{
-                                                        padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800',
-                                                        background: log.status === 'Sent' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                                                        color: log.status === 'Sent' ? '#10b981' : '#ef4444'
-                                                    }}>{log.status}</span>
-                                                </td>
-                                                <td>
-                                                    <div style={{ fontSize: '12px' }}>{log.ipAddress || 'Internal'}</div>
-                                                    <div style={{ fontSize: '10px', color: '#64748b' }}>{log.deviceInfo?.substring(0, 30)}...</div>
-                                                </td>
-                                            </tr>
+                        {analyticsData ? (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px' }}>
+                                    <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#94a3b8' }}>Transmission Volume (Last 7 Days)</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {analyticsData.dailyStats?.map((day: any) => (
+                                            <div key={day._id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div style={{ width: '80px', fontSize: '11px', color: '#64748b' }}>{day._id.split('-').slice(1).join('/')}</div>
+                                                <div style={{ flex: 1, height: '12px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', display: 'flex' }}>
+                                                    <div style={{ width: `${(day.sent / (day.sent + day.failed || 1)) * 100}%`, background: '#10b981' }}></div>
+                                                </div>
+                                                <div style={{ width: '40px', fontSize: '11px', fontWeight: '800', textAlign: 'right' }}>{day.sent}</div>
+                                            </div>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px' }}>
+                                    <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#94a3b8' }}>Agent Productivity Output</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {analyticsData.agentStats?.map((agent: any) => (
+                                            <div key={agent._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                                <div style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: '500' }}>{agent._id}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ fontSize: '13px', fontWeight: '800', color: '#3b82f6' }}>{agent.count} Actions</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '100px 0' }}>
+                                <Activity size={48} color="#3b82f6" style={{ opacity: 0.2, marginBottom: '16px' }} />
+                                <h3 style={{ color: '#64748b' }}>Enhanced Analytics Visualizations Loading...</h3>
+                                <p style={{ fontSize: '12px', color: '#4b5563' }}>Real-time telemetry from SMTP and Chat Hub nodes.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        switch (activePage) {
+            case 'Emailing':
+                if (selectedTicket) {
+                    return (
+                        <div className={gmailStyles.emailDetail} style={{ background: 'transparent', height: '100%', overflowY: 'auto' }}>
+                            <div className={gmailStyles.detailToolbar} style={{ padding: '12px 24px', position: 'sticky', top: 0, background: '#0f172a', zIndex: 10 }}>
+                                <div className={gmailStyles.actionIcon} onClick={() => setSelectedTicket(null)}><ArrowLeft size={18} /></div>
+                                <div className={gmailStyles.toolbarDivider} />
+                                <div className={gmailStyles.actionIcon} onClick={() => handleAction('Archive')}><Archive size={18} /></div>
+                                <div className={gmailStyles.actionIcon} onClick={() => handleAction('Report Spam')}><AlertCircle size={18} /></div>
+                                <div className={gmailStyles.actionIcon} onClick={() => handleAction('Delete')}><Trash2 size={18} /></div>
+                            </div>
+
+                            <div className={gmailStyles.detailContent} style={{ padding: '0 32px 100px' }}>
+                                <h2 className={gmailStyles.detailSubject} style={{ padding: '24px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '22px', fontWeight: '400' }}>{selectedTicket.subject}</h2>
+
+                                <div className={gmailStyles.threadContainer}>
+                                    {selectedTicket.messages.map((msg, idx) => {
+                                        const isStaff = ['Staff', 'Agent', 'Support', 'E-Advocate'].some(id => msg.sender.includes(id));
+                                        return (
+                                            <div key={idx} className={gmailStyles.threadMessage} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', padding: '24px 0' }}>
+                                                <div className={gmailStyles.detailHeader} style={{ display: 'flex', gap: '16px' }}>
+                                                    <div className={gmailStyles.avatar} style={{ width: '40px', height: '40px', borderRadius: '50%', background: isStaff ? '#3b82f6' : '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '600' }}>{msg.sender.charAt(0)}</div>
+                                                    <div className={gmailStyles.headerInfo} style={{ flex: 1 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <span className={gmailStyles.senderName} style={{ fontWeight: '700' }}>{msg.sender}</span>
+                                                            <span className={gmailStyles.detailDate} style={{ fontSize: '12px', color: '#64748b' }}>{new Date(msg.timestamp).toLocaleString()}</span>
+                                                        </div>
+                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                                            from: <span style={{ color: '#9ea3ae' }}>{isStaff ? 'support@eadvocate.live' : selectedTicket.user}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className={gmailStyles.messageBody} style={{ paddingLeft: '56px', marginTop: '16px', lineHeight: '1.6', color: '#e2e8f0' }}>
+                                                    <MessageContent text={msg.text} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {isReplying ? (
+                                    <div className={gmailStyles.replySection} style={{ marginTop: '32px', background: '#020617', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px' }}>
+                                        <div style={{ color: '#64748b', fontSize: '13px', marginBottom: '12px' }}>To: {selectedTicket.user}</div>
+                                        <textarea
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                            style={{ width: '100%', minHeight: '200px', background: 'transparent', border: 'none', color: '#fff', fontSize: '14px', resize: 'vertical', outline: 'none' }}
+                                            placeholder="Type your message here..."
+                                            autoFocus
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', gap: '12px' }}>
+                                                <button className={gmailStyles.sendBtn} onClick={handleReply} disabled={loading} style={{ background: '#3b82f6', color: '#fff', padding: '10px 24px', borderRadius: '8px', border: 'none', fontWeight: '600', cursor: 'pointer' }}>
+                                                    {loading ? 'Sending...' : 'Send'}
+                                                </button>
+                                                <button className={gmailStyles.actionBtn} onClick={() => setIsReplying(false)} style={{ background: 'rgba(255,255,255,0.05)', color: '#94a3b8', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '16px', color: '#64748b' }}>
+                                                <Paperclip size={20} style={{ cursor: 'pointer' }} />
+                                                <ImageIcon size={20} style={{ cursor: 'pointer' }} />
+                                                <Link size={20} style={{ cursor: 'pointer' }} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ marginTop: '32px', display: 'flex', gap: '12px' }}>
+                                        <button className={gmailStyles.actionBtn} onClick={() => setIsReplying(true)} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '10px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', cursor: 'pointer' }}>
+                                            <Reply size={18} /> Reply
+                                        </button>
+                                        <button className={gmailStyles.actionBtn} onClick={() => handleAction('Forward')} style={{ background: 'rgba(255,255,255,0.03)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.05)', padding: '10px 24px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', cursor: 'pointer' }}>
+                                            <Forward size={18} /> Forward
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
                 }
 
                 return (
-                    <div className={gmailStyles.mainContent} style={{ border: 'none', boxShadow: 'none', background: 'transparent', height: '100%' }}>
-                        {!selectedTicket ? (
-                            <>
-                                <div className={gmailStyles.actionBar}>
-                                    <div className={gmailStyles.bulkActionGroup}>
-                                        <div onClick={toggleSelectAll} style={{ cursor: 'pointer', padding: '8px' }}>
-                                            <Square size={18} color="#9ea3ae" fill={selectedEmailIds.length > 0 && selectedEmailIds.length === filteredTickets.length ? "#9ea3ae" : "none"} />
-                                        </div>
-                                        {selectedEmailIds.length > 0 ? (
-                                            <>
-                                                <div className={gmailStyles.actionIcon} onClick={() => handleBulkAction('Archive')} title="Archive"><Archive size={18} /></div>
-                                                <div className={gmailStyles.actionIcon} onClick={() => handleBulkAction('Report Spam')} title="Report Spam"><AlertCircle size={18} /></div>
-                                                <div className={gmailStyles.actionIcon} onClick={() => handleBulkAction('Delete')} title="Delete"><Trash2 size={18} /></div>
-                                                <div className={gmailStyles.actionIcon} onClick={() => handleBulkAction('Mark Unread')} title="Mark as unread"><Mail size={18} /></div>
-                                                <div className={gmailStyles.toolbarDivider} />
-                                                <div className={gmailStyles.actionIcon}><MoreVertical size={18} /></div>
-                                            </>
-                                        ) : (
-                                            <RotateCcw size={18} className={loading ? gmailStyles.spin : ''} onClick={() => handleSync(true)} style={{ cursor: 'pointer', color: '#9ea3ae' }} />
-                                        )}
-                                    </div>
-                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '16px', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px' }}>1-{filteredTickets.length} of {filteredTickets.length}</span>
-                                        <ChevronLeft size={18} color="#dadce0" />
-                                        <ChevronRight size={18} color="#dadce0" />
-                                    </div>
+                    <div className={gmailStyles.mainContent} style={{ height: '100%', overflowY: 'auto' }}>
+                        {/* TOOLBAR */}
+                        <div style={{ padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, background: '#0b0f19', zIndex: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                <div onClick={toggleSelectAll} style={{ cursor: 'pointer' }}>
+                                    <Square size={16} color="#4b5563" fill={selectedEmailIds.length > 0 ? "#4b5563" : "none"} />
                                 </div>
-
-                                <div className={gmailStyles.tabs}>
-                                    <div className={`${gmailStyles.tab} ${activeTab === 'Primary' ? gmailStyles.tabActive : ''}`} onClick={() => setActiveTab('Primary')}>
-                                        <Inbox size={20} /> Primary
-                                    </div>
-                                    <div className={`${gmailStyles.tab} ${activeTab === 'Updates' ? gmailStyles.tabActive : ''}`} onClick={() => setActiveTab('Updates')}>
-                                        <Info size={20} /> Updates
-                                    </div>
+                                <RotateCcw size={16} color="#4b5563" onClick={() => handleSync(true)} className={loading ? gmailStyles.spin : ''} style={{ cursor: 'pointer' }} />
+                                {selectedEmailIds.length > 0 && (
+                                    <>
+                                        <div style={{ width: '1px', height: '16px', background: 'rgba(255,255,255,0.05)' }} />
+                                        <Archive size={16} color="#4b5563" style={{ cursor: 'pointer' }} onClick={() => handleBulkAction('Archive')} />
+                                        <AlertCircle size={16} color="#4b5563" style={{ cursor: 'pointer' }} onClick={() => handleBulkAction('Report Spam')} />
+                                        <Trash2 size={16} color="#4b5563" style={{ cursor: 'pointer' }} onClick={() => handleBulkAction('Delete')} />
+                                    </>
+                                )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#64748b', fontSize: '12px', fontWeight: '500' }}>
+                                <span>{filteredTickets.length > 0 ? `1-${filteredTickets.length} of ${filteredTickets.length}` : '1-0 of 0'}</span>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <ChevronLeft size={16} color="#94a3b8" style={{ cursor: 'pointer' }} />
+                                    <ChevronRight size={16} color="#94a3b8" style={{ cursor: 'pointer' }} />
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className={gmailStyles.emailList}>
-                                    {filteredTickets.length > 0 ? filteredTickets.map(t => (
-                                        <div
-                                            key={t.id}
-                                            className={`${gmailStyles.emailItem} ${t.status === 'New Reply' || t.status === 'Open' ? gmailStyles.unread : ''}`}
-                                            onClick={() => setSelectedTicket(t)}
-                                        >
-                                            <div className={gmailStyles.emailItemIcons}>
-                                                <div className={gmailStyles.emailCheckbox} onClick={(e) => toggleEmailSelection(t.id, e)}>
-                                                    <Square size={20} fill={selectedEmailIds.includes(t.id) ? "#9ea3ae" : "none"} color={selectedEmailIds.includes(t.id) ? "#9ea3ae" : "#4b5262"} />
-                                                </div>
-                                                <div className={gmailStyles.emailStar} onClick={(e) => toggleStar(t.id, e)}>
-                                                    <Star size={20} color={starredIds.includes(t.id) ? "#fbbc04" : "#4b5262"} fill={starredIds.includes(t.id) ? "#fbbc04" : "none"} />
-                                                </div>
-                                            </div>
-                                            <div className={gmailStyles.emailSender}>{t.user?.split('@')[0]}</div>
-                                            <div className={gmailStyles.emailSubjectContainer}>
-                                                <span className={gmailStyles.emailSubject}>{t.subject}</span>
-                                                <span className={gmailStyles.emailSnippet}> — Platform Enquiry #{t.id.slice(-4)}</span>
-                                            </div>
-                                            <div className={gmailStyles.emailDate}>{new Date(t.updatedAt || t.createdAt).toLocaleDateString()}</div>
-                                        </div>
-                                    )) : (
-                                        <div style={{ textAlign: 'center', padding: '100px 0', color: '#64748b' }}>
-                                            <Mail size={48} opacity={0.2} style={{ marginBottom: '16px' }} />
-                                            <p>No queries found in {currentFolder}</p>
-                                        </div>
-                                    )}
+                        {/* INBOX TABS */}
+                        {currentFolder === 'Inbox' && (
+                            <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0 16px', background: '#0b0f19' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', borderBottom: '2px solid #facc15', color: '#facc15', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                                    <Inbox size={16} /> Primary
                                 </div>
-                            </>
-                        ) : (
-                            <div className={gmailStyles.emailDetail}>
-                                <div className={gmailStyles.detailToolbar}>
-                                    <div className={gmailStyles.actionIcon} onClick={() => setSelectedTicket(null)} title="Back to inbox"><ArrowLeft size={18} /></div>
-                                    <div className={gmailStyles.toolbarDivider} />
-                                    <div className={gmailStyles.actionIcon} title="Archive"><Archive size={18} /></div>
-                                    <div className={gmailStyles.actionIcon} title="Report Spam"><AlertCircle size={18} /></div>
-                                    <div className={gmailStyles.actionIcon} title="Delete"><Trash2 size={18} /></div>
-                                    <div className={gmailStyles.toolbarDivider} />
-                                    <div className={gmailStyles.actionIcon} title="Mark unread"><Mail size={18} /></div>
-                                    <div className={gmailStyles.actionIcon} title="Clock"><Clock size={18} /></div>
-                                    <div className={gmailStyles.actionIcon} title="Categorize"><Tag size={18} /></div>
-                                    <div className={gmailStyles.toolbarDivider} />
-                                    <div className={gmailStyles.actionIcon} title="More"><MoreVertical size={18} /></div>
-                                </div>
-
-                                <div className={gmailStyles.detailContent}>
-                                    <h2 className={gmailStyles.detailSubject}>{selectedTicket.subject} <span style={{ marginLeft: '12px', fontSize: '10px', background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>ENQUIRY</span></h2>
-
-                                    <div className={gmailStyles.threadContainer}>
-                                        {selectedTicket.messages.map((msg, index) => {
-                                            const staffIdentifiers = ['Staff', 'Agent', 'Support', 'E-Advocate'];
-                                            const isAgent = staffIdentifiers.some(id => msg.sender.includes(id));
-                                            const isLast = index === selectedTicket.messages.length - 1;
-
-                                            return (
-                                                <div key={index} className={`${gmailStyles.threadMessage} ${isLast ? gmailStyles.activeMessage : ''}`}>
-                                                    <div className={gmailStyles.detailHeader}>
-                                                        <div className={gmailStyles.avatar} style={{ background: isAgent ? '#3b82f6' : '#d97706' }}>
-                                                            {msg.sender.charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div className={gmailStyles.headerInfo}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span className={gmailStyles.senderName}>{msg.sender}</span>
-                                                                <span className={gmailStyles.detailDate}>{formatDate(msg.timestamp)}</span>
-                                                            </div>
-                                                            <div className={gmailStyles.senderEmail}>
-                                                                <div style={{ color: '#9ea3ae', fontSize: '12px' }}>
-                                                                    from: <span style={{ color: '#e3e3e3' }}>{isAgent ? `support@eadvocate.live` : selectedTicket.user}</span>
-                                                                </div>
-                                                                <div style={{ color: '#9ea3ae', fontSize: '12px', marginTop: '2px' }}>
-                                                                    to: <span style={{ color: '#e3e3e3' }}>{isAgent ? selectedTicket.user : `support@eadvocate.live`}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className={gmailStyles.headerActions}>
-                                                            <div onClick={() => setIsReplying(true)} className={gmailStyles.actionIcon} title="Reply">
-                                                                <Reply size={18} />
-                                                            </div>
-                                                            <div className={gmailStyles.actionIcon} title="More">
-                                                                <MoreVertical size={18} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className={gmailStyles.messageBody}>
-                                                        <MessageContent text={msg.text} />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {isReplying ? (
-                                        <div className={gmailStyles.replySection}>
-                                            <div className={gmailStyles.replyBox}>
-                                                <div className={gmailStyles.replyHeader}>
-                                                    <Reply size={16} /> To: {selectedTicket.user}
-                                                </div>
-                                                <textarea
-                                                    placeholder={`Reply to ${selectedTicket.user}`}
-                                                    value={replyText}
-                                                    onChange={(e) => setReplyText(e.target.value)}
-                                                    autoFocus
-                                                />
-                                                <div className={gmailStyles.replyBoxActions}>
-                                                    <button className={gmailStyles.sendBtn} onClick={handleReply} disabled={loading}>
-                                                        {loading ? 'Sending...' : 'Send'}
-                                                    </button>
-                                                    <div style={{ display: 'flex', gap: '16px', color: '#9ea3ae', alignItems: 'center' }}>
-                                                        <Paperclip size={20} style={{ cursor: 'pointer' }} />
-                                                        <Type size={20} style={{ cursor: 'pointer' }} />
-                                                        <Smile size={20} style={{ cursor: 'pointer' }} />
-                                                        <div className={gmailStyles.vDivider} />
-                                                        <Trash2 size={20} onClick={() => setIsReplying(false)} style={{ cursor: 'pointer' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className={gmailStyles.bottomActions}>
-                                            <button className={gmailStyles.actionBtn} onClick={() => setIsReplying(true)}>
-                                                <Reply size={18} /> Reply
-                                            </button>
-                                            <button className={gmailStyles.actionBtn} onClick={() => handleAction('Forward')}>
-                                                <Forward size={18} /> Forward
-                                            </button>
-                                        </div>
-                                    )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', color: '#94a3b8', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+                                    <Info size={16} /> Updates
                                 </div>
                             </div>
                         )}
+
+                        {/* LIST OR EMPTY STATE */}
+                        <div style={{ background: '#0b0f19', minHeight: 'calc(100vh - 350px)' }}>
+                            {filteredTickets.length > 0 ? filteredTickets.map(t => (
+                                <div key={t.id} className={`${gmailStyles.emailItem} ${t.status === 'New Reply' ? gmailStyles.unread : ''}`} onClick={() => setSelectedTicket(t)} style={{ display: 'flex', alignItems: 'center', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.02)', cursor: 'pointer', transition: 'background 0.2s' }}>
+                                    <div onClick={(e) => toggleEmailSelection(t.id, e)} style={{ marginRight: '16px' }}>
+                                        <Square size={18} color="#4b5262" fill={selectedEmailIds.includes(t.id) ? "#9ea3ae" : "none"} />
+                                    </div>
+                                    <div onClick={(e) => toggleStar(t.id, e)} style={{ marginRight: '20px' }}>
+                                        <Star size={18} color={starredIds.includes(t.id) ? "#facc15" : "#4b5262"} fill={starredIds.includes(t.id) ? "#facc15" : "none"} />
+                                    </div>
+                                    <div style={{ minWidth: '200px', fontWeight: t.status === 'New Reply' ? '700' : '400', color: t.status === 'New Reply' ? '#fff' : '#94a3b8' }}>
+                                        {currentFolder === 'Sent' ? `To: ${t.user.split('@')[0]}` : t.user.split('@')[0]}
+                                    </div>
+                                    <div style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 24px' }}>
+                                        <span style={{ color: '#e2e8f0', fontWeight: t.status === 'New Reply' ? '700' : '500' }}>{t.subject}</span>
+                                        <span style={{ color: '#64748b', marginLeft: '8px' }}>— {t.messages[t.messages.length - 1]?.text.substring(0, 100)}...</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', minWidth: '100px', textAlign: 'right' }}>
+                                        {new Date(t.updatedAt || t.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                    </div>
+                                </div>
+                            )) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '400px', color: '#4b5563' }}>
+                                    <Mail size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: '16px' }} />
+                                    <p style={{ fontSize: '14px', margin: 0 }}>No queries found in {currentFolder}</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
 
@@ -1063,70 +1090,6 @@ const EmailSupport: React.FC = () => {
                     </div>
                 );
 
-            case 'Analytics':
-                return (
-                    <div className={styles.pageContent}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
-                            {[
-                                { label: 'Platform Population', value: stats.totalUsers, color: '#3b82f6', trend: '+12%' },
-                                { label: 'Active Inbound', value: stats.openTickets, color: '#f59e0b', trend: '-5%' },
-                                { label: 'Resolved Queries', value: stats.solvedTickets, color: '#10b981', trend: '+28%' },
-                                { label: 'System Integrity', value: '99.9%', color: '#6366f1', trend: 'Stable' }
-                            ].map(stat => (
-                                <div key={stat.label} style={{ background: '#0f172a', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <div style={{ color: '#64748b', fontSize: '11px', fontWeight: '700', marginBottom: '8px', textTransform: 'uppercase' }}>{stat.label}</div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                                        <div style={{ fontSize: '28px', fontWeight: '900', color: stat.color }}>{stat.value}</div>
-                                        <div style={{ fontSize: '11px', color: stat.trend.startsWith('+') ? '#10b981' : stat.trend.startsWith('-') ? '#ef4444' : '#64748b', fontWeight: '700' }}>{stat.trend}</div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div style={{ background: '#0f172a', padding: '32px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px' }}>
-                            <div style={{ marginBottom: '24px' }}>
-                                <h3 style={{ fontSize: '18px', fontWeight: '800' }}>Recent Performance Trends</h3>
-                                <p style={{ color: '#64748b', fontSize: '13px' }}>Daily transmission and system health metrics.</p>
-                            </div>
-
-                            {analyticsData ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px' }}>
-                                        <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#94a3b8' }}>Transmission Volume (Last 7 Days)</h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            {analyticsData.dailyStats?.map((day: any) => (
-                                                <div key={day._id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <div style={{ width: '80px', fontSize: '11px', color: '#64748b' }}>{day._id.split('-').slice(1).join('/')}</div>
-                                                    <div style={{ flex: 1, height: '12px', background: '#1e293b', borderRadius: '6px', overflow: 'hidden', display: 'flex' }}>
-                                                        <div style={{ width: `${(day.sent / (day.sent + day.failed || 1)) * 100}%`, background: '#10b981' }}></div>
-                                                    </div>
-                                                    <div style={{ width: '40px', fontSize: '11px', fontWeight: '800', textAlign: 'right' }}>{day.sent}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px' }}>
-                                        <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#94a3b8' }}>Agent Productivity</h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            {analyticsData.agentStats?.map((agent: any) => (
-                                                <div key={agent._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div style={{ fontSize: '13px' }}>{agent._id}</div>
-                                                    <div style={{ fontSize: '13px', fontWeight: '800', color: '#3b82f6' }}>{agent.count} Actions</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '100px 0' }}>
-                                    <Activity size={48} color="#3b82f6" style={{ opacity: 0.2, marginBottom: '16px' }} />
-                                    <h3 style={{ color: '#64748b' }}>Enhanced Analytics Visualizations Loading...</h3>
-                                    <p style={{ fontSize: '12px', color: '#4b5563' }}>Real-time telemetry from SMTP and Chat Hub nodes.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-
             case 'Users':
                 return (
                     <div className={styles.pageContent}>
@@ -1136,39 +1099,46 @@ const EmailSupport: React.FC = () => {
                         </div>
                         <div className={styles.clientGrid}>
                             {realUsers.length > 0 ? realUsers.map((u: any) => (
-                                <div key={u.id || u._id} className={styles.clientCard}>
-                                    <div className={styles.clientCardHeader}>
-                                        <div className={styles.clientMainInfo}>
-                                            <div className={styles.avatarLarge} style={{ background: u.role === 'admin' ? '#ef4444' : '#3b82f6' }}>{u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}</div>
-                                            <div className={styles.clientMeta}>
-                                                <h4>{u.name || 'Member'}</h4>
-                                                <p>{u.email}</p>
+                                <div key={u.id || u._id} className={styles.clientCard} style={{ padding: '20px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: u.role === 'admin' ? '#ef4444' : u.role === 'staff' ? '#3b82f6' : '#10b981', color: '#fff', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', borderRadius: '0 0 0 12px' }}>
+                                        {u.role}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                                        <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800', color: '#3b82f6' }}>
+                                            {u.name?.charAt(0) || u.email?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <h4 style={{ fontSize: '16px', fontWeight: '800', color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || 'Anonymous User'}</h4>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12px' }}>
+                                                <Mail size={12} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</span>
                                             </div>
                                         </div>
-                                        <Badge color={u.role === 'client' ? 'green' : u.role === 'staff' ? 'blue' : 'yellow'}>{u.role}</Badge>
                                     </div>
-                                    <div className={styles.clientDetails}>
-                                        <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: '600' }}>{u.company || 'Org-Unit: ' + (u.unique_id || 'N/A')}</p>
-                                        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748b' }}>{u.phone || 'No direct dial'}</p>
-                                    </div>
-                                    <div className={styles.clientStats}>
-                                        <div className={styles.statItem}>
-                                            <span>Platform ID</span>
-                                            <strong>{u.id?.slice(-6) || u._id?.slice(-6)}</strong>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.02)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '11px', color: '#4b5563', fontWeight: '700' }}>UNIQUE ID</span>
+                                            <span style={{ fontSize: '11px', color: '#fff', fontWeight: '800', fontFamily: 'monospace' }}>{u.unique_id || 'UID-' + (u.id?.slice(-6) || u._id?.slice(-6))}</span>
                                         </div>
-                                        <div className={styles.statItem} style={{ textAlign: 'right' }}>
-                                            <span>Current Status</span>
-                                            <strong style={{ fontSize: '14px', color: u.status === 'Active' ? '#10b981' : '#f59e0b' }}>{u.status || 'Active'}</strong>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '11px', color: '#4b5563', fontWeight: '700' }}>PHONE</span>
+                                            <span style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: '600' }}>{u.phone || '--'}</span>
                                         </div>
                                     </div>
-                                    {u.tags && (
-                                        <div className={styles.tagGroup}>
-                                            {u.tags.map((t: string) => <span key={t} className={styles.tag}>{t}</span>)}
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: u.status === 'Active' ? '#10b981' : '#f59e0b' }}></div>
+                                            <span style={{ fontSize: '12px', fontWeight: '700', color: u.status === 'Active' ? '#10b981' : '#f59e0b' }}>{u.status || 'Active'}</span>
                                         </div>
-                                    )}
-                                    <div className={styles.clientActions}>
-                                        <button className={styles.actionBtn}>View Docs</button>
-                                        <button className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} onClick={() => { setTo(u.email); setIsComposeOpen(true); }}>Direct Message</button>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button
+                                                onClick={() => { setTo(u.email); setIsComposeOpen(true); }}
+                                                style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}
+                                            >
+                                                Message
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )) : (
@@ -1280,118 +1250,67 @@ const EmailSupport: React.FC = () => {
         <div className={`${styles.premiumDashboard} ${gmailStyles.darkTheme}`} style={{ padding: '0', height: '100vh', overflow: 'hidden' }}>
 
             {/* MAIN CONTENT */}
-            {/* MAIN CONTENT */}
-            <main className={styles.mainContainer}>
+            <main className={styles.mainContainer} style={{ padding: '0 24px 24px' }}>
                 {/* UNIFIED TOP SECTION */}
                 <div style={{
-                    background: '#0f172a',
+                    background: '#111827',
                     borderRadius: '24px',
-                    padding: '24px',
+                    padding: '16px 24px',
                     border: '1px solid rgba(255,255,255,0.05)',
-                    marginBottom: '32px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+                    marginBottom: '20px',
+                    marginTop: '12px'
                 }}>
-                    <header className={styles.headerRow} style={{ marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
-                        <div>
-                            <h1 className={styles.pageTitle} style={{ fontSize: '28px', margin: 0, background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Email Support</h1>
-                            <p style={{ fontSize: '13px', color: '#64748b', marginTop: '6px' }}>
-                                Welcome to {user?.name || user?.email?.split('@')[0] || 'Support'} • {new Date().toLocaleDateString()}
-                            </p>
-                        </div>
-                        <div className={styles.topActions}>
-                            <div className={styles.profileBadge} onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ position: 'relative' }}>
-                                <div className={styles.miniAvatar} style={{ background: 'linear-gradient(135deg, #facc15, #f59e0b)', color: '#000' }}>
-                                    {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
-                                </div>
-                                <div style={{ textAlign: 'left' }}>
-                                    <div style={{ fontSize: '13px', fontWeight: '800', color: '#fff' }}>{user?.email || 'Staff Member'}</div>
-                                    <div style={{ fontSize: '10px', color: '#64748b' }}>{getRoleDisplayName()}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* PERSISTENT UNIFIED NAVIGATION BAR */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <button className={styles.composeBtn} onClick={() => setIsComposeOpen(true)}>
-                                <Plus size={20} /> Compose
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <button style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '16px', padding: '6px 18px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }} onClick={() => setIsComposeOpen(true)}>
+                                <Plus size={16} strokeWidth={3} /> Compose
                             </button>
 
-                            <button className={`${styles.navItem} ${currentFolder === 'Dashboard' ? styles.navActive : ''}`} onClick={() => { setActivePage('Emailing'); setCurrentFolder('Dashboard'); setSelectedTicket(null); }}>
-                                <Layout size={18} /> Dashboard
-                            </button>
+                            <div style={{ height: '24px', width: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
 
-                            <button className={`${styles.navItem} ${currentFolder === 'Inbox' ? styles.navActive : ''}`} onClick={() => { setActivePage('Emailing'); setCurrentFolder('Inbox'); setSelectedTicket(null); }}>
-                                <Inbox size={18} /> Inbox {folderCounts.Inbox > 0 && <span className={styles.countBadge}>{folderCounts.Inbox}</span>}
-                            </button>
-                            <button className={`${styles.navItem} ${currentFolder === 'Starred' ? styles.navActive : ''}`} onClick={() => { setActivePage('Emailing'); setCurrentFolder('Starred'); setSelectedTicket(null); }}>
-                                <Star size={18} /> Starred
-                            </button>
-                            <button className={`${styles.navItem} ${currentFolder === 'Sent' ? styles.navActive : ''}`} onClick={() => { setActivePage('Emailing'); setCurrentFolder('Sent'); setSelectedTicket(null); }}>
-                                <Send size={18} /> Sent
-                            </button>
-                            <button className={`${styles.navItem} ${currentFolder === 'Important' ? styles.navActive : ''}`} onClick={() => { setActivePage('Emailing'); setCurrentFolder('Important'); setSelectedTicket(null); }}>
-                                <Tag size={18} /> Important
-                            </button>
-                            <button className={`${styles.navItem} ${activePage === 'Users' ? styles.navActive : ''}`} onClick={() => setActivePage('Users')}>
-                                <Users size={18} /> Users
-                            </button>
-                            <button className={`${styles.navItem} ${activePage === 'Tasks' ? styles.navActive : ''}`} onClick={() => setActivePage('Tasks')}>
-                                <Briefcase size={18} /> Tasks
-                            </button>
-                            <button className={`${styles.navItem} ${activePage === 'Analytics' ? styles.navActive : ''}`} onClick={() => setActivePage('Analytics')}>
-                                <Activity size={18} /> Analytics
-                            </button>
-                            <button className={`${styles.navItem} ${activePage === 'Activity Log' ? styles.navActive : ''}`} onClick={() => setActivePage('Activity Log')}>
-                                <ShieldCheck size={18} /> Activity Log
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                {[
+                                    { id: 'Emailing', icon: Inbox, label: 'Inbox', folder: 'Inbox' },
+                                    { id: 'Emailing', icon: Star, label: 'Starred', folder: 'Starred' },
+                                    { id: 'Emailing', icon: Send, label: 'Sent', folder: 'Sent' },
+                                    { id: 'Emailing', icon: Tag, label: 'Important', folder: 'Important' },
+                                ].map(item => {
+                                    const isActive = activePage === 'Emailing' && currentFolder === item.folder;
+                                    return (
+                                        <button
+                                            key={item.label}
+                                            onClick={() => { setActivePage('Emailing'); setCurrentFolder(item.folder); setSelectedTicket(null); }}
+                                            style={{
+                                                background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                                                border: 'none',
+                                                color: isActive ? '#3b82f6' : '#94a3b8',
+                                                borderRadius: '12px',
+                                                padding: '6px 14px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                fontSize: '12px',
+                                                fontWeight: isActive ? '700' : '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <item.icon size={14} /> {item.label}
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
 
-                        <button className={styles.navItem} onClick={handleLogout} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
-                            <LogOut size={18} /> Logout
-                        </button>
+                        <div className={styles.searchBar} style={{ maxWidth: '300px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '4px 12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <Search size={14} color="#64748b" />
+                            <input
+                                placeholder="Search command..."
+                                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '12px', outline: 'none', width: '100%' }}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
                     </div>
-
-                    {/* STATS GRID - INTEGRATED INTO TOP SECTION */}
-                    {activePage === 'Emailing' && currentFolder === 'Dashboard' && (
-                        <div className={styles.compactCardGrid} style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '24px' }}>
-                            <div className={styles.compactCard} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                <div className={styles.compactIcon} style={{ background: 'rgba(59, 130, 246, 0.1)' }}><Mail size={20} color="#3b82f6" /></div>
-                                <div className={styles.compactContent}>
-                                    <div className={styles.compactLabel}>Emails Today</div>
-                                    <div className={styles.compactValue}>{stats.totalEmailsSentToday || 0}</div>
-                                    <div className={`${styles.compactTrend} ${styles.trendUp}`}>Live Sync Active</div>
-                                </div>
-                            </div>
-                            <div className={styles.compactCard} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                <div className={styles.compactIcon} style={{ background: 'rgba(245, 158, 11, 0.1)' }}><Activity size={20} color="#f59e0b" /></div>
-                                <div className={styles.compactContent}>
-                                    <div className={styles.compactLabel}>Resolution Rate</div>
-                                    <div className={styles.compactValue}>
-                                        {stats.totalTickets > 0 ? ((stats.solvedTickets / stats.totalTickets) * 100).toFixed(1) : '0'}%
-                                    </div>
-                                    <div className={`${styles.compactTrend} ${styles.trendUp}`}>↑ Resolved: {stats.solvedTickets}</div>
-                                </div>
-                            </div>
-                            <div className={styles.compactCard} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                <div className={styles.compactIcon} style={{ background: 'rgba(16, 185, 129, 0.1)' }}><Briefcase size={20} color="#10b981" /></div>
-                                <div className={styles.compactContent}>
-                                    <div className={styles.compactLabel}>Open Tickets</div>
-                                    <div className={styles.compactValue}>{stats.openTickets}</div>
-                                    <div className={`${styles.compactTrend} ${styles.trendNeutral}`}>Requires action</div>
-                                </div>
-                            </div>
-                            <div className={styles.compactCard} style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                <div className={styles.compactIcon} style={{ background: 'rgba(139, 92, 246, 0.1)' }}><Users size={20} color="#8b5cf6" /></div>
-                                <div className={styles.compactContent}>
-                                    <div className={styles.compactLabel}>Total Users</div>
-                                    <div className={styles.compactValue}>{stats.totalUsers}</div>
-                                    <div className={`${styles.compactTrend} ${styles.trendUp}`}>Platform Global</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {renderPageContent()}
@@ -1411,8 +1330,8 @@ const EmailSupport: React.FC = () => {
                     <div className={styles.composeHeader} onMouseDown={startDrag} style={{ cursor: isMaximized ? 'default' : 'grab' }}>
                         <span>Direct Secure Transmission</span>
                         <div className={styles.headerActions}>
-                            <Minus size={16} onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} style={{ cursor: 'pointer' }} />
-                            <Maximize2 size={14} onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); setIsMinimized(false); }} style={{ cursor: 'pointer' }} />
+                            <Minus size={16} onClick={(e: any) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} style={{ cursor: 'pointer' }} />
+                            <Maximize2 size={14} onClick={(e: any) => { e.stopPropagation(); setIsMaximized(!isMaximized); setIsMinimized(false); }} style={{ cursor: 'pointer' }} />
                             <X size={16} onClick={() => setIsComposeOpen(false)} style={{ cursor: 'pointer' }} />
                         </div>
                     </div>

@@ -126,6 +126,7 @@ export const staffService = {
         api.post<{ success: boolean; lead: any }>(`/staff/leads/${id}/update`, data),
     getPerformance: () => api.get<{ success: boolean; stats: any }>('/staff/performance'),
     getCallLogs: () => api.get<{ success: boolean; logs: any[] }>('/staff/call-logs'),
+    getAgents: () => api.get<{ success: boolean; agents: any[] }>('/admin/staff'), // Reusing admin staff list for now
 };
 
 export const walletService = {

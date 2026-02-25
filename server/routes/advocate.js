@@ -579,26 +579,50 @@ router.put('/update/:uniqueId', upload.single('profilePic'), async (req, res) =>
         const { uniqueId } = req.params;
         let updateData = req.body;
         console.log(`[UPDATE DEBUG] Request for UniqueID: ${uniqueId}`);
-        console.log(`[UPDATE DEBUG] RAW Payload:`, JSON.stringify(updateData, null, 2));
+        // console.log(`[UPDATE DEBUG] RAW Payload:`, JSON.stringify(updateData, null, 2));
 
         const advocate = await Advocate.findOne({ unique_id: uniqueId });
-        console.log(`[UPDATE] Found advocate: ${advocate?._id}`);
         if (!advocate) return res.status(404).json({ error: 'Advocate not found' });
 
-        if (updateData.firstName) advocate.firstName = updateData.firstName;
-        if (updateData.lastName) advocate.lastName = updateData.lastName;
-        if (updateData.name) advocate.name = updateData.name;
-        // Mobile update needs care, but allowing as per request
-        if (updateData.mobile) advocate.mobile = updateData.mobile;
+        const parseValue = (val) => {
+            try {
+                if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+                    return JSON.parse(val);
+                }
+            } catch (e) { }
+            return val;
+        };
 
-        if (updateData.gender) advocate.gender = updateData.gender;
-        if (updateData.dob) advocate.dob = updateData.dob;
-        if (updateData.idProofType) advocate.idProofType = updateData.idProofType;
+        const oldEmail = advocate.email;
 
-        if (updateData.location) advocate.location = { ...advocate.location, ...updateData.location };
-        if (updateData.education) advocate.education = { ...advocate.education, ...updateData.education };
-        if (updateData.practice) advocate.practice = { ...advocate.practice, ...updateData.practice };
-        if (updateData.career) advocate.career = { ...advocate.career, ...updateData.career };
+        // --- Personal Details ---
+        if (updateData.firstName !== undefined) advocate.firstName = updateData.firstName.trim();
+        if (updateData.lastName !== undefined) advocate.lastName = updateData.lastName.trim();
+
+        // Always sync Full Name field
+        advocate.name = `${advocate.firstName} ${advocate.lastName}`.trim();
+
+        if (updateData.mobile !== undefined) advocate.mobile = updateData.mobile;
+        if (updateData.email !== undefined) advocate.email = updateData.email.trim().toLowerCase();
+        if (updateData.gender !== undefined) advocate.gender = updateData.gender;
+        if (updateData.dob !== undefined) advocate.dob = updateData.dob;
+        if (updateData.idProofType !== undefined) advocate.idProofType = updateData.idProofType;
+
+        // --- Nested Objects Parsing ---
+        const loc = parseValue(updateData.location);
+        if (loc) advocate.location = { ...advocate.location, ...loc };
+
+        const edu = parseValue(updateData.education);
+        if (edu) advocate.education = { ...advocate.education, ...edu };
+
+        const practice = parseValue(updateData.practice);
+        if (practice) advocate.practice = { ...advocate.practice, ...practice };
+
+        const career = parseValue(updateData.career);
+        if (career) advocate.career = { ...advocate.career, ...career };
+
+        const availability = parseValue(updateData.availability);
+        if (availability) advocate.availability = { ...advocate.availability, ...availability };
 
         // --- File Upload Handling ---
         if (req.file) {
@@ -607,16 +631,35 @@ router.put('/update/:uniqueId', upload.single('profilePic'), async (req, res) =>
         }
 
         const savedAdvocate = await advocate.save();
-        console.log(`[UPDATE DEBUG] Saved Advocate Name: ${savedAdvocate.name}`);
-        console.log(`[UPDATE DEBUG] Saved Advocate FirstName: ${savedAdvocate.firstName}`);
+        console.log(`[UPDATE SUCCESS] Saved advocate: ${savedAdvocate.unique_id}, Name: ${savedAdvocate.name}`);
 
-        if (savedAdvocate.userId && savedAdvocate.name) {
-            const User = require('../models/User'); // Ensure import
-            await User.findByIdAndUpdate(savedAdvocate.userId, { name: savedAdvocate.name });
-            console.log(`[UPDATE DEBUG] Synced name to User model`);
+        // Keep User model in sync
+        if (savedAdvocate.userId) {
+            const userUpdate = {
+                name: savedAdvocate.name,
+                phone: savedAdvocate.mobile
+            };
+
+            // Only update email in User model if it's changing and valid
+            if (updateData.email && updateData.email.trim().toLowerCase() !== oldEmail) {
+                const newEmail = updateData.email.trim().toLowerCase();
+                const exists = await User.findOne({ email: newEmail, _id: { $ne: savedAdvocate.userId } });
+                if (!exists) {
+                    userUpdate.email = newEmail;
+                }
+            }
+
+            await User.findByIdAndUpdate(savedAdvocate.userId, userUpdate);
+            console.log(`[UPDATE SYNC] User model synced:`, userUpdate);
         }
 
-        res.json({ success: true, advocate: savedAdvocate });
+        res.json({
+            success: true,
+            advocate: {
+                ...savedAdvocate.toObject(),
+                image_url: getImageUrl(savedAdvocate.profilePicPath)
+            }
+        });
     } catch (err) {
         console.error('Update Advocate Error:', err);
         res.status(500).json({ error: err.message });

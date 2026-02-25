@@ -15,6 +15,8 @@ import { useAuth } from '../../../context/AuthContext';
 import { db } from '../../../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
+import MemberTable from '../../../components/admin/MemberTable';
+
 interface Lead {
     _id: string;
     clientName: string;
@@ -33,7 +35,11 @@ interface Lead {
     unique_id?: string;
 }
 
-const TelecallerDashboard: React.FC = () => {
+interface TelecallerDashboardProps {
+    view?: 'leads' | 'members' | 'stats';
+}
+
+const TelecallerDashboard: React.FC<TelecallerDashboardProps> = ({ view = 'leads' }) => {
     const { user } = useAuth();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [activeLead, setActiveLead] = useState<Lead | null>(null);
@@ -138,6 +144,19 @@ const TelecallerDashboard: React.FC = () => {
     const filteredLeads = useMemo(() => {
         return leads.filter(l => l.clientName?.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [leads, searchTerm]);
+
+    if (view === 'members') {
+        return (
+            <div className={styles.fullDashboardArea}>
+                <div className={styles.leadsContainer}>
+                    <div className={styles.boxHeader}><h3>Verified Member Directory</h3></div>
+                    <div className={styles.scrollableContent}>
+                        <MemberTable context="approved" title="Qualified Contacts" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.fullDashboardArea}>

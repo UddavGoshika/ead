@@ -258,12 +258,20 @@ import {
     ChevronDown,
     ChevronUp,
     X,
+    MoreVertical,
     CheckCircle,
     Clock as ClockIcon,
     AlertCircle,
     Loader2,
+    CreditCard,
+    Settings,
+    User,
+    Calendar,
+    DollarSign,
+    Briefcase
 } from "lucide-react";
 import { MdSyncAlt } from "react-icons/md";
+import { toast } from "react-toastify";
 import axios from "axios";
 
 interface AgreementRequest {
@@ -384,21 +392,106 @@ const mockRequests: AgreementRequest[] = [
         stepsCompleted: 8,
         totalSteps: 16,
         grossFee: 5000,
-        earned: Math.round(5000 * 0.4), // partial on progress
+        earned: Math.round(5000 * 0.4),
         reportedLogs: "",
         clientNotes: "50-50 partnership for retail business",
         lastUpdated: "2026-01-31",
     },
+    {
+        requestId: "AGR-REQ-2005",
+        agreementId: "4",
+        title: "Commercial Lease Agreement",
+        category: "Property",
+        price: "₹3,500",
+        timeline: "48 Hours",
+        status: "Review",
+        requestedBy: "Sanjay Singhania",
+        clientPhone: "+91 98877 66554",
+        requestedDate: "2026-02-01",
+        completionDate: undefined,
+        specialist: "Adv. Vikram Seth",
+        specialistLicense: "ADV-15542 | KA",
+        specField: "Property Law",
+        licenseNo: "KA/8821/19",
+        stepsCompleted: 12,
+        totalSteps: 15,
+        grossFee: 3500,
+        earned: 0,
+        reportedLogs: "",
+        clientNotes: "Office space lease in Bangalore",
+        lastUpdated: "2026-02-02",
+    },
+    {
+        requestId: "AGR-REQ-2006",
+        agreementId: "5",
+        title: "Vendor Service Agreement",
+        category: "Corporate",
+        price: "₹2,500",
+        timeline: "24 Hours",
+        status: "Rejected",
+        requestedBy: "Kavita Rao",
+        clientPhone: "+91 91122 33445",
+        requestedDate: "2026-01-25",
+        completionDate: undefined,
+        specialist: "Adv. Rajesh Kumar",
+        specialistLicense: "ADV-10023 | Delhi",
+        specField: "Corporate Law",
+        licenseNo: "DL/4421/22",
+        stepsCompleted: 2,
+        totalSteps: 14,
+        grossFee: 2500,
+        earned: 0,
+        reportedLogs: "Specialist rejected due to conflict of interest",
+        clientNotes: "Software delivery contract",
+        lastUpdated: "2026-01-26",
+    },
+    {
+        requestId: "AGR-REQ-2007",
+        agreementId: "1",
+        title: "Non-Disclosure Agreement (NDA)",
+        category: "Corporate",
+        price: "₹1,500",
+        timeline: "24 Hours",
+        status: "Completed",
+        requestedBy: "Amitabh Shah",
+        clientPhone: "+91 90000 11111",
+        requestedDate: "2026-01-10",
+        completionDate: "2026-01-11",
+        specialist: "Adv. Priya Mehta",
+        specialistLicense: "ADV-11892 | MH",
+        specField: "IT Contracts",
+        licenseNo: "MH/7789/21",
+        stepsCompleted: 14,
+        totalSteps: 14,
+        grossFee: 1500,
+        earned: 1050,
+        reportedLogs: "",
+        clientNotes: "Standard NDA",
+        lastUpdated: "2026-01-11",
+    }
 ];
 
 const AgreementsList = () => {
-    const [requests, setRequests] = useState<AgreementRequest[]>([]);
+    const [requests, setRequests] = useState<AgreementRequest[]>(mockRequests);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("All");
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [modalFilter, setModalFilter] = useState<"all" | "completed" | "pending" | "reported" | null>(null);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [selectedRequest, setSelectedRequest] = useState<AgreementRequest | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [newTemplate, setNewTemplate] = useState({
+        title: "",
+        category: "Corporate",
+        price: "",
+        timeline: "24 Hours",
+        description: ""
+    });
 
     const fetchRequests = async () => {
         try {
@@ -407,7 +500,7 @@ const AgreementsList = () => {
                 params: { type: "Agreement" }
             });
             if (res.data.success) {
-                setRequests(res.data.requests);
+                setRequests([...mockRequests, ...(res.data.requests || [])]);
             }
         } catch (err: any) {
             console.error("Error fetching agreements:", err);
@@ -420,6 +513,24 @@ const AgreementsList = () => {
     useEffect(() => {
         fetchRequests();
     }, []);
+
+    const toggleMenu = (id: string) => {
+        setOpenMenuId(openMenuId === id ? null : id);
+    };
+
+    const handleAction = (type: 'view' | 'manage' | 'delete' | 'payment', req: AgreementRequest) => {
+        setOpenMenuId(null);
+        setSelectedRequest(req);
+        if (type === 'view') setIsViewModalOpen(true);
+        if (type === 'manage') setIsManageModalOpen(true);
+        if (type === 'payment') setIsPaymentModalOpen(true);
+        if (type === 'delete') {
+            if (window.confirm("Are you sure you want to delete this record?")) {
+                toast.success("Record deleted successfully (Mock)");
+                setRequests(requests.filter(r => r.requestId !== req.requestId));
+            }
+        }
+    };
 
     const filteredMain = useMemo(() => {
         return requests.filter((r) => {
@@ -500,7 +611,7 @@ const AgreementsList = () => {
                     </p>
                 </div>
                 <div className={styles.headerActions}>
-                    <button className={styles.primaryBtn}>
+                    <button className={styles.primaryBtn} onClick={() => setIsConfigModalOpen(true)}>
                         <Plus size={18} /> Configure New Template
                     </button>
                 </div>
@@ -699,26 +810,37 @@ const AgreementsList = () => {
                                             <td>{req.requestedDate}</td>
                                             <td>
                                                 <div className={styles.rowActions}>
-                                                    <button className={styles.actionIcon} title="Quick View">
-                                                        <Eye size={16} />
-                                                    </button>
                                                     <button
                                                         className={styles.actionIcon}
-                                                        style={{
-                                                            color: "#3b82f6",
-                                                            border: "1px solid rgba(59, 130, 246, 0.2)",
-                                                            padding: "4px 10px",
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleMenu(req.requestId);
                                                         }}
                                                     >
-                                                        Manage
+                                                        <MoreVertical size={20} />
                                                     </button>
-                                                    <button
-                                                        className={styles.actionIcon}
-                                                        title="Delete Record"
-                                                        style={{ color: "#ef4444" }}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+
+                                                    {openMenuId === req.requestId && (
+                                                        <div className={styles.dropdownMenu} onClick={(e) => e.stopPropagation()}>
+                                                            <div className={styles.menuDivider}>Actions</div>
+                                                            <button onClick={() => handleAction('view', req)}>
+                                                                <Eye size={14} /> View Case
+                                                            </button>
+                                                            <button onClick={() => handleAction('manage', req)}>
+                                                                <Settings size={14} /> Manage
+                                                            </button>
+                                                            <button onClick={() => handleAction('payment', req)}>
+                                                                <CreditCard size={14} /> Payment
+                                                            </button>
+                                                            <div className={styles.menuDivider}>Danger</div>
+                                                            <button
+                                                                onClick={() => handleAction('delete', req)}
+                                                                style={{ color: '#ef4444' }}
+                                                            >
+                                                                <Trash2 size={14} /> Delete Record
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -834,6 +956,220 @@ const AgreementsList = () => {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Configuration Modal */}
+            {isConfigModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                        <div className={styles.modalHeader}>
+                            <h3>Configure New Agreement Template</h3>
+                            <button onClick={() => setIsConfigModalOpen(false)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody} style={{ padding: '20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Template Title</label>
+                                    <input
+                                        type="text"
+                                        className={styles.modalInput}
+                                        placeholder="e.g. Non-Disclosure Agreement"
+                                        value={newTemplate.title}
+                                        onChange={(e) => setNewTemplate({ ...newTemplate, title: e.target.value })}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Category</label>
+                                        <select
+                                            className={styles.modalInput}
+                                            value={newTemplate.category}
+                                            onChange={(e) => setNewTemplate({ ...newTemplate, category: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        >
+                                            <option>Corporate</option>
+                                            <option>Property</option>
+                                            <option>Legal Entity</option>
+                                            <option>IT/Tech</option>
+                                            <option>Personal</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Base Price (₹)</label>
+                                        <input
+                                            type="number"
+                                            className={styles.modalInput}
+                                            placeholder="1500"
+                                            value={newTemplate.price}
+                                            onChange={(e) => setNewTemplate({ ...newTemplate, price: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Standard Timeline</label>
+                                    <select
+                                        className={styles.modalInput}
+                                        value={newTemplate.timeline}
+                                        onChange={(e) => setNewTemplate({ ...newTemplate, timeline: e.target.value })}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                    >
+                                        <option>12 Hours</option>
+                                        <option>24 Hours</option>
+                                        <option>48 Hours</option>
+                                        <option>3-5 Days</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Description</label>
+                                    <textarea
+                                        className={styles.modalInput}
+                                        placeholder="Describe the agreement purpose..."
+                                        value={newTemplate.description}
+                                        onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc', minHeight: '80px', resize: 'vertical' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter} style={{ padding: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                            <button onClick={() => setIsConfigModalOpen(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #334155', borderRadius: '8px', color: '#94a3b8' }}>Cancel</button>
+                            <button
+                                onClick={() => {
+                                    alert("New Template Saved Successfully!");
+                                    setIsConfigModalOpen(false);
+                                }}
+                                className={styles.primaryBtn}
+                            >
+                                Save Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Modal */}
+            {isViewModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <div className={styles.modalHeader}>
+                            <h2>Case Details: {selectedRequest.requestId}</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsViewModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.detailGrid}>
+                                <div className={styles.profileHero}>
+                                    <div className={styles.largeAvatar}><FileText size={40} /></div>
+                                    <div className={styles.heroInfo}>
+                                        <h3>{selectedRequest.title}</h3>
+                                        <p>{selectedRequest.category}</p>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto' }}>
+                                        <span className={`${styles.statusBadge} ${styles[selectedRequest.status.toLowerCase().replace(' ', '')]}`}>
+                                            {selectedRequest.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <label><User size={14} /> Client Details</label>
+                                        <p>{selectedRequest.requestedBy}</p>
+                                        <div className={styles.pSub}>{selectedRequest.clientPhone}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><Briefcase size={14} /> Assigned Specialist</label>
+                                        <p>{selectedRequest.specialist}</p>
+                                        <div className={styles.pSub}>{selectedRequest.specialistLicense}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><Calendar size={14} /> Dates</label>
+                                        <p>Requested: {selectedRequest.requestedDate}</p>
+                                        <div className={styles.pSub}>Completed: {selectedRequest.completionDate || "—"}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><DollarSign size={14} /> Financials</label>
+                                        <p>Gross Fee: {selectedRequest.price}</p>
+                                        <div className={styles.pSub}>Platform Earned: ₹{selectedRequest.earned.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Client Notes</label>
+                                    <p style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                                        {selectedRequest.clientNotes || "No notes provided"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.secondaryBtn} onClick={() => setIsViewModalOpen(false)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage Modal Mock */}
+            {isManageModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '450px' }}>
+                        <div className={styles.modalHeader}>
+                            <h2>Manage Case</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsManageModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div>
+                                    <label style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>Update Status</label>
+                                    <select
+                                        className={styles.modalInput}
+                                        defaultValue={selectedRequest.status}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', padding: '12px', borderRadius: '8px', color: '#fff', marginTop: '8px' }}
+                                    >
+                                        <option>Pending</option>
+                                        <option>In Progress</option>
+                                        <option>Review</option>
+                                        <option>Completed</option>
+                                        <option>Reported</option>
+                                        <option>Rejected</option>
+                                    </select>
+                                </div>
+                                <button className={styles.primaryBtn} onClick={() => { toast.success("Settings updated"); setIsManageModalOpen(false) }}>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Modal Mock */}
+            {isPaymentModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
+                        <div className={styles.modalHeader}>
+                            <h2>Payment History</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsPaymentModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981' }}>{selectedRequest.price}</div>
+                                <p style={{ color: '#64748b' }}>Status: Paid via Online Banking</p>
+                                <div style={{ marginTop: '24px', textAlign: 'left', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <span>Transaction ID:</span>
+                                        <span style={{ color: '#fff' }}>TXN_99812233</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Date:</span>
+                                        <span style={{ color: '#fff' }}>{selectedRequest.requestedDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.primaryBtn} onClick={() => setIsPaymentModalOpen(false)}>Close</button>
                         </div>
                     </div>
                 </div>

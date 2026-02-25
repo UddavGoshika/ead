@@ -10,20 +10,27 @@ import {
     Plus,
     Filter,
     ClipboardCheck,
-    Clock,
+    FileText,
     Eye,
     Trash2,
     ChevronDown,
     ChevronUp,
     User,
     X,
+    MoreVertical,
     CheckCircle,
     AlertCircle,
     Clock as ClockIcon,
     Loader2,
+    CreditCard,
+    Settings,
+    Calendar,
+    DollarSign,
+    Briefcase
 } from "lucide-react";
 import { MdSyncAlt } from "react-icons/md";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 interface AffidavitRequest {
     _id?: string;
@@ -33,8 +40,9 @@ interface AffidavitRequest {
     type: string;
     price: string;
     timeline: string;
-    status: "Pending" | "In Progress" | "Executed" | "Delivered" | "Reported" | "Rejected";
+    status: "Pending" | "In Progress" | "Executed" | "Delivered" | "Reported" | "Rejected" | "Drafting" | "Notarizing";
     requiredStamp: string;
+    stampValue?: string;
     requestedBy: string;
     clientPhone: string;
     requestedDate: string;
@@ -137,17 +145,71 @@ const mockRequests: AffidavitRequest[] = [
         reportedLogs: "",
         clientNotes: "For college admission",
     },
-    // Add more realistic entries here if needed
+    {
+        requestId: "AFF-REQ-1005",
+        affidavitId: "4",
+        title: "Self-Declaration of Income",
+        type: "Financial",
+        price: "₹500",
+        timeline: "24 Hours",
+        status: "In Progress",
+        requiredStamp: "₹20",
+        requestedBy: "Manish Pandey",
+        clientPhone: "+91 94432 11223",
+        requestedDate: "2026-02-02",
+        fulfillmentSpecialist: "Adv. Rajesh Kumar",
+        specialistLicense: "ADV-10023 | Delhi",
+        stepsCompleted: 2,
+        totalSteps: 4,
+        grossFee: 500,
+        earned: 0,
+        reportedLogs: "",
+        clientNotes: "For scholarship application",
+    },
+    {
+        requestId: "AFF-REQ-1006",
+        affidavitId: "5",
+        title: "Heirship Affidavit",
+        type: "Property",
+        price: "₹1,200",
+        timeline: "48 Hours",
+        status: "Pending",
+        requiredStamp: "₹100",
+        requestedBy: "Geeta Devi",
+        clientPhone: "+91 88877 66554",
+        requestedDate: "2026-02-03",
+        fulfillmentSpecialist: "Sneha Sharma",
+        specialistLicense: "ADV-99201 | MH",
+        stepsCompleted: 1,
+        totalSteps: 8,
+        grossFee: 1200,
+        earned: 0,
+        reportedLogs: "",
+        clientNotes: "Property transfer after demise",
+    }
 ];
 
 const AffidavitsList = () => {
-    const [requests, setRequests] = useState<AffidavitRequest[]>([]);
+    const [requests, setRequests] = useState<AffidavitRequest[]>(mockRequests);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedType, setSelectedType] = useState("All");
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [modalFilter, setModalFilter] = useState<"all" | "pending" | "completed" | "reported" | null>(null);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [selectedRequest, setSelectedRequest] = useState<AffidavitRequest | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [newAffidavit, setNewAffidavit] = useState({
+        title: "",
+        type: "General",
+        price: "",
+        stampValue: "₹100",
+        fulfillmentTimeline: "24 Hours"
+    });
 
     const fetchRequests = async () => {
         try {
@@ -156,7 +218,7 @@ const AffidavitsList = () => {
                 params: { type: "Affidavit" }
             });
             if (res.data.success) {
-                setRequests(res.data.requests);
+                setRequests([...mockRequests, ...(res.data.requests || [])]);
             }
         } catch (err: any) {
             console.error("Error fetching affidavits:", err);
@@ -169,6 +231,24 @@ const AffidavitsList = () => {
     useEffect(() => {
         fetchRequests();
     }, []);
+
+    const toggleMenu = (id: string) => {
+        setOpenMenuId(openMenuId === id ? null : id);
+    };
+
+    const handleAction = (type: 'view' | 'manage' | 'delete' | 'payment', req: AffidavitRequest) => {
+        setOpenMenuId(null);
+        setSelectedRequest(req);
+        if (type === 'view') setIsViewModalOpen(true);
+        if (type === 'manage') setIsManageModalOpen(true);
+        if (type === 'payment') setIsPaymentModalOpen(true);
+        if (type === 'delete') {
+            if (window.confirm("Are you sure you want to delete this record?")) {
+                toast.success("Record deleted successfully (Mock)");
+                setRequests(requests.filter(r => r.requestId !== req.requestId));
+            }
+        }
+    };
 
     const filteredMain = useMemo(() => {
         return requests.filter((r) => {
@@ -256,7 +336,7 @@ const AffidavitsList = () => {
                     </p>
                 </div>
                 <div className={styles.headerActions}>
-                    <button className={styles.primaryBtn}>
+                    <button className={styles.primaryBtn} onClick={() => setIsConfigModalOpen(true)}>
                         <Plus size={18} /> New Affidavit Request
                     </button>
                 </div>
@@ -347,7 +427,7 @@ const AffidavitsList = () => {
                                     <button
                                         key={s}
                                         className={`${styles.pill} ${selectedType === s ? styles.activePill : ""
-                                            }`}
+                                            } `}
                                         onClick={() => setSelectedType(s)}
                                     >
                                         {s}
@@ -401,7 +481,7 @@ const AffidavitsList = () => {
                                             <td>
                                                 <div className={styles.profileCell}>
                                                     <div
-                                                        className={`${styles.avatar} ${styles.affIcon}`}
+                                                        className={`${styles.avatar} ${styles.affIcon} `}
                                                     >
                                                         <ClipboardCheck size={20} />
                                                     </div>
@@ -437,7 +517,8 @@ const AffidavitsList = () => {
                                                     <span
                                                         className={`${styles.statusBadge} ${styles[req.status
                                                             .toLowerCase()
-                                                            .replace(/\s+/g, "")]}`}
+                                                            .replace(/\s+/g, "")]
+                                                            } `}
                                                         style={{ marginTop: "4px" }}
                                                     >
                                                         {req.status}
@@ -474,7 +555,7 @@ const AffidavitsList = () => {
                                                 {isReported ? (
                                                     <div className={styles.credCell}>
                                                         <span
-                                                            className={`${styles.severityTag} ${styles.medium}`}
+                                                            className={`${styles.severityTag} ${styles.medium} `}
                                                         >
                                                             Issue Reported
                                                         </span>
@@ -494,28 +575,35 @@ const AffidavitsList = () => {
                                                 <div className={styles.rowActions}>
                                                     <button
                                                         className={styles.actionIcon}
-                                                        title="View Details"
-                                                    >
-                                                        <Eye size={16} />
-                                                    </button>
-                                                    <button
-                                                        className={styles.actionIcon}
-                                                        style={{
-                                                            color: "#3b82f6",
-                                                            border:
-                                                                "1px solid rgba(59, 130, 246, 0.2)",
-                                                            padding: "4px 10px",
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleMenu(req.requestId);
                                                         }}
                                                     >
-                                                        Manage
+                                                        <MoreVertical size={20} />
                                                     </button>
-                                                    <button
-                                                        className={styles.actionIcon}
-                                                        title="Delete Record"
-                                                        style={{ color: "#ef4444" }}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+
+                                                    {openMenuId === req.requestId && (
+                                                        <div className={styles.dropdownMenu} onClick={(e) => e.stopPropagation()}>
+                                                            <div className={styles.menuDivider}>Actions</div>
+                                                            <button onClick={() => handleAction('view', req)}>
+                                                                <Eye size={14} /> View Case
+                                                            </button>
+                                                            <button onClick={() => handleAction('manage', req)}>
+                                                                <Settings size={14} /> Manage
+                                                            </button>
+                                                            <button onClick={() => handleAction('payment', req)}>
+                                                                <CreditCard size={14} /> Payment
+                                                            </button>
+                                                            <div className={styles.menuDivider}>Danger</div>
+                                                            <button
+                                                                onClick={() => handleAction('delete', req)}
+                                                                style={{ color: '#ef4444' }}
+                                                            >
+                                                                <Trash2 size={14} /> Delete Record
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -682,6 +770,235 @@ const AffidavitsList = () => {
                                     No requests found in this category.
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Configuration Modal */}
+            {isConfigModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '500px' }}>
+                        <div className={styles.modalHeader}>
+                            <h3>Configure New Affidavit Type</h3>
+                            <button onClick={() => setIsConfigModalOpen(false)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody} style={{ padding: '20px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Affidavit Title</label>
+                                    <input
+                                        type="text"
+                                        className={styles.modalInput}
+                                        placeholder="e.g. Identity Proof Affidavit"
+                                        value={newAffidavit.title}
+                                        onChange={(e) => setNewAffidavit({ ...newAffidavit, title: e.target.value })}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Type / Group</label>
+                                        <select
+                                            className={styles.modalInput}
+                                            value={newAffidavit.type}
+                                            onChange={(e) => setNewAffidavit({ ...newAffidavit, type: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        >
+                                            <option>Identity</option>
+                                            <option>Residence</option>
+                                            <option>Education</option>
+                                            <option>Financial</option>
+                                            <option>Property</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Estimated Cost (₹)</label>
+                                        <input
+                                            type="number"
+                                            className={styles.modalInput}
+                                            placeholder="800"
+                                            value={newAffidavit.price}
+                                            onChange={(e) => setNewAffidavit({ ...newAffidavit, price: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Stamp Value</label>
+                                        <select
+                                            className={styles.modalInput}
+                                            value={newAffidavit.stampValue}
+                                            onChange={(e) => setNewAffidavit({ ...newAffidavit, stampValue: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        >
+                                            <option>₹10</option>
+                                            <option>₹20</option>
+                                            <option>₹50</option>
+                                            <option>₹100</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Fulfillment Target</label>
+                                        <select
+                                            className={styles.modalInput}
+                                            value={newAffidavit.fulfillmentTimeline}
+                                            onChange={(e) => setNewAffidavit({ ...newAffidavit, fulfillmentTimeline: e.target.value })}
+                                            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#f8fafc' }}
+                                        >
+                                            <option>6 Hours</option>
+                                            <option>12 Hours</option>
+                                            <option>24 Hours</option>
+                                            <option>48 Hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalField}>
+                            <label>Price Coverage (Gross Fee)</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. ₹1,200"
+                                className={styles.modalInput}
+                                value={newAffidavit.price}
+                                onChange={(e) => setNewAffidavit({ ...newAffidavit, price: e.target.value })}
+                            />
+                        </div>
+                        <div className={styles.modalFooter} style={{ marginTop: '20px' }}>
+                            <button onClick={() => setIsConfigModalOpen(false)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #334155', borderRadius: '8px', color: '#94a3b8' }}>Cancel</button>
+                            <button
+                                onClick={() => {
+                                    alert("Service Configured Successfully!");
+                                    setIsConfigModalOpen(false);
+                                }}
+                                className={styles.primaryBtn}
+                            >
+                                Add Service
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Modal */}
+            {isViewModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <div className={styles.modalHeader}>
+                            <h2>Affidavit Details: {selectedRequest.requestId}</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsViewModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.detailGrid}>
+                                <div className={styles.profileHero}>
+                                    <div className={styles.largeAvatar}><FileText size={40} /></div>
+                                    <div className={styles.heroInfo}>
+                                        <h3>{selectedRequest.title}</h3>
+                                        <p>{selectedRequest.type}</p>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto' }}>
+                                        <span className={`${styles.statusBadge} ${styles[selectedRequest.status?.toLowerCase().replace(' ', '') || 'pending']} `}>
+                                            {selectedRequest.status || 'Pending'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className={styles.infoGrid}>
+                                    <div className={styles.infoItem}>
+                                        <label><User size={14} /> Deponent / Client</label>
+                                        <p>{selectedRequest.requestedBy}</p>
+                                        <div className={styles.pSub}>{selectedRequest.clientPhone}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><Briefcase size={14} /> Fulfillment Specialist</label>
+                                        <p>{selectedRequest.fulfillmentSpecialist}</p>
+                                        <div className={styles.pSub}>{selectedRequest.specialistLicense}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><Calendar size={14} /> Dates</label>
+                                        <p>Requested: {selectedRequest.requestedDate}</p>
+                                        <div className={styles.pSub}>Delivered: {selectedRequest.executionDate || "—"}</div>
+                                    </div>
+                                    <div className={styles.infoItem}>
+                                        <label><DollarSign size={14} /> Financials</label>
+                                        <p>Total Fee: ₹{selectedRequest.grossFee.toLocaleString()}</p>
+                                        <div className={styles.pSub}>Stamp Value: {selectedRequest.stampValue}</div>
+                                    </div>
+                                </div>
+                                <div className={styles.infoItem}>
+                                    <label>Client Notes</label>
+                                    <p style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', fontSize: '0.9rem' }}>
+                                        {selectedRequest.clientNotes || "No notes provided"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.secondaryBtn} onClick={() => setIsViewModalOpen(false)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage Modal Mock */}
+            {isManageModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '450px' }}>
+                        <div className={styles.modalHeader}>
+                            <h2>Manage Affidavit</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsManageModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div>
+                                    <label style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>Update Status</label>
+                                    <select
+                                        className={styles.modalInput}
+                                        defaultValue={selectedRequest.status}
+                                        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', padding: '12px', borderRadius: '8px', color: '#fff', marginTop: '8px' }}
+                                    >
+                                        <option>Pending</option>
+                                        <option>Drafting</option>
+                                        <option>Notarizing</option>
+                                        <option>Delivered</option>
+                                        <option>Reported</option>
+                                    </select>
+                                </div>
+                                <button className={styles.primaryBtn} onClick={() => { toast.success("Affidavit updated"); setIsManageModalOpen(false) }}>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Payment Modal Mock */}
+            {isPaymentModalOpen && selectedRequest && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
+                        <div className={styles.modalHeader}>
+                            <h2>Payment Log</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsPaymentModalOpen(false)}><X size={24} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981' }}>₹{selectedRequest.grossFee.toLocaleString()}</div>
+                                <p style={{ color: '#64748b' }}>Status: Payment Successful</p>
+                                <div style={{ marginTop: '24px', textAlign: 'left', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <span>Transaction ID:</span>
+                                        <span style={{ color: '#fff' }}>AFX_11223344</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Date:</span>
+                                        <span style={{ color: '#fff' }}>{selectedRequest.requestedDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.primaryBtn} onClick={() => setIsPaymentModalOpen(false)}>Close</button>
                         </div>
                     </div>
                 </div>

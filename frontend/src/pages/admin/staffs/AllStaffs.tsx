@@ -28,7 +28,7 @@ interface Staff {
 }
 
 const ROLE_DISPLAY_MAP: Record<string, string> = {
-    admin: 'Super Admin',
+    admin: 'Admin',
     super_admin: 'Super Admin',
     superadmin: 'Super Admin',
     manager: 'Manager',
@@ -53,7 +53,7 @@ const ROLE_DISPLAY_MAP: Record<string, string> = {
 };
 
 const ALL_ROLES = [
-    "All", "Super Admin", "Manager", "Team Lead", "HR",
+    "All", "Super Admin", "Admin", "Manager", "Team Lead", "HR",
     "Telecallers", "Data Entry", "Customer Care Support",
     "Chat Support", "Live Chat Support", "Call Support",
     "Personal Assistant Support", "Marketers", "Email Support",
@@ -424,12 +424,14 @@ const AllStaffs: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Employee Details</th>
+                                    <th>Personnel Identity</th>
+                                    <th>Contact Information</th>
                                     <th>Position / Role</th>
-                                    <th>Performance</th>
-                                    <th>Analytics (Solved/Pend)</th>
-                                    <th>Earnings (Gross/Net)</th>
-                                    <th>Joined / Activity</th>
+                                    <th style={{ textAlign: "center" }}>Solved</th>
+                                    <th style={{ textAlign: "center" }}>Pending</th>
+                                    <th style={{ textAlign: "center" }}>Performance</th>
+                                    <th>Net Earnings</th>
+                                    <th>Joined Date</th>
                                     <th>Status</th>
                                     <th style={{ textAlign: "right" }}>Actions</th>
                                 </tr>
@@ -447,11 +449,13 @@ const AllStaffs: React.FC = () => {
                                                 <div className={styles.stacked}>
                                                     <span className={styles.primaryText}>{staff.name}</span>
                                                     <span className={styles.idText}>{staff.staffId}</span>
-                                                    <div className={styles.miniChannels}>
-                                                        <span title={staff.email}><Mail size={10} /> {staff.email}</span>
-                                                        <span><Phone size={10} /> {staff.mobile}</span>
-                                                    </div>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className={styles.stacked}>
+                                                <span className={styles.mobileText}>{staff.mobile}</span>
+                                                <span className={styles.emailText}>{staff.email}</span>
                                             </div>
                                         </td>
                                         <td>
@@ -460,28 +464,22 @@ const AllStaffs: React.FC = () => {
                                                 <span className={styles.deptText}>{staff.department}</span>
                                             </div>
                                         </td>
-                                        <td>
-                                            <div className={styles.successRateBox}>
-                                                <BarChart3 size={14} /> {staff.successRate}
+                                        <td style={{ textAlign: "center" }}>
+                                            <span className={styles.solvedCount}>{staff.solvedCases}</span>
+                                        </td>
+                                        <td style={{ textAlign: "center" }}>
+                                            <span className={styles.pendingCount}>{staff.pendingCases}</span>
+                                        </td>
+                                        <td style={{ textAlign: "center" }}>
+                                            <div className={styles.successRateBox} style={{ margin: "0 auto" }}>
+                                                {staff.successRate}
                                             </div>
                                         </td>
                                         <td>
-                                            <div className={styles.analyticsCell}>
-                                                <span className={styles.solvedText}>{staff.solvedCases} Solved</span>
-                                                <span className={styles.pendingText}>{staff.pendingCases} Pending</span>
-                                            </div>
+                                            <span className={styles.netText}>{staff.netAmount}</span>
                                         </td>
                                         <td>
-                                            <div className={styles.earningsCell}>
-                                                <span className={styles.grossText}>{staff.grossAmount} Gross</span>
-                                                <span className={styles.netText}>{staff.netAmount} Net</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.joinedCol}>
-                                                <span className={styles.secondaryText}>{staff.joinedDate}</span>
-                                                <span className={styles.activityPulse}><Clock size={10} /> {staff.lastActive}</span>
-                                            </div>
+                                            <span className={styles.secondaryText}>{staff.joinedDate}</span>
                                         </td>
                                         <td>
                                             <span className={`${styles.statusBadge} ${styles[staff.status.toLowerCase().replace(" ", "")]}`}>

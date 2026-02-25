@@ -92,41 +92,8 @@ const AuthModal: React.FC = () => {
                     return;
                 }
 
-                // Redirect based on role
-                const u = response.data.user;
-                const role = (u.role || '').toLowerCase();
-                const uid = u.unique_id || u.id;
-                let target = `/dashboard/client/${uid}`;
-
-                if (role === 'admin' || role === 'superadmin') {
-                    target = '/admin/dashboard';
-                } else if (role === 'advocate') {
-                    target = `/dashboard/advocate/${uid}`;
-                } else if (role === 'verifier') {
-                    target = '/dashboard/verifier';
-                } else if (role === 'finance') {
-                    target = '/dashboard/finance';
-                } else if (role === 'legal_provider') {
-                    target = `/dashboard/advisor/${uid}`;
-                } else if ([
-                    'referral', 'influencer', 'marketer', 'marketing_agency'
-                ].includes(role)) {
-                    target = '/dashboard/referral';
-                } else if ([
-                    'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
-                    'chat_support', 'live_chat', 'call_support', 'data_entry',
-                    'personal_assistant', 'personal_agent'
-                ].includes(role)) {
-                    target = '/staff/portal';
-                }
-                else if (role === 'email_support') {
-                    target = `/dashboard/email_support/${uid}`;
-                } else if (role === 'user') {
-                    target = `/dashboard/user/${uid}`;
-                }
-
-                console.log('Redirecting to:', target);
-                navigate(target, { replace: true });
+                // Redirect to centralized dashboard handler
+                navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
             console.error('Auth Error:', err);
@@ -169,13 +136,8 @@ const AuthModal: React.FC = () => {
                 login(response.data.user, response.data.token);
                 closeAuthModal();
 
-                const uid = response.data.user.unique_id || response.data.user.id;
-                let target = `/dashboard/client/${uid}`;
-                if (response.data.user.role === 'advocate') target = `/dashboard/advocate/${uid}`;
-                else if (response.data.user.role === 'legal_provider') target = `/dashboard/advisor/${uid}`;
-
-                navigate(target, { replace: true });
-                console.log('Redirecting to:', target);
+                // Redirect to centralized dashboard handler
+                navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
             console.error('Registration Error:', err);

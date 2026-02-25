@@ -101,19 +101,10 @@
     transform: translateX(-3px);
 }
 
-/* Adjust main app top padding and sticky headers when banner is visible */
+/* Adjust main app top padding when banner is visible */
 :global(body.impersonating) {
     --banner-height: 54px;
     padding-top: var(--banner-height);
-}
-
-:global(body.impersonating) [class*="header"],
-:global(body.impersonating) [class*="sidebar"] {
-    top: var(--banner-height) !important;
-}
-
-:global(body.impersonating) [class*="sidebar"] {
-    height: calc(100vh - var(--banner-height)) !important;
 }
 
 @media (max-width: 768px) {

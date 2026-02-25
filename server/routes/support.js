@@ -33,13 +33,13 @@ router.get('/sync', auth, async (req, res) => {
                 // Emit socket event for real-time update
                 const io = req.app.get('io');
                 if (io) {
-                    io.emit('support:new-email', { count: result.count });
+                    io.emit('support:new-email', { count: result.count, logs: result.logs });
                 }
             }
-            res.json({ success: true, count: result.count });
+            res.json({ success: true, count: result.count, logs: result.logs });
         } else {
             // Not crashing, just reporting error
-            res.json({ success: false, error: result.error });
+            res.json({ success: false, error: result.error, logs: result.logs });
         }
     } catch (err) {
         console.error("Sync Route Error:", err);
@@ -188,6 +188,7 @@ router.post('/send-bulk', auth, upload.array('attachments'), async (req, res) =>
                     category: 'Outbound Email',
                     priority: 'Medium',
                     status: 'Solved', // Initial status solved until reply.
+                    folder: 'Sent',
                     created: new Date().toLocaleDateString(),
                     messages: [{
                         sender: req.user.name || 'Support Agent',
@@ -244,16 +245,19 @@ router.post('/send-bulk', auth, upload.array('attachments'), async (req, res) =>
 // @desc    Dashboard Metrics
 router.get('/stats', auth, async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments();
-        const openTickets = await Ticket.countDocuments({ status: 'Open' });
-        const solvedTickets = await Ticket.countDocuments({ status: 'Solved' });
+        const totalUsers = await User.countDocuments().catch(() => 0);
+        const openTickets = await Ticket.countDocuments({ status: { $in: ['Open', 'New Reply'] } }).catch(() => 0);
+        const solvedTickets = await Ticket.countDocuments({ status: 'Solved' }).catch(() => 0);
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const totalEmailsSentToday = await SupportActivity.countDocuments({
             status: 'Sent',
             timestamp: { $gte: today }
-        });
+        }).catch(() => 0);
+
+        const recentLogs = await SupportActivity.find().sort({ timestamp: -1 }).limit(10).lean().catch(() => []);
 
         res.json({
             success: true,
@@ -263,11 +267,12 @@ router.get('/stats', auth, async (req, res) => {
                 solvedTickets,
                 totalEmailsSentToday,
                 health: 'Optimal',
-                recentLogs
+                recentLogs: recentLogs || []
             }
         });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        console.error("CRITICAL: Error in /stats route:", err);
+        res.status(500).json({ success: false, error: "Internal Server Error during stats aggregation: " + err.message });
     }
 });
 
@@ -309,8 +314,14 @@ router.post('/action', auth, async (req, res) => {
 
             // If action is Delete, we might want to actually update status or remove, 
             // but for now, we just ensure the ACTIVITY is logged first.
-            if (action === 'Delete') {
-                ticket.status = 'Bin'; // Or actually delete if desired
+            if (action === 'Delete' || action === 'Trash') {
+                ticket.folder = 'Bin';
+                await ticket.save();
+            } else if (action === 'Archive') {
+                ticket.folder = 'Archive';
+                await ticket.save();
+            } else if (action === 'Report Spam') {
+                ticket.folder = 'Spam';
                 await ticket.save();
             }
         }

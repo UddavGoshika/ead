@@ -9,6 +9,7 @@ const TicketSchema = new mongoose.Schema({
     priority: { type: String, enum: ['High', 'Medium', 'Low'], default: 'Medium' },
     status: { type: String, enum: ['Open', 'In Progress', 'Solved', 'New Reply'], default: 'Open' },
     hasUnread: { type: Boolean, default: true },
+    folder: { type: String, default: 'Inbox' },
     assignedTo: { type: String, default: 'None' },
     created: { type: String }, // formatted date
     messages: [{
@@ -17,7 +18,6 @@ const TicketSchema = new mongoose.Schema({
         messageId: { type: String, sparse: true }, // Added to prevent duplicates
         timestamp: { type: Date, default: Date.now }
     }],
-    createdAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Ticket', TicketSchema);

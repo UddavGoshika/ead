@@ -22,46 +22,79 @@ const config = {
 let isSyncing = false;
 
 const syncEmails = async () => {
+    const logs = [];
+    const addLog = (msg) => {
+        logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+        console.log(`[EmailSync] ${msg}`);
+    };
+
     if (isSyncing) {
-        console.log("⏳ Sync already in progress, skipping...");
-        return { success: true, count: 0, message: 'Sync in progress' };
+        addLog("⏳ Segment: Check Concurrency -> Sync already in progress, skipping.");
+        return { success: true, count: 0, message: 'Sync in progress', logs };
     }
     isSyncing = true;
-    console.log("📨 Syncing Emails via IMAP (Filtered & Thorough)...");
+    addLog("📨 Segment: Initialization -> Starting IMAP sync process...");
+
     let connection;
     let newMessagesCount = 0;
 
     try {
+        addLog(`📨 Segment: Connection -> Attempting to connect to ${config.imap.host}...`);
         connection = await imps.connect(config);
+        addLog("✅ Segment: Connection -> Established successfully.");
 
-        // GMAIL Specific folders. May vary by locale, but these are standard for English Gmail.
-        const folders = ['INBOX', '[Gmail]/Sent Mail'];
+        // Discovery of folder names (Gmail has different names based on account settings)
+        const boxList = await connection.getBoxes();
+        const availableFolders = [];
 
-        for (const folder of folders) {
+        const flattenBoxes = (boxes, prefix = '') => {
+            for (const key in boxes) {
+                const fullPath = prefix + key;
+                availableFolders.push(fullPath);
+                if (boxes[key].children) {
+                    flattenBoxes(boxes[key].children, fullPath + boxes[key].delimiter);
+                }
+            }
+        };
+        flattenBoxes(boxList);
+        addLog(`🔎 Segment: Folder Discovery -> Found ${availableFolders.length} folders.`);
+
+        // Target folders: Look for Inbox and Sent
+        const targetInbox = availableFolders.find(f => f.toUpperCase() === 'INBOX') || 'INBOX';
+        const targetSent = availableFolders.find(f => f.includes('Sent')) || '[Gmail]/Sent Mail';
+
+        const foldersToScan = [targetInbox, targetSent];
+        addLog(`📂 Segment: Folder Selection -> Scanning folders: ${foldersToScan.join(', ')}`);
+
+        for (const folder of foldersToScan) {
             try {
+                addLog(`📂 Segment: Box Access -> Opening folder: ${folder}`);
                 await connection.openBox(folder);
-                console.log(`🔎 Scanning folder: ${folder}`);
 
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
+                const lookbackDays = 7; // Increased lookback for reliability
+                const sinceDate = new Date();
+                sinceDate.setDate(sinceDate.getDate() - lookbackDays);
 
-                const searchCriteria = [['SINCE', yesterday]];
+                addLog(`🔎 Segment: Search -> Searching for emails since ${sinceDate.toDateString()}...`);
+                const searchCriteria = [['SINCE', sinceDate]];
                 const fetchOptions = { bodies: ['HEADER', 'TEXT', ''], markSeen: false };
 
                 const messages = await connection.search(searchCriteria, fetchOptions);
+                addLog(`📩 Segment: Search Result -> Found ${messages.length} total messages in ${folder}.`);
 
                 for (const item of messages) {
                     const all = item.parts.find(part => part.which === '');
                     const parsed = await simpleParser(all.body);
 
-                    const fromEmail = parsed.from.value[0].address;
-                    const fromName = parsed.from.value[0].name || fromEmail.split('@')[0];
+                    const fromEmail = parsed.from?.value?.[0]?.address || 'unknown@email.com';
+                    const fromName = parsed.from?.value?.[0]?.name || fromEmail.split('@')[0];
                     const subject = parsed.subject || '(No Subject)';
                     const messageId = parsed.messageId;
                     const fullBody = parsed.text || '(No Content)';
 
-                    // STRICT FILTER: Only pull if it has TKT- tag or matches an active ticket
-                    // This prevents personal emails in the same inbox from being pulled.
+                    addLog(`📄 Segment: Processing -> Subject: "${subject.substring(0, 30)}..." from ${fromEmail}`);
+
+                    // FLEXIBLE FILTER: Try to match existing or create new for support
                     const ticketMatch = subject.match(/TKT-(\d+)/);
                     let ticket = null;
 
@@ -70,61 +103,75 @@ const syncEmails = async () => {
                         ticket = await Ticket.findOne({ id: tId });
                     }
 
-                    // If no TKT tag, check if it's an ongoing thread from a known user
+                    // If no TKT tag or ticket not found by ID, match by user email
                     if (!ticket && fromEmail.toLowerCase() !== config.imap.user.toLowerCase()) {
-                        ticket = await Ticket.findOne({
+                        ticket = await Ticket.findOne({ user: fromEmail }).sort({ createdAt: -1 });
+                    }
+
+                    // IF STILL NO TICKET -> CREATE NEW (for incoming emails only)
+                    if (!ticket && fromEmail.toLowerCase() !== config.imap.user.toLowerCase()) {
+                        const count = await Ticket.countDocuments();
+                        const newId = `TKT-${10000 + count + 1}`;
+                        addLog(`✨ Segment: New Ticket -> Creating ${newId} for ${fromEmail}`);
+                        ticket = await Ticket.create({
+                            id: newId,
+                            subject: subject,
                             user: fromEmail,
-                            status: { $in: ['Open', 'In Progress', 'New Reply'] }
+                            category: 'Email Inquiry',
+                            status: 'Open',
+                            folder: 'Inbox',
+                            messages: []
                         });
                     }
 
-                    // IF STILL NO TICKET AND NO TKT TAG -> IGNORE (Prevents personal mail clutter)
-                    if (!ticket && !ticketMatch) {
-                        // console.log(`     -> Skipping unrelated email: ${subject}`);
+                    if (!ticket) {
+                        // Skip if it's our own outgoing mail with no thread
                         continue;
                     }
 
-                    // 1. DUPLICATE CHECK
+                    // DUPLICATE CHECK
                     const isDuplicate = await Ticket.findOne({ "messages.messageId": messageId });
-                    if (isDuplicate) continue;
+                    if (isDuplicate) {
+                        // addLog(`⏭️ Segment: Duplicate -> Skipping messageId: ${messageId}`);
+                        continue;
+                    }
 
                     const newMessage = {
                         sender: fromName,
-                        text: fullBody, // Send full body to frontend for smart parsing
+                        text: fullBody,
                         messageId: messageId,
                         timestamp: parsed.date || new Date()
                     };
 
-                    if (ticket) {
-                        console.log(`     -> Appending to Ticket ${ticket.id} (${folder})`);
-                        ticket.messages.push(newMessage);
-                        // Only change status to New Reply if it's an incoming email (INBOX)
-                        if (folder === 'INBOX' && fromEmail.toLowerCase() !== config.imap.user.toLowerCase()) {
-                            ticket.status = 'New Reply';
-                            ticket.hasUnread = true;
-                        }
-                        ticket.updatedAt = new Date();
-                        await ticket.save();
-                    } else if (ticketMatch) {
-                        // This case happens if the ticket was deleted or is the first time we see it but it has a tag?
-                        // Usually unlikely, but we skip starting new tickets without an active thread or explicit tag
+                    addLog(`➕ Segment: Append -> Adding message to ${ticket.id}`);
+                    ticket.messages.push(newMessage);
+
+                    // Logic for status/unread
+                    if (folder === targetInbox && fromEmail.toLowerCase() !== config.imap.user.toLowerCase()) {
+                        ticket.status = 'New Reply';
+                        ticket.hasUnread = true;
+                        ticket.folder = 'Inbox';
                     }
+
+                    ticket.updatedAt = new Date();
+                    await ticket.save();
                     newMessagesCount++;
                 }
             } catch (err) {
-                console.warn(`Could not open folder ${folder}:`, err.message);
+                addLog(`❌ Segment: Error -> Failed processing folder ${folder}: ${err.message}`);
             }
         }
 
-        console.log(`✅ Sync Complete. ${newMessagesCount} messages updated.`);
-        return { success: true, count: newMessagesCount };
+        addLog(`🏁 Segment: Finalization -> Sync Complete. ${newMessagesCount} messages updated.`);
+        return { success: true, count: newMessagesCount, logs };
 
     } catch (err) {
-        console.error("❌ IMAP Error:", err);
-        return { success: false, error: err.message };
+        addLog(`🛑 Segment: Critical Error -> IMAP Failure: ${err.message}`);
+        return { success: false, error: err.message, logs };
     } finally {
         isSyncing = false;
         if (connection) connection.end();
+        addLog("🔌 Segment: Cleanup -> Connection closed.");
     }
 };
 

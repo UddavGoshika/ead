@@ -220,8 +220,11 @@ import InformSuperAdmin from './pages/manager/communications/InformSuperAdmin';
 import ManagerPermissions from './pages/admin/settings/ManagerPermissions';
 import ManagerPermissionGuard from './components/auth/ManagerPermissionGuard';
 import StaffGlobalDashboard from './pages/staff/StaffGlobalDashboard';
-import CallOverlay from './components/CallOverlay';
 import RejectionOverlay from './components/auth/RejectionOverlay';
+import LiveChatPage from './pages/staff/LiveChatPage';
+import CallSupportPage from './pages/staff/CallSupportPage';
+import TelecallerPage from './pages/staff/TelecallerPage';
+import EmailSupportPage from './pages/staff/EmailSupportPage';
 import EmailSupport from './pages/dashboard/support/roles/EmailSupport';
 
 import { useAuth } from './context/AuthContext';
@@ -243,10 +246,10 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  const role = user.role.toLowerCase();
+  const role = user.role.toLowerCase().replace(/-/g, '_');
   const id = user.unique_id || user.id;
 
-  if (role === 'admin' || role === 'super_admin') {
+  if (role === 'admin' || role === 'super_admin' || role === 'superadmin') {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
@@ -256,10 +259,24 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/dashboard/referral" replace />;
   }
 
+  if (role === 'live_chat' || role === 'chat_support') {
+    return <Navigate to="/dashboard/live-chat" replace />;
+  }
+
+  if (role === 'call_support') {
+    return <Navigate to="/dashboard/call-support" replace />;
+  }
+
+  if (role === 'telecaller') {
+    return <Navigate to="/dashboard/telecalling" replace />;
+  }
+
+  if (role === 'email_support') {
+    return <Navigate to="/dashboard/email-desk" replace />;
+  }
+
   if ([
-    'manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care',
-    'chat_support', 'live_chat', 'personal_assistant', 'personal_agent',
-    'email_support', 'call_support', 'data_entry'
+    'manager', 'teamlead', 'hr', 'data_entry', 'personal_assistant', 'personal_agent', 'support', 'customer_care'
   ].includes(role)) {
     return <Navigate to="/staff/portal" replace />;
   }
@@ -344,8 +361,13 @@ const AppContent: React.FC = () => {
         <Route path="/dashboard/referral" element={<ProtectedRoute allowedRoles={['referral', 'influencer', 'marketer', 'marketing_agency']}><ReferralDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs />} />
 
+        <Route path="/dashboard/live-chat" element={<ProtectedRoute allowedRoles={['live_chat', 'chat_support']}><LiveChatPage /></ProtectedRoute>} />
+        <Route path="/dashboard/call-support" element={<ProtectedRoute allowedRoles={['call_support']}><CallSupportPage /></ProtectedRoute>} />
+        <Route path="/dashboard/telecalling" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerPage /></ProtectedRoute>} />
+        <Route path="/dashboard/email-desk" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupportPage /></ProtectedRoute>} />
+
         {/* STAFF ROUTES */}
-        <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'telecaller', 'support', 'customer_care', 'chat_support', 'live_chat', 'call_support', 'data_entry', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency', 'email_support']}><StaffGlobalDashboard /></ProtectedRoute>} />
+        <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'support', 'customer_care', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency', 'data_entry']}><StaffGlobalDashboard /></ProtectedRoute>} />
 
         {/* ADMIN ROUTES */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminLayout /></ProtectedRoute>}>

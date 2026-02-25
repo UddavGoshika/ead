@@ -341,7 +341,7 @@ interface DocumentationProvider {
     experience: string;
     license_id: string;
     verified: boolean;
-    status: "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted";
+    status: "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted" | "Suspended";
     totalDrafts: number;
     rating: number;
     baseRate: string;
@@ -350,7 +350,6 @@ interface DocumentationProvider {
 }
 
 const mockAdminProviders: DocumentationProvider[] = [
-    // ... your existing mock data + joinDate added
     {
         id: "1",
         adv_id: "ADV-100000",
@@ -387,7 +386,114 @@ const mockAdminProviders: DocumentationProvider[] = [
         joinDate: "2024-01-15",
         legalDocumentation: ["affidavits", "legal-docs"]
     },
-    // Add 5–10 more entries for realistic pagination testing
+    {
+        id: "3",
+        adv_id: "ADV-100002",
+        name: "Amit Patel",
+        email: "amit.p@eadvocate.in",
+        mobile: "+91 98765 43212",
+        location: "Ahmedabad, GJ",
+        specialization: "Property Laws",
+        experience: "15 Years",
+        license_id: "GJ/6612/4412",
+        verified: true,
+        status: "Blocked",
+        totalDrafts: 210,
+        rating: 4.5,
+        baseRate: "₹3,000",
+        joinDate: "2023-11-20",
+        legalDocumentation: ["agreements", "legal-docs"]
+    },
+    {
+        id: "4",
+        adv_id: "ADV-100003",
+        name: "Priyanka Chopra",
+        email: "priyanka.c@eadvocate.in",
+        mobile: "+91 98765 43213",
+        location: "Chandigarh, CH",
+        specialization: "Family Docs",
+        experience: "5 Years",
+        license_id: "CH/2145/6678",
+        verified: false,
+        status: "Pending",
+        totalDrafts: 15,
+        rating: 3.8,
+        baseRate: "₹1,200",
+        joinDate: "2024-02-15",
+        legalDocumentation: ["affidavits"]
+    },
+    {
+        id: "5",
+        adv_id: "ADV-100004",
+        name: "Arjun Singh",
+        email: "arjun.s@eadvocate.in",
+        mobile: "+91 98765 43214",
+        location: "Jaipur, RJ",
+        specialization: "Criminal Law",
+        experience: "10 Years",
+        license_id: "RJ/9981/1234",
+        verified: true,
+        status: "Deactivated",
+        totalDrafts: 120,
+        rating: 4.2,
+        baseRate: "₹2,800",
+        joinDate: "2023-08-10",
+        legalDocumentation: ["notices"]
+    },
+    {
+        id: "6",
+        adv_id: "ADV-100005",
+        name: "Komal Gupta",
+        email: "komal.g@eadvocate.in",
+        mobile: "+91 98765 43215",
+        location: "Kolkata, WB",
+        specialization: "Intellectual Property",
+        experience: "7 Years",
+        license_id: "WB/3342/9901",
+        verified: true,
+        status: "Deleted",
+        totalDrafts: 45,
+        rating: 4.6,
+        baseRate: "₹4,000",
+        joinDate: "2023-05-05",
+        legalDocumentation: ["agreements", "notices", "legal-docs"]
+    },
+    {
+        id: "7",
+        adv_id: "ADV-100006",
+        name: "Suresh Raina",
+        email: "suresh.r@eadvocate.in",
+        mobile: "+91 98765 43216",
+        location: "Chennai, TN",
+        specialization: "Corporate Contracts",
+        experience: "9 Years",
+        license_id: "TN/7765/1122",
+        verified: true,
+        status: "Active",
+        totalDrafts: 88,
+        rating: 4.7,
+        baseRate: "₹3,200",
+        joinDate: "2024-01-10",
+        legalDocumentation: ["agreements", "affidavits"]
+    },
+    {
+        id: "8",
+        adv_id: "ADV-100007",
+        name: "Vikram Sarabhai",
+        email: "vikram.s@eadvocate.in",
+        mobile: "+91 98765 43217",
+        location: "Ahmedabad, GJ",
+        specialization: "Space Law",
+        experience: "25 Years",
+        license_id: "GJ/1122/3344",
+        verified: true,
+        status: "Suspended",
+        totalDrafts: 500,
+        rating: 4.9,
+        baseRate: "₹10,000",
+        joinDate: "2022-10-10",
+        legalDocumentation: ["agreements", "legal-docs"]
+    }
 ];
 
 type SortKey = "name" | "rating" | "totalDrafts" | "earned" | null;
@@ -401,14 +507,14 @@ const DocumentationProviders = () => {
 
     const { statusFilter } = useParams();
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedStatus, setSelectedStatus] = useState<"All" | "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted">("All");
+    const [selectedStatus, setSelectedStatus] = useState<"All" | "Active" | "Pending" | "Blocked" | "Deactivated" | "Deleted" | "Suspended">("All");
     const [selectedSpec, setSelectedSpec] = useState("All");
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [sortKey, setSortKey] = useState<SortKey>(null);
     const [sortDir, setSortDir] = useState<SortDirection>("asc");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | "deactivated" | "deleted" | null>(null);
+    const [modalFilter, setModalFilter] = useState<"all" | "active" | "pending" | "blocked" | "deactivated" | "deleted" | "suspended" | null>(null);
     const [selectedService, setSelectedService] = useState("All");
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [selectedProvider, setSelectedProvider] = useState<DocumentationProvider | null>(null);
@@ -475,14 +581,20 @@ const DocumentationProviders = () => {
             const filterMap: Record<string, any> = {
                 'blocked': 'Blocked',
                 'deactivated': 'Deactivated',
-                'deleted': 'Deleted'
+                'deleted': 'Deleted',
+                'pending': 'Pending',
+                'active': 'Active',
+                'suspended': 'Suspended'
             };
             setSelectedStatus(filterMap[statusFilter] || 'All');
         } else {
-            setSelectedStatus('Active');
+            setSelectedStatus('All');
         }
-        fetchProviders();
     }, [statusFilter]);
+
+    useEffect(() => {
+        fetchProviders();
+    }, [selectedStatus]);
 
     // ────────────────────────────────────────────────
     // Filtering + Sorting + Pagination
@@ -558,9 +670,10 @@ const DocumentationProviders = () => {
         const total = providers.length;
         const active = providers.filter((p) => p.status === "Active").length;
         const pending = providers.filter((p) => p.status === "Pending").length;
-        const blocked = providers.filter((p) => p.status === "Blocked").length;
-        const deactivated = providers.filter((p) => p.status === "Deactivated").length;
-        const deleted = providers.filter((p) => p.status === "Deleted").length;
+        const blocked = providers.filter(p => p.status === 'Blocked').length;
+        const deactivated = providers.filter(p => p.status === 'Deactivated').length;
+        const deleted = providers.filter(p => p.status === 'Deleted').length;
+        const suspended = providers.filter(p => p.status === 'Suspended').length;
 
         // Service Counts
         const serviceCounts = {
@@ -571,7 +684,7 @@ const DocumentationProviders = () => {
             'legal-docs': providers.filter(p => p.legalDocumentation?.includes('legal-docs')).length
         };
 
-        return { total, active, pending, blocked, deactivated, deleted, serviceCounts };
+        return { total, active, pending, blocked, deactivated, deleted, suspended, serviceCounts };
     }, [providers]);
 
     const modalData = useMemo(() => {
@@ -587,6 +700,8 @@ const DocumentationProviders = () => {
                 return providers.filter((p) => p.status === "Deactivated");
             case "deleted":
                 return providers.filter((p) => p.status === "Deleted");
+            case "suspended":
+                return providers.filter((p) => p.status === "Suspended");
             default:
                 return providers; // all
         }
@@ -777,6 +892,16 @@ const DocumentationProviders = () => {
                         </p>
                     </div>
                 </div>
+
+                <div className={styles.summaryCard} onClick={() => setModalFilter("suspended")}>
+                    <AlertCircle size={32} color="#f59e0b" />
+                    <div>
+                        <h4>Suspended</h4>
+                        <p className={styles.summaryNumber} style={{ color: "#f59e0b" }}>
+                            {summary.suspended}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Filters */}
@@ -800,7 +925,7 @@ const DocumentationProviders = () => {
                     <div className={styles.pillGroup}>
                         <label><Filter size={14} /> Status</label>
                         <div className={styles.pillList}>
-                            {["All", "Active", "Pending", "Blocked", "Deactivated", "Deleted"].map((s) => (
+                            {["All", "Active", "Pending", "Blocked", "Deactivated", "Deleted", "Suspended"].map((s) => (
                                 <button
                                     key={s}
                                     className={`${styles.pill} ${selectedStatus === s ? styles.activePill : ""}`}

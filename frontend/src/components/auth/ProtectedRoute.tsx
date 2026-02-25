@@ -65,13 +65,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
     // 3. Check Role Permission
     if (allowedRoles && allowedRoles.length > 0) {
-        let currentUserRole = (user?.role || '').toUpperCase();
+        let currentUserRole = (user?.role || '').toLowerCase().replace(/-/g, '_').toUpperCase();
 
         // Fallback to localStorage if context not yet populated but token exists
         if (!currentUserRole && storedUserStr) {
             try {
                 const parsed = JSON.parse(storedUserStr);
-                currentUserRole = (parsed.role || '').toUpperCase();
+                currentUserRole = (parsed.role || '').toLowerCase().replace(/-/g, '_').toUpperCase();
             } catch (e) { }
         }
 

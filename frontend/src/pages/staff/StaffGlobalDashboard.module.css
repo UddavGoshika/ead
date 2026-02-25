@@ -7,14 +7,15 @@
 }
 
 .sideNav {
-    width: 280px;
+    width: 260px;
     height: 100%;
     background: #0f172a;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
-    padding: 32px 0;
+    padding: 20px 0;
     overflow-y: auto;
+    box-shadow: 10px 0 50px rgba(0, 0, 0, 0.5);
 }
 
 .sideNav::-webkit-scrollbar {
@@ -27,11 +28,12 @@
 }
 
 .brand {
-    padding: 0 32px;
+    padding: 10px 24px 30px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 48px;
+    gap: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    margin-bottom: 20px;
 }
 
 .logoSquare {
@@ -69,18 +71,19 @@
 }
 
 .sidebarSectionLabel {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
-    color: #475569;
-    letter-spacing: 1px;
-    margin: 24px 20px 12px;
+    color: #94a3b8;
+    letter-spacing: 1.5px;
+    margin: 24px 24px 12px;
     text-transform: uppercase;
+    opacity: 0.6;
 }
 
 .customSidebarContent {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
 
 /* Dashboard Welcome Grid */
@@ -146,19 +149,26 @@
     color: #3b82f6;
 }
 
+.navLinks {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 8px;
+}
+
 .navLink {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 14px;
-    padding: 14px 20px;
-    border-radius: 12px;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 14px;
     color: #94a3b8;
     border: none;
     background: transparent;
     cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 700;
     font-size: 14px;
 }
 
@@ -181,11 +191,12 @@
 }
 
 .sideFooter {
-    padding: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
+    margin-top: auto;
 }
 
 .userSection {
@@ -234,12 +245,12 @@
 
 .dashboard {
     flex: 1;
-    padding: 32px;
+    padding: 24px;
     height: 100vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 24px;
 }
 
 .viewContainer {
@@ -259,12 +270,18 @@
     border-collapse: collapse;
     font-size: 13px;
 }
-.dataTable th, .dataTable td {
+
+.dataTable th,
+.dataTable td {
     padding: 10px 12px;
     text-align: left;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-.dataTable th { color: #94a3b8; font-weight: 600; }
+
+.dataTable th {
+    color: #94a3b8;
+    font-weight: 600;
+}
 
 .header {
     display: flex;
@@ -339,8 +356,8 @@
 
 .workspace {
     display: grid;
-    grid-template-columns: 350px 1fr 300px;
-    gap: 24px;
+    grid-template-columns: 320px 1fr 280px;
+    gap: 20px;
 }
 
 .queuePanel,
@@ -375,9 +392,9 @@
 }
 
 .leadCard {
-    padding: 20px;
-    border-radius: 16px;
-    margin-bottom: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 4px;
     cursor: pointer;
     transition: all 0.2s;
     border: 1px solid transparent;
@@ -920,12 +937,12 @@
 .modernLeadCard {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 14px;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     border: 1px solid transparent;
 }
 
@@ -1415,10 +1432,11 @@
 }
 
 .sidebarHeader {
-    padding: 24px;
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .liveBadge {
@@ -1439,11 +1457,12 @@
 .sessionCard {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 16px;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    margin-bottom: 2px;
 }
 
 .sessionCard:hover {
@@ -1455,14 +1474,15 @@
 }
 
 .sessionAvatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: #3b82f6;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
+    font-size: 13px;
 }
 
 .chatMainArea {

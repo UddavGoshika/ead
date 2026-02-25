@@ -497,91 +497,108 @@ router.get('/:userId', async (req, res) => {
 // UPDATE CLIENT PROFILE
 // UPDATE CLIENT PROFILE
 // UPDATE CLIENT PROFILE
+// UPDATE CLIENT PROFILE
 router.put('/update/:uniqueId', upload.single('profilePic'), async (req, res) => {
     try {
         const { uniqueId } = req.params;
         let updateData = req.body;
 
-        console.log(`[UPDATE CLIENT START] UniqueID: ${uniqueId}`);
-        console.log(`[UPDATE CLIENT] Content-Type: ${req.headers['content-type']}`);
-        // console.log(`[UPDATE CLIENT] Body Keys: ${Object.keys(updateData).join(', ')}`);
-        // console.log(`[UPDATE CLIENT] Body:`, JSON.stringify(updateData, null, 2));
+        console.log(`[UPDATE CLIENT] UniqueID: ${uniqueId}`);
 
         const client = await Client.findOne({ unique_id: uniqueId });
-        if (!client) {
-            console.error(`[UPDATE CLIENT ERROR] Client not found: ${uniqueId}`);
-            return res.status(404).json({ error: 'Client not found' });
-        }
+        if (!client) return res.status(404).json({ error: 'Client not found' });
+
+        const parseValue = (val) => {
+            try {
+                if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+                    return JSON.parse(val);
+                }
+            } catch (e) { }
+            return val;
+        };
+
+        const oldEmail = client.email;
 
         // --- Personal Details ---
         if (updateData.firstName !== undefined) client.firstName = updateData.firstName.trim();
         if (updateData.lastName !== undefined) client.lastName = updateData.lastName.trim();
+
+        // Sync Full Name
+        const fullName = `${client.firstName} ${client.lastName}`.trim();
+
         if (updateData.gender !== undefined) client.gender = updateData.gender;
         if (updateData.dob !== undefined) client.dob = updateData.dob;
         if (updateData.mobile !== undefined) client.mobile = updateData.mobile;
-
-        // Map frontend 'idProofType' to backend 'documentType'
+        if (updateData.email !== undefined) client.email = updateData.email.trim().toLowerCase();
         if (updateData.idProofType !== undefined) client.documentType = updateData.idProofType;
 
-        // --- Address / Location ---
-        // Handle explicit address object update logic
-        if (updateData.address) {
-            // Need to parse if it came as string (FormData edge case)
-            let addr = updateData.address;
-            if (typeof addr === 'string') {
-                try { addr = JSON.parse(addr); } catch (e) { }
-            }
-            client.address = { ...client.address, ...addr };
+        // --- Location / Address Parsing ---
+        const loc = parseValue(updateData.location);
+        if (loc) {
+            client.address = {
+                ...client.address,
+                state: loc.state !== undefined ? loc.state : client.address.state,
+                city: loc.city !== undefined ? loc.city : client.address.city,
+                pincode: loc.pincode !== undefined ? loc.pincode : client.address.pincode,
+                office: loc.officeAddress !== undefined ? loc.officeAddress : client.address.office,
+                permanent: loc.permanentAddress !== undefined ? loc.permanentAddress : client.address.permanent,
+                country: loc.country !== undefined ? loc.country : (client.address.country || 'India')
+            };
         }
 
-        // Handle mapped location fields (from Frontend 'Location Details' form)
-        // Note: Frontend sends 'location' object.
-        if (updateData.location) {
-            let loc = updateData.location;
-            if (typeof loc === 'string') {
-                try { loc = JSON.parse(loc); } catch (e) { }
-            }
-            // Mongoose Subdocument update: Assign individual fields to ensure change tracking
-            if (loc.state !== undefined) client.address.state = loc.state;
-            if (loc.city !== undefined) client.address.city = loc.city;
-            if (loc.pincode !== undefined) client.address.pincode = loc.pincode;
-            if (loc.officeAddress !== undefined) client.address.office = loc.officeAddress;
-            if (loc.permanentAddress !== undefined) client.address.permanent = loc.permanentAddress;
-            if (loc.country !== undefined) client.address.country = loc.country;
+        // --- Legal Preferences Parsing ---
+        const lh = parseValue(updateData.legalHelp);
+        if (lh) {
+            client.legalHelp = {
+                ...client.legalHelp,
+                ...lh,
+                // Direct field overrides from flat payload if any
+                category: updateData.category !== undefined ? updateData.category : (lh.category || client.legalHelp.category),
+                specialization: updateData.specialization !== undefined ? updateData.specialization : (lh.specialization || client.legalHelp.specialization),
+                mode: updateData.mode !== undefined ? updateData.mode : (lh.mode || client.legalHelp.mode),
+                languages: updateData.languages !== undefined ? updateData.languages : (lh.languages || client.legalHelp.languages),
+                issueDescription: updateData.issueDescription !== undefined ? updateData.issueDescription : (lh.issueDescription || client.legalHelp.issueDescription)
+            };
         }
-
-        // --- Legal Preferences ---
-        if (updateData.legalHelp) {
-            let lh = updateData.legalHelp;
-            if (typeof lh === 'string') {
-                try { lh = JSON.parse(lh); } catch (e) { }
-            }
-            client.legalHelp = { ...client.legalHelp, ...lh };
-        }
-
-        // Direct field mapping if not nested
-        if (updateData.category !== undefined) client.legalHelp.category = updateData.category;
-        if (updateData.specialization !== undefined) client.legalHelp.specialization = updateData.specialization;
-        if (updateData.subDepartment !== undefined) client.legalHelp.subDepartment = updateData.subDepartment;
-        if (updateData.mode !== undefined) client.legalHelp.mode = updateData.mode;
-        if (updateData.languages !== undefined) client.legalHelp.languages = updateData.languages;
-        if (updateData.issueDescription !== undefined) client.legalHelp.issueDescription = updateData.issueDescription;
 
         // --- File Upload Handling ---
         if (req.file) {
             client.profilePicPath = req.file.path;
-            console.log(`[UPDATE CLIENT] Updated Profile Pic Path: ${req.file.path}`);
+            console.log(`[UPDATE CLIENT] Updated Profile Pic: ${req.file.path}`);
         }
 
-        // Mark modified if needed (Mongoose usually auto-detects)
-        // client.markModified('address'); 
-
         const savedClient = await client.save();
-        console.log(`[UPDATE CLIENT SUCCESS] Saved client: ${savedClient.unique_id}, Name: ${savedClient.firstName} ${savedClient.lastName}`);
+        console.log(`[UPDATE SUCCESS] Saved client: ${savedClient.unique_id}, Name: ${fullName}`);
 
-        res.json({ success: true, client: savedClient });
+        // Sync to User Model
+        if (savedClient.userId) {
+            const userUpdate = {
+                name: fullName,
+                phone: savedClient.mobile
+            };
+
+            // Sync Email if changing
+            if (updateData.email && updateData.email.trim().toLowerCase() !== oldEmail) {
+                const newEmail = updateData.email.trim().toLowerCase();
+                const exists = await User.findOne({ email: newEmail, _id: { $ne: savedClient.userId } });
+                if (!exists) {
+                    userUpdate.email = newEmail;
+                }
+            }
+
+            await User.findByIdAndUpdate(savedClient.userId, userUpdate);
+            console.log(`[UPDATE SYNC] User model synced:`, userUpdate);
+        }
+
+        res.json({
+            success: true,
+            client: {
+                ...savedClient.toObject(),
+                image_url: getImageUrl(savedClient.profilePicPath)
+            }
+        });
     } catch (err) {
-        console.error('[UPDATE CLIENT CRITICAL ERROR]:', err);
+        console.error('Update Client Error:', err);
         res.status(500).json({ error: err.message });
     }
 });

@@ -4,6 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { useSocketStore } from '../../store/useSocketStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wifi, WifiOff, X, Play, RotateCcw } from 'lucide-react';
+import SnakeGame from './SnakeGame';
 
 const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
@@ -92,7 +93,7 @@ const GlobalUtilityHandler: React.FC = () => {
                                 </button>
                             </div>
                             <div style={styles.gameBody}>
-                                <SimpleGame />
+                                <SnakeGame />
                             </div>
                         </motion.div>
                     </div>
@@ -109,69 +110,6 @@ const GlobalUtilityHandler: React.FC = () => {
     );
 };
 
-// --- SIMPLE CATCH GAME ---
-const SimpleGame: React.FC = () => {
-    const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(30);
-    const [gameStarted, setGameStarted] = useState(false);
-    const [ballPos, setBallPos] = useState({ x: 50, y: 50 });
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const moveBall = () => {
-        const x = Math.random() * 80 + 10;
-        const y = Math.random() * 80 + 10;
-        setBallPos({ x, y });
-    };
-
-    useEffect(() => {
-        let timer: NodeJS.Timeout;
-        if (gameStarted && timeLeft > 0) {
-            timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-        } else if (timeLeft === 0) {
-            setGameStarted(false);
-        }
-        return () => clearInterval(timer);
-    }, [gameStarted, timeLeft]);
-
-    const handleBallClick = () => {
-        if (!gameStarted) return;
-        setScore(prev => prev + 1);
-        moveBall();
-    };
-
-    const startGame = () => {
-        setScore(0);
-        setTimeLeft(30);
-        setGameStarted(true);
-        moveBall();
-    };
-
-    return (
-        <div style={styles.gameContainer}>
-            <div style={styles.gameStats}>
-                <span>Score: {score}</span>
-                <span>Time: {timeLeft}s</span>
-            </div>
-            <div ref={containerRef} style={styles.gameBoard}>
-                {!gameStarted ? (
-                    <div style={styles.startScreen}>
-                        <h4>Catch the Glowing Ball!</h4>
-                        <button onClick={startGame} style={styles.startBtn}>
-                            <Play size={24} /> {timeLeft === 0 ? 'Retry' : 'Start Game'}
-                        </button>
-                    </div>
-                ) : (
-                    <motion.div
-                        animate={{ left: `${ballPos.x}%`, top: `${ballPos.y}%` }}
-                        transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-                        onClick={handleBallClick}
-                        style={styles.ball}
-                    />
-                )}
-            </div>
-        </div>
-    );
-};
 
 const styles = {
     modalOverlay: {
