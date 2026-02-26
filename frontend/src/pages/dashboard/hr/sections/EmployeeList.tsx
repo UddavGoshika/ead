@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
 import { Search, Filter, Plus, Phone, Mail, MapPin, Briefcase, Calendar } from 'lucide-react';
 import styles from './HROverview.module.css';
-import DataTable from '../../../../components/dashboard/shared/DataTable';
-import ActionModal from '../../../../components/dashboard/shared/ActionModal';
+import { DataTable } from '../../../../components/dashboard/shared/DataTable';
+import { ActionModal } from '../../../../components/dashboard/shared/ActionModal';
+
+interface Employee {
+    id: string;
+    name: string;
+    role: string;
+    department: string;
+    status: string;
+    joinDate: string;
+}
 
 const EmployeeList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const columns = [
-        { key: 'name', label: 'Employee Name' },
-        { key: 'role', label: 'Role / Designation' },
-        { key: 'department', label: 'Department' },
-        { key: 'status', label: 'Status' },
-        { key: 'joinDate', label: 'Join Date' },
+        { header: 'Employee Name', accessor: 'name' as keyof Employee },
+        { header: 'Role / Designation', accessor: 'role' as keyof Employee },
+        { header: 'Department', accessor: 'department' as keyof Employee },
+        { header: 'Status', accessor: 'status' as keyof Employee },
+        { header: 'Join Date', accessor: 'joinDate' as keyof Employee },
     ];
 
-    const mockEmployees = [
+    const mockEmployees: Employee[] = [
         { id: '1', name: 'John Doe', role: 'Senior Support Agent', department: 'Customer Support', status: 'Active', joinDate: '2022-01-15' },
         { id: '2', name: 'Jane Smith', role: 'Telecaller', department: 'Operations', status: 'Active', joinDate: '2022-06-20' },
         { id: '3', name: 'Mike Johnson', role: 'Finance Analyst', department: 'Finance', status: 'On Leave', joinDate: '2021-11-10' },
@@ -34,7 +43,6 @@ const EmployeeList: React.FC = () => {
     const handleAddSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setIsAddModalOpen(false);
-        // Toast placeholder
     };
 
     return (
@@ -74,8 +82,12 @@ const EmployeeList: React.FC = () => {
             <DataTable
                 columns={columns}
                 data={filteredEmployees}
-                onEdit={(row) => console.log('Edit', row)}
-                onDelete={(row) => console.log('Delete', row)}
+                keyExtractor={(row: Employee) => row.id}
+                actions={(row: Employee) => (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => console.log('Edit', row)} style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer' }}>Edit</button>
+                    </div>
+                )}
             />
 
             <ActionModal

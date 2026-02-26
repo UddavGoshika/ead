@@ -22,7 +22,7 @@ interface DataTableProps<T> {
     onRowClick?: (row: T) => void;
 }
 
-export const DataTable = React.memo(function DataTable<T>({
+const DataTableInner = <T,>({
     data,
     columns,
     keyExtractor,
@@ -32,7 +32,7 @@ export const DataTable = React.memo(function DataTable<T>({
     actions,
     itemsPerPage = 10,
     onRowClick,
-}: DataTableProps<T>) {
+}: DataTableProps<T>) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -155,4 +155,7 @@ export const DataTable = React.memo(function DataTable<T>({
             )}
         </div>
     );
-});
+};
+
+export const DataTable = React.memo(DataTableInner) as <T>(props: DataTableProps<T>) => React.ReactElement;
+
