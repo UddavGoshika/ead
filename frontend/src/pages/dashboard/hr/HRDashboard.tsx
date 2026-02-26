@@ -9,6 +9,7 @@ import EmployeeList from './sections/EmployeeList';
 import RecruitmentDesk from './sections/RecruitmentDesk';
 import PerformanceReviews from './sections/PerformanceReviews';
 import TimeOffAttendance from './sections/TimeOffAttendance';
+import SystemSettings from '../shared/SystemSettings';
 
 const navItems: NavItem[] = [
     { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard size={20} /> },
@@ -38,7 +39,7 @@ const HRDashboard: React.FC = () => {
             case 'policies':
                 return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Policies & Onboarding</h2><p style={{ color: '#94a3b8' }}>Manage company policies and new employee onboarding flows.</p></div>;
             case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Profile & Settings</h2><p style={{ color: '#94a3b8' }}>HR system configuration and user roles.</p></div>;
+                return <SystemSettings allowedTabs={['users', 'logs']} />;
             default:
                 return <HROverview />;
         }
@@ -51,6 +52,7 @@ const HRDashboard: React.FC = () => {
             navItems={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            department="hr"
         >
             {renderContent()}
         </StaffLayout>

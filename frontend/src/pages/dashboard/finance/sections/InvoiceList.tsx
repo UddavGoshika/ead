@@ -1,131 +1,149 @@
 import React, { useState } from 'react';
-import { DataTable } from '../../../../components/dashboard/shared/DataTable';
-import type { Column } from '../../../../components/dashboard/shared/DataTable';
-import { ActionModal } from '../../../../components/dashboard/shared/ActionModal';
-import { Plus, Edit2, Trash2, Send, Download } from 'lucide-react';
+import { Search, Filter, Plus, FileText, Download, Check, Clock, AlertTriangle } from 'lucide-react';
+import styles from './FinanceSections.module.css';
 
-interface Invoice {
-    id: string;
-    clientId: string;
-    clientName: string;
-    amount: number;
-    date: string;
-    dueDate: string;
-    status: 'Paid' | 'Pending' | 'Overdue';
-}
+const InvoiceList: React.FC = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('All');
 
-const mockInvoices: Invoice[] = [
-    { id: 'INV-2024-001', clientId: 'CLI-001', clientName: 'Acme Corp', amount: 45000, date: '2024-10-01', dueDate: '2024-10-15', status: 'Paid' },
-    { id: 'INV-2024-002', clientId: 'CLI-042', clientName: 'Global Tech', amount: 12500, date: '2024-10-10', dueDate: '2024-10-24', status: 'Pending' },
-    { id: 'INV-2024-003', clientId: 'CLI-018', clientName: 'Stark Industries', amount: 89000, date: '2024-09-15', dueDate: '2024-09-29', status: 'Overdue' },
-    { id: 'INV-2024-004', clientId: 'CLI-099', clientName: 'Wayne Enterprises', amount: 250000, date: '2024-10-12', dueDate: '2024-10-26', status: 'Pending' },
-];
-
-const Invoices: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const formatCurrency = (val: number) => `₹${val.toLocaleString()}`;
-
-    const columns: Column<Invoice>[] = [
-        { header: 'Invoice ID', accessor: (row) => <span style={{ fontWeight: 600, color: '#f8fafc' }}>{row.id}</span> },
-        { header: 'Client', accessor: 'clientName' },
-        { header: 'Amount', accessor: (row) => formatCurrency(row.amount) },
-        { header: 'Date', accessor: 'date' },
-        { header: 'Due Date', accessor: 'dueDate' },
-        {
-            header: 'Status',
-            accessor: (row) => {
-                const colors = {
-                    'Paid': { bg: '#10b98120', text: '#10b981' },
-                    'Pending': { bg: '#facc1520', text: '#facc15' },
-                    'Overdue': { bg: '#ef444420', text: '#ef4444' }
-                };
-                const color = colors[row.status];
-
-                return (
-                    <span style={{
-                        padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500,
-                        background: color.bg, color: color.text
-                    }}>
-                        {row.status}
-                    </span>
-                );
-            }
-        }
+    const mockInvoices = [
+        { id: 'INV-2023-089', client: 'Acme Corp', date: '2023-10-25', amount: '$4,500.00', status: 'Paid' },
+        { id: 'INV-2023-090', client: 'Global Tech', date: '2023-10-26', amount: '$1,250.00', status: 'Pending' },
+        { id: 'INV-2023-091', client: 'Smith & Co Legal', date: '2023-10-20', amount: '$8,900.00', status: 'Overdue' },
+        { id: 'INV-2023-092', client: 'NextGen Solutions', date: '2023-10-28', amount: '$3,200.00', status: 'Draft' },
+        { id: 'INV-2023-093', client: 'Alpha Industries', date: '2023-10-27', amount: '$6,750.00', status: 'Paid' },
     ];
 
-    const renderActions = (row: Invoice) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }} title="Send Reminder"><Send size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#10b981', cursor: 'pointer', padding: '4px' }} title="Download PDF"><Download size={16} /></button>
-            <div style={{ width: '1px', background: '#334155', margin: '0 4px' }} />
-            <button style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }} title="Delete"><Trash2 size={16} /></button>
-        </div>
-    );
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'Paid': return { color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' };
+            case 'Pending': return { color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' };
+            case 'Overdue': return { color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' };
+            case 'Draft': return { color: '#94a3b8', background: 'rgba(148, 163, 184, 0.1)', border: '1px solid rgba(148, 163, 184, 0.2)' };
+            default: return {};
+        }
+    };
+
+    const filteredInvoices = mockInvoices.filter(inv => {
+        const matchesSearch = inv.client.toLowerCase().includes(searchTerm.toLowerCase()) || inv.id.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === 'All' || inv.status === filterStatus;
+        return matchesSearch && matchesStatus;
+    });
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#f8fafc', margin: 0 }}>Invoices & Billing</h2>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#3b82f6', color: '#ffffff', border: 'none',
-                        padding: '10px 20px', borderRadius: '8px', fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Plus size={18} /> Create Invoice
-                </button>
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>Invoices & Payments</h2>
+                    <p className={styles.sectionSubtitle}>Manage client billing, track payments and generate PDF invoices.</p>
+                </div>
+                <div className={styles.headerActions}>
+                    <button className={styles.secondaryBtn}>
+                        <Download size={16} /> Export CSV
+                    </button>
+                    <button className={styles.primaryBtn}>
+                        <Plus size={16} /> New Invoice
+                    </button>
+                </div>
             </div>
 
-            <DataTable
-                data={mockInvoices}
-                columns={columns}
-                keyExtractor={(row) => row.id}
-                actions={renderActions}
-            />
+            <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}>
+                        <FileText size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Total Outstanding</h4>
+                        <p>$13,350.00</p>
+                    </div>
+                </div>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}>
+                        <Check size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Paid this Month</h4>
+                        <p>$42,800.00</p>
+                    </div>
+                </div>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }}>
+                        <AlertTriangle size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Overdue Amount</h4>
+                        <p>$8,900.00</p>
+                    </div>
+                </div>
+            </div>
 
-            <ActionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Create New Invoice"
-            >
-                <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Client Name</label>
-                            <input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+            <div className={styles.card}>
+                <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>Recent Invoices</h3>
+                    <div className={styles.filtersRow}>
+                        <div className={styles.searchBox}>
+                            <Search size={16} className={styles.icon} />
+                            <input
+                                type="text"
+                                placeholder="Search client or ID..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Amount (₹)</label>
-                            <input type="number" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                        </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Invoice Date</label>
-                            <input type="date" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Due Date</label>
-                            <input type="date" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+                        <div className={styles.filterBox}>
+                            <Filter size={16} className={styles.icon} />
+                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                                <option value="All">All Status</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Overdue">Overdue</option>
+                                <option value="Draft">Draft</option>
+                            </select>
                         </div>
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Description</label>
-                        <textarea rows={3} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }}></textarea>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                        <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #334155', background: 'transparent', color: '#f8fafc', cursor: 'pointer' }}>Cancel</button>
-                        <button type="button" style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 'bold', cursor: 'pointer' }}>Generate Invoice</button>
-                    </div>
-                </form>
-            </ActionModal>
+                </div>
+
+                <div className={styles.tableWrapper}>
+                    <table className={styles.dataTable}>
+                        <thead>
+                            <tr>
+                                <th>Invoice ID</th>
+                                <th>Client Name</th>
+                                <th>Date Issued</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredInvoices.map(invoice => (
+                                <tr key={invoice.id}>
+                                    <td className={styles.highlightCell}>{invoice.id}</td>
+                                    <td>{invoice.client}</td>
+                                    <td className={styles.dateCell}><Clock size={14} /> {invoice.date}</td>
+                                    <td className={styles.amountCell}>{invoice.amount}</td>
+                                    <td>
+                                        <span className={styles.statusBadge} style={getStatusStyle(invoice.status)}>
+                                            {invoice.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className={styles.actionLinks}>
+                                            <button className={styles.textLink}>View</button>
+                                            <button className={styles.textLink}>Download PDF</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {filteredInvoices.length === 0 && (
+                        <div className={styles.emptyState}>No invoices found matching criteria.</div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
 
-export default Invoices;
+export default InvoiceList;

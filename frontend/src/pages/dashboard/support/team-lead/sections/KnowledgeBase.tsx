@@ -1,117 +1,89 @@
 import React, { useState } from 'react';
-import { DataTable } from '../../../../../components/dashboard/shared/DataTable';
-import type { Column } from '../../../../../components/dashboard/shared/DataTable';
-import { ActionModal } from '../../../../../components/dashboard/shared/ActionModal';
-import { Plus, Edit2, Trash2, Eye, BookOpen } from 'lucide-react';
-
-interface Article {
-    id: string;
-    title: string;
-    category: string;
-    author: string;
-    views: number;
-    lastUpdated: string;
-    status: 'Published' | 'Draft' | 'Archived';
-}
-
-const mockArticles: Article[] = [
-    { id: 'ART-001', title: 'Getting Started for Advocates', category: 'Onboarding', author: 'Team Lead', views: 1240, lastUpdated: '2024-10-20', status: 'Published' },
-    { id: 'ART-002', title: 'How to Reset Your ID Password', category: 'Account Security', author: 'HR Manager', views: 850, lastUpdated: '2024-10-22', status: 'Published' },
-    { id: 'ART-003', title: 'Understanding Refund Policies', category: 'Billing', author: 'Finance Team', views: 320, lastUpdated: '2024-10-24', status: 'Draft' },
-    { id: 'ART-004', title: 'Verification Process Walkthrough', category: 'Verification', author: 'Verifier Team', views: 560, lastUpdated: '2024-09-15', status: 'Archived' },
-];
+import { Search, Plus, Edit2, FileText, ChevronRight } from 'lucide-react';
+import styles from './SupportSections.module.css';
 
 const KnowledgeBase: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const columns: Column<Article>[] = [
-        {
-            header: 'Article Title',
-            accessor: (row: Article) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <BookOpen size={16} className="text-blue-400" />
-                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>{row.title}</span>
-                </div>
-            )
-        },
-        { header: 'Category', accessor: 'category' },
-        { header: 'Views', accessor: 'views' },
-        {
-            header: 'Status',
-            accessor: (row: Article) => (
-                <span style={{
-                    padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600,
-                    background: row.status === 'Published' ? '#10b98120' : row.status === 'Draft' ? '#f59e0b20' : '#64748b20',
-                    color: row.status === 'Published' ? '#10b981' : row.status === 'Draft' ? '#f59e0b' : '#64748b'
-                }}>
-                    {row.status}
-                </span>
-            )
-        },
-        { header: 'Last Updated', accessor: 'lastUpdated' }
+    const categories = [
+        { id: '1', name: 'Getting Started', articleCount: 12 },
+        { id: '2', name: 'Billing & Payments', articleCount: 8 },
+        { id: '3', name: 'Troubleshooting Guides', articleCount: 24 },
+        { id: '4', name: 'Account Management', articleCount: 15 },
     ];
 
-    const renderActions = (row: Article) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }} title="Preview"><Eye size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }} title="Archive" onClick={() => console.log(row.id)}><Trash2 size={16} /></button>
-        </div>
-    );
+    const recentDrafts = [
+        { id: 'd1', title: 'How to configure SSO', author: 'Alice Smith', lastEdited: '2 hours ago' },
+        { id: 'd2', title: 'Updating payment methods (2024)', author: 'Bob Jones', lastEdited: '1 day ago' },
+    ];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#f8fafc', margin: 0 }}>Knowledge Base Editor</h2>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#3b82f6', color: '#ffffff', border: 'none',
-                        padding: '10px 20px', borderRadius: '8px', fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Plus size={18} /> New Article
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>Knowledge Base Editor</h2>
+                    <p className={styles.sectionSubtitle}>Manage help articles, FAQs, and internal documentation.</p>
+                </div>
+                <button className={styles.primaryBtn}>
+                    <Plus size={16} /> New Article
                 </button>
             </div>
 
-            <DataTable
-                data={mockArticles}
-                columns={columns}
-                keyExtractor={(row: Article) => row.id}
-                actions={renderActions}
-            />
+            <div className={styles.filtersRow}>
+                <div className={styles.searchBox}>
+                    <Search size={18} className={styles.icon} />
+                    <input
+                        type="text"
+                        placeholder="Search articles or drafts..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ width: '300px' }}
+                    />
+                </div>
+            </div>
 
-            <ActionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Create Help Article"
-            >
-                <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Article Title</label>
-                        <input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+            <div className={styles.splitLayout}>
+                <div className={styles.card} style={{ flex: 2 }}>
+                    <div className={styles.cardHeader}>
+                        <h3>Categories</h3>
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Category</label>
-                        <select style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }}>
-                            <option>Onboarding</option>
-                            <option>Account Security</option>
-                            <option>Billing</option>
-                            <option>Legal Procedures</option>
-                        </select>
+                    <div className={styles.categoryList}>
+                        {categories.map(cat => (
+                            <div key={cat.id} className={styles.categoryRow}>
+                                <div className={styles.categoryInfo}>
+                                    <FileText size={20} className={styles.iconBlue} />
+                                    <div className={styles.categoryText}>
+                                        <h4>{cat.name}</h4>
+                                        <span>{cat.articleCount} articles</span>
+                                    </div>
+                                </div>
+                                <button className={styles.iconBtn}>
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Content (Markdown supported)</label>
-                        <textarea rows={8} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff', resize: 'none' }}></textarea>
+                </div>
+
+                <div className={styles.card} style={{ flex: 1 }}>
+                    <div className={styles.cardHeader}>
+                        <h3>Recent Drafts</h3>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                        <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #334155', background: 'transparent', color: '#f8fafc', cursor: 'pointer' }}>Save Draft</button>
-                        <button type="button" style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 'bold', cursor: 'pointer' }}>Publish Article</button>
+                    <div className={styles.draftsList}>
+                        {recentDrafts.map(draft => (
+                            <div key={draft.id} className={styles.draftItem}>
+                                <h4>{draft.title}</h4>
+                                <div className={styles.draftMeta}>
+                                    <span>{draft.author}</span> • <span>{draft.lastEdited}</span>
+                                </div>
+                                <button className={styles.editDraftBtn}>
+                                    <Edit2 size={12} /> Edit
+                                </button>
+                            </div>
+                        ))}
                     </div>
-                </form>
-            </ActionModal>
+                </div>
+            </div>
         </div>
     );
 };

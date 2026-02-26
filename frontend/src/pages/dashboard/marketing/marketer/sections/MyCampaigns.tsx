@@ -1,121 +1,145 @@
 import React, { useState } from 'react';
-import { DataTable } from '../../../../../components/dashboard/shared/DataTable';
-import type { Column } from '../../../../../components/dashboard/shared/DataTable';
-import { ActionModal } from '../../../../../components/dashboard/shared/ActionModal';
-import { Plus, Edit2, Trash2, Link, Copy } from 'lucide-react';
-
-interface AdCampaign {
-    id: string;
-    adSet: string;
-    platform: string;
-    clicks: number;
-    impressions: number;
-    cpa: number;
-    status: 'Live' | 'Review' | 'Stopped';
-}
-
-const mockAds: AdCampaign[] = [
-    { id: 'AD-101', adSet: 'Retargeting Audience A', platform: 'Facebook', clicks: 1450, impressions: 45000, cpa: 120, status: 'Live' },
-    { id: 'AD-102', adSet: 'Search - Legal Keywords', platform: 'Google Ads', clicks: 890, impressions: 12000, cpa: 250, status: 'Live' },
-    { id: 'AD-103', adSet: 'B2B LinkedIn Cold', platform: 'LinkedIn', clicks: 120, impressions: 5000, cpa: 850, status: 'Review' },
-    { id: 'AD-104', adSet: 'Instagram Reels Video', platform: 'Instagram', clicks: 3200, impressions: 150000, cpa: 45, status: 'Stopped' },
-];
+import { Search, Plus, Filter, BarChart, Users, CheckCircle, Clock, MoreVertical, PlayCircle } from 'lucide-react';
+import styles from './MarketingSections.module.css';
 
 const MyCampaigns: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterPlatform, setFilterPlatform] = useState('All');
 
-    const formatCurrency = (val: number) => `₹${val}`;
-
-    const columns: Column<AdCampaign>[] = [
-        { header: 'Ad Set Name', accessor: (row) => <span style={{ fontWeight: 600, color: '#f8fafc' }}>{row.adSet}</span> },
-        { header: 'Platform', accessor: 'platform' },
-        { header: 'Impressions', accessor: (row) => row.impressions.toLocaleString() },
-        { header: 'Clicks', accessor: (row) => <strong style={{ color: '#3b82f6' }}>{row.clicks.toLocaleString()}</strong> },
-        { header: 'CPA', accessor: (row) => formatCurrency(row.cpa) },
-        {
-            header: 'Status',
-            accessor: (row) => {
-                const colors = {
-                    'Live': { bg: '#10b98120', text: '#10b981' },
-                    'Review': { bg: '#facc1520', text: '#facc15' },
-                    'Stopped': { bg: '#ef444420', text: '#ef4444' }
-                };
-                const color = colors[row.status];
-
-                return (
-                    <span style={{
-                        padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500,
-                        background: color.bg, color: color.text
-                    }}>
-                        {row.status}
-                    </span>
-                );
-            }
-        }
+    const mockCampaigns = [
+        { id: '1', name: 'Q4 Holiday Special', platform: 'Facebook Ads', status: 'Active', budget: '$5,000', spent: '$2,150', conversions: 124, cpa: '$17.33' },
+        { id: '2', name: 'Retargeting - Cart Abandoners', platform: 'Google Ads', status: 'Active', budget: '$2,000', spent: '$850', conversions: 45, cpa: '$18.88' },
+        { id: '3', name: 'Brand Awareness 2023', platform: 'LinkedIn LinkedIn Ads', status: 'Paused', budget: '$10,000', spent: '$10,000', conversions: 89, cpa: '$112.35' },
+        { id: '4', name: 'Newsletter Promo - Oct', platform: 'Email (Mailchimp)', status: 'Draft', budget: '$0', spent: '$0', conversions: 0, cpa: '-' },
+        { id: '5', name: 'Winter Sale Teaser', platform: 'Instagram Ads', status: 'Active', budget: '$3,500', spent: '$420', conversions: 12, cpa: '$35.00' },
     ];
 
-    const renderActions = (row: AdCampaign) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ background: 'transparent', border: 'none', color: '#8b5cf6', cursor: 'pointer', padding: '4px' }} title="Copy UTM Link"><Copy size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#10b981', cursor: 'pointer', padding: '4px' }} title="Go to Ad Platform"><Link size={16} /></button>
-            <div style={{ width: '1px', background: '#334155', margin: '0 4px' }} />
-            <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }} title="Delete"><Trash2 size={16} /></button>
-        </div>
-    );
+    const filteredCampaigns = mockCampaigns.filter(camp => {
+        const matchesSearch = camp.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesPlatform = filterPlatform === 'All' || camp.platform.includes(filterPlatform);
+        return matchesSearch && matchesPlatform;
+    });
+
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'Active': return { color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' };
+            case 'Paused': return { color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' };
+            case 'Draft': return { color: '#94a3b8', background: 'rgba(148, 163, 184, 0.1)' };
+            default: return {};
+        }
+    };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#f8fafc', margin: 0 }}>Ad Sets & Tracking</h2>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#3b82f6', color: '#ffffff', border: 'none',
-                        padding: '10px 20px', borderRadius: '8px', fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Plus size={18} /> Generate UTM Link
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>Campaign Manager</h2>
+                    <p className={styles.sectionSubtitle}>Create, track, and optimize your marketing campaigns across platforms.</p>
+                </div>
+                <button className={styles.primaryBtn}>
+                    <Plus size={16} /> Create Campaign
                 </button>
             </div>
 
-            <DataTable
-                data={mockAds}
-                columns={columns}
-                keyExtractor={(row) => row.id}
-                actions={renderActions}
-            />
+            <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}>
+                        <BarChart size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Total Ad Spend (MTD)</h4>
+                        <p>$13,420.00</p>
+                    </div>
+                </div>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' }}>
+                        <Users size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Total Conversions</h4>
+                        <p>270</p>
+                    </div>
+                </div>
+                <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ color: '#8b5cf6', background: 'rgba(139, 92, 246, 0.1)' }}>
+                        <CheckCircle size={20} />
+                    </div>
+                    <div className={styles.statInfo}>
+                        <h4>Average CPA</h4>
+                        <p>$49.70</p>
+                    </div>
+                </div>
+            </div>
 
-            <ActionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title="Generate Tracking Link"
-            >
-                <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Target URL</label>
-                        <input type="url" placeholder="https://eadvocate.in/" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+            <div className={styles.card}>
+                <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className={styles.filtersRow}>
+                        <div className={styles.searchBox}>
+                            <Search size={16} className={styles.icon} />
+                            <input
+                                type="text"
+                                placeholder="Find a campaign..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className={styles.filterBox}>
+                            <Filter size={16} className={styles.icon} />
+                            <select value={filterPlatform} onChange={(e) => setFilterPlatform(e.target.value)}>
+                                <option value="All">All Platforms</option>
+                                <option value="Facebook">Meta (FB/IG)</option>
+                                <option value="Google">Google Ads</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Email">Email Marketing</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Campaign Source (utm_source)</label>
-                        <input type="text" placeholder="e.g. google, facebook" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Campaign Medium (utm_medium)</label>
-                        <input type="text" placeholder="e.g. cpc, banner, email" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Campaign Name (utm_campaign)</label>
-                        <input type="text" placeholder="e.g. summer_sale" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                        <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #334155', background: 'transparent', color: '#f8fafc', cursor: 'pointer' }}>Cancel</button>
-                        <button type="button" style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 'bold', cursor: 'pointer' }}>Generate & Copy</button>
-                    </div>
-                </form>
-            </ActionModal>
+                </div>
+
+                <div className={styles.tableWrapper}>
+                    <table className={styles.dataTable}>
+                        <thead>
+                            <tr>
+                                <th>Campaign Name</th>
+                                <th>Platform</th>
+                                <th>Status</th>
+                                <th>Budget</th>
+                                <th>Spent</th>
+                                <th>Conversions</th>
+                                <th>CPA</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredCampaigns.map(camp => (
+                                <tr key={camp.id}>
+                                    <td className={styles.highlightCell}>{camp.name}</td>
+                                    <td>{camp.platform}</td>
+                                    <td>
+                                        <span className={styles.statusBadge} style={getStatusStyle(camp.status)}>
+                                            {camp.status === 'Active' && <PlayCircle size={12} style={{ marginRight: '4px' }} />}
+                                            {camp.status === 'Paused' && <Clock size={12} style={{ marginRight: '4px' }} />}
+                                            {camp.status}
+                                        </span>
+                                    </td>
+                                    <td>{camp.budget}</td>
+                                    <td>{camp.spent}</td>
+                                    <td><span style={{ fontWeight: 600, color: '#f8fafc' }}>{camp.conversions}</span></td>
+                                    <td className={styles.highlightCell}>{camp.cpa}</td>
+                                    <td>
+                                        <button className={styles.iconBtn} title="More actions">
+                                            <MoreVertical size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {filteredCampaigns.length === 0 && (
+                        <div className={styles.emptyState}>No campaigns match your filters.</div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

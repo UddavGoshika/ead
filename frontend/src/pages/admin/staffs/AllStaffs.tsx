@@ -25,12 +25,14 @@ interface Staff {
     grossAmount: string;
     netAmount: string;
     avatar?: string;
+    rawRole: string;
 }
 
 const ROLE_DISPLAY_MAP: Record<string, string> = {
     admin: 'Admin',
     super_admin: 'Super Admin',
     superadmin: 'Super Admin',
+    general_manager: 'General Manager',
     manager: 'General Manager',
     teamlead: 'Team Lead',
     marketing_team_lead: 'Marketing Team Lead',
@@ -47,11 +49,10 @@ const ROLE_DISPLAY_MAP: Record<string, string> = {
     personal_agent: 'Personal Agent',
     marketer: 'Marketer',
     marketing_agency: 'Marketing Agency',
-    legal_provider: 'Legal Advisor',
-    email_support: 'Email Support',
     influencer: 'Influencer',
     verifier: 'Verifier',
     finance: 'Finance',
+    email_support: 'Email Support',
     support: 'Support'
 };
 
@@ -237,6 +238,7 @@ const AllStaffs: React.FC = () => {
                         email: s.email,
                         mobile: (s.profile && s.profile.mobile) || 'N/A',
                         role: roleDisplay,
+                        rawRole: r,
                         department: (s.profile && s.profile.department) || 'N/A',
                         status: (s.status === 'Active' ? 'Active' : s.status === 'Blocked' ? 'Suspended' : s.status === 'Pending' ? 'Inactive' : (s.status || 'Active')) as StaffStatus,
                         joinedDate: (s.profile && s.profile.joinedDate) ? new Date(s.profile.joinedDate).toLocaleDateString() : new Date(s.createdAt).toLocaleDateString(),
@@ -269,12 +271,12 @@ const AllStaffs: React.FC = () => {
             "Call Support": "call_support",
             "Personal Assistant": "personal_assistant",
             "Marketer": "marketer",
-            "General Manager": "manager",
-            "Team Lead": "teamlead",
+            "General Manager": "general_manager",
+            "Team Lead": "team_lead",
             "Marketing Team Lead": "marketing_team_lead",
             "Support Team Lead": "support_team_lead",
             "Operations Team Lead": "operations_team_lead",
-            "Super Admin": "admin",
+            "Super Admin": "super_admin",
             "HR": "hr",
             "Email Support": "email_support",
             "Influencer": "influencer",
@@ -354,7 +356,7 @@ const AllStaffs: React.FC = () => {
             impersonate({
                 id: staff.id,
                 name: staff.name,
-                role: staff.role.toLowerCase().replace(/\s+/g, '_') as any,
+                role: staff.rawRole as any,
                 email: staff.email,
                 unique_id: staff.staffId
             });

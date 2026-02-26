@@ -1,103 +1,158 @@
 import React from 'react';
-import { StatCard } from '../../../../../components/dashboard/shared/StatCard';
-import { MessageSquare, Clock, AlertTriangle, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Users, Clock, AlertTriangle, MessageSquare, PhoneCall, CheckCircle } from 'lucide-react';
+import styles from './SupportSections.module.css';
 
 const LiveOverview: React.FC = () => {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
-                <StatCard
-                    title="Live Chat Queue"
-                    value="18"
-                    icon={<MessageSquare size={24} />}
-                    color="blue"
-                    trend={{ value: 'Active', isPositive: true, label: 'now' }}
-                />
-                <StatCard
-                    title="Avg Wait Time"
-                    value="4m 12s"
-                    icon={<Clock size={24} />}
-                    color="yellow"
-                    trend={{ value: '+30s', isPositive: false, label: 'vs avg' }}
-                />
-                <StatCard
-                    title="SLA Breaches"
-                    value="3"
-                    icon={<AlertTriangle size={24} />}
-                    color="red"
-                    trend={{ value: 'Urgent', isPositive: false, label: 'action needed' }}
-                />
-                <StatCard
-                    title="Online Agents"
-                    value="12 / 15"
-                    icon={<Users size={24} />}
-                    color="green"
-                    trend={{ value: '80%', isPositive: true, label: 'occupancy' }}
-                />
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>Real-Time Queue Overview</h2>
+                    <p className={styles.sectionSubtitle}>Monitor live incoming tickets, calls, and agent availability.</p>
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                <motion.div
-                    style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                >
-                    <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <MessageSquare size={18} className="text-blue-400" />
-                        Queue Distribution
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {[
-                            { label: 'General Queries', count: 8, color: '#3b82f6' },
-                            { label: 'Billing Support', count: 5, color: '#10b981' },
-                            { label: 'Technical Issues', count: 3, color: '#f59e0b' },
-                            { label: 'Legal Verification', count: 2, color: '#ef4444' }
-                        ].map((item, i) => (
-                            <div key={i}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.9rem' }}>
-                                    <span style={{ color: '#94a3b8' }}>{item.label}</span>
-                                    <span style={{ color: '#f8fafc', fontWeight: 600 }}>{item.count}</span>
-                                </div>
-                                <div style={{ height: '8px', background: '#0f172a', borderRadius: '4px', overflow: 'hidden' }}>
-                                    <div style={{ width: `${(item.count / 18) * 100}%`, height: '100%', background: item.color }} />
-                                </div>
-                            </div>
-                        ))}
+            <div className={styles.liveStatsGrid}>
+                {/* Active Agents */}
+                <div className={styles.liveStatCard}>
+                    <div className={styles.statHeader}>
+                        <Users size={20} className={styles.iconBlue} />
+                        <h4>Active Agents</h4>
                     </div>
-                </motion.div>
+                    <div className={styles.statBody}>
+                        <span className={styles.largeNumber}>24</span>
+                        <span className={styles.subtext}>/ 30 Logged In</span>
+                    </div>
+                    <div className={styles.progressContainer}>
+                        <div className={styles.progressBar} style={{ width: '80%', background: '#3b82f6' }}></div>
+                    </div>
+                </div>
 
-                <motion.div
-                    style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                >
-                    <h3 style={{ margin: '0 0 16px 0', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Users size={18} className="text-green-400" />
-                        Agent Status
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        {[
-                            { name: 'Rahul S.', status: 'On Call', time: '12m', color: '#3b82f6' },
-                            { name: 'Priya M.', status: 'Chatting', time: '5m', color: '#10b981' },
-                            { name: 'Amit K.', status: 'Available', time: '3m', color: '#10b981' },
-                            { name: 'Sana L.', status: 'Away', time: '15m', color: '#64748b' },
-                            { name: 'Vikram J.', status: 'Wrap up', time: '2m', color: '#f59e0b' },
-                            { name: 'Nisha R.', status: 'Break', time: '20m', color: '#ef4444' }
-                        ].map((agent, i) => (
-                            <div key={i} style={{ padding: '12px', background: '#0f172a', borderRadius: '8px', border: '1px solid #334155' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: '#f8fafc', fontWeight: 500 }}>{agent.name}</span>
-                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: agent.color }} />
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.75rem' }}>
-                                    <span style={{ color: '#94a3b8' }}>{agent.status}</span>
-                                    <span style={{ color: '#64748b' }}>{agent.time}</span>
-                                </div>
-                            </div>
-                        ))}
+                {/* Queue Length */}
+                <div className={styles.liveStatCard}>
+                    <div className={styles.statHeader}>
+                        <MessageSquare size={20} className={styles.iconYellow} />
+                        <h4>Unassigned Tickets</h4>
                     </div>
-                </motion.div>
+                    <div className={styles.statBody}>
+                        <span className={styles.largeNumber}>142</span>
+                        <span className={styles.subtext}>Awaiting Routing</span>
+                    </div>
+                    <div className={styles.trendRow}>
+                        <span className={styles.trendUp}>+12%</span> vs last hour
+                    </div>
+                </div>
+
+                {/* Avg Wait Time */}
+                <div className={styles.liveStatCard}>
+                    <div className={styles.statHeader}>
+                        <Clock size={20} className={styles.iconOrange} />
+                        <h4>Avg Wait Time</h4>
+                    </div>
+                    <div className={styles.statBody}>
+                        <span className={styles.largeNumber}>4m 12s</span>
+                        <span className={styles.subtext}>Live Chats & Calls</span>
+                    </div>
+                    <div className={styles.trendRow}>
+                        <span className={styles.trendDown}>-30s</span> vs yesterday
+                    </div>
+                </div>
+
+                {/* SLA Breaches */}
+                <div className={styles.liveStatCard} style={{ border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                    <div className={styles.statHeader}>
+                        <AlertTriangle size={20} className={styles.iconRed} />
+                        <h4 style={{ color: '#ef4444' }}>SLA Breaches</h4>
+                    </div>
+                    <div className={styles.statBody}>
+                        <span className={styles.largeNumber} style={{ color: '#ef4444' }}>8</span>
+                        <span className={styles.subtext}>High Priority Tickets</span>
+                    </div>
+                    <div className={styles.pulseIndicator}>
+                        <div className={styles.pulseRing}></div>
+                        Critical Attention Needed
+                    </div>
+                </div>
+            </div>
+
+            <div className={styles.splitLayout}>
+                <div className={styles.card} style={{ flex: 2 }}>
+                    <div className={styles.cardHeader}>
+                        <h3>Live Call Queue Monitoring</h3>
+                    </div>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.dataTable}>
+                            <thead>
+                                <tr>
+                                    <th>Caller</th>
+                                    <th>Intent / IVR Choice</th>
+                                    <th>Wait Time</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td className={styles.highlightCell}>+1 (555) 019-2834</td>
+                                    <td>Billing Inquiry</td>
+                                    <td style={{ color: '#ef4444', fontWeight: 600 }}>08:45</td>
+                                    <td><span className={styles.badgeWarning}>Waiting</span></td>
+                                    <td><button className={styles.actionLink}>Force Route</button></td>
+                                </tr>
+                                <tr>
+                                    <td className={styles.highlightCell}>+44 7700 900077</td>
+                                    <td>Technical Support</td>
+                                    <td style={{ color: '#f59e0b' }}>03:12</td>
+                                    <td><span className={styles.badgeWarning}>Waiting</span></td>
+                                    <td><button className={styles.actionLink}>Force Route</button></td>
+                                </tr>
+                                <tr>
+                                    <td className={styles.highlightCell}>+1 (555) 332-1199</td>
+                                    <td>Sales Escalation</td>
+                                    <td>01:05</td>
+                                    <td><span className={styles.badgeSuccess}>In Progress</span></td>
+                                    <td><button className={styles.actionLink}>Monitor Call</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className={styles.card} style={{ flex: 1 }}>
+                    <div className={styles.cardHeader}>
+                        <h3>Agent Activity Heatmap</h3>
+                    </div>
+                    <div className={styles.heatmapList}>
+                        <div className={styles.agentRow}>
+                            <div className={styles.agentInfo}>
+                                <div className={styles.avatar}>AS</div>
+                                <span>Alice Smith</span>
+                            </div>
+                            <span className={styles.statusDot} style={{ background: '#10b981' }} title="Available"></span>
+                        </div>
+                        <div className={styles.agentRow}>
+                            <div className={styles.agentInfo}>
+                                <div className={styles.avatar}>BJ</div>
+                                <span>Bob Jones</span>
+                            </div>
+                            <span className={styles.statusDot} style={{ background: '#f59e0b' }} title="On Call (12m)"></span>
+                        </div>
+                        <div className={styles.agentRow}>
+                            <div className={styles.agentInfo}>
+                                <div className={styles.avatar}>CM</div>
+                                <span>Charlie Miller</span>
+                            </div>
+                            <span className={styles.statusDot} style={{ background: '#ef4444' }} title="Away / Break"></span>
+                        </div>
+                        <div className={styles.agentRow}>
+                            <div className={styles.agentInfo}>
+                                <div className={styles.avatar}>DW</div>
+                                <span>Diana Wong</span>
+                            </div>
+                            <span className={styles.statusDot} style={{ background: '#3b82f6' }} title="Chatting (3 active)"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

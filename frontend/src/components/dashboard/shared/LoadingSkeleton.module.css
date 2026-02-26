@@ -1,0 +1,170 @@
+@keyframes shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+
+    100% {
+        background-position: 468px 0;
+    }
+}
+
+.cardSkeleton,
+.skeletonHeader,
+.skeletonRow,
+.avatar,
+.line1,
+.line2,
+.header,
+.contentBlock,
+.contentBlockSm {
+    background: #1e293b;
+    background-image: linear-gradient(to right,
+            #1e293b 0%,
+            #334155 20%,
+            #1e293b 40%,
+            #1e293b 100%);
+    background-repeat: no-repeat;
+    background-size: 800px 104px;
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: shimmer;
+    animation-timing-function: linear;
+    border-radius: 6px;
+}
+
+/* Card Type */
+.cardSkeleton {
+    padding: 20px;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cardIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: inherit;
+    animation: inherit;
+}
+
+.cardLine1 {
+    width: 60%;
+    height: 14px;
+    background: inherit;
+    animation: inherit;
+}
+
+.cardLine2 {
+    width: 40%;
+    height: 24px;
+    background: inherit;
+    animation: inherit;
+}
+
+/* Table Type */
+.tableSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.skeletonHeader {
+    height: 40px;
+    width: 100%;
+}
+
+.skeletonRow {
+    display: flex;
+    gap: 16px;
+    height: 30px;
+}
+
+.cell1 {
+    width: 5%;
+    background: inherit;
+    animation: inherit;
+}
+
+.cell2 {
+    width: 25%;
+    background: inherit;
+    animation: inherit;
+}
+
+.cell3 {
+    width: 50%;
+    background: inherit;
+    animation: inherit;
+}
+
+.cell4 {
+    width: 20%;
+    background: inherit;
+    animation: inherit;
+}
+
+/* List Type */
+.listSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.listItem {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.listText {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.line1 {
+    height: 14px;
+    width: 40%;
+}
+
+.line2 {
+    height: 12px;
+    width: 80%;
+}
+
+/* Detail Type */
+.detailSkeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+}
+
+.header {
+    height: 32px;
+    width: 30%;
+}
+
+.contentBlock {
+    height: 100px;
+    width: 100%;
+}
+
+.contentBlockSm {
+    height: 60px;
+    width: 100%;
+}

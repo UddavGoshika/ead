@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import WorkQueue from '../shared/WorkQueue';
 import type { WorkItem } from '../shared/WorkQueue';
+import SystemSettings from '../../shared/SystemSettings';
 
 const navItems: NavItem[] = [
     { id: 'calling', label: 'Call Queue', icon: <PhoneCall size={20} /> },
@@ -35,7 +36,7 @@ const TelecallerDashboard: React.FC = () => {
             case 'history':
                 return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Call Logs</h2><p style={{ color: '#94a3b8' }}>Review your previous calls and recordings.</p></div>;
             case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Device Settings</h2><p style={{ color: '#94a3b8' }}>Configure your softphone and audio settings.</p></div>;
+                return <SystemSettings allowedTabs={['general']} />;
             default:
                 return <WorkQueue role="telecaller" items={mockLeads} />;
         }
@@ -48,6 +49,7 @@ const TelecallerDashboard: React.FC = () => {
             navItems={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            department="operations"
         >
             {renderContent()}
         </StaffLayout>

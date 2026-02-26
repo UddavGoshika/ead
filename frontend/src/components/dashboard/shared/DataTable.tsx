@@ -22,7 +22,7 @@ interface DataTableProps<T> {
     onRowClick?: (row: T) => void;
 }
 
-export function DataTable<T>({
+export const DataTable = React.memo(function DataTable<T>({
     data,
     columns,
     keyExtractor,
@@ -155,4 +155,4 @@ export function DataTable<T>({
             )}
         </div>
     );
-}
+});

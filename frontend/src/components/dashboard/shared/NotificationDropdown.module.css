@@ -1,0 +1,214 @@
+.dropdownContainer {
+    position: relative;
+}
+
+.iconBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.iconBtn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+.badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #0f172a;
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 50;
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #f8fafc;
+}
+
+.markReadBtn {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.markReadBtn:hover {
+    text-decoration: underline;
+}
+
+.notificationList {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.notificationList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notificationList::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+}
+
+.notificationItem {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.notificationItem:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notificationItem.unread {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.itemIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.iconSuccess {
+    color: #10b981;
+}
+
+.iconWarning {
+    color: #f59e0b;
+}
+
+.iconError {
+    color: #ef4444;
+}
+
+.iconInfo {
+    color: #3b82f6;
+}
+
+.itemContent {
+    flex: 1;
+}
+
+.itemContent h4 {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: #f8fafc;
+}
+
+.itemContent p {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.emptyState {
+    padding: 32px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.footer {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.viewAllBtn {
+    background: none;
+    border: none;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.viewAllBtn:hover {
+    text-decoration: underline;
+}

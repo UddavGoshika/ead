@@ -6,6 +6,7 @@ import {
 import styles from './StaffLayout.module.css';
 import { useAuth } from '../../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationDropdown from '../../../../components/dashboard/shared/NotificationDropdown';
 
 export interface NavItem {
     id: string;
@@ -20,6 +21,7 @@ interface StaffLayoutProps {
     activeTab: string;
     onTabChange: (tabId: string) => void;
     children: React.ReactNode;
+    department?: 'hr' | 'finance' | 'marketing' | 'support' | 'operations' | 'management';
 }
 
 const StaffLayout: React.FC<StaffLayoutProps> = ({
@@ -28,7 +30,8 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({
     navItems,
     activeTab,
     onTabChange,
-    children
+    children,
+    department = 'management'
 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -41,7 +44,7 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({
     };
 
     return (
-        <div className={styles.layout}>
+        <div className={`${styles.layout} ${styles[`dept_${department}`]}`}>
             {/* Desktop Sidebar */}
             <motion.aside
                 className={`${styles.sidebar} ${!isSidebarOpen ? styles.sidebarCollapsed : ''}`}
@@ -163,10 +166,7 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({
                             <Search size={18} className={styles.searchIcon} />
                             <input type="text" placeholder="Search..." className={styles.searchInput} />
                         </div>
-                        <button className={styles.iconBtn}>
-                            <Bell size={20} />
-                            <span className={styles.badge}>3</span>
-                        </button>
+                        <NotificationDropdown />
                         <div className={styles.profileMenu}>
                             <div className={styles.avatar}>
                                 {user?.name ? user.name.charAt(0).toUpperCase() : <UserIcon size={20} />}

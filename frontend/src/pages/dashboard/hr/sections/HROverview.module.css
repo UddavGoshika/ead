@@ -1,0 +1,314 @@
+.sectionContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sectionTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0 0 4px 0;
+}
+
+.sectionSubtitle {
+    color: #94a3b8;
+    margin: 0;
+    font-size: 14px;
+}
+
+.primaryBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.primaryBtn:hover {
+    background: #2563eb;
+}
+
+.filtersRow {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.searchBox,
+.filterBox {
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0 12px;
+}
+
+.searchIcon,
+.filterIcon {
+    color: #64748b;
+    margin-right: 8px;
+}
+
+.searchInput,
+.filterSelect {
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    padding: 10px 0;
+    font-size: 14px;
+    outline: none;
+}
+
+.searchInput {
+    width: 250px;
+}
+
+.filterSelect {
+    width: 150px;
+    cursor: pointer;
+}
+
+.filterSelect option {
+    background: #0f172a;
+    color: white;
+}
+
+/* Modals */
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.formRow {
+    display: flex;
+    gap: 16px;
+}
+
+.formGroup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formGroup label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.formGroup input,
+.formGroup select {
+    padding: 10px 12px;
+    background: #0b0f19;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.cancelBtn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.submitBtn {
+    background: #3b82f6;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Time Off Tabs */
+.tabsContainer {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tabBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #cbd5e1;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tabBtn.activeTab {
+    background: #3b82f6;
+    color: white;
+    font-weight: 500;
+}
+
+/* Cards & Tables */
+.card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cardHeader {
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cardHeader h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #f8fafc;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.customTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.customTable th {
+    text-align: left;
+    padding: 12px 20px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.customTable td {
+    padding: 16px 20px;
+    color: #cbd5e1;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.heavyCell {
+    font-weight: 500;
+    color: #f8fafc;
+}
+
+.flexCell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.statusBadge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.actionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.iconBtnSuccess {
+    background: none;
+    border: none;
+    color: #10b981;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.iconBtnSuccess:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.iconBtnDanger {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.iconBtnDanger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.dateLabel {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.attendanceStats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statBox {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    border-top-width: 3px;
+    border-top-color: #3b82f6;
+}
+
+.statBox h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.statBox p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.emptyStateContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}

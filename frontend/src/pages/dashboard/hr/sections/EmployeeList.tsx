@@ -1,125 +1,131 @@
 import React, { useState } from 'react';
-import { DataTable } from '../../../../components/dashboard/shared/DataTable';
-import type { Column } from '../../../../components/dashboard/shared/DataTable';
-import { ActionModal } from '../../../../components/dashboard/shared/ActionModal';
-import { Plus, Edit2, Trash2, Mail, Phone } from 'lucide-react';
+import { Search, Filter, Plus, Phone, Mail, MapPin, Briefcase, Calendar } from 'lucide-react';
+import styles from './HROverview.module.css';
+import DataTable from '../../../../components/dashboard/shared/DataTable';
+import ActionModal from '../../../../components/dashboard/shared/ActionModal';
 
-interface Employee {
-    id: string;
-    name: string;
-    email: string;
-    department: string;
-    role: string;
-    status: 'Active' | 'On Leave' | 'Terminated';
-}
+const EmployeeList: React.FC = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-const mockEmployees: Employee[] = [
-    { id: '1', name: 'John Doe', email: 'john.doe@company.com', department: 'Operations', role: 'Telecaller', status: 'Active' },
-    { id: '2', name: 'Jane Smith', email: 'jane.smith@company.com', department: 'Support', role: 'Call Support', status: 'On Leave' },
-    { id: '3', name: 'Mike Johnson', email: 'mike.j@company.com', department: 'Marketing', role: 'Marketer', status: 'Active' },
-    { id: '4', name: 'Sarah Williams', email: 'sarah.w@company.com', department: 'Finance', role: 'Accountant', status: 'Terminated' },
-];
-
-const EmployeeDirectory: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const columns: Column<Employee>[] = [
-        {
-            header: 'Employee',
-            accessor: (row) => (
-                <div>
-                    <div style={{ fontWeight: 600, color: '#f8fafc' }}>{row.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                        <Mail size={12} /> {row.email}
-                    </div>
-                </div>
-            )
-        },
-        { header: 'Department', accessor: 'department' },
-        { header: 'Role', accessor: 'role' },
-        {
-            header: 'Status',
-            accessor: (row) => (
-                <span style={{
-                    padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500,
-                    background: row.status === 'Active' ? '#10b98120' : row.status === 'On Leave' ? '#facc1520' : '#ef444420',
-                    color: row.status === 'Active' ? '#10b981' : row.status === 'On Leave' ? '#facc15' : '#ef4444'
-                }}>
-                    {row.status}
-                </span>
-            )
-        }
+    const columns = [
+        { key: 'name', label: 'Employee Name' },
+        { key: 'role', label: 'Role / Designation' },
+        { key: 'department', label: 'Department' },
+        { key: 'status', label: 'Status' },
+        { key: 'joinDate', label: 'Join Date' },
     ];
 
-    const renderActions = (row: Employee) => (
-        <>
-            <button style={{ background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer', padding: '4px' }} title="Edit"><Edit2 size={16} /></button>
-            <button style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }} title="Delete"><Trash2 size={16} /></button>
-        </>
+    const mockEmployees = [
+        { id: '1', name: 'John Doe', role: 'Senior Support Agent', department: 'Customer Support', status: 'Active', joinDate: '2022-01-15' },
+        { id: '2', name: 'Jane Smith', role: 'Telecaller', department: 'Operations', status: 'Active', joinDate: '2022-06-20' },
+        { id: '3', name: 'Mike Johnson', role: 'Finance Analyst', department: 'Finance', status: 'On Leave', joinDate: '2021-11-10' },
+        { id: '4', name: 'Sarah Williams', role: 'HR Manager', department: 'Human Resources', status: 'Active', joinDate: '2020-05-05' },
+        { id: '5', name: 'David Brown', role: 'Marketing Lead', department: 'Marketing', status: 'Probation', joinDate: '2023-09-01' },
+        { id: '6', name: 'Emily Davis', role: 'Data Entry Clerk', department: 'Operations', status: 'Active', joinDate: '2023-01-10' },
+    ];
+
+    const filteredEmployees = mockEmployees.filter(emp =>
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleAddSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsAddModalOpen(false);
+        // Toast placeholder
+    };
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#f8fafc', margin: 0 }}>Employee Directory</h2>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        background: '#3b82f6', color: '#ffffff', border: 'none',
-                        padding: '10px 20px', borderRadius: '8px', fontWeight: 600,
-                        cursor: 'pointer'
-                    }}
-                >
-                    <Plus size={18} /> Add Employee
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>Employee Directory</h2>
+                    <p className={styles.sectionSubtitle}>Manage all staff profiles and records.</p>
+                </div>
+                <button className={styles.primaryBtn} onClick={() => setIsAddModalOpen(true)}>
+                    <Plus size={16} /> Add Employee
                 </button>
             </div>
 
+            <div className={styles.filtersRow}>
+                <div className={styles.searchBox}>
+                    <Search size={18} className={styles.searchIcon} />
+                    <input
+                        type="text"
+                        placeholder="Search employees..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={styles.searchInput}
+                    />
+                </div>
+                <div className={styles.filterBox}>
+                    <Filter size={18} className={styles.filterIcon} />
+                    <select className={styles.filterSelect}>
+                        <option value="all">All Departments</option>
+                        <option value="hr">Human Resources</option>
+                        <option value="finance">Finance</option>
+                        <option value="operations">Operations</option>
+                    </select>
+                </div>
+            </div>
+
             <DataTable
-                data={mockEmployees}
                 columns={columns}
-                keyExtractor={(row) => row.id}
-                actions={renderActions}
+                data={filteredEmployees}
+                onEdit={(row) => console.log('Edit', row)}
+                onDelete={(row) => console.log('Delete', row)}
             />
 
             <ActionModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
                 title="Add New Employee"
             >
-                <form style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>First Name</label>
-                            <input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+                <form className={styles.modalForm} onSubmit={handleAddSubmit}>
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label>Full Name</label>
+                            <input type="text" required placeholder="Alice Smith" />
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Last Name</label>
-                            <input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+                        <div className={styles.formGroup}>
+                            <label>Email Address</label>
+                            <input type="email" required placeholder="alice@eadvocate.com" />
                         </div>
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Email Address</label>
-                        <input type="email" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Department</label>
-                            <select style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }}>
-                                <option>Operations</option>
-                                <option>Support</option>
-                                <option>Marketing</option>
-                                <option>Finance</option>
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label>Department</label>
+                            <select required>
+                                <option value="">Select Department</option>
+                                <option value="hr">Human Resources</option>
+                                <option value="finance">Finance</option>
+                                <option value="support">Customer Support</option>
                             </select>
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8' }}>Role</label>
-                            <input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#0f172a', color: '#fff' }} />
+                        <div className={styles.formGroup}>
+                            <label>Designation</label>
+                            <input type="text" required placeholder="e.g. Call Support Agent" />
                         </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-                        <button type="button" onClick={() => setIsModalOpen(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #334155', background: 'transparent', color: '#f8fafc', cursor: 'pointer' }}>Cancel</button>
-                        <button type="button" style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#ffffff', fontWeight: 'bold', cursor: 'pointer' }}>Save Employee</button>
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label>Join Date</label>
+                            <input type="date" required />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Employment Type</label>
+                            <select required>
+                                <option value="fulltime">Full-Time</option>
+                                <option value="parttime">Part-Time</option>
+                                <option value="contract">Contractor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className={styles.modalActions}>
+                        <button type="button" className={styles.cancelBtn} onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                        <button type="submit" className={styles.submitBtn}>Save Employee</button>
                     </div>
                 </form>
             </ActionModal>
@@ -127,4 +133,4 @@ const EmployeeDirectory: React.FC = () => {
     );
 };
 
-export default EmployeeDirectory;
+export default EmployeeList;

@@ -1,0 +1,67 @@
+.breadcrumbCard {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: inline-block;
+    margin-bottom: 24px;
+}
+
+.breadcrumbList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.breadcrumbItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.homeBtn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    border-radius: 4px;
+}
+
+.homeBtn:hover,
+.breadcrumbLink:hover {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.breadcrumbLink {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.activeLabel {
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 8px;
+}
+
+.separator {
+    color: #475569;
+}

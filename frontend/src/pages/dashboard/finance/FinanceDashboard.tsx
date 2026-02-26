@@ -7,6 +7,7 @@ import {
 import FinanceOverview from './sections/FinanceOverview';
 import InvoiceList from './sections/InvoiceList';
 import PayrollManagement from './sections/PayrollManagement';
+import SystemSettings from '../shared/SystemSettings';
 import Expenses from './sections/Expenses';
 import Reconciliation from './sections/Reconciliation';
 
@@ -38,7 +39,7 @@ const FinanceDashboard: React.FC = () => {
             case 'reports':
                 return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Budget vs Actual Reports</h2><p style={{ color: '#94a3b8' }}>Detailed financial analysis and variance reports.</p></div>;
             case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Settings</h2><p style={{ color: '#94a3b8' }}>Finance configuration and audit logs.</p></div>;
+                return <SystemSettings allowedTabs={['general', 'logs']} />;
             default:
                 return <FinanceOverview />;
         }
@@ -51,6 +52,7 @@ const FinanceDashboard: React.FC = () => {
             navItems={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            department="finance"
         >
             {renderContent()}
         </StaffLayout>

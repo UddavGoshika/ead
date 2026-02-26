@@ -1,0 +1,208 @@
+.logViewerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.headerControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.searchBox,
+.filterBox {
+    display: flex;
+    align-items: center;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 16px;
+    gap: 12px;
+    transition: border-color 0.2s;
+}
+
+.searchBox:focus-within,
+.filterBox:focus-within {
+    border-color: #3b82f6;
+}
+
+.icon {
+    color: #64748b;
+}
+
+.searchBox input {
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    width: 250px;
+}
+
+.filterBox select {
+    background: transparent;
+    border: none;
+    color: #f8fafc;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+.filterBox select option {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logTable {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.logTable th {
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logTable td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.logTable tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.timestampCell {
+    color: #94a3b8;
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.actionCell strong {
+    color: #f8fafc;
+    font-weight: 500;
+}
+
+.moduleCell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.moduleIcon {
+    color: #3b82f6;
+    display: flex;
+}
+
+.userCell {
+    font-family: monospace;
+    color: #cbd5e1;
+}
+
+.ipCell {
+    color: #64748b;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badgeSuccess {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badgeFailed {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badgeWarning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.emptyState {
+    padding: 40px;
+    text-align: center;
+    color: #94a3b8;
+    background: #1e293b;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.pageInfo {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.pageControls {
+    display: flex;
+    gap: 8px;
+}
+
+.pageControls button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pageControls button:hover:not(:disabled) {
+    background: #334155;
+    border-color: #475569;
+}
+
+.pageControls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pageControls button.activePage {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}

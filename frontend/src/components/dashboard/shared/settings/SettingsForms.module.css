@@ -1,0 +1,170 @@
+.settingsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sectionHeader h2 {
+    font-size: 20px;
+    color: #f8fafc;
+    margin: 0 0 8px 0;
+}
+
+.sectionHeader p {
+    color: #94a3b8;
+    margin: 0;
+    font-size: 14px;
+}
+
+.card {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cardHeader {
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cardHeader h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cardHeader h3 svg {
+    color: #3b82f6;
+}
+
+.cardBody {
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formRow {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.formGroup {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formGroup label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+}
+
+.inputField,
+.selectField {
+    padding: 12px 16px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #f8fafc;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    outline: none;
+    width: 100%;
+}
+
+.inputField:focus,
+.selectField:focus {
+    border-color: #3b82f6;
+}
+
+.selectField option {
+    background: #1e293b;
+    color: white;
+}
+
+.logoUploadGroup {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.currentLogo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.uploadControls h4 {
+    margin: 0 0 4px 0;
+    color: #f8fafc;
+    font-size: 14px;
+}
+
+.uploadControls p {
+    margin: 0 0 12px 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.uploadBtn {
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.uploadBtn:hover {
+    background: #334155;
+    border-color: #475569;
+}
+
+.actionFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.saveBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+}
+
+.saveBtn:hover {
+    background: #2563eb;
+}

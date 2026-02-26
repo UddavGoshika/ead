@@ -1,107 +1,131 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Clock, Check, X, Filter, User, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import styles from './HROverview.module.css';
 
 const TimeOffAttendance: React.FC = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const calendarDays = Array.from({ length: 31 }, (_, i) => i + 1);
+    const [activeTab, setActiveTab] = useState('requests');
 
-    const pendingLeave = [
-        { id: 'PTO-11', employee: 'Rahul Sharma', type: 'Sick Leave', range: 'Oct 26 - Oct 27', reason: 'Flu symptoms' },
-        { id: 'PTO-12', employee: 'Sneha Gupta', type: 'Annual Leave', range: 'Nov 02 - Nov 05', reason: 'Family vacation' },
+    const mockRequests = [
+        { id: '1', employee: 'John Doe', type: 'Annual Leave', dates: 'Oct 28 - Nov 5', days: 8, status: 'Pending' },
+        { id: '2', employee: 'Jane Smith', type: 'Sick Leave', dates: 'Oct 25 - Oct 26', days: 2, status: 'Approved' },
+        { id: '3', employee: 'Mike Johnson', type: 'Personal', dates: 'Nov 12', days: 1, status: 'Pending' },
+        { id: '4', employee: 'Sarah Williams', type: 'Maternity', dates: 'Dec 1 - Mar 1', days: 90, status: 'Approved' },
     ];
 
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'Approved': return { color: '#10b981', background: 'rgba(16, 185, 129, 0.1)' };
+            case 'Pending': return { color: '#f59e0b', background: 'rgba(245, 158, 11, 0.1)' };
+            case 'Rejected': return { color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' };
+            default: return { color: '#94a3b8', background: 'transparent' };
+        }
+    };
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 style={{ color: '#f8fafc', margin: 0 }}>Attendance & PTO</h2>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button style={{ background: '#1e293b', border: '1px solid #334155', color: '#f8fafc', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Filter size={16} /> Filter Attendance
-                    </button>
-                    <button style={{ background: '#3b82f6', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
-                        Policy Settings
-                    </button>
+        <div className={styles.sectionContainer}>
+            <div className={styles.sectionHeader}>
+                <div>
+                    <h2 className={styles.sectionTitle}>PTO & Attendance</h2>
+                    <p className={styles.sectionSubtitle}>Manage leave workflows, track attendance, and view schedules.</p>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '24px' }}>
-                <motion.div
-                    style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
+            <div className={styles.tabsContainer}>
+                <button
+                    className={`${styles.tabBtn} ${activeTab === 'requests' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('requests')}
                 >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <h3 style={{ margin: 0, color: '#f8fafc' }}>Team Calendar</h3>
-                            <span style={{ color: '#64748b' }}>October 2024</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button style={{ padding: '6px', background: '#334155', border: 'none', borderRadius: '6px', color: '#fff' }}><ChevronLeft size={16} /></button>
-                            <button style={{ padding: '6px', background: '#334155', border: 'none', borderRadius: '6px', color: '#fff' }}><ChevronRight size={16} /></button>
-                        </div>
+                    Leave Requests
+                </button>
+                <button
+                    className={`${styles.tabBtn} ${activeTab === 'attendance' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('attendance')}
+                >
+                    Daily Attendance Grid
+                </button>
+            </div>
+
+            {activeTab === 'requests' && (
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <h3>Pending & Recent Leave Requests</h3>
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: '#334155' }}>
-                        {days.map(d => (
-                            <div key={d} style={{ background: '#1e293b', padding: '12px', textAlign: 'center', fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>{d}</div>
-                        ))}
-                        {calendarDays.map(d => {
-                            const isLeave = [12, 13, 14, 26, 27].includes(d);
-                            return (
-                                <div key={d} style={{ background: '#1e293b', height: '80px', padding: '8px', position: 'relative' }}>
-                                    <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{d}</span>
-                                    {isLeave && (
-                                        <div style={{
-                                            position: 'absolute', bottom: '8px', left: '4px', right: '4px', padding: '4px 6px',
-                                            background: d >= 26 ? '#ef444420' : '#3b82f620', borderLeft: `3px solid ${d >= 26 ? '#ef4444' : '#3b82f6'}`,
-                                            fontSize: '0.65rem', color: d >= 26 ? '#ef4444' : '#3b82f6', borderRadius: '2px'
-                                        }}>
-                                            {d >= 26 ? 'Rahul S. (Sick)' : 'Sneha G. (Vac)'}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </motion.div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <motion.div
-                        style={{ background: '#1e293b', padding: '24px', borderRadius: '12px', border: '1px solid #334155' }}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                    >
-                        <h3 style={{ margin: '0 0 20px 0', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Clock size={20} className="text-yellow-500" /> Pending Requests
-                        </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {pendingLeave.map((req) => (
-                                <div key={req.id} style={{ padding: '16px', background: '#0f172a', borderRadius: '10px', border: '1px solid #334155' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <div style={{ fontWeight: 600, color: '#f8fafc' }}>{req.employee}</div>
-                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{req.id}</span>
-                                    </div>
-                                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '12px' }}>
-                                        {req.type} • {req.range}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button style={{ flex: 1, padding: '8px', background: '#10b98120', color: '#10b981', border: '1px solid #10b98140', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>Approve</button>
-                                        <button style={{ flex: 1, padding: '8px', background: '#ef444420', color: '#ef4444', border: '1px solid #ef444440', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>Reject</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-
-                    <div style={{ background: '#3b82f610', padding: '20px', borderRadius: '12px', border: '1px solid #3b82f630' }}>
-                        <h4 style={{ margin: '0 0 12px 0', color: '#3b82f6' }}>Employee Coverage Alert</h4>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.5' }}>
-                            Support Team will have <span style={{ color: '#fff' }}>25% reduced capacity</span> on Nov 2nd due to overlapping leave requests.
-                        </p>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.customTable}>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>Date Range</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {mockRequests.map(req => (
+                                    <tr key={req.id}>
+                                        <td className={styles.heavyCell}>{req.employee}</td>
+                                        <td>{req.type}</td>
+                                        <td><div className={styles.flexCell}><Calendar size={14} /> {req.dates}</div></td>
+                                        <td>{req.days} days</td>
+                                        <td>
+                                            <span className={styles.statusBadge} style={getStatusStyle(req.status)}>
+                                                {req.status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {req.status === 'Pending' ? (
+                                                <div className={styles.actionRow}>
+                                                    <button className={styles.iconBtnSuccess} title="Approve"><CheckCircle size={18} /></button>
+                                                    <button className={styles.iconBtnDanger} title="Reject"><XCircle size={18} /></button>
+                                                </div>
+                                            ) : (
+                                                <span className={styles.mutedText}>Processed</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {activeTab === 'attendance' && (
+                <div className={styles.card}>
+                    <div className={styles.cardHeader} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <h3>Today's Attendance Overview</h3>
+                        <span className={styles.dateLabel}>{new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div className={styles.attendanceGrid}>
+                        {/* Placeholder for attendance grid UI */}
+                        <div className={styles.attendanceStats}>
+                            <div className={styles.statBox}>
+                                <h4>Total Staff</h4>
+                                <p>154</p>
+                            </div>
+                            <div className={styles.statBox} style={{ borderColor: '#10b981' }}>
+                                <h4 style={{ color: '#10b981' }}>Present</h4>
+                                <p>142</p>
+                            </div>
+                            <div className={styles.statBox} style={{ borderColor: '#ef4444' }}>
+                                <h4 style={{ color: '#ef4444' }}>Absent</h4>
+                                <p>4</p>
+                            </div>
+                            <div className={styles.statBox} style={{ borderColor: '#f59e0b' }}>
+                                <h4 style={{ color: '#f59e0b' }}>On Leave</h4>
+                                <p>8</p>
+                            </div>
+                        </div>
+
+                        <div className={styles.emptyStateContainer} style={{ padding: '40px' }}>
+                            <Clock size={48} color="#334155" style={{ marginBottom: '16px' }} />
+                            <p style={{ color: '#94a3b8' }}>Detailed attendance grid will populate upon backend integration.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

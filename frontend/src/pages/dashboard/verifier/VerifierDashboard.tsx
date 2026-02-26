@@ -7,6 +7,7 @@ import {
 import VerifierOverview from './sections/VerifierOverview';
 import VerificationList from './sections/VerificationList';
 import VerifierPerformance from './sections/Performance';
+import SystemSettings from '../shared/SystemSettings';
 
 const navItems: NavItem[] = [
     { id: 'overview', label: 'Tasks Queue', icon: <LayoutDashboard size={20} /> },
@@ -31,9 +32,9 @@ const VerifierDashboard: React.FC = () => {
             case 'rejection_templates':
                 return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Rejection Templates</h2><p style={{ color: '#94a3b8' }}>Standardized responses for common verification issues.</p></div>;
             case 'history':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Audit History</h2><p style={{ color: '#94a3b8' }}>View previously verified accounts and actions.</p></div>;
+                return <SystemSettings allowedTabs={['logs']} />;
             case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Settings</h2><p style={{ color: '#94a3b8' }}>Verifier specific settings and preferences.</p></div>;
+                return <SystemSettings allowedTabs={['general']} />;
             default:
                 return <VerifierOverview />;
         }

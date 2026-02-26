@@ -7,6 +7,7 @@ import {
 import Overview from './sections/Overview';
 import StaffDirectory from './sections/StaffDirectory';
 import FinanceReports from './sections/FinanceReports';
+import SystemSettings from '../shared/SystemSettings';
 
 const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
@@ -30,7 +31,7 @@ const GeneralManagerDashboard: React.FC = () => {
             case 'documents':
                 return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Document Management</h2><p style={{ color: '#94a3b8' }}>This section handles company-wide documents.</p></div>;
             case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Settings</h2><p style={{ color: '#94a3b8' }}>General Manager specific settings.</p></div>;
+                return <SystemSettings />;
             default:
                 return <Overview />;
         }

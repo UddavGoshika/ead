@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -204,27 +204,27 @@ import MarketingAgencyWorkspace from './pages/marketing-agency/workspace/Marketi
 import AssistantWorkspace from './pages/personalassistant/workspace/AssistantWorkspace';
 
 // NEW STAFF DASHBOARDS - MANAGEMENT
-import GeneralManagerDashboard from './pages/dashboard/general-manager/GeneralManagerDashboard';
-import HRDashboard from './pages/dashboard/hr/HRDashboard';
-import FinanceDashboard from './pages/dashboard/finance/FinanceDashboard';
-import VerifierDashboard from './pages/dashboard/verifier/VerifierDashboard';
+const GeneralManagerDashboard = lazy(() => import('./pages/dashboard/general-manager/GeneralManagerDashboard'));
+const HRDashboard = lazy(() => import('./pages/dashboard/hr/HRDashboard'));
+const FinanceDashboard = lazy(() => import('./pages/dashboard/finance/FinanceDashboard'));
+const VerifierDashboard = lazy(() => import('./pages/dashboard/verifier/VerifierDashboard'));
 
 // NEW STAFF DASHBOARDS - MARKETING
-import MarketingTeamLeadDashboard from './pages/dashboard/marketing/team-lead/MarketingTeamLeadDashboard';
-import MarketerDashboard from './pages/dashboard/marketing/marketer/MarketerDashboard';
-import MarketingAgencyDashboard from './pages/dashboard/marketing/agency/MarketingAgencyDashboard';
+const MarketingTeamLeadDashboard = lazy(() => import('./pages/dashboard/marketing/team-lead/MarketingTeamLeadDashboard'));
+const MarketerDashboard = lazy(() => import('./pages/dashboard/marketing/marketer/MarketerDashboard'));
+const MarketingAgencyDashboard = lazy(() => import('./pages/dashboard/marketing/agency/MarketingAgencyDashboard'));
 
 // NEW STAFF DASHBOARDS - SUPPORT
-import SupportTeamLeadDashboard from './pages/dashboard/support/team-lead/SupportTeamLeadDashboard';
-import CallSupportDashboardNew from './pages/dashboard/support/call-support/CallSupportDashboard';
-import PersonalAgentDashboard from './pages/dashboard/support/personal-agent/PersonalAgentDashboard';
+const SupportTeamLeadDashboard = lazy(() => import('./pages/dashboard/support/team-lead/SupportTeamLeadDashboard'));
+const CallSupportDashboardNew = lazy(() => import('./pages/dashboard/support/call-support/CallSupportDashboard'));
+const PersonalAgentDashboard = lazy(() => import('./pages/dashboard/support/personal-agent/PersonalAgentDashboard'));
 
 // NEW STAFF DASHBOARDS - OPERATIONS
-import OperationsTeamLeadDashboard from './pages/dashboard/operations/team-lead/OperationsTeamLeadDashboard';
-import TelecallerDashboardNew from './pages/dashboard/operations/telecaller/TelecallerDashboard';
-import CustomerCareDashboard from './pages/dashboard/operations/customer-care/CustomerCareDashboard';
-import DataEntryDashboard from './pages/dashboard/operations/data-entry/DataEntryDashboard';
-import PersonalAssistantDashboard from './pages/dashboard/operations/personal-assistant/PersonalAssistantDashboard';
+const OperationsTeamLeadDashboard = lazy(() => import('./pages/dashboard/operations/team-lead/OperationsTeamLeadDashboard'));
+const TelecallerDashboardNew = lazy(() => import('./pages/dashboard/operations/telecaller/TelecallerDashboard'));
+const CustomerCareDashboard = lazy(() => import('./pages/dashboard/operations/customer-care/CustomerCareDashboard'));
+const DataEntryDashboard = lazy(() => import('./pages/dashboard/operations/data-entry/DataEntryDashboard'));
+const PersonalAssistantDashboard = lazy(() => import('./pages/dashboard/operations/personal-assistant/PersonalAssistantDashboard'));
 
 // MANAGEMENT & OPERATIONS IMPORTS
 import TeamLeadLayout from './layouts/TeamLeadLayout';
@@ -276,8 +276,8 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // Referral Roles mapping
-  const referralRoles = ['referral', 'influencer', 'marketer', 'marketing_agency'];
+  // Referral Roles mapping (Legacy/Shared)
+  const referralRoles = ['referral', 'influencer'];
   if (referralRoles.includes(role)) {
     return <Navigate to="/dashboard/referral" replace />;
   }
@@ -317,7 +317,7 @@ const DashboardRedirect: React.FC = () => {
     return <Navigate to="/dashboard/operations/data-entry" replace />;
   }
 
-  if (role === 'general_manager') {
+  if (role === 'general_manager' || role === 'manager') {
     return <Navigate to="/dashboard/general-manager" replace />;
   }
 
@@ -350,7 +350,7 @@ const DashboardRedirect: React.FC = () => {
   }
 
   if ([
-    'manager', 'teamlead'
+    'teamlead', 'team_lead'
   ].includes(role)) {
     return <Navigate to="/staff/portal" replace />;
   }
@@ -386,172 +386,174 @@ const AppContent: React.FC = () => {
       <ScrollToTop />
       <FloatingScrollButton />
       <ImpersonationBanner />
-      <Routes>
-        {/* ROUTES CONTENT */}
-        <Route path="/" element={<HomeLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="about" element={<AboutUs />} />
-          <Route path="faq" element={<FAQPage />} />
-          <Route path="blogs" element={<BlogPage />} />
-          <Route path="search" element={<SearchPage />} />
-          <Route path="profile/:uniqueId" element={<PublicProfile />} />
-          <Route path="premium-services" element={<Preservices />} />
-          <Route path="how-it-works" element={<SiteHowItWorks />} />
-          <Route path="advocate-how-it-works" element={<AdvHowIt />} />
-          <Route path="client-how-it-works" element={<ClientHowIt />} />
-          <Route path="terms" element={<TermsOfUse />} />
-          <Route path="privacy" element={<PrivacyPolicy />} />
-          <Route path="careers" element={<Careers />} />
-          <Route path="site-map" element={<SiteMap />} />
-          <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
-          <Route path="reset-password/:token" element={<ResetPassword />} />
-          <Route path="legal-documentation" element={<LegalDocumentationPage />} />
-          <Route path="summons-and-notices" element={<Summons />} />
-          <Route path="grievance-redressal" element={<Grievances />} />
-          <Route path="refund" element={<RefundPolicy />} />
-          <Route path="centers" element={<AdvCenters />} />
-          <Route path="fraud-alert" element={<FraudAlert />} />
-          <Route path="third-party-terms" element={<ThirdPartyTerms />} />
-          <Route path="cookie-policy" element={<CookiePolicy />} />
-        </Route>
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0b0f19', color: '#3b82f6', fontSize: '14px', fontWeight: 600 }}>Loading Application Module...</div>}>
+        <Routes>
+          {/* ROUTES CONTENT */}
+          <Route path="/" element={<HomeLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="about" element={<AboutUs />} />
+            <Route path="faq" element={<FAQPage />} />
+            <Route path="blogs" element={<BlogPage />} />
+            <Route path="search" element={<SearchPage />} />
+            <Route path="profile/:uniqueId" element={<PublicProfile />} />
+            <Route path="premium-services" element={<Preservices />} />
+            <Route path="how-it-works" element={<SiteHowItWorks />} />
+            <Route path="advocate-how-it-works" element={<AdvHowIt />} />
+            <Route path="client-how-it-works" element={<ClientHowIt />} />
+            <Route path="terms" element={<TermsOfUse />} />
+            <Route path="privacy" element={<PrivacyPolicy />} />
+            <Route path="careers" element={<Careers />} />
+            <Route path="site-map" element={<SiteMap />} />
+            <Route path="documentation-how-it-works" element={<LegalDocumentationPage />} />
+            <Route path="reset-password/:token" element={<ResetPassword />} />
+            <Route path="legal-documentation" element={<LegalDocumentationPage />} />
+            <Route path="summons-and-notices" element={<Summons />} />
+            <Route path="grievance-redressal" element={<Grievances />} />
+            <Route path="refund" element={<RefundPolicy />} />
+            <Route path="centers" element={<AdvCenters />} />
+            <Route path="fraud-alert" element={<FraudAlert />} />
+            <Route path="third-party-terms" element={<ThirdPartyTerms />} />
+            <Route path="cookie-policy" element={<CookiePolicy />} />
+          </Route>
 
-        {/* DASHBOARD ROUTES */}
-        <Route path="/dashboard" element={<DashboardRedirect />} />
-        <Route path="/dashboard/client/:uniqueId" element={<ProtectedRoute allowedRoles={['client']}><ClientDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/advocate/:uniqueId" element={<ProtectedRoute allowedRoles={['advocate']}><AdvocateDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/advisor/:uniqueId" element={<ProtectedRoute allowedRoles={['legal_provider']}><AdvisorDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/user/:uniqueId" element={<ProtectedRoute allowedRoles={['user']}><UserDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/email_support/:uniqueId" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupport /></ProtectedRoute>} />
-        <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><VerifierDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
+          {/* DASHBOARD ROUTES */}
+          <Route path="/dashboard" element={<DashboardRedirect />} />
+          <Route path="/dashboard/client/:uniqueId" element={<ProtectedRoute allowedRoles={['client']}><ClientDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/advocate/:uniqueId" element={<ProtectedRoute allowedRoles={['advocate']}><AdvocateDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/advisor/:uniqueId" element={<ProtectedRoute allowedRoles={['legal_provider']}><AdvisorDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/user/:uniqueId" element={<ProtectedRoute allowedRoles={['user']}><UserDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/support/email-support" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupport /></ProtectedRoute>} />
+          <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><VerifierDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
 
-        {/* NEW STAFF DASHBOARD ROUTES */}
-        <Route path="/dashboard/general-manager" element={<ProtectedRoute allowedRoles={['general_manager']}><GeneralManagerDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/hr" element={<ProtectedRoute allowedRoles={['hr']}><HRDashboard /></ProtectedRoute>} />
+          {/* NEW STAFF DASHBOARD ROUTES */}
+          <Route path="/dashboard/general-manager" element={<ProtectedRoute allowedRoles={['general_manager', 'manager']}><GeneralManagerDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/hr" element={<ProtectedRoute allowedRoles={['hr']}><HRDashboard /></ProtectedRoute>} />
 
-        <Route path="/dashboard/marketing/team-lead" element={<ProtectedRoute allowedRoles={['marketing_team_lead']}><MarketingTeamLeadDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/marketing/marketer" element={<ProtectedRoute allowedRoles={['marketer']}><MarketerDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/marketing/agency" element={<ProtectedRoute allowedRoles={['marketing_agency']}><MarketingAgencyDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/marketing/team-lead" element={<ProtectedRoute allowedRoles={['marketing_team_lead']}><MarketingTeamLeadDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/marketing/marketer" element={<ProtectedRoute allowedRoles={['marketer']}><MarketerDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/marketing/agency" element={<ProtectedRoute allowedRoles={['marketing_agency']}><MarketingAgencyDashboard /></ProtectedRoute>} />
 
-        <Route path="/dashboard/support/team-lead" element={<ProtectedRoute allowedRoles={['support_team_lead']}><SupportTeamLeadDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/support/call-support" element={<ProtectedRoute allowedRoles={['call_support']}><CallSupportDashboardNew /></ProtectedRoute>} />
-        <Route path="/dashboard/support/personal-agent" element={<ProtectedRoute allowedRoles={['personal_agent']}><PersonalAgentDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/support/team-lead" element={<ProtectedRoute allowedRoles={['support_team_lead']}><SupportTeamLeadDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/support/call-support" element={<ProtectedRoute allowedRoles={['call_support']}><CallSupportDashboardNew /></ProtectedRoute>} />
+          <Route path="/dashboard/support/personal-agent" element={<ProtectedRoute allowedRoles={['personal_agent']}><PersonalAgentDashboard /></ProtectedRoute>} />
 
-        <Route path="/dashboard/operations/team-lead" element={<ProtectedRoute allowedRoles={['operations_team_lead']}><OperationsTeamLeadDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/operations/telecaller" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerDashboardNew /></ProtectedRoute>} />
-        <Route path="/dashboard/operations/customer-care" element={<ProtectedRoute allowedRoles={['customer_care']}><CustomerCareDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/operations/data-entry" element={<ProtectedRoute allowedRoles={['data_entry']}><DataEntryDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/operations/personal-assistant" element={<ProtectedRoute allowedRoles={['personal_assistant']}><PersonalAssistantDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/operations/team-lead" element={<ProtectedRoute allowedRoles={['operations_team_lead', 'team_lead', 'teamlead']}><OperationsTeamLeadDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/operations/telecaller" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerDashboardNew /></ProtectedRoute>} />
+          <Route path="/dashboard/operations/customer-care" element={<ProtectedRoute allowedRoles={['customer_care']}><CustomerCareDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/operations/data-entry" element={<ProtectedRoute allowedRoles={['data_entry']}><DataEntryDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/operations/personal-assistant" element={<ProtectedRoute allowedRoles={['personal_assistant']}><PersonalAssistantDashboard /></ProtectedRoute>} />
 
-        <Route path="/dashboard/referral" element={<ProtectedRoute allowedRoles={['referral', 'influencer', 'marketer', 'marketing_agency']}><ReferralDashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs />} />
+          <Route path="/dashboard/referral" element={<ProtectedRoute allowedRoles={['referral', 'influencer', 'marketer', 'marketing_agency']}><ReferralDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs />} />
 
-        <Route path="/dashboard/live-chat" element={<ProtectedRoute allowedRoles={['live_chat', 'chat_support']}><LiveChatPage /></ProtectedRoute>} />
-        <Route path="/dashboard/telecalling-old" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerPage /></ProtectedRoute>} />
-        <Route path="/dashboard/email-desk" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupportPage /></ProtectedRoute>} />
+          <Route path="/dashboard/live-chat" element={<ProtectedRoute allowedRoles={['live_chat', 'chat_support']}><LiveChatPage /></ProtectedRoute>} />
+          <Route path="/dashboard/telecalling-old" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerPage /></ProtectedRoute>} />
+          <Route path="/dashboard/email-desk" element={<Navigate to="/dashboard/support/email-support" replace />} />
 
-        {/* STAFF ROUTES */}
-        <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'support', 'customer_care', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency', 'data_entry']}><StaffGlobalDashboard /></ProtectedRoute>} />
+          {/* STAFF ROUTES */}
+          <Route path="/staff/portal" element={<ProtectedRoute allowedRoles={['manager', 'teamlead', 'hr', 'support', 'customer_care', 'personal_assistant', 'personal_agent', 'influencer', 'marketer', 'marketing_agency', 'data_entry']}><StaffGlobalDashboard /></ProtectedRoute>} />
 
-        {/* ADMIN ROUTES */}
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminLayout /></ProtectedRoute>}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="profile" element={<AdminProfile />} />
-          <Route path="settings" element={<AdminSettings />} />
-          <Route path="members/free" element={<FreeMembers />} />
-          <Route path="members/premium" element={<PremiumMembers />} />
-          <Route path="members/approved" element={<ApprovedMembers />} />
-          <Route path="members/pending" element={<PendingMembers />} />
-          <Route path="members/verification" element={<MemberVerification />} />
-          <Route path="members/unapproved-pictures" element={<UnapprovedPictures />} />
-          <Route path="members/reported" element={<ReportedMembers />} />
-          <Route path="members/blocked" element={<BlockedMembers />} />
-          <Route path="members/deactivated" element={<DeactivatedMembers />} />
-          <Route path="members/deleted" element={<DeletedMembers />} />
-          <Route path="members/login-details" element={<LoginMemberDetails />} />
+          {/* ADMIN ROUTES */}
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminLayout /></ProtectedRoute>}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="members/free" element={<FreeMembers />} />
+            <Route path="members/premium" element={<PremiumMembers />} />
+            <Route path="members/approved" element={<ApprovedMembers />} />
+            <Route path="members/pending" element={<PendingMembers />} />
+            <Route path="members/verification" element={<MemberVerification />} />
+            <Route path="members/unapproved-pictures" element={<UnapprovedPictures />} />
+            <Route path="members/reported" element={<ReportedMembers />} />
+            <Route path="members/blocked" element={<BlockedMembers />} />
+            <Route path="members/deactivated" element={<DeactivatedMembers />} />
+            <Route path="members/deleted" element={<DeletedMembers />} />
+            <Route path="members/login-details" element={<LoginMemberDetails />} />
 
-          <Route path="members/bulk-add" element={<BulkMemberAdd />} />
-          <Route path="members/attributes" element={<Navigate to="attributes/practice-areas" replace />} />
-          <Route path="attributes/practice-areas" element={<PracticeAreas />} />
-          <Route path="attributes/courts" element={<Courts />} />
-          <Route path="attributes/specializations" element={<Specializations />} />
-          <Route path="attributes/case-types" element={<CaseTypes />} />
-          <Route path="attributes/language" element={<MemberLanguage />} />
-          <Route path="attributes/country" element={<Country />} />
-          <Route path="attributes/state" element={<State />} />
-          <Route path="attributes/city" element={<City />} />
-          <Route path="attributes/id-proof" element={<IdProofTypes />} />
-          <Route path="attributes/experience" element={<ExperienceLevels />} />
-          <Route path="members/profile-sections" element={<ProfileSections />} />
+            <Route path="members/bulk-add" element={<BulkMemberAdd />} />
+            <Route path="members/attributes" element={<Navigate to="attributes/practice-areas" replace />} />
+            <Route path="attributes/practice-areas" element={<PracticeAreas />} />
+            <Route path="attributes/courts" element={<Courts />} />
+            <Route path="attributes/specializations" element={<Specializations />} />
+            <Route path="attributes/case-types" element={<CaseTypes />} />
+            <Route path="attributes/language" element={<MemberLanguage />} />
+            <Route path="attributes/country" element={<Country />} />
+            <Route path="attributes/state" element={<State />} />
+            <Route path="attributes/city" element={<City />} />
+            <Route path="attributes/id-proof" element={<IdProofTypes />} />
+            <Route path="attributes/experience" element={<ExperienceLevels />} />
+            <Route path="members/profile-sections" element={<ProfileSections />} />
 
-          <Route path="premium-packages" element={<PremiumPackages />} />
-          <Route path="package-payments" element={<PackagePayments />} />
+            <Route path="premium-packages" element={<PremiumPackages />} />
+            <Route path="package-payments" element={<PackagePayments />} />
 
-          <Route path="legal-docs/providers" element={<DocumentationProviders />} />
-          <Route path="legal-docs/providers/:statusFilter" element={<DocumentationProviders />} />
-          <Route path="legal-docs/agreements" element={<AgreementsList />} />
-          <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
-          <Route path="legal-docs/notices" element={<NoticesList />} />
-          <Route path="legal-docs/services" element={<LegalDocumentServices />} />
+            <Route path="legal-docs/providers" element={<DocumentationProviders />} />
+            <Route path="legal-docs/providers/:statusFilter" element={<DocumentationProviders />} />
+            <Route path="legal-docs/agreements" element={<AgreementsList />} />
+            <Route path="legal-docs/affidavits" element={<AffidavitsList />} />
+            <Route path="legal-docs/notices" element={<NoticesList />} />
+            <Route path="legal-docs/services" element={<LegalDocumentServices />} />
 
-          <Route path="wallet/history" element={<WalletHistory />} />
-          <Route path="wallet/recharge" element={<WalletRecharge />} />
+            <Route path="wallet/history" element={<WalletHistory />} />
+            <Route path="wallet/recharge" element={<WalletRecharge />} />
 
-          <Route path="blog/posts" element={<AllPosts />} />
-          <Route path="blog/categories" element={<BlogCategories />} />
+            <Route path="blog/posts" element={<AllPosts />} />
+            <Route path="blog/categories" element={<BlogCategories />} />
 
-          <Route path="marketing/newsletter" element={<Newsletter />} />
-          <Route path="marketing/activity" element={<MailAgentActivity />} />
-          <Route path="contact-queries" element={<ContactQueries />} />
+            <Route path="marketing/newsletter" element={<Newsletter />} />
+            <Route path="marketing/activity" element={<MailAgentActivity />} />
+            <Route path="contact-queries" element={<ContactQueries />} />
 
-          <Route path="referral/commission" element={<ReferralCommission />} />
-          <Route path="referral/users" element={<ReferralUsers />} />
-          <Route path="referral/offers" element={<ReferralOffers />} />
-          <Route path="referral/earnings" element={<ReferralEarnings />} />
-          <Route path="referral/withdraw" element={<WalletWithdraw />} />
+            <Route path="referral/commission" element={<ReferralCommission />} />
+            <Route path="referral/users" element={<ReferralUsers />} />
+            <Route path="referral/offers" element={<ReferralOffers />} />
+            <Route path="referral/earnings" element={<ReferralEarnings />} />
+            <Route path="referral/withdraw" element={<WalletWithdraw />} />
 
-          <Route path="support/active" element={<ActiveTickets />} />
-          <Route path="support/settings/category" element={<SupportCategory />} />
-          <Route path="support/settings/agent" element={<AssignedAgent />} />
+            <Route path="support/active" element={<ActiveTickets />} />
+            <Route path="support/settings/category" element={<SupportCategory />} />
+            <Route path="support/settings/agent" element={<AssignedAgent />} />
 
-          <Route path="otp/templates" element={<SmsTemplates />} />
-          <Route path="otp/credentials" element={<OtpCredentials />} />
-          <Route path="otp/send" element={<SendSms />} />
+            <Route path="otp/templates" element={<SmsTemplates />} />
+            <Route path="otp/credentials" element={<OtpCredentials />} />
+            <Route path="otp/send" element={<SendSms />} />
 
-          <Route path="offline-payments/manual" element={<ManualPayments />} />
-          <Route path="uploaded-files" element={<UploadedFiles />} />
+            <Route path="offline-payments/manual" element={<ManualPayments />} />
+            <Route path="uploaded-files" element={<UploadedFiles />} />
 
-          <Route path="setup/header" element={<HeaderSetup />} />
-          <Route path="setup/footer" element={<FooterSetup />} />
-          <Route path="setup/pages" element={<PagesSetup />} />
-          <Route path="setup/appearance" element={<AppearanceSetup />} />
-          <Route path="setup/ecosystem" element={<EcosystemSetup />} />
+            <Route path="setup/header" element={<HeaderSetup />} />
+            <Route path="setup/footer" element={<FooterSetup />} />
+            <Route path="setup/pages" element={<PagesSetup />} />
+            <Route path="setup/appearance" element={<AppearanceSetup />} />
+            <Route path="setup/ecosystem" element={<EcosystemSetup />} />
 
-          <Route path="settings/general" element={<GeneralSettings />} />
-          <Route path="settings/language" element={<LanguageSettings />} />
-          <Route path="settings/currency" element={<CurrencySettings />} />
-          <Route path="settings/payments" element={<PaymentMethods />} />
-          <Route path="settings/smtp" element={<SmtpSettings />} />
-          <Route path="settings/email-templates" element={<EmailTemplates />} />
-          <Route path="settings/third-party" element={<ThirdPartySettings />} />
-          <Route path="settings/social-login" element={<SocialLogin />} />
-          <Route path="settings/push-notification" element={<PushNotification />} />
+            <Route path="settings/general" element={<GeneralSettings />} />
+            <Route path="settings/language" element={<LanguageSettings />} />
+            <Route path="settings/currency" element={<CurrencySettings />} />
+            <Route path="settings/payments" element={<PaymentMethods />} />
+            <Route path="settings/smtp" element={<SmtpSettings />} />
+            <Route path="settings/email-templates" element={<EmailTemplates />} />
+            <Route path="settings/third-party" element={<ThirdPartySettings />} />
+            <Route path="settings/social-login" element={<SocialLogin />} />
+            <Route path="settings/push-notification" element={<PushNotification />} />
 
-          <Route path="staffs/all" element={<AllStaffs />} />
-          <Route path="staffs/roles" element={<StaffRoles />} />
-          <Route path="staffs/outsourced" element={<Outsourcing />} />
-          <Route path="staffs/registration" element={<SuperRegistration />} />
+            <Route path="staffs/all" element={<AllStaffs />} />
+            <Route path="staffs/roles" element={<StaffRoles />} />
+            <Route path="staffs/outsourced" element={<Outsourcing />} />
+            <Route path="staffs/registration" element={<SuperRegistration />} />
 
-          <Route path="system/update" element={<SystemUpdate />} />
-          <Route path="system/status" element={<ServerStatus />} />
+            <Route path="system/update" element={<SystemUpdate />} />
+            <Route path="system/status" element={<ServerStatus />} />
 
-          <Route path="manager-permissions" element={<ManagerPermissions />} />
-          <Route path="addon-manager" element={<AddonManager />} />
-        </Route>
+            <Route path="manager-permissions" element={<ManagerPermissions />} />
+            <Route path="addon-manager" element={<AddonManager />} />
+          </Route>
 
-        {/* CATCH ALL */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* CATCH ALL */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   );
 };
