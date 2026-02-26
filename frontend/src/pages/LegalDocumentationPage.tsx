@@ -5,12 +5,13 @@ import { useLocation } from 'react-router-dom';
 import styles from './LegalDocumentationPage.module.css';
 import {
     FileText, ClipboardCheck, Scale, ScrollText, CheckCircle2, Zap, Bookmark, MessageCircle,
-    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X
+    ArrowRight, Home, MapPin, Search, Handshake, Filter, Briefcase, Award, Star, Clock, Info, ChevronDown, Shield, Lock, X, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { interactionService } from '../services/interactionService';
 import { LOCATION_DATA_RAW } from '../components/layout/statesdis';
+import { clientService, advocateService } from '../services/api';
 
 // --- Types ---
 
@@ -721,8 +722,55 @@ const ConsultationPopup: React.FC<{ provider: Provider; service: string; onClose
 // --- Main Page Component ---
 
 const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded = false }) => {
-    const { isLoggedIn, openAuthModal, user } = useAuth();
+    const { isLoggedIn, openAuthModal, user, refreshUser } = useAuth();
     const location = useLocation();
+
+    // --- Popup States ---
+    const [showUpdatePopup, setShowUpdatePopup] = useState(false);
+    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    const [selectedProfileServices, setSelectedProfileServices] = useState<string[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Trigger Popup after 3 seconds for logged in Clients/Advocates
+    useEffect(() => {
+        if (isLoggedIn && (user?.role === 'client' || user?.role === 'advocate')) {
+            const hasSeen = sessionStorage.getItem('hasSeenProfileUpdatePopup');
+            if (!hasSeen) {
+                const timer = setTimeout(() => {
+                    setShowUpdatePopup(true);
+                    // Pre-fill with existing services if any
+                    const existing = (user as any).legalHelp?.featuredServices || [];
+                    setSelectedProfileServices(existing);
+                }, 3000);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [isLoggedIn, user]);
+
+    const handleSaveProfileServices = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            const updates = {
+                legalHelp: {
+                    ...(user as any).legalHelp,
+                    featuredServices: selectedProfileServices
+                }
+            };
+            if (user.role === 'client') {
+                await clientService.updateClient(user.unique_id, updates);
+            } else {
+                await advocateService.updateAdvocate(user.unique_id, updates);
+            }
+            refreshUser(updates as any);
+            sessionStorage.setItem('hasSeenProfileUpdatePopup', 'true');
+            setShowUpdatePopup(false);
+        } catch (err) {
+            console.error("Save failed", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
     const [activeNav, setActiveNav] = useState(isEmbedded ? 'agreements' : 'home');
     const [isLoaded, setIsLoaded] = useState(false);
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -1719,6 +1767,98 @@ const LegalDocumentationPage: React.FC<{ isEmbedded?: boolean }> = ({ isEmbedded
                     </motion.div>
                 )}
             </AnimatePresence>
+            {/* --- Profile Update Popup --- */}
+            <AnimatePresence>
+                {showUpdatePopup && (
+                    <motion.div
+                        className={styles.pPopupOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className={styles.pPopupContent}
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                        >
+                            <button className={styles.pPopupClose} onClick={() => setShowUpdatePopup(false)}><X /></button>
+
+                            <div className={styles.pPopupHeader}>
+                                <Sparkles className={styles.pPopupIcon} />
+                                <h3>Update your detailed profile</h3>
+                                <p>Which legal services do you want to appear in your detailed profile to appear to legal service providers?</p>
+                            </div>
+
+                            <div className={styles.pPopupBody}>
+                                {documentationServices.map(service => (
+                                    <div key={service.id} className={styles.pPopupItem}>
+                                        <div
+                                            className={styles.pPopupItemHeader}
+                                            onClick={() => setExpandedCategory(expandedCategory === service.id ? null : service.id)}
+                                        >
+                                            <div className={styles.pPopupItemTitle}>
+                                                {service.icon}
+                                                <span>{service.title}</span>
+                                            </div>
+                                            <ChevronDown
+                                                size={20}
+                                                style={{
+                                                    transform: expandedCategory === service.id ? 'rotate(180deg)' : 'none',
+                                                    transition: 'transform 0.3s'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <AnimatePresence>
+                                            {expandedCategory === service.id && (
+                                                <motion.div
+                                                    className={styles.pPopupOptions}
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                >
+                                                    <div className={styles.pPopupGrid}>
+                                                        {service.serviceOptions.map(opt => {
+                                                            const isSel = selectedProfileServices.includes(opt);
+                                                            return (
+                                                                <button
+                                                                    key={opt}
+                                                                    className={`${styles.pPopupOption} ${isSel ? styles.pPopupOptionActive : ''}`}
+                                                                    onClick={() => {
+                                                                        setSelectedProfileServices(prev =>
+                                                                            isSel ? prev.filter(x => x !== opt) : [...prev, opt]
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    {opt}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={styles.pPopupFooter}>
+                                <div className={styles.pPopupCount}>
+                                    {selectedProfileServices.length} services selected
+                                </div>
+                                <button
+                                    className={styles.pPopupSave}
+                                    onClick={handleSaveProfileServices}
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? 'Updating...' : 'Update Profile & Continue'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 };

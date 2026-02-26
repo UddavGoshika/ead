@@ -7,7 +7,7 @@ import { interactionService } from '../../../services/interactionService';
 import {
     Loader2, ArrowLeft, Star, Bookmark, MapPin, Briefcase, Scale, Shield,
     CheckCircle, Phone, Mail, Clock, MessageCircle, Video, Send,
-    Sparkles, Award, BookOpen, Users, ChevronRight, ThumbsDown, Ban, X, UserCheck, Lock
+    Sparkles, Award, BookOpen, Users, ChevronRight, ThumbsDown, Ban, X, UserCheck, Lock, Calendar
 } from 'lucide-react';
 import styles from './DetailedProfile.module.css';
 import { useAuth } from '../../../context/AuthContext';
@@ -618,6 +618,30 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                                             ? 'You have sent an interest. Waiting for their response.'
                                             : 'This user has sent you an interest. You can Accept or Reject below.'}
                                 </p>
+
+                                {isAccepted && items[currentIndex]?.metadata?.meetingDetails && (
+                                    <div style={{
+                                        marginTop: '15px',
+                                        padding: '12px',
+                                        background: 'rgba(16, 185, 129, 0.1)',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                                        textAlign: 'left'
+                                    }}>
+                                        <div style={{ fontWeight: 600, color: '#10b981', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Calendar size={14} /> Scheduled Consultation
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '4px' }}>
+                                            <strong>Mode:</strong> {items[currentIndex].metadata.meetingDetails.type}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '4px' }}>
+                                            <strong>When:</strong> {items[currentIndex].metadata.meetingDetails.date} at {items[currentIndex].metadata.meetingDetails.time}
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#e2e8f0', wordBreak: 'break-all' }}>
+                                            <strong>{items[currentIndex].metadata.meetingDetails.type === 'Online' ? 'Link:' : 'Location:'}</strong> {items[currentIndex].metadata.meetingDetails.linkOrAddress}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -719,39 +743,6 @@ const DetailedProfileEnhanced: React.FC<DetailedProfileProps> = ({
                 </div>
             </div>
 
-            {/* Contact Official Support Button */}
-            <button
-                style={{
-                    position: 'fixed',
-                    bottom: '30px',
-                    right: '30px',
-                    background: '#2563eb',
-                    color: '#fff',
-                    padding: '14px 24px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 10px 30px rgba(37, 99, 235, 0.4)',
-                    zIndex: 100001,
-                    transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 15px 40px rgba(37, 99, 235, 0.6)';
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 10px 30px rgba(37, 99, 235, 0.4)';
-                }}
-            >
-                <MessageCircle size={18} />
-                Lexi
-            </button>
         </div>
     );
 };

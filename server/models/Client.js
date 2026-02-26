@@ -27,7 +27,8 @@ const ClientSchema = new mongoose.Schema({
         mode: String,
         advocateType: String,
         languages: String,
-        issueDescription: String
+        issueDescription: String,
+        featuredServices: [String]
     },
     verified: { type: Boolean, default: false },
     verifiedAt: { type: Date },

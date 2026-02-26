@@ -10,8 +10,35 @@ const CaseSchema = new mongoose.Schema({
     customCategory: { type: String },
     status: {
         type: String,
-        enum: ['Open', 'In Progress', 'Action Required', 'Closed', 'Resolved', 'Case Request Received', 'Client Approved'],
-        default: 'Open'
+        enum: ['Requested', 'Accepted', 'Rejected', 'Quoted', 'Funded', 'In Progress', 'Delivered', 'Revision Requested', 'Completed', 'Cancelled', 'Disputed'],
+        default: 'Requested'
+    },
+    urgency: { type: String, enum: ['Normal', 'Priority'], default: 'Normal' },
+    budget: Number,
+    deadline: Date,
+    rejectedReason: String,
+    quotingInfo: {
+        estimatedDelivery: String,
+        milestones: [{
+            title: String,
+            description: String,
+            amount: Number
+        }],
+        terms: String
+    },
+    revisionCount: { type: Number, default: 0 },
+    maxRevisions: { type: Number, default: 0 },
+    jurisdiction: String,
+    communicationPreferences: { type: String, enum: ['In-App Chat', 'Email', 'Voice Call', 'Video Call', 'Any'], default: 'In-App Chat' },
+    paymentInfo: {
+        serviceFee: { type: Number, default: 0 },
+        platformFee: { type: Number, default: 0 },
+        totalPaid: { type: Number, default: 0 },
+        advisorPayoutAmount: { type: Number, default: 0 },
+        payoutStatus: { type: String, enum: ['Pending', 'Released', 'Refunded'], default: 'Pending' },
+        razorpayOrderId: String,
+        razorpayPaymentId: String,
+        transactionId: String
     },
     location: { type: String }, // e.g., Mumbai, Delhi
     court: { type: String }, // Supreme Court, High Court, etc.
@@ -25,6 +52,7 @@ const CaseSchema = new mongoose.Schema({
         url: String,
         uploadedAt: { type: Date, default: Date.now }
     }],
+    deliverableContent: String,
     lastUpdate: { type: Date, default: Date.now }
 }, { timestamps: true });
 

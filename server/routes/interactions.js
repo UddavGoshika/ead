@@ -49,6 +49,7 @@ router.get('/stats/:userId', async (req, res) => {
 router.post('/respond/:activityId/:status', async (req, res) => {
     try {
         const { activityId, status } = req.params; // status: 'accepted' or 'declined'
+        const { meetingDetails } = req.body;
         console.log(`Response Request: ID=${activityId}, Status=${status}`);
 
         if (!['accepted', 'declined'].includes(status)) {
@@ -71,6 +72,12 @@ router.post('/respond/:activityId/:status', async (req, res) => {
 
         // Update specific activity
         activity.status = status;
+        if (status === 'accepted' && (activity.type === 'meet_request' || activity.type === 'consultation') && meetingDetails) {
+            activity.metadata = {
+                ...activity.metadata,
+                meetingDetails
+            };
+        }
         await activity.save();
 
         // Fetch responder details for notification
@@ -87,12 +94,18 @@ router.post('/respond/:activityId/:status', async (req, res) => {
         // Send notification to the SENDER of the interest
         const notifType = activity.type === 'superInterest' ? 'superInterest' : 'interest';
         const actionMsg = status === 'accepted' ? 'accepted' : 'declined';
+
+        let customNotifMsg = `${responderName} has ${actionMsg} your request.`;
+        if (status === 'accepted' && meetingDetails) {
+            customNotifMsg = `${responderName} has accepted your consultation and scheduled a meeting on ${meetingDetails.date} at ${meetingDetails.time}.`;
+        }
+
         await createNotification(
             notifType,
-            `${responderName} has ${actionMsg} your request.`,
+            customNotifMsg,
             responderName,
             receiverId,
-            { activityId: activity._id, status: status }
+            { activityId: activity._id, status: status, meetingDetails }
         );
 
         // Real-time Notification via Socket.IO
@@ -104,9 +117,10 @@ router.post('/respond/:activityId/:status', async (req, res) => {
         if (senderSocketId) {
             io.to(senderSocketId).emit('new-notification', {
                 type: notifType,
-                message: `${responderName} has ${actionMsg} your request.`,
+                message: customNotifMsg,
                 senderName: responderName,
-                status: status
+                status: status,
+                meetingDetails
             });
         }
 
@@ -120,16 +134,39 @@ router.post('/respond/:activityId/:status', async (req, res) => {
             });
         }
 
-        // Self-Healing: Update duplicates if they exist
-        await Activity.updateMany(
-            {
-                sender: activity.sender,
-                receiver: activity.receiver,
-                type: activity.type,
-                status: 'pending'
-            },
-            { status: status }
-        );
+        // SYNC WITH RELATIONSHIP MODEL
+        try {
+            const [u1, u2] = [activity.sender.toString(), activity.receiver.toString()].sort();
+            let relationship = await Relationship.findOne({ user1: u1, user2: u2 });
+
+            let newState = status.toUpperCase(); // 'ACCEPTED' or 'DECLINED'
+            if (status === 'accepted') {
+                newState = 'ACCEPTED';
+            } else if (status === 'declined') {
+                newState = 'DECLINED';
+            }
+
+            if (relationship) {
+                relationship.state = newState;
+                relationship.last_state_updated_at = Date.now();
+                await relationship.save();
+                console.log(`[SYNC] Relationship updated to ${newState} for users ${u1} and ${u2}`);
+            } else {
+                // If it doesn't exist, create it (fallback)
+                relationship = new Relationship({
+                    user1: u1,
+                    user2: u2,
+                    requester: activity.sender,
+                    state: newState,
+                    last_state_updated_at: Date.now()
+                });
+                await relationship.save();
+                console.log(`[SYNC] Relationship created as ${newState} for users ${u1} and ${u2}`);
+            }
+        } catch (syncErr) {
+            console.error('[SYNC ERROR] Failed to update Relationship model:', syncErr);
+            // Non-blocking error for the response
+        }
 
         console.log(`Successfully updated activity ${activityId} to ${status}`);
         res.json({ success: true, message: `Request ${status}` });

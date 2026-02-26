@@ -163,6 +163,105 @@
     }
 }
 
+/* Modal Professional Case Layout */
+.caseForm {
+    padding: 24px;
+}
+
+.detailSection {
+    margin-bottom: 24px;
+}
+
+.pLabel {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.detailValue {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.detailValueText {
+    color: #94a3b8;
+    line-height: 1.6;
+    font-size: 13px;
+    margin: 0;
+}
+
+.typeTag {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.financialBox,
+.deliverableBox {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.financialBox h5,
+.deliverableBox h5 {
+    color: #facc15;
+    margin: 0 0 16px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 800;
+}
+
+.breakdownRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 16px;
+    color: #fff;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+    font-weight: 700;
+}
+
+.payoutAlert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 12px;
+    color: #60a5fa;
+    font-size: 12px;
+    margin-top: 16px;
+}
+
+.formRow {
+    display: flex;
+    gap: 20px;
+}
+
 .clientProfileBox {
     display: flex;
     align-items: center;
@@ -481,4 +580,136 @@
     .formGrid {
         grid-template-columns: 1fr;
     }
+}
+
+/* INCOMING REQUESTS STYLES */
+.incomingSection {
+    margin-bottom: 40px;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.incomingSection h2 {
+    font-size: 1.25rem;
+    color: #facc15;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.incomingList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.incomingItem {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.incomingItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(250, 204, 21, 0.2);
+}
+
+.incomingAvatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(250, 204, 21, 0.2);
+}
+
+.incomingContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.incomingHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.incomingName {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.incomingDate {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.incomingSub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.incomingServices {
+    font-size: 13px;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.incomingMessage {
+    font-size: 13px;
+    color: #facc15;
+    font-weight: 600;
+}
+
+.incomingActions {
+    display: flex;
+    gap: 10px;
+}
+
+.acceptBtnSmall {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.acceptBtnSmall:hover {
+    background: #16a34a;
+    transform: scale(1.05);
+}
+
+.declineBtnSmall {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.declineBtnSmall:hover {
+    background: #ef4444;
+    color: white;
 }

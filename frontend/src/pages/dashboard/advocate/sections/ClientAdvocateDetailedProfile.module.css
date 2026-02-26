@@ -245,21 +245,62 @@
     gap: 6px;
 }
 
+.serviceGroups {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-top: 5px;
+}
+
+/* Custom Scrollbar for Service Groups */
+.serviceGroups::-webkit-scrollbar {
+    width: 6px;
+}
+
+.serviceGroups::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+
+.serviceGroups::-webkit-scrollbar-thumb {
+    background: rgba(250, 204, 21, 0.2);
+    border-radius: 10px;
+}
+
+.serviceGroups::-webkit-scrollbar-thumb:hover {
+    background: rgba(250, 204, 21, 0.4);
+}
+
+.serviceGroup {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 15px;
+}
+
+.groupTitle {
+    font-size: 11px;
+    font-weight: 800;
+    color: #facc15;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    letter-spacing: 0.8px;
+    opacity: 0.9;
+}
+
+.groupGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .tagsGrid {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-.tagsGrid::-webkit-scrollbar {
-    width: 4px;
-}
-
-.tagsGrid::-webkit-scrollbar-thumb {
-    background: #334155;
 }
 
 .tagItem {
@@ -755,4 +796,29 @@
     color: #94a3b8;
     font-size: 14px;
     margin: 0;
+}
+
+/* Featured Highlighting for blinking gold borders */
+@keyframes blinkGold {
+    0% {
+        border-color: rgba(250, 204, 21, 0.2);
+        box-shadow: 0 0 0 rgba(250, 204, 21, 0);
+    }
+
+    50% {
+        border-color: rgba(250, 204, 21, 1);
+        box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+    }
+
+    100% {
+        border-color: rgba(250, 204, 21, 0.2);
+        box-shadow: 0 0 0 rgba(250, 204, 21, 0);
+    }
+}
+
+.featuredTag {
+    background: rgba(250, 204, 21, 0.1) !important;
+    border: 1px solid #facc15 !important;
+    color: #facc15 !important;
+    animation: blinkGold 2s infinite ease-in-out;
 }

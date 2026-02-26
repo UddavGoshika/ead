@@ -426,7 +426,7 @@ router.get('/:userId', async (req, res) => {
             const u1 = viewerId.toString() < clientUserId.toString() ? viewerId.toString() : clientUserId.toString();
             const u2 = viewerId.toString() < clientUserId.toString() ? clientUserId.toString() : viewerId.toString();
 
-            const rel = await Relationship.findOne({ user1: u1, user2: u2 });
+            let rel = await Relationship.findOne({ user1: u1, user2: u2 });
             if (rel) {
                 relationshipState = rel.state;
                 // Refine state based on who initiated
@@ -434,6 +434,36 @@ router.get('/:userId', async (req, res) => {
                     relationshipState = rel.requester.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
                 } else if (rel.state === 'SUPER_INTEREST') {
                     relationshipState = rel.requester.toString() === viewerId.toString() ? 'SUPER_INTEREST_SENT' : 'SUPER_INTEREST_RECEIVED';
+                }
+            } else {
+                // FALLBACK: Check Activity model for legacy/missing Relationship records
+                try {
+                    const Activity = require('../models/Activity');
+                    const activity = await Activity.findOne({
+                        $or: [
+                            { sender: viewerId, receiver: clientUserId },
+                            { sender: clientUserId, receiver: viewerId }
+                        ],
+                        status: 'accepted'
+                    });
+                    if (activity) {
+                        relationshipState = 'ACCEPTED';
+                    } else {
+                        const pending = await Activity.findOne({
+                            $or: [
+                                { sender: viewerId, receiver: clientUserId },
+                                { sender: clientUserId, receiver: viewerId }
+                            ],
+                            type: { $in: ['interest', 'superInterest'] },
+                            status: 'pending'
+                        }).sort({ timestamp: -1 });
+
+                        if (pending) {
+                            relationshipState = pending.sender.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
+                        }
+                    }
+                } catch (actErr) {
+                    console.error('[BACKEND] Activity fallback error:', actErr);
                 }
             }
         }

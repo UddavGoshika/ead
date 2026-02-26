@@ -2799,21 +2799,906 @@
 }
 
 .callActionBtn {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #facc15 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    padding: 0;
+    position: relative;
+    overflow: visible;
+    flex-shrink: 0 !important;
+}
+
+.callActionBtn svg,
+.callActionBtn svg * {
+    width: 22px !important;
+    height: 22px !important;
+    stroke: #facc15 !important;
+    stroke-width: 2.5px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    fill: none !important;
 }
 
 .callActionBtn:hover {
-    background: rgba(218, 165, 32, 0.1);
-    color: #daa520;
-    border-color: #daa520;
+    background: #facc15;
+    color: #000 !important;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);
+    border-color: #facc15;
+}
+
+.callActionBtn:hover svg,
+.callActionBtn:hover svg * {
+    stroke: #000 !important;
+    transform: scale(1.1);
+}
+
+/* PROFILE UPDATE POPUP STYLES */
+.pPopupOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.9);
+    backdrop-filter: blur(12px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pPopupContent {
+    background: #0f172a;
+    width: 100%;
+    max-width: 800px;
+    max-height: 290vh;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8);
+}
+
+.pPopupClose {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.pPopupClose:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.pPopupHeader {
+    padding: 40px 40px 20px;
+    text-align: center;
+}
+
+.pPopupIcon {
+    color: #facc15;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 15px;
+}
+
+.pPopupHeader h3 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 10px;
+}
+
+.pPopupHeader p {
+    font-size: 15px;
+    color: #94a3b8;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+.pPopupBodyWrapper {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.pPopupBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 40px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pPopupBody::-webkit-scrollbar,
+.pPopupOptions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pPopupBody::-webkit-scrollbar-track,
+.pPopupOptions::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.pPopupBody::-webkit-scrollbar-thumb,
+.pPopupOptions::-webkit-scrollbar-thumb {
+    background: rgba(250, 204, 21, 0.2);
+    border-radius: 10px;
+}
+
+.pPopupBody::-webkit-scrollbar-thumb:hover,
+.pPopupOptions::-webkit-scrollbar-thumb:hover {
+    background: rgba(250, 204, 21, 0.4);
+}
+
+.pPopupItem {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+}
+
+.pPopupItem:hover {
+    border-color: rgba(250, 204, 21, 0.3);
+}
+
+.pPopupItemHeader {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.pPopupItemTitle {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.pPopupItemTitle svg {
+    color: #facc15;
+}
+
+.pPopupOptions {
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    max-height: 420px;
+    /* Fixed max height for the inner services section */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.pPopupGrid {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.pPopupOption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 48px;
+}
+
+.optionText {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.deselectIcon {
+    color: #facc15;
+    opacity: 0.7;
+    transition: all 0.2s;
+    background: rgba(250, 204, 21, 0.1);
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.pPopupOption:hover .deselectIcon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.pPopupOption:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.pPopupOptionActive {
+    background: rgba(250, 204, 21, 0.1);
+    border-color: #facc15;
+    color: #facc15;
+}
+
+.pPopupFooter {
+    padding: 20px 40px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0f172a;
+    /* Solid background to prevent overlapping content from showing behind */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 20;
+}
+
+.pPopupCount {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.pPopupSave {
+    background: #facc15;
+    color: #000;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pPopupSave:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);
+    background: #fde047;
+}
+
+.pPopupSave:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .pPopupGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .pPopupFooter {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+}
+
+.createCaseModal {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    width: 800px;
+    max-width: 95%;
+    max-height: 85vh;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 10002;
+}
+
+.caseForm {
+    padding: 20px 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.radioGroup {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.radioGroup label {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.radioActive {
+    border-color: #facc15 !important;
+    background: rgba(250, 204, 21, 0.1) !important;
+    color: #facc15;
+}
+
+.radioGroup input {
+    display: none;
+}
+
+.fileUploadZone {
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.fileUploadZone:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: #3b82f6;
+}
+
+.fileUploadZone span {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.submitCaseBtn {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.submitCaseBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(250, 204, 21, 0.2);
+}
+
+.submitCaseBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Activity Footer Buttons */
+.caseRequestBtn,
+.consultTabBtn,
+.chatTabBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.caseRequestBtn {
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    color: #facc15;
+}
+
+.caseRequestBtn:hover {
+    background: #facc15;
+    color: #000;
+}
+
+.consultTabBtn {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.consultTabBtn:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.chatTabBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.chatTabBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Cases View Styling */
+.casesView {
+    padding: 20px;
+    min-height: 80vh;
+}
+
+.casesHeader {
+    margin-bottom: 30px;
+}
+
+.casesHeader h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.casesHeader p {
+    color: #94a3b8;
+    font-size: 16px;
+}
+
+.casesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 25px;
+}
+
+.caseCard {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 24px;
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.caseCard:hover {
+    transform: translateY(-8px);
+    border-color: #facc1550;
+    background: rgba(15, 23, 42, 0.7);
+    box-shadow: 0 25px 50px -12px rgba(250, 204, 21, 0.15);
+}
+
+.caseCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.caseTypeBadge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statusBadge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.statusRequested {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+}
+
+.statusAdvisorQuoted {
+    background: rgba(250, 204, 21, 0.1);
+    color: #facc15;
+}
+
+.statusFunded {
+    background: rgba(34, 197, 94, 0.1);
+    color: #4ade80;
+}
+
+.statusInProgress {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+}
+
+.statusDelivered {
+    background: rgba(168, 85, 247, 0.1);
+    color: #c084fc;
+}
+
+.statusCompleted {
+    background: #22c55e;
+    color: #fff;
+}
+
+.caseTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.caseDesc {
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+}
+
+.caseMeta {
+    display: flex;
+    gap: 15px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.casePartition {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 5px 0;
+}
+
+.caseFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.partnerInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.partnerInfo img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    object-fit: cover;
+}
+
+.pLabel {
+    display: block;
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.partnerInfo .pName {
+    display: block;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.caseActions {
+    display: flex;
+    gap: 8px;
+}
+
+.payEscrowBtn,
+.quoteBtn,
+.deliverBtn,
+.approveBtn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.payEscrowBtn {
+    background: #facc15;
+    color: #000;
+}
+
+.quoteBtn {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.deliverBtn {
+    background: #a855f7;
+    color: #fff;
+}
+
+.approveBtn {
+    background: #22c55e;
+    color: #fff;
+}
+
+.viewDocBtn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.noCases {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: #64748b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.noCases h3 {
+    color: #fff;
+    font-size: 22px;
+    margin: 0;
+}
+
+/* --- Case Management Professional UI --- */
+
+.detailSection {
+    margin-bottom: 24px;
+}
+
+.pLabel {
+    display: block;
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.detailValue {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.detailValueText {
+    color: #94a3b8;
+    line-height: 1.6;
+    font-size: 14px;
+    margin: 0;
+}
+
+.typeTag {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.financialBox,
+.deliverableBox {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.financialBox h5,
+.deliverableBox h5,
+.docSection h5 {
+    color: #facc15;
+    margin: 0 0 16px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    margin-bottom: 16px;
+}
+
+.breakdownRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    font-size: 18px;
+    color: #fff;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+}
+
+.payoutStatus {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.fundedTick {
+    color: #22c55e;
+    font-weight: 800;
+}
+
+.deliverableTextContent {
+    font-size: 14px;
+    color: #e2e8f0;
+    line-height: 1.7;
+}
+
+.partnerBrief {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.partnerBrief img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #facc15;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.2);
+}
+
+.partnerBrief .pName {
+    display: block;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.partition {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 32px 0;
+}
+
+.rejectBtn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rejectBtn:hover {
+    background: #ef4444;
+    color: #fff !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.feeBreakdown {
+    background: rgba(250, 204, 21, 0.03);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(250, 204, 21, 0.1);
+}
+
+.caseSummaryCard {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    border-left: 4px solid #facc15;
+}
+
+.caseSummaryCard h4 {
+    color: #fff;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.caseSummaryCard p {
+    color: #94a3b8;
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.payoutAlert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 12px;
+    color: #60a5fa;
+    font-size: 13px;
+    margin-top: 16px;
 }

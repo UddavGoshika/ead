@@ -50,11 +50,25 @@ export interface Case {
     title: string;
     description: string;
     category: string;
-    status: string;
+    status: 'Requested' | 'Accepted' | 'Advisor Quoted' | 'Funded' | 'In Progress' | 'Delivered' | 'Client Review' | 'Completed' | 'Cancelled' | 'Disputed';
+    urgency: 'Normal' | 'Priority';
+    budget?: number;
+    deadline?: string | Date;
+    deliverableContent?: string;
     location?: string;
     court?: string;
     department?: string;
     subDepartment?: string;
+    paymentInfo?: {
+        serviceFee: number;
+        platformFee: number;
+        totalPaid: number;
+        advisorPayoutAmount: number;
+        payoutStatus: 'Pending' | 'Released' | 'Refunded';
+        razorpayOrderId?: string;
+        razorpayPaymentId?: string;
+        transactionId?: string;
+    };
     lastUpdate?: string;
     updatedAt?: string;
     createdAt?: string;

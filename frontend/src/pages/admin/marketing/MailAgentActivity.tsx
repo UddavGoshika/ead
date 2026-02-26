@@ -6,8 +6,9 @@ import {
     MoreVertical, AlertCircle, BarChart3, PieChart, Info, MapPin,
     Monitor, Hash, Database, Reply, Trash2, X, Calendar, Globe, Server,
     Paperclip, History, MousePointer2, Eye, LayoutGrid, List, TrendingUp,
-    Check, Phone, ArrowLeft, MessageSquare, Activity, Star, Tag, ChevronLeft, ChevronRight
+    Check, Phone, ArrowLeft, MessageSquare, Activity, Star, Tag, ChevronLeft, ChevronRight, Key
 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -157,6 +158,7 @@ const Badge = ({ children, color = 'blue' }: { children: React.ReactNode, color?
 };
 
 const MailAgentActivity: React.FC = () => {
+    const { impersonate } = useAuth();
     const [activeTab, setActiveTab] = useState<'logs' | 'analytics'>('logs');
     const [logs, setLogs] = useState<SupportActivity[]>([]);
     const [totalLogs, setTotalLogs] = useState(0);
@@ -597,12 +599,21 @@ const MailAgentActivity: React.FC = () => {
                                             </div>
                                         </td>
                                         <td style={{ padding: '20px 24px', textAlign: 'right' }}>
-                                            <button
-                                                onClick={() => handleOpenLog(log)}
-                                                style={{ background: '#facc15', color: '#000', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '800' }}
-                                            >
-                                                Details
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                                <button
+                                                    onClick={() => handleOpenLog(log)}
+                                                    style={{ background: 'rgba(250, 204, 21, 0.1)', color: '#facc15', border: '1px solid rgba(250, 204, 21, 0.2)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: '800' }}
+                                                >
+                                                    Show Activity
+                                                </button>
+                                                <button
+                                                    onClick={() => impersonate({ id: log.sentByAgentId || log.agentId, name: log.agentName, email: log.agentEmail, role: log.agentRole as any, unique_id: log.agentId })}
+                                                    style={{ background: '#facc15', color: '#000', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                                    title="Login as this member"
+                                                >
+                                                    <Key size={12} /> Login As
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

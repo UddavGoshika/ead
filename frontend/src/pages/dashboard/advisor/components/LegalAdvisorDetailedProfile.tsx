@@ -26,6 +26,7 @@ interface DetailedProfileProps {
     onNavigate?: (index: number) => void;
     onClose?: () => void;
     partnerRole?: 'advocate' | 'client';
+    initialRelationshipState?: string;
 }
 
 const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
@@ -38,7 +39,8 @@ const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
     onNavigate,
     onClose,
     isModal = false,
-    partnerRole: propPartnerRole
+    partnerRole: propPartnerRole,
+    initialRelationshipState
 }) => {
     const { user } = useAuth();
     const { handleInteraction } = useInteractions(showToast);
@@ -86,13 +88,23 @@ const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
                 }
 
                 if (result) {
-                    setAdvocate(result.data);
+                    let profileData = result.data;
+                    // Priority Sync for "Self" view
+                    const isSelf = String(profileId) === String(user.unique_id) || String(profileId) === String(user.id);
+                    if (isSelf && (user as any).legalHelp) {
+                        profileData = { ...profileData, legalHelp: (user as any).legalHelp };
+                    }
+
+                    setAdvocate(profileData);
                     setActualRole(result.role);
 
                     if (result.data.relationship_state) {
                         const pid = result.data.userId?._id || result.data.userId || result.data.id || result.data._id;
-                        if (pid) {
-                            setRelationship(String(pid), result.data.relationship_state, result.role === 'client' ? 'receiver' : 'sender');
+                        const newState = result.data.relationship_state;
+
+                        // Only override if not 'NONE', or if we don't have a more specific state already
+                        if (pid && (newState !== 'NONE' || !initialRelationshipState)) {
+                            setRelationship(String(pid), newState, result.role === 'client' ? 'receiver' : 'sender');
                         }
                     }
                 } else {
@@ -141,7 +153,7 @@ const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
         ? String(advocate.userId._id)
         : String(advocate.userId || advocate.id || '');
 
-    const relData = relationships[advocatePartnerId] || (advocate as any)?.relationship_state || 'NONE';
+    const relData = relationships[advocatePartnerId] || initialRelationshipState || (advocate as any)?.relationship_state || 'NONE';
     const state = (typeof relData === 'string' ? relData : relData.state || 'NONE').toUpperCase();
 
     const isInterested = state === 'INTEREST' || state === 'INTEREST_SENT' || state === 'SUPER_INTEREST' || state === 'SUPER_INTEREST_SENT';
@@ -250,20 +262,97 @@ const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
                         </div>
                         <div className={styles.specSection}>
                             <div className={styles.specTitle}><Scale size={14} /> {actualRole === 'client' ? 'Required Legal Help' : 'Expertise & Specializations'}</div>
-                            <div className={styles.tagsGrid}>
-                                {actualRole === 'client' ? (
-                                    <>
-                                        {advocate.legalHelp?.category && <span className={styles.tagItem}>{advocate.legalHelp.category}</span>}
-                                        {advocate.legalHelp?.specialization && <span className={styles.tagItem}>{advocate.legalHelp.specialization}</span>}
-                                        {advocate.legalHelp?.subDepartment && <span className={styles.tagItem}>{advocate.legalHelp.subDepartment}</span>}
-                                    </>
-                                ) : (
-                                    <>
-                                        {advocate.specialization && <span className={styles.tagItem}>{advocate.specialization}</span>}
-                                        {advocate.subSpecialization && <span className={styles.tagItem}>{advocate.subSpecialization}</span>}
-                                        <span className={styles.tagItem}>Criminal</span>
-                                    </>
-                                )}
+
+                            <div className={styles.serviceGroups}>
+                                {(() => {
+                                    const serviceGrouping: Record<string, string[]> = {
+                                        'Agreements Drafting': [
+                                            'Agency Agreement', 'Arbitration Agreement', 'Business Transfer Agreement', 'Consultancy Agreement',
+                                            'Co-founder Agreement', 'Distribution Agreement', 'Development Agreement', 'Exclusivity Agreement',
+                                            'Franchise Agreement', 'Independent Contractor Agreement', 'Joint Venture Agreement', 'Partnership Deed',
+                                            'Shareholders Agreement', 'Supply Agreement', 'Vendor Agreement', 'Retainer Agreement', 'Service Level Agreement (SLA)',
+                                            'Employment Agreement', 'Non-Compete Agreement', 'Confidentiality Agreement', 'Non-Disclosure Agreement (NDA)',
+                                            'Builder–Buyer Agreement', 'Lease Agreement (Residential)', 'Lease Agreement (Commercial)', 'Rental Agreement',
+                                            'Purchase Agreement', 'Gift Deed (Agreement Format)', 'Intellectual Property Assignment Agreement',
+                                            'Licensing Agreement', 'Technology Transfer Agreement', 'Trademark Licensing Agreement',
+                                            'Memorandum of Understanding (MoU)', 'Settlement Agreement', 'Indemnity Agreement', 'Guarantee Agreement'
+                                        ],
+                                        'Affidavits': [
+                                            'Address Proof Affidavit', 'Age Proof Affidavit', 'Birth Certificate Correction Affidavit', 'Change of Name Affidavit',
+                                            'Character Certificate Affidavit', 'Date of Birth Correction Affidavit', 'Education / Qualification Affidavit',
+                                            'Financial Status Affidavit', 'Heirship Affidavit', 'Income Affidavit', 'Loss of Documents Affidavit',
+                                            'Marriage Affidavit', 'Nationality Affidavit', 'Ownership Declaration Affidavit', 'Passport Related Affidavit',
+                                            'Relationship Proof Affidavit', 'Single Status Affidavit', 'Service Record Affidavit', 'Vehicle Ownership Affidavit',
+                                            'Court Proceedings Affidavit', 'Government Submission Affidavit', 'Bank / Financial Institution Affidavit'
+                                        ],
+                                        'Legal Notices': [
+                                            'Breach of Contract Notice', 'Consumer Complaint Notice', 'Divorce Legal Notice', 'Eviction Notice',
+                                            'Fraud & Misrepresentation Notice', 'Loan Recovery Notice', 'Money Recovery Notice', 'Property Dispute Notice',
+                                            'Rent Arrears Notice', 'Service Deficiency Notice', 'Termination of Contract Notice', 'Workplace Harassment Representation',
+                                            'Cheque Bounce Notice (NI Act)', 'Reply to Legal Notice', 'Cease and Desist Notice'
+                                        ],
+                                        'Legal Document Services': [
+                                            'Will Drafting', 'Codicil to Will', 'Power of Attorney (General)', 'Power of Attorney (Special)', 'Gift Deed',
+                                            'Trust Deed', 'Lease Deed', 'Rental Agreement', 'Indemnity Bond', 'Declaration & Undertaking', 'Authorization Letter',
+                                            'Property Declarations', 'Statutory Forms & Applications', 'Government Representations', 'Regulatory Filings'
+                                        ]
+                                    };
+
+                                    const selectedServices = advocate.legalHelp?.featuredServices || [];
+                                    const categorized: Record<string, string[]> = {};
+
+                                    selectedServices.forEach((service: string) => {
+                                        let found = false;
+                                        for (const [cat, list] of Object.entries(serviceGrouping)) {
+                                            if (list.includes(service)) {
+                                                if (!categorized[cat]) categorized[cat] = [];
+                                                categorized[cat].push(service);
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found) {
+                                            if (!categorized['Other Services']) categorized['Other Services'] = [];
+                                            categorized['Other Services'].push(service);
+                                        }
+                                    });
+
+                                    return (
+                                        <>
+                                            {actualRole !== 'client' && (
+                                                <div className={styles.serviceGroup}>
+                                                    <div className={styles.groupTitle}>Primary Specialization</div>
+                                                    <div className={styles.groupGrid}>
+                                                        {advocate.specialization && <span className={styles.tagItem}>{advocate.specialization}</span>}
+                                                        {advocate.subSpecialization && <span className={styles.tagItem}>{advocate.subSpecialization}</span>}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {actualRole === 'client' && (
+                                                <div className={styles.serviceGroup}>
+                                                    <div className={styles.groupTitle}>Current Case Type</div>
+                                                    <div className={styles.groupGrid}>
+                                                        {advocate.legalHelp?.category && <span className={styles.tagItem}>{advocate.legalHelp.category}</span>}
+                                                        {advocate.legalHelp?.specialization && <span className={styles.tagItem}>{advocate.legalHelp.specialization}</span>}
+                                                        {advocate.legalHelp?.subDepartment && <span className={styles.tagItem}>{advocate.legalHelp.subDepartment}</span>}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {Object.entries(categorized).map(([category, services]) => (
+                                                <div key={category} className={styles.serviceGroup}>
+                                                    <div className={styles.groupTitle}>{category}</div>
+                                                    <div className={styles.groupGrid}>
+                                                        {services.map(service => (
+                                                            <span key={service} className={`${styles.tagItem} ${styles.featuredTag}`}>
+                                                                {service}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                         <div className={styles.heroActionsFull}>
@@ -398,31 +487,6 @@ const LegalAdvisorDetailedProfile: React.FC<DetailedProfileProps> = ({
                 </div>
             </div>
 
-            {/* AI Support Button (Lexi) */}
-            <button
-                style={{
-                    position: 'fixed',
-                    bottom: '30px',
-                    right: '30px',
-                    background: '#2563eb',
-                    color: '#fff',
-                    padding: '14px 24px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 10px 30px rgba(37, 99, 235, 0.4)',
-                    zIndex: 100001,
-                    transition: 'all 0.2s'
-                }}
-            >
-                <MessageCircle size={18} />
-                Lexi
-            </button>
         </div>
     );
 };

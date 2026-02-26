@@ -374,6 +374,7 @@ router.get('/', async (req, res) => {
                 isMasked: (shouldMask && user?.role !== 'legal_provider'),
                 specialization: adv.practice?.specialization || 'Legal Services',
                 category: adv.practice?.specialization || 'General',
+                legalHelp: adv.legalHelp,
                 bar_council_id: (shouldMask && user?.role !== 'legal_provider') ? 'XXXXXXXXXX' : (adv.education?.enrollmentNo || adv.practice?.barAssociation || 'N/A')
             };
         });
@@ -501,7 +502,7 @@ router.get('/:uniqueId', async (req, res) => {
             const u1 = viewerId.toString() < advUserId.toString() ? viewerId.toString() : advUserId.toString();
             const u2 = viewerId.toString() < advUserId.toString() ? advUserId.toString() : viewerId.toString();
 
-            const rel = await Relationship.findOne({ user1: u1, user2: u2 });
+            let rel = await Relationship.findOne({ user1: u1, user2: u2 });
             if (rel) {
                 relationshipState = rel.state;
                 // Refine state based on who initiated
@@ -509,6 +510,36 @@ router.get('/:uniqueId', async (req, res) => {
                     relationshipState = rel.requester.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
                 } else if (rel.state === 'SUPER_INTEREST') {
                     relationshipState = rel.requester.toString() === viewerId.toString() ? 'SUPER_INTEREST_SENT' : 'SUPER_INTEREST_RECEIVED';
+                }
+            } else {
+                // FALLBACK: Check Activity model for legacy/missing Relationship records
+                try {
+                    const Activity = require('../models/Activity');
+                    const activity = await Activity.findOne({
+                        $or: [
+                            { sender: viewerId, receiver: advUserId },
+                            { sender: advUserId, receiver: viewerId }
+                        ],
+                        status: 'accepted'
+                    });
+                    if (activity) {
+                        relationshipState = 'ACCEPTED';
+                    } else {
+                        const pending = await Activity.findOne({
+                            $or: [
+                                { sender: viewerId, receiver: advUserId },
+                                { sender: advUserId, receiver: viewerId }
+                            ],
+                            type: { $in: ['interest', 'superInterest'] },
+                            status: 'pending'
+                        }).sort({ timestamp: -1 });
+
+                        if (pending) {
+                            relationshipState = pending.sender.toString() === viewerId.toString() ? 'INTEREST_SENT' : 'INTEREST_RECEIVED';
+                        }
+                    }
+                } catch (actErr) {
+                    console.error('[BACKEND] Activity fallback error (Advocate):', actErr);
                 }
             }
         }
@@ -563,7 +594,8 @@ router.get('/:uniqueId', async (req, res) => {
             privacySettings: privacy,
             notificationSettings: advocate.userId?.notificationSettings,
             messageSettings: msgSettings,
-            relationship_state: relationshipState
+            relationship_state: relationshipState,
+            legalHelp: advocate.legalHelp
         };
 
         res.json({ success: true, advocate: formattedAdvocate });
@@ -620,6 +652,9 @@ router.put('/update/:uniqueId', upload.single('profilePic'), async (req, res) =>
 
         const career = parseValue(updateData.career);
         if (career) advocate.career = { ...advocate.career, ...career };
+
+        const lh = parseValue(updateData.legalHelp);
+        if (lh) advocate.legalHelp = { ...advocate.legalHelp, ...lh };
 
         const availability = parseValue(updateData.availability);
         if (availability) advocate.availability = { ...advocate.availability, ...availability };

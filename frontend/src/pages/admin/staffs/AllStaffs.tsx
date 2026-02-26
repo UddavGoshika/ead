@@ -31,18 +31,21 @@ const ROLE_DISPLAY_MAP: Record<string, string> = {
     admin: 'Admin',
     super_admin: 'Super Admin',
     superadmin: 'Super Admin',
-    manager: 'Manager',
+    manager: 'General Manager',
     teamlead: 'Team Lead',
+    marketing_team_lead: 'Marketing Team Lead',
+    support_team_lead: 'Support Team Lead',
+    operations_team_lead: 'Operations Team Lead',
     hr: 'HR',
-    telecaller: 'Telecallers',
+    telecaller: 'Telecaller',
     data_entry: 'Data Entry',
-    customer_care: 'Customer Care Support',
+    customer_care: 'Customer Care',
     chat_support: 'Chat Support',
-    live_chat: 'Live Chat Support',
+    live_chat: 'Live Chat',
     call_support: 'Call Support',
-    personal_assistant: 'Personal Assistant Support',
+    personal_assistant: 'Personal Assistant',
     personal_agent: 'Personal Agent',
-    marketer: 'Marketers',
+    marketer: 'Marketer',
     marketing_agency: 'Marketing Agency',
     legal_provider: 'Legal Advisor',
     email_support: 'Email Support',
@@ -52,14 +55,50 @@ const ROLE_DISPLAY_MAP: Record<string, string> = {
     support: 'Support'
 };
 
-const ALL_ROLES = [
-    "All", "Super Admin", "Admin", "Manager", "Team Lead", "HR",
-    "Telecallers", "Data Entry", "Customer Care Support",
-    "Chat Support", "Live Chat Support", "Call Support",
-    "Personal Assistant Support", "Marketers", "Email Support",
-    "Influencer", "Marketing Agency", "Verifier", "Finance", "Support",
-    "Personal Agent", "Legal Advisor"
+const DEPARTMENTS = [
+    {
+        name: "Super Admin Hierarchy",
+        color: "#ef4444",
+        roles: ["Super Admin"]
+    },
+    {
+        name: "Admin Office",
+        color: "#3b82f6",
+        roles: ["Admin", "Finance", "Verifier"]
+    },
+    {
+        name: "General Management",
+        color: "#a855f7",
+        roles: ["General Manager"]
+    },
+    {
+        name: "HR Department",
+        color: "#f472b6",
+        roles: ["HR"]
+    },
+    {
+        name: "Marketing Department",
+        color: "#fbbf24",
+        roles: ["Marketing Team Lead", "Marketer", "Marketing Agency", "Influencer"]
+    },
+    {
+        name: "Support Department",
+        color: "#10b981",
+        roles: ["Support Team Lead", "Call Support", "Chat Support", "Live Chat", "Email Support", "Personal Agent"]
+    },
+    {
+        name: "Operations Department",
+        color: "#22d3ee",
+        roles: ["Operations Team Lead", "Telecaller", "Customer Care", "Data Entry"]
+    },
+    {
+        name: "Executive Office",
+        color: "#818cf8",
+        roles: ["Personal Assistant"]
+    }
 ];
+
+const ALL_ROLES = ["All", ...DEPARTMENTS.flatMap(d => d.roles)];
 
 const STATUSES = ["All", "Active", "Inactive", "On Leave", "Suspended"];
 
@@ -222,16 +261,19 @@ const AllStaffs: React.FC = () => {
         e.preventDefault();
 
         const roleMapping: { [key: string]: string } = {
-            "Telecallers": "telecaller",
+            "Telecaller": "telecaller",
             "Data Entry": "data_entry",
-            "Customer Care Support": "customer_care",
+            "Customer Care": "customer_care",
             "Chat Support": "chat_support",
-            "Live Chat Support": "live_chat",
+            "Live Chat": "live_chat",
             "Call Support": "call_support",
-            "Personal Assistant Support": "personal_assistant",
-            "Marketers": "marketer",
-            "Manager": "manager",
+            "Personal Assistant": "personal_assistant",
+            "Marketer": "marketer",
+            "General Manager": "manager",
             "Team Lead": "teamlead",
+            "Marketing Team Lead": "marketing_team_lead",
+            "Support Team Lead": "support_team_lead",
+            "Operations Team Lead": "operations_team_lead",
             "Super Admin": "admin",
             "HR": "hr",
             "Email Support": "email_support",
@@ -380,24 +422,42 @@ const AllStaffs: React.FC = () => {
 
                 <div className={styles.gridFilters}>
                     <div className={styles.filterGroup}>
-                        <label><Briefcase size={14} /> Filter by Role</label>
-                        <div className={styles.roleGrid}>
-                            {ALL_ROLES.map(role => (
-                                <div
-                                    key={role}
-                                    className={`${styles.roleBlock} ${selectedRole === role ? styles.activeRole : ""}`}
-                                    onClick={() => setSelectedRole(role)}
-                                >
-                                    <span className={styles.roleName}>{role}</span>
-                                    <span className={styles.roleCount}>
-                                        {role === "All" ? staffList.length : staffList.filter(s => s.role === role).length}
-                                    </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <label><Briefcase size={14} /> Organization Hierarchy</label>
+                            <div
+                                className={`${styles.roleBlockSmall} ${selectedRole === "All" ? styles.activeRole : ""}`}
+                                onClick={() => setSelectedRole("All")}
+                                style={{ minWidth: '160px' }}
+                            >
+                                <span className={styles.roleNameSmall}>Complete Workforce</span>
+                                <span className={styles.roleCountSmall}>{staffList.length}</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.hierarchyContainer}>
+                            {DEPARTMENTS.map(dept => (
+                                <div key={dept.name} className={styles.deptSection} style={{ borderTop: `2px solid ${dept.color}` }}>
+                                    <h4 className={styles.deptHeading} style={{ color: dept.color }}>{dept.name}</h4>
+                                    <div className={styles.roleSubGrid}>
+                                        {dept.roles.map(role => (
+                                            <div
+                                                key={role}
+                                                className={`${styles.roleBlockSmall} ${selectedRole === role ? styles.activeRole : ""}`}
+                                                onClick={() => setSelectedRole(role)}
+                                            >
+                                                <span className={styles.roleNameSmall}>{role}</span>
+                                                <span className={styles.roleCountSmall}>
+                                                    {staffList.filter(s => s.role === role).length}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className={styles.filterGroup}>
+                    <div className={styles.filterGroup} style={{ borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: '32px' }}>
                         <label><Zap size={14} /> Filter by Status</label>
                         <div className={styles.statusGrid}>
                             {STATUSES.map(status => (
@@ -409,6 +469,13 @@ const AllStaffs: React.FC = () => {
                                     {status}
                                 </div>
                             ))}
+                        </div>
+
+                        <div style={{ marginTop: 'auto', padding: '24px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '16px', border: '1px dashed rgba(59, 130, 246, 0.2)' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 800, color: '#3b82f6', textTransform: 'uppercase', marginBottom: '8px' }}>Staff Insight</div>
+                            <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+                                Use the organizational hierarchy to filter staff by department and specific specialized roles.
+                            </p>
                         </div>
                     </div>
                 </div>

@@ -68,8 +68,14 @@ const ClientAdvocateDetailedProfile: React.FC<DetailedProfileProps> = ({
                 const res = await api.get(endpoint);
 
                 if (res.data.success) {
-                    const profileData = res.data.client;
+                    let profileData = res.data.client;
                     if (profileData) {
+                        // Priority Sync for "Self" view
+                        const isSelf = String(profileId) === String(user.unique_id) || String(profileId) === String(user.id);
+                        if (isSelf && (user as any).legalHelp) {
+                            profileData = { ...profileData, legalHelp: (user as any).legalHelp };
+                        }
+
                         setAdvocate(profileData);
                         const pid = profileData.userId?._id || profileData.userId || profileData.id || profileData._id;
                         if (pid && profileData.relationship_state) {
@@ -227,10 +233,88 @@ const ClientAdvocateDetailedProfile: React.FC<DetailedProfileProps> = ({
 
                         <div className={styles.specSection}>
                             <div className={styles.specTitle}><Scale size={14} /> Legal Help Required</div>
-                            <div className={styles.tagsGrid}>
-                                {(advocate.legalHelp?.category || advocate.specialization) && <span className={styles.tagItem}>{advocate.legalHelp?.category || advocate.specialization}</span>}
-                                {(advocate.legalHelp?.specialization || advocate.subSpecialization) && <span className={styles.tagItem}>{advocate.legalHelp?.specialization || advocate.subSpecialization}</span>}
-                                <span className={styles.tagItem}>High Priority</span>
+
+                            <div className={styles.serviceGroups}>
+                                {(() => {
+                                    const serviceGrouping: Record<string, string[]> = {
+                                        'Agreements Drafting': [
+                                            'Agency Agreement', 'Arbitration Agreement', 'Business Transfer Agreement', 'Consultancy Agreement',
+                                            'Co-founder Agreement', 'Distribution Agreement', 'Development Agreement', 'Exclusivity Agreement',
+                                            'Franchise Agreement', 'Independent Contractor Agreement', 'Joint Venture Agreement', 'Partnership Deed',
+                                            'Shareholders Agreement', 'Supply Agreement', 'Vendor Agreement', 'Retainer Agreement', 'Service Level Agreement (SLA)',
+                                            'Employment Agreement', 'Non-Compete Agreement', 'Confidentiality Agreement', 'Non-Disclosure Agreement (NDA)',
+                                            'Builder–Buyer Agreement', 'Lease Agreement (Residential)', 'Lease Agreement (Commercial)', 'Rental Agreement',
+                                            'Purchase Agreement', 'Gift Deed (Agreement Format)', 'Intellectual Property Assignment Agreement',
+                                            'Licensing Agreement', 'Technology Transfer Agreement', 'Trademark Licensing Agreement',
+                                            'Memorandum of Understanding (MoU)', 'Settlement Agreement', 'Indemnity Agreement', 'Guarantee Agreement'
+                                        ],
+                                        'Affidavits': [
+                                            'Address Proof Affidavit', 'Age Proof Affidavit', 'Birth Certificate Correction Affidavit', 'Change of Name Affidavit',
+                                            'Character Certificate Affidavit', 'Date of Birth Correction Affidavit', 'Education / Qualification Affidavit',
+                                            'Financial Status Affidavit', 'Heirship Affidavit', 'Income Affidavit', 'Loss of Documents Affidavit',
+                                            'Marriage Affidavit', 'Nationality Affidavit', 'Ownership Declaration Affidavit', 'Passport Related Affidavit',
+                                            'Relationship Proof Affidavit', 'Single Status Affidavit', 'Service Record Affidavit', 'Vehicle Ownership Affidavit',
+                                            'Court Proceedings Affidavit', 'Government Submission Affidavit', 'Bank / Financial Institution Affidavit'
+                                        ],
+                                        'Legal Notices': [
+                                            'Breach of Contract Notice', 'Consumer Complaint Notice', 'Divorce Legal Notice', 'Eviction Notice',
+                                            'Fraud & Misrepresentation Notice', 'Loan Recovery Notice', 'Money Recovery Notice', 'Property Dispute Notice',
+                                            'Rent Arrears Notice', 'Service Deficiency Notice', 'Termination of Contract Notice', 'Workplace Harassment Representation',
+                                            'Cheque Bounce Notice (NI Act)', 'Reply to Legal Notice', 'Cease and Desist Notice'
+                                        ],
+                                        'Legal Document Services': [
+                                            'Will Drafting', 'Codicil to Will', 'Power of Attorney (General)', 'Power of Attorney (Special)', 'Gift Deed',
+                                            'Trust Deed', 'Lease Deed', 'Rental Agreement', 'Indemnity Bond', 'Declaration & Undertaking', 'Authorization Letter',
+                                            'Property Declarations', 'Statutory Forms & Applications', 'Government Representations', 'Regulatory Filings'
+                                        ]
+                                    };
+
+                                    const selectedServices = advocate.legalHelp?.featuredServices || [];
+                                    const categorized: Record<string, string[]> = {};
+
+                                    selectedServices.forEach((service: string) => {
+                                        let found = false;
+                                        for (const [cat, list] of Object.entries(serviceGrouping)) {
+                                            if (list.includes(service)) {
+                                                if (!categorized[cat]) categorized[cat] = [];
+                                                categorized[cat].push(service);
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!found) {
+                                            if (!categorized['Other Services']) categorized['Other Services'] = [];
+                                            categorized['Other Services'].push(service);
+                                        }
+                                    });
+
+                                    return (
+                                        <>
+                                            {(advocate.legalHelp?.category || advocate.specialization) && (
+                                                <div className={styles.serviceGroup}>
+                                                    <div className={styles.groupTitle}>Core Requirements</div>
+                                                    <div className={styles.groupGrid}>
+                                                        {advocate.legalHelp?.category && <span className={styles.tagItem}>{advocate.legalHelp.category}</span>}
+                                                        {advocate.legalHelp?.specialization && <span className={styles.tagItem}>{advocate.legalHelp.specialization}</span>}
+                                                        <span className={styles.tagItem}>High Priority</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {Object.entries(categorized).map(([category, services]) => (
+                                                <div key={category} className={styles.serviceGroup}>
+                                                    <div className={styles.groupTitle}>{category}</div>
+                                                    <div className={styles.groupGrid}>
+                                                        {services.map(service => (
+                                                            <span key={service} className={`${styles.tagItem} ${styles.featuredTag}`}>
+                                                                {service}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -418,9 +502,6 @@ const ClientAdvocateDetailedProfile: React.FC<DetailedProfileProps> = ({
                 </div>
             </div>
 
-            <button style={{ position: 'fixed', bottom: '30px', right: '30px', background: '#2563eb', color: '#fff', padding: '14px 24px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 30px rgba(37, 99, 235, 0.4)', zIndex: 100001 }}>
-                <MessageCircle size={18} /> Lexi
-            </button>
         </div>
     );
 };

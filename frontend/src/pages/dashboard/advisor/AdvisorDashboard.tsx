@@ -23,7 +23,8 @@ import CreateBlog from '../advocate/sections/CreateBlog.tsx';
 import CreditsPage from '../shared/CreditsPage.tsx';
 import LegalDocumentationPage from '../../LegalDocumentationPage.tsx';
 import ReferAndEarn from '../shared/ReferAndEarn.tsx';
-import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare } from 'lucide-react';
+import SupportHub from '../shared/SupportHub.tsx';
+import { Menu, ArrowLeft, Bell, PenLine, X, Info, CheckCircle, MessageSquare, Bot } from 'lucide-react';
 
 import { useAuth } from '../../../context/AuthContext';
 import PlanOverview from '../../../components/dashboard/shared/PlanOverview.tsx';
@@ -208,7 +209,7 @@ const AdvisorDashboard: React.FC = () => {
             case 'activity': return 'Recent Activity';
             case 'messenger': return 'Messages';
             case 'direct-chat': return 'Chat';
-            case 'my-cases': return 'Service Cases';
+            case 'my-cases': return 'My Cases';
             case 'fileacase': return 'New Service Request';
             case 'legal-documentation': return 'Legal Documentation';
             case 'refer-earn': return 'Refer & Earn';
@@ -261,6 +262,15 @@ const AdvisorDashboard: React.FC = () => {
                                 <span>Write Blog</span>
                             </button>
                         )}
+
+                        {/* <button
+                            className={styles.lexiTopBtn}
+                            onClick={() => window.dispatchEvent(new CustomEvent('open-support-hub'))}
+                            title="Ask Lexi AI"
+                        >
+                            <Bot size={22} color="#facc15" />
+                            <span className={styles.lexiLabel}>Lexi</span>
+                        </button> */}
 
                         {/* Notification Button & Dropdown */}
                         <div className={styles.notificationWrapper} ref={notifRef}>
@@ -348,6 +358,7 @@ const AdvisorDashboard: React.FC = () => {
                     />
                 )
             }
+            <SupportHub />
         </div >
     );
 };

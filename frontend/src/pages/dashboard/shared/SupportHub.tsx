@@ -61,6 +61,15 @@ const SupportHub: React.FC = () => {
     }, [isInCall]);
 
     useEffect(() => {
+        const handleOpen = () => {
+            setIsOpen(true);
+            if (!sessionId) setHubStage('faq');
+        };
+        window.addEventListener('open-support-hub', handleOpen);
+        return () => window.removeEventListener('open-support-hub', handleOpen);
+    }, [sessionId]);
+
+    useEffect(() => {
         if (!user?.id || !isFirebaseReady) return;
         const unsubscribe = useCallSignals(String(user.id), (callId, caller) => {
             if (!isInCall && !isIncomingCall) {
@@ -214,7 +223,7 @@ const SupportHub: React.FC = () => {
     return (
         <>
             {/* CONSTRAINTS CONTAINER FOR DRAG */}
-            <div ref={constraintsRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 4999 }} />
+            <div ref={constraintsRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1000000 }} />
 
             {/* GRAVITY DRAGGABLE BOT BALL */}
             <motion.div

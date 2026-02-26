@@ -14,7 +14,7 @@
     justify-content: center;
     cursor: grab;
     box-shadow: 0 10px 30px rgba(30, 58, 138, 0.4);
-    z-index: 9999;
+    z-index: 1000000;
     touch-action: none;
     transition: all 0.3s ease;
 }
@@ -46,7 +46,7 @@
     align-items: flex-end;
     justify-content: flex-end;
     padding: 24px;
-    z-index: 6000;
+    z-index: 1000001;
 }
 
 .overlayBlur {

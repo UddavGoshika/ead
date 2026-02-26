@@ -54,6 +54,7 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
     const [selectedCallPartnerId, setSelectedCallPartnerId] = useState<string | null>(null);
     const [partnerCallHistory, setPartnerCallHistory] = useState<any[]>([]);
     const [popupLoading, setPopupLoading] = useState(false);
+    const [selectedProfileStatus, setSelectedProfileStatus] = useState<string | null>(null);
 
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentAmount, setPaymentAmount] = useState('');
@@ -298,7 +299,7 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
                     <header className={styles.chatHeader}>
                         <div className={styles.headerLeft}>
                             <button className={styles.backBtn} onClick={handleBack}><ArrowLeft size={20} /></button>
-                            <div className={styles.profileClickArea} onClick={() => { setSelectedProfileId(String(activeConv?.advocate.id || selectedAdvocate?.id)); setShowDetailedProfile(true); }}>
+                            <div className={styles.profileClickArea} onClick={() => { setSelectedProfileId(String(activeConv?.advocate.id || selectedAdvocate?.id)); setSelectedProfileStatus('ACCEPTED'); setShowDetailedProfile(true); }}>
                                 <div className={styles.avatarMini}>{displayName.charAt(0)}</div>
                                 <div className={styles.headerInfo}>
                                     <h3>{displayName}</h3>
@@ -353,7 +354,7 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
                                     <img src={formatImageUrl((conv.advocate as any).profilePic || (conv.advocate as any).img)} className={styles.convAvatar} alt={conv.advocate.name} />
                                     <div className={styles.convDetails}>
                                         <div className={styles.convTitleRow}>
-                                            <h4 onClick={(e) => { e.stopPropagation(); setSelectedProfileId(String(conv.advocate.id)); setShowDetailedProfile(true); }}>{conv.advocate.name}</h4>
+                                            <h4 onClick={(e) => { e.stopPropagation(); setSelectedProfileId(String(conv.advocate.id)); setSelectedProfileStatus('ACCEPTED'); setShowDetailedProfile(true); }}>{conv.advocate.name}</h4>
                                             <span className={styles.convTime}>{conv.lastMessage ? new Date(conv.lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                                         </div>
                                         <div className={styles.convSub}><span>{conv.advocate.unique_id}</span><span>•</span><span>{conv.advocate.location}</span></div>
@@ -370,7 +371,7 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
                             <div key={act._id} className={styles.convItem} onClick={() => handleSelectConversation({ advocate: { id: act.sender, partnerUserId: act.sender, name: act.partnerName, unique_id: act.partnerUniqueId, profilePic: act.partnerImg } as any, unreadCount: 0 })}>
                                 <img src={formatImageUrl(act.partnerImg)} className={styles.convAvatar} alt={act.partnerName} />
                                 <div className={styles.convDetails}>
-                                    <div className={styles.convTitleRow}><h4>{act.partnerName}</h4><span>{new Date(act.timestamp).toLocaleDateString()}</span></div>
+                                    <div className={styles.convTitleRow}><h4 onClick={(e) => { e.stopPropagation(); setSelectedProfileId(String(act.sender)); setSelectedProfileStatus('INTEREST_RECEIVED'); setShowDetailedProfile(true); }}>{act.partnerName}</h4><span>{new Date(act.timestamp).toLocaleDateString()}</span></div>
                                     <div className={styles.convSub}><span>{act.partnerUniqueId}</span><span>•</span><span style={{ color: '#facc15' }}>INTEREST RECEIVED</span></div>
                                     <div className={styles.actButtons}>
                                         <button className={styles.acceptBtn} onClick={(e) => handleResponse(act._id, 'accepted', e)}>Accept</button>
@@ -392,9 +393,10 @@ const LegalAdvisorMessenger: React.FC<MessengerProps> = ({ view = 'list', select
             {showDetailedProfile && selectedProfileId && (
                 <LegalAdvisorDetailedProfile
                     profileId={selectedProfileId}
-                    backToProfiles={() => { setSelectedProfileId(null); setShowDetailedProfile(false); }}
-                    onClose={() => { setSelectedProfileId(null); setShowDetailedProfile(false); }}
+                    backToProfiles={() => { setSelectedProfileId(null); setShowDetailedProfile(false); setSelectedProfileStatus(null); }}
+                    onClose={() => { setSelectedProfileId(null); setShowDetailedProfile(false); setSelectedProfileStatus(null); }}
                     onSelectForChat={onSelectForChat}
+                    initialRelationshipState={selectedProfileStatus || undefined}
                 />
             )}
 

@@ -367,3 +367,41 @@
     justify-content: center;
     border: 2px solid #0f172a;
 }
+
+.lexiTopBtn {
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    color: #facc15;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+}
+
+.lexiTopBtn:hover {
+    background: rgba(250, 204, 21, 0.2);
+    border-color: #facc15;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);
+}
+
+.lexiLabel {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 640px) {
+    .lexiLabel {
+        display: none;
+    }
+
+    .lexiTopBtn {
+        padding: 8px;
+        margin-right: 10px;
+    }
+}

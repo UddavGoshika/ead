@@ -60,6 +60,9 @@ const AdvocateSchema = new mongoose.Schema({
     verifiedAt: { type: Date },
     signaturePath: String, // File upload
     legalDocumentation: [String], // Added to track doc services
+    legalHelp: {
+        featuredServices: [String]
+    },
     interests: [{ type: String }],
     superInterests: [{ type: String }],
     shortlists: [{ type: String }],

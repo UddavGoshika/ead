@@ -532,6 +532,7 @@ const ChatWidget: React.FC = () => {
                 onClick={() => setIsOpen(true)}
             >
                 <BotMessageSquare size={24} />
+                <span className={styles.innerText}>Ask Lexi</span>
             </button>
         </div>
     );

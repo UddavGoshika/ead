@@ -437,7 +437,7 @@ const ContactQueries: React.FC = () => {
                                                 )}
 
                                                 <button className={styles.iconBtn} onClick={() => setSelectedQuery(q)}>
-                                                    <ExternalLink size={16} />
+                                                    <ExternalLink size={16} />👁
                                                 </button>
 
                                                 <div className={styles.moreActions}>
@@ -445,7 +445,7 @@ const ContactQueries: React.FC = () => {
                                                         className={styles.iconBtn}
                                                         onClick={() => setOpenMenuId(openMenuId === q.id ? null : q.id)}
                                                     >
-                                                        <MoreVertical size={16} />
+                                                        <MoreVertical size={16} />⋮
                                                     </button>
                                                     {openMenuId === q.id && (
                                                         <div className={styles.dropdownMenu}>

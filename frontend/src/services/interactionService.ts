@@ -158,8 +158,8 @@ export const interactionService = {
         return response.data.activities;
     },
 
-    respondToActivity: async (activityId: string, status: 'accepted' | 'declined') => {
-        const response = await api.post(`/interactions/respond/${activityId}/${status}`);
+    respondToActivity: async (activityId: string, status: 'accepted' | 'declined', meetingDetails?: any) => {
+        const response = await api.post(`/interactions/respond/${activityId}/${status}`, { meetingDetails });
         return response.data;
     },
 

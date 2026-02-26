@@ -31,6 +31,13 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
     const [loading, setLoading] = useState(true);
     const [selectedClient, setSelectedClient] = useState<any>(null);
     const [popupLoading, setPopupLoading] = useState(false);
+    const [meetingForm, setMeetingForm] = useState<any>(null); // To store activity being responded to for meeting
+    const [meetingDetails, setMeetingDetails] = useState({
+        type: 'Online',
+        linkOrAddress: '',
+        date: '',
+        time: ''
+    });
 
     useEffect(() => {
         if (user) {
@@ -127,7 +134,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
         }
     }, []);
 
-    const handleClientClick = async (partnerId: string, role: string = 'client') => {
+    const handleClientClick = async (partnerId: string, role: string = 'client', status?: string) => {
         try {
             setPopupLoading(true);
             const endpoint = (role === 'advocate' || role === 'legal_provider') ? `/advocate/${partnerId}` : `/client/${partnerId}`;
@@ -143,6 +150,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                     ...data,
                     resolvedId: resolvedId,
                     role: role,
+                    status: status,
                     firstName: data.firstName || data.name?.split(' ')[0] || 'User',
                     lastName: data.lastName || data.name?.split(' ').slice(1).join(' ') || '',
                     img: data.img || data.profilePic || data.profilePicPath,
@@ -160,27 +168,51 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
         }
     };
 
-    const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent) => {
+    const handleResponse = async (activityId: string, status: 'accepted' | 'declined', e: React.MouseEvent, activityType?: string) => {
         e.stopPropagation();
+
+        if (status === 'accepted' && (activityType === 'meet_request' || activityType === 'consultation')) {
+            const act = activities.find(a => a._id === activityId);
+            setMeetingForm(act);
+            return;
+        }
+
         try {
             await interactionService.respondToActivity(activityId, status);
             alert(`Request ${status}`);
-            // Refresh counts and list
-            const [statsData, activitiesData] = await Promise.all([
-                interactionService.getActivityStats(String(user?.id)),
-                interactionService.getAllActivities(String(user?.id))
-            ]);
-            setStats({
-                ...statsData,
-                messages: statsData.messages || 0,
-                consultations: statsData.consultations || statsData.meet_request || 0,
-                blocked: statsData.blocked || 0
-            });
-            setActivities(activitiesData);
+            refreshActivities();
         } catch (err) {
             console.error("Failed to respond:", err);
             alert("Failed to update status.");
         }
+    };
+
+    const submitMeetingDetails = async () => {
+        if (!meetingForm) return;
+        try {
+            await interactionService.respondToActivity(meetingForm._id, 'accepted', meetingDetails);
+            alert(`Consultation accepted and meeting details sent!`);
+            setMeetingForm(null);
+            setMeetingDetails({ type: 'Online', linkOrAddress: '', date: '', time: '' });
+            refreshActivities();
+        } catch (err) {
+            console.error("Failed to submit meeting details:", err);
+            alert("Failed to confirm meeting.");
+        }
+    };
+
+    const refreshActivities = async () => {
+        const [statsData, activitiesData] = await Promise.all([
+            interactionService.getActivityStats(String(user?.id)),
+            interactionService.getAllActivities(String(user?.id))
+        ]);
+        setStats({
+            ...statsData,
+            messages: statsData.messages || 0,
+            consultations: statsData.consultations || statsData.meet_request || 0,
+            blocked: statsData.blocked || 0
+        });
+        setActivities(activitiesData);
     };
 
     const maskContactInfo = (info: string) => {
@@ -253,7 +285,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                                                 className={styles.activityName}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleClientClick(act.partnerId, act.partnerRole || 'client');
+                                                    handleClientClick(act.partnerId, act.partnerRole || 'client', act.status);
                                                 }}
                                                 title="View Profile"
                                                 style={{ cursor: 'pointer', textDecoration: 'underline' }}
@@ -294,6 +326,12 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                                                 </span>
                                             )}
                                         </div>
+                                        {act.metadata?.meetingDetails && (
+                                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px', background: 'rgba(255,255,255,0.03)', padding: '6px', borderRadius: '4px' }}>
+                                                <div style={{ color: '#10b981', fontWeight: 600, marginBottom: '2px' }}>Meeting Scheduled:</div>
+                                                <div>{act.metadata.meetingDetails.type} • {act.metadata.meetingDetails.date} at {act.metadata.meetingDetails.time}</div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Action Buttons */}
@@ -301,13 +339,13 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                                         <div className={styles.actionRow} onClick={e => e.stopPropagation()}>
                                             <button
                                                 className={styles.acceptBtn}
-                                                onClick={(e) => handleResponse(act._id, 'accepted', e)}
+                                                onClick={(e) => handleResponse(act._id, 'accepted', e, act.type)}
                                             >
                                                 Accept
                                             </button>
                                             <button
                                                 className={styles.declineBtn}
-                                                onClick={(e) => handleResponse(act._id, 'declined', e)}
+                                                onClick={(e) => handleResponse(act._id, 'declined', e, act.type)}
                                             >
                                                 Decline
                                             </button>
@@ -358,6 +396,67 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                 </div>
             </div>
 
+            {/* Meeting Details Modal */}
+            {meetingForm && (
+                <div className={styles.overlay} onClick={() => setMeetingForm(null)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Setup Consultation Meeting</h3>
+                            <button onClick={() => setMeetingForm(null)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.meetingForm}>
+                                <div className={styles.inputGroup}>
+                                    <label>Meeting Type</label>
+                                    <select
+                                        className={styles.select}
+                                        value={meetingDetails.type}
+                                        onChange={e => setMeetingDetails({ ...meetingDetails, type: e.target.value })}
+                                    >
+                                        <option value="Online">Online Meet</option>
+                                        <option value="Offline">Offline Meet</option>
+                                    </select>
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>{meetingDetails.type === 'Online' ? 'Meeting Link' : 'Office Address'}</label>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder={meetingDetails.type === 'Online' ? 'Enter Google Meet / Zoom link' : 'Enter full office address'}
+                                        value={meetingDetails.linkOrAddress}
+                                        onChange={e => setMeetingDetails({ ...meetingDetails, linkOrAddress: e.target.value })}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <div className={styles.inputGroup} style={{ flex: 1 }}>
+                                        <label>Date</label>
+                                        <input
+                                            type="date"
+                                            className={styles.input}
+                                            value={meetingDetails.date}
+                                            onChange={e => setMeetingDetails({ ...meetingDetails, date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className={styles.inputGroup} style={{ flex: 1 }}>
+                                        <label>Time</label>
+                                        <input
+                                            type="time"
+                                            className={styles.input}
+                                            value={meetingDetails.time}
+                                            onChange={e => setMeetingDetails({ ...meetingDetails, time: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className={styles.formActions}>
+                                    <button className={styles.cancelBtn} onClick={() => setMeetingForm(null)}>Cancel</button>
+                                    <button className={styles.submitBtn} onClick={submitMeetingDetails}>Submit & Notify User</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Client Details Popup - Premium UI */}
             {selectedClient && (
                 <LegalAdvisorDetailedProfile
@@ -366,6 +465,7 @@ const AdvisorActivity: React.FC<AdvisorActivityProps> = ({ onNavigate, onChatSel
                     onClose={() => setSelectedClient(null)}
                     backToProfiles={() => setSelectedClient(null)}
                     partnerRole={selectedClient.role === 'advocate' || selectedClient.role === 'legal_provider' ? 'advocate' : 'client'}
+                    initialRelationshipState={selectedClient.status?.toUpperCase()}
                     onSelectForChat={(p) => {
                         onChatSelect?.(p);
                         onNavigate?.('messenger');

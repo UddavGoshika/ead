@@ -253,6 +253,7 @@ const AdvisorChatPopup: React.FC<ChatPopupProps> = ({ advocate: initialAdvocate,
                     profileId={partnerUserId}
                     backToProfiles={() => setShowDetailedProfile(false)}
                     onClose={() => setShowDetailedProfile(false)}
+                    initialRelationshipState="ACCEPTED"
                 />
             )}
         </div>

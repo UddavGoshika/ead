@@ -70,6 +70,7 @@ router.post('/login', async (req, res) => {
             let displayName = user.email;
             let userImage = null;
             let rejectionReason = null;
+            let legalHelp = {};
 
             if (user.role === 'advocate' || user.role === 'legal_provider') {
                 const Advocate = require('../models/Advocate');
@@ -79,6 +80,7 @@ router.post('/login', async (req, res) => {
                     displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
                     userImage = getImageUrl(advocate.profilePicPath);
                     rejectionReason = advocate.rejectionReason;
+                    legalHelp = advocate.legalHelp || {};
                 }
             } else if (user.role === 'client') {
                 const Client = require('../models/Client');
@@ -88,6 +90,7 @@ router.post('/login', async (req, res) => {
                     displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
                     userImage = getImageUrl(client.profilePicPath);
                     rejectionReason = client.rejectionReason;
+                    legalHelp = client.legalHelp || {};
                 }
             } else {
                 // Check StaffProfile for rejection reason
@@ -130,7 +133,8 @@ router.post('/login', async (req, res) => {
                     coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
                     coinsReceived: user.coinsReceived || 0,
                     coinsUsed: user.coinsUsed || 0,
-                    walletBalance: user.walletBalance || 0
+                    walletBalance: user.walletBalance || 0,
+                    legalHelp: legalHelp
                 }
             });
         }
@@ -199,6 +203,7 @@ router.get('/me', async (req, res) => {
         let displayName = user.email; // Default
         let userImage = null;
         let rejectionReason = null;
+        let legalHelp = {};
 
         if (user.role === 'advocate' || user.role === 'legal_provider') {
             const Advocate = require('../models/Advocate');
@@ -207,6 +212,7 @@ router.get('/me', async (req, res) => {
                 uniqueId = advocate.unique_id;
                 displayName = advocate.name || advocate.firstName + ' ' + advocate.lastName;
                 userImage = getImageUrl(advocate.profilePicPath);
+                legalHelp = advocate.legalHelp || {};
             }
         } else if (user.role === 'client') {
             const Client = require('../models/Client');
@@ -216,6 +222,7 @@ router.get('/me', async (req, res) => {
                 displayName = client.firstName ? `${client.firstName} ${client.lastName}` : user.email;
                 userImage = getImageUrl(client.profilePicPath);
                 rejectionReason = client.rejectionReason;
+                legalHelp = client.legalHelp || {};
             }
         } else {
             const profile = await StaffProfile.findOne({ userId: user._id });
@@ -240,7 +247,8 @@ router.get('/me', async (req, res) => {
                 coins: (user.plan && user.plan.toLowerCase() === 'free') ? 0 : (user.coins || 0),
                 coinsReceived: user.coinsReceived || 0,
                 coinsUsed: user.coinsUsed || 0,
-                walletBalance: user.walletBalance || 0
+                walletBalance: user.walletBalance || 0,
+                legalHelp: legalHelp
             }
         });
     } catch (err) {

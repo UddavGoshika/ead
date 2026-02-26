@@ -428,9 +428,10 @@
     font-size: 14px;
 }
 
+/* ROLE HIERARCHY GRID */
 .gridFilters {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 1fr 300px;
     gap: 32px;
 }
 
@@ -441,8 +442,8 @@
 }
 
 .filterGroup label {
-    font-size: 12px;
-    font-weight: 800;
+    font-size: 11px;
+    font-weight: 900;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -451,53 +452,79 @@
     gap: 8px;
 }
 
-/* ROLE GRID - TIGHT ALIGNMENT */
-.roleGrid {
+.hierarchyContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
-.roleBlock {
-    background: rgba(15, 23, 42, 0.8);
+.deptSection {
+    background: rgba(15, 23, 42, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 10px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
+    border-radius: 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
 }
 
-.roleBlock:hover {
-    border-color: rgba(59, 130, 246, 0.3);
+.deptHeading {
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.roleSubGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .roleSubGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.roleBlockSmall {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.roleBlockSmall:hover {
+    border-color: rgba(255, 255, 255, 0.15);
     background: rgba(15, 23, 42, 1);
 }
 
-.activeRole {
+.roleBlockSmall.activeRole {
     background: rgba(59, 130, 246, 0.1) !important;
     border-color: #3b82f6 !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
 }
 
-.roleName {
+.roleNameSmall {
     font-size: 11px;
     font-weight: 700;
     color: #94a3b8;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-.activeRole .roleName {
+.activeRole .roleNameSmall {
     color: #3b82f6;
 }
 
-.roleCount {
-    font-size: 16px;
+.roleCountSmall {
+    font-size: 13px;
     font-weight: 800;
     color: #fff;
-    margin-top: 2px;
 }
 
 /* STATUS GRID */
@@ -508,42 +535,52 @@
 }
 
 .statusBlock {
-    padding: 8px 10px;
-    border-radius: 8px;
+    padding: 10px;
+    border-radius: 10px;
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
     text-align: center;
     cursor: pointer;
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     color: #94a3b8;
+}
+
+.statusBlock:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .activeStatus.active {
     background: #10b981;
     color: white;
+    border-color: #10b981;
 }
 
 .activeStatus.inactive {
     background: #64748b;
     color: white;
+    border-color: #64748b;
 }
 
 .activeStatus.onleave {
     background: #f59e0b;
     color: white;
+    border-color: #f59e0b;
 }
 
 .activeStatus.suspended {
     background: #ef4444;
     color: white;
+    border-color: #ef4444;
 }
 
 .activeStatus.all {
     background: #3b82f6;
     color: white;
+    border-color: #3b82f6;
 }
 
 /* TABLE */

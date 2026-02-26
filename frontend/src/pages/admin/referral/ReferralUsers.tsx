@@ -3,6 +3,7 @@ import styles from "./ReferralUsers.module.css";
 import { Search, Filter, UserCircle, Briefcase, IndianRupee, PieChart, FileText, MoreVertical, CheckCircle, XCircle, ShieldCheck, Zap, Activity, UserPlus, X, Mail, Phone as PhoneIcon, Key, Hash, Percent } from "lucide-react";
 import { referralService } from "../../../services/api";
 import { motion } from "framer-motion";
+import { useAuth } from "../../../context/AuthContext";
 
 type UserStatus = "Active" | "Blocked" | "Pending";
 type KYCStatus = "Verified" | "Pending" | "Unverified";
@@ -131,10 +132,11 @@ const MOCK_USERS: ReferralUser[] = [
     }
 ];
 
-const ROLES = ["All", "Our Staff", "Teamleads", "Managers", "Influencers", "Marketing Roles", "Marketing Agencies", "Freelance Marketers", "Digital Partners", "Legal Consultants"];
+const ROLES = ["All", "referral", "Marketer", "Influencer", "Marketing_Agency", "Teamlead", "Manager", "Email_Support", "Call_Support", "Data_Entry"];
 const STATUSES = ["All", "Active", "Pending", "Blocked"];
 
 const ReferralUserAdmin: React.FC = () => {
+    const { impersonate } = useAuth();
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRole, setSelectedRole] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
@@ -238,7 +240,10 @@ const ReferralUserAdmin: React.FC = () => {
             const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.email.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRole = selectedRole === "All" || user.role.toLowerCase().includes(selectedRole.toLowerCase().split(' ')[0]);
+            const roleVal = user.role?.toLowerCase() || "";
+            const matchesRole = selectedRole === "All" ||
+                roleVal === selectedRole.toLowerCase() ||
+                roleVal.includes(selectedRole.toLowerCase().split('_')[0]);
             const matchesStatus = selectedStatus === "All" || user.status === selectedStatus;
             return matchesSearch && matchesRole && matchesStatus;
         });
@@ -264,7 +269,11 @@ const ReferralUserAdmin: React.FC = () => {
 
     const getCount = (role: string) => {
         if (role === "All") return users.length;
-        return users.filter(u => u.role.toLowerCase().includes(role.toLowerCase().split(' ')[0])).length;
+        const lowerRole = role.toLowerCase();
+        return users.filter(u => {
+            const uRole = u.role?.toLowerCase() || "";
+            return uRole === lowerRole || uRole.includes(lowerRole.split('_')[0].split(' ')[0]);
+        }).length;
     };
 
     return (
@@ -420,6 +429,9 @@ const ReferralUserAdmin: React.FC = () => {
                                                 </button>
                                                 <button onClick={() => alert("KYC Details for " + user.name)}>
                                                     <ShieldCheck size={14} /> KYC Doc
+                                                </button>
+                                                <button onClick={() => impersonate({ id: user.id || user.userId, name: user.name, email: user.email, role: 'USER' as any, unique_id: user.userId })}>
+                                                    <Key size={14} /> Login As
                                                 </button>
                                             </div>
                                         )}
