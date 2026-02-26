@@ -15,7 +15,8 @@ const UserSchema = new mongoose.Schema({
         enum: [
             'client', 'advocate', 'admin', 'superadmin', 'super_admin', 'manager', 'teamlead', 'verifier', 'finance', 'support', 'legal_provider',
             'hr', 'influencer', 'marketer', 'marketing_agency', 'call_support', 'chat_support', 'personal_agent',
-            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant', 'email_support', 'referral'
+            'live_chat', 'telecaller', 'customer_care', 'data_entry', 'personal_assistant', 'email_support', 'referral',
+            'general_manager', 'marketing_team_lead', 'support_team_lead', 'operations_team_lead'
         ],
         default: 'client'
     },

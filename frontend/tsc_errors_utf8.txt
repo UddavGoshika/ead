@@ -1,0 +1,11 @@
+﻿src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(143,59): error TS1005: ',' expected.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(143,68): error TS1005: '}' expected.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(143,113): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(143,114): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(143,115): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(146,19): error TS17002: Expected corresponding JSX closing tag for 'form'.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(147,15): error TS17002: Expected corresponding JSX closing tag for 'ActionModal'.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(148,11): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(149,9): error TS1005: ')' expected.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(150,5): error TS1109: Expression expected.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(151,1): error TS1128: Declaration or statement expected.

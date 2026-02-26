@@ -1,0 +1,30 @@
+﻿src/pages/dashboard/finance/FinanceDashboard.tsx(2,23): error TS1484: 'NavItem' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/finance/sections/Invoices.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/finance/sections/Payroll.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/general-manager/GeneralManagerDashboard.tsx(2,23): error TS1484: 'NavItem' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/general-manager/sections/FinancialReports.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/general-manager/sections/StaffManagement.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/hr/HRDashboard.tsx(2,23): error TS1484: 'NavItem' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/hr/sections/EmployeeDirectory.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/hr/sections/Recruitment.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/marketing/agency/MarketingAgencyDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/marketing/agency/sections/ClientProjects.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/marketing/marketer/MarketerDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/marketing/marketer/sections/MyCampaigns.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/marketing/team-lead/MarketingTeamLeadDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/marketing/team-lead/sections/Campaigns.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/operations/customer-care/CustomerCareDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/operations/customer-care/sections/TicketQueue.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/operations/data-entry/DataEntryDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/operations/data-entry/sections/DataEntryTasks.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/operations/personal-assistant/PersonalAssistantDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/operations/personal-assistant/sections/AssistantTasks.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/operations/team-lead/OperationsTeamLeadDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/operations/telecaller/TelecallerDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/staff/shared/StaffLayout.tsx(7,25): error TS2307: Cannot find module '../../../../../context/AuthContext' or its corresponding type declarations.
+src/pages/dashboard/support/call-support/CallSupportDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/support/personal-agent/PersonalAgentDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/support/personal-agent/sections/MyClients.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/support/team-lead/SupportTeamLeadDashboard.tsx(2,38): error TS2307: Cannot find module '../../../staff/shared/StaffLayout' or its corresponding type declarations.
+src/pages/dashboard/verifier/sections/VerificationQueue.tsx(2,21): error TS1484: 'Column' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/dashboard/verifier/VerifierDashboard.tsx(2,23): error TS1484: 'NavItem' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.

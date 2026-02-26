@@ -203,6 +203,29 @@ import MarketingAgencyWorkspace from './pages/marketing-agency/workspace/Marketi
 // SUPPORT ROLE DATA (REFACTORED)
 import AssistantWorkspace from './pages/personalassistant/workspace/AssistantWorkspace';
 
+// NEW STAFF DASHBOARDS - MANAGEMENT
+import GeneralManagerDashboard from './pages/dashboard/general-manager/GeneralManagerDashboard';
+import HRDashboard from './pages/dashboard/hr/HRDashboard';
+import FinanceDashboard from './pages/dashboard/finance/FinanceDashboard';
+import VerifierDashboard from './pages/dashboard/verifier/VerifierDashboard';
+
+// NEW STAFF DASHBOARDS - MARKETING
+import MarketingTeamLeadDashboard from './pages/dashboard/marketing/team-lead/MarketingTeamLeadDashboard';
+import MarketerDashboard from './pages/dashboard/marketing/marketer/MarketerDashboard';
+import MarketingAgencyDashboard from './pages/dashboard/marketing/agency/MarketingAgencyDashboard';
+
+// NEW STAFF DASHBOARDS - SUPPORT
+import SupportTeamLeadDashboard from './pages/dashboard/support/team-lead/SupportTeamLeadDashboard';
+import CallSupportDashboardNew from './pages/dashboard/support/call-support/CallSupportDashboard';
+import PersonalAgentDashboard from './pages/dashboard/support/personal-agent/PersonalAgentDashboard';
+
+// NEW STAFF DASHBOARDS - OPERATIONS
+import OperationsTeamLeadDashboard from './pages/dashboard/operations/team-lead/OperationsTeamLeadDashboard';
+import TelecallerDashboardNew from './pages/dashboard/operations/telecaller/TelecallerDashboard';
+import CustomerCareDashboard from './pages/dashboard/operations/customer-care/CustomerCareDashboard';
+import DataEntryDashboard from './pages/dashboard/operations/data-entry/DataEntryDashboard';
+import PersonalAssistantDashboard from './pages/dashboard/operations/personal-assistant/PersonalAssistantDashboard';
+
 // MANAGEMENT & OPERATIONS IMPORTS
 import TeamLeadLayout from './layouts/TeamLeadLayout';
 import TeamLeadWorkspace from './pages/teamlead/workspace/TeamLeadWorkspace';
@@ -264,29 +287,72 @@ const DashboardRedirect: React.FC = () => {
   }
 
   if (role === 'call_support') {
-    return <Navigate to="/dashboard/call-support" replace />;
+    return <Navigate to="/dashboard/support/call-support" replace />;
   }
 
   if (role === 'telecaller') {
-    return <Navigate to="/dashboard/telecalling" replace />;
+    return <Navigate to="/dashboard/operations/telecaller" replace />;
   }
 
   if (role === 'email_support') {
-    return <Navigate to="/dashboard/email-desk" replace />;
+    return <Navigate to="/dashboard/support/email-support" replace />;
   }
 
-  if ([
-    'manager', 'teamlead', 'hr', 'data_entry', 'personal_assistant', 'personal_agent', 'support', 'customer_care'
-  ].includes(role)) {
-    return <Navigate to="/staff/portal" replace />;
+  // Support Roles
+  if (role === 'support_team_lead') {
+    return <Navigate to="/dashboard/support/team-lead" replace />;
+  }
+  if (role === 'personal_agent') {
+    return <Navigate to="/dashboard/support/personal-agent" replace />;
+  }
+
+  // Operations Roles
+  if (role === 'operations_team_lead') {
+    return <Navigate to="/dashboard/operations/team-lead" replace />;
+  }
+  if (role === 'customer_care') {
+    return <Navigate to="/dashboard/operations/customer-care" replace />;
+  }
+  if (role === 'data_entry') {
+    return <Navigate to="/dashboard/operations/data-entry" replace />;
+  }
+
+  if (role === 'general_manager') {
+    return <Navigate to="/dashboard/general-manager" replace />;
+  }
+
+  if (role === 'hr') {
+    return <Navigate to="/dashboard/hr" replace />;
+  }
+
+  if (role === 'finance') {
+    return <Navigate to="/dashboard/finance" replace />;
   }
 
   if (role === 'verifier') {
     return <Navigate to="/dashboard/verifier" replace />;
   }
 
-  if (role === 'finance') {
-    return <Navigate to="/dashboard/finance" replace />;
+  if (role === 'marketing_team_lead') {
+    return <Navigate to="/dashboard/marketing/team-lead" replace />;
+  }
+
+  if (role === 'marketer') {
+    return <Navigate to="/dashboard/marketing/marketer" replace />;
+  }
+
+  if (role === 'marketing_agency') {
+    return <Navigate to="/dashboard/marketing/agency" replace />;
+  }
+
+  if (role === 'personal_assistant') {
+    return <Navigate to="/dashboard/operations/personal-assistant" replace />;
+  }
+
+  if ([
+    'manager', 'teamlead'
+  ].includes(role)) {
+    return <Navigate to="/staff/portal" replace />;
   }
 
   // Custom mapping for role-to-path
@@ -356,14 +422,32 @@ const AppContent: React.FC = () => {
         <Route path="/dashboard/advisor/:uniqueId" element={<ProtectedRoute allowedRoles={['legal_provider']}><AdvisorDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/user/:uniqueId" element={<ProtectedRoute allowedRoles={['user']}><UserDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/email_support/:uniqueId" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupport /></ProtectedRoute>} />
-        <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><AssignedVerifications /></ProtectedRoute>} />
-        <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><Transactions /></ProtectedRoute>} />
+        <Route path="/dashboard/verifier" element={<ProtectedRoute allowedRoles={['verifier']}><VerifierDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/finance" element={<ProtectedRoute allowedRoles={['finance']}><FinanceDashboard /></ProtectedRoute>} />
+
+        {/* NEW STAFF DASHBOARD ROUTES */}
+        <Route path="/dashboard/general-manager" element={<ProtectedRoute allowedRoles={['general_manager']}><GeneralManagerDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/hr" element={<ProtectedRoute allowedRoles={['hr']}><HRDashboard /></ProtectedRoute>} />
+
+        <Route path="/dashboard/marketing/team-lead" element={<ProtectedRoute allowedRoles={['marketing_team_lead']}><MarketingTeamLeadDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/marketing/marketer" element={<ProtectedRoute allowedRoles={['marketer']}><MarketerDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/marketing/agency" element={<ProtectedRoute allowedRoles={['marketing_agency']}><MarketingAgencyDashboard /></ProtectedRoute>} />
+
+        <Route path="/dashboard/support/team-lead" element={<ProtectedRoute allowedRoles={['support_team_lead']}><SupportTeamLeadDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/support/call-support" element={<ProtectedRoute allowedRoles={['call_support']}><CallSupportDashboardNew /></ProtectedRoute>} />
+        <Route path="/dashboard/support/personal-agent" element={<ProtectedRoute allowedRoles={['personal_agent']}><PersonalAgentDashboard /></ProtectedRoute>} />
+
+        <Route path="/dashboard/operations/team-lead" element={<ProtectedRoute allowedRoles={['operations_team_lead']}><OperationsTeamLeadDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/operations/telecaller" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerDashboardNew /></ProtectedRoute>} />
+        <Route path="/dashboard/operations/customer-care" element={<ProtectedRoute allowedRoles={['customer_care']}><CustomerCareDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/operations/data-entry" element={<ProtectedRoute allowedRoles={['data_entry']}><DataEntryDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/operations/personal-assistant" element={<ProtectedRoute allowedRoles={['personal_assistant']}><PersonalAssistantDashboard /></ProtectedRoute>} />
+
         <Route path="/dashboard/referral" element={<ProtectedRoute allowedRoles={['referral', 'influencer', 'marketer', 'marketing_agency']}><ReferralDashboard /></ProtectedRoute>} />
         <Route path="/dashboard/legal-docs" element={<DashboardLegalDocs />} />
 
         <Route path="/dashboard/live-chat" element={<ProtectedRoute allowedRoles={['live_chat', 'chat_support']}><LiveChatPage /></ProtectedRoute>} />
-        <Route path="/dashboard/call-support" element={<ProtectedRoute allowedRoles={['call_support']}><CallSupportPage /></ProtectedRoute>} />
-        <Route path="/dashboard/telecalling" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerPage /></ProtectedRoute>} />
+        <Route path="/dashboard/telecalling-old" element={<ProtectedRoute allowedRoles={['telecaller']}><TelecallerPage /></ProtectedRoute>} />
         <Route path="/dashboard/email-desk" element={<ProtectedRoute allowedRoles={['email_support']}><EmailSupportPage /></ProtectedRoute>} />
 
         {/* STAFF ROUTES */}
