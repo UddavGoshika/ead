@@ -318,6 +318,42 @@
     position: relative;
 }
 
+.osWidgets {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-right: 16px;
+    border-right: 1px solid #334155;
+}
+
+.widgetBadge,
+.orgSwitcher,
+.subscriptionBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.widgetBadge:hover,
+.orgSwitcher:hover,
+.subscriptionBadge:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+.widgetIcon {
+    opacity: 0.9;
+}
+
 .badge {
     position: absolute;
     top: 4px;
@@ -424,6 +460,10 @@
 
     .header {
         padding: 0 16px;
+    }
+
+    .osWidgets {
+        display: none;
     }
 
     .content {

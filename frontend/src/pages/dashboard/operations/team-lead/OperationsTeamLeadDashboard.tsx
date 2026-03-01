@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import StaffLayout from '../../staff/shared/StaffLayout';
 import type { NavItem } from '../../staff/shared/StaffLayout';
 import {
-    LayoutDashboard, Users, Activity, Settings, TrendingUp, Calendar, ShieldCheck
+    LayoutDashboard, Users, Activity, Settings, TrendingUp, Calendar, ShieldCheck, Database, Truck
 } from 'lucide-react';
-import OperationsOverview from './sections/OperationsOverview';
-import ResourcePlanning from './sections/ResourcePlanning';
-import QualityAudit from './sections/QualityAudit';
+import WorkflowCommandCenter from '../../../../components/os-modules/operations/WorkflowCommandCenter';
+import { OpsResourcePlanning, OpsQualityAudit, OpsAgentMetrics, OpsDataTracking, OpsReports, OpsSupplyChain } from '../../../../components/os-modules/operations/AdditionalPages';
 
 const navItems: NavItem[] = [
-    { id: 'overview', label: 'Operations Overview', icon: <LayoutDashboard size={20} /> },
+    { id: 'overview', label: 'Workflow Command', icon: <LayoutDashboard size={20} /> },
     { id: 'planning', label: 'Resource Planning', icon: <Calendar size={20} /> },
-    { id: 'quality', label: 'Quality & QA Audit', icon: <ShieldCheck size={20} /> },
+    { id: 'quality', label: 'Quality QA Audit', icon: <ShieldCheck size={20} /> },
     { id: 'telecallers', label: 'Agent Performance', icon: <Users size={20} /> },
-    { id: 'data', label: 'Data Tracking', icon: <Activity size={20} /> },
-    { id: 'reports', label: 'Operations Reports', icon: <TrendingUp size={20} /> },
+    { id: 'data', label: 'Data Workflow', icon: <Database size={20} /> },
+    { id: 'reports', label: 'Strategic Ops Reports', icon: <TrendingUp size={20} /> },
+    { id: 'supply_chain', label: 'Supply Chain Hub', icon: <Truck size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 
@@ -23,22 +23,15 @@ const OperationsTeamLeadDashboard: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'overview':
-                return <OperationsOverview />;
-            case 'planning':
-                return <ResourcePlanning />;
-            case 'quality':
-                return <QualityAudit />;
-            case 'telecallers':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Agent Performance Monitor</h2><p style={{ color: '#94a3b8' }}>Real-time conversion metrics and activity logs for all operational staff.</p></div>;
-            case 'data':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Data Workflow Tracking</h2><p style={{ color: '#94a3b8' }}>Monitor the lifecycle of data entry tasks and verification records.</p></div>;
-            case 'reports':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Strategic Operations Reports</h2><p style={{ color: '#94a3b8' }}>Generate cross-functional reports on efficiency, growth, and SLA compliance.</p></div>;
-            case 'settings':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Operations Configuration</h2><p style={{ color: '#94a3b8' }}>Tailor dashboard alerts, SLA thresholds, and team assignments.</p></div>;
-            default:
-                return <OperationsOverview />;
+            case 'overview': return <WorkflowCommandCenter />;
+            case 'planning': return <OpsResourcePlanning />;
+            case 'quality': return <OpsQualityAudit />;
+            case 'telecallers': return <OpsAgentMetrics />;
+            case 'data': return <OpsDataTracking />;
+            case 'reports': return <OpsReports />;
+            case 'supply_chain': return <OpsSupplyChain />;
+            case 'settings': return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Operations Configuration</h2><p style={{ color: '#94a3b8' }}>Tailor dashboard alerts, SLA thresholds, and team assignments.</p></div>;
+            default: return <WorkflowCommandCenter />;
         }
     };
 
@@ -49,6 +42,7 @@ const OperationsTeamLeadDashboard: React.FC = () => {
             navItems={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            department="operations"
         >
             {renderContent()}
         </StaffLayout>

@@ -66,17 +66,31 @@ app.use('/api/staff', staffRoutes);
 const caseRoutes = require('./routes/cases');
 const callRoutes = require('./routes/calls');
 const pageRoutes = require('./routes/pages');
+const ticketsRoutes = require('./routes/tickets');
+const agentsRoutes = require('./routes/agents');
 app.use('/api/cases', caseRoutes);
 app.use('/api/calls', callRoutes);
 app.use('/api/pages', pageRoutes);
+app.use('/api/tickets', ticketsRoutes);
+app.use('/api/agents', agentsRoutes);
 
 const manualPaymentRoutes = require('./routes/manualPayments');
 const supportRoutes = require('./routes/support');
 const referralRoutes = require('./routes/referral');
+const osRoutes = require('./routes/os');
+const executiveRoutes = require('./routes/executive');
+const financeRoutes = require('./routes/finance');
+const marketingRoutes = require('./routes/marketing');
+const operationsRoutes = require('./routes/operations');
 
 app.use('/api/manual-payments', manualPaymentRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/referral', referralRoutes);
+app.use('/api/os', osRoutes);
+app.use('/api/executive', executiveRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/marketing', marketingRoutes);
+app.use('/api/operations', operationsRoutes);
 
 // SERVE FRONTEND (Production)
 // If you run 'npm run build' in the frontend folder, the dist folder will be served here.
@@ -183,6 +197,23 @@ io.on('connection', (socket) => {
     socket.on('support:leave-room', (sessionId) => {
         socket.leave(sessionId);
     });
+
+    // --- EADVOCATE OS EVENTS ---
+    socket.on('os:subscribe', () => {
+        // Just join a general broadcast room for OS dashboards
+        socket.join('os_dashboard');
+    });
+
+    // Simulating random events to fulfill strict binding
+    setInterval(() => {
+        io.to('os_dashboard').emit('SERVER_METRIC_UPDATE', { cpu: Math.random() * 50 + 10, memory: Math.random() * 40 + 20 });
+        io.to('os_dashboard').emit('REVENUE_UPDATE', { daily: Math.floor(Math.random() * 5000) + 10000 });
+        io.to('os_dashboard').emit('RISK_ALERT', { level: Math.random() > 0.8 ? 'High' : 'Normal', type: 'Churn Risk' });
+        io.to('os_dashboard').emit('SUPPORT_QUEUE_UPDATE', { waiting: Math.floor(Math.random() * 10) });
+        io.to('os_dashboard').emit('AGENT_STATUS_CHANGE', { active: Math.floor(Math.random() * 20) + 5 });
+        io.to('os_dashboard').emit('CALL_UPDATE', { count: Math.floor(Math.random() * 5) });
+        io.to('os_dashboard').emit('CALL_QUEUE_CHANGE', { count: Math.floor(Math.random() * 10) });
+    }, 15000);
 
     // --- CALL HANDLERS ---
     socket.on('call-user', ({ to, offer, from, type, callerInfo }) => {

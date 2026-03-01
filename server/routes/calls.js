@@ -192,4 +192,50 @@ router.get('/history/:userId', async (req, res) => {
     }
 });
 
+// === NEW EADVOCATE OS CALL CONTROL ENDPOINTS === //
+
+router.get('/live', async (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: 'C100', caller: 'John Doe', agent: 'Agent Smith', duration: '05:22', status: 'In Progress' },
+            { id: 'C101', caller: 'Jane Roe', agent: 'Agent K', duration: '12:01', status: 'In Progress' }
+        ]
+    });
+});
+
+router.get('/queue', async (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { id: 'Q1', caller: 'Alice Q', waitTime: '02:15', priority: 'High' },
+            { id: 'Q2', caller: 'Bob N', waitTime: '00:45', priority: 'Normal' }
+        ]
+    });
+});
+
+router.get('/logs', async (req, res) => {
+    res.json({ success: true, data: [] });
+});
+
+router.get('/recordings', async (req, res) => {
+    res.json({ success: true, data: [] });
+});
+
+router.post('/accept', async (req, res) => {
+    res.json({ success: true, message: 'Call accepted' });
+});
+
+router.post('/reject', async (req, res) => {
+    res.json({ success: true, message: 'Call rejected' });
+});
+
+router.post('/transfer', async (req, res) => {
+    res.json({ success: true, message: 'Call transferred' });
+});
+
+router.post('/record', async (req, res) => {
+    res.json({ success: true, message: 'Recording toggled' });
+});
+
 module.exports = router;

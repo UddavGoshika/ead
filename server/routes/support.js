@@ -535,4 +535,73 @@ router.get('/ticket/:ticketId', auth, async (req, res) => {
     }
 });
 
+// === NEW EADVOCATE OS ENDPOINTS === //
+
+// @route   GET /api/support/metrics
+router.get('/metrics', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: { active_tickets: 145, unassigned: 12, avg_resolution: '4.2h', csat: '98%' }
+    });
+});
+
+// @route   GET /api/support/live-status
+router.get('/live-status', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: { system_status: 'Healthy', active_sessions: 45, lag: '12ms' }
+    });
+});
+
+// @route   GET /api/support/queue-health
+router.get('/queue-health', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: { wait_time: '1m 20s', abandonment_rate: '2.4%', callers_in_queue: 5 }
+    });
+});
+
+// @route   GET /api/support/agent-status
+router.get('/agent-status', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: { online: 24, on_call: 12, wrap_up: 5, offline: 3 }
+    });
+});
+
+// GET /api/support/knowledge-base
+router.get('/knowledge-base', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { article: 'Call Acceptance Flow', category: 'Ops', helpfulness: '94%', views: 1450 },
+            { article: 'Refund Policy EAdvocate', category: 'Finance', helpfulness: '88%', views: 850 }
+        ]
+    });
+});
+
+// GET /api/support/sla-trends
+router.get('/sla-trends', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { month: 'Jan', compliance: '92%', breaches: 14 },
+            { month: 'Feb', compliance: '95%', breaches: 8 }
+        ]
+    });
+});
+
+// GET /api/support/csat-detailed
+router.get('/csat-detailed', auth, (req, res) => {
+    res.json({
+        success: true,
+        data: [
+            { rating: 5, count: 1250, sentiment: 'Excellent' },
+            { rating: 4, count: 450, sentiment: 'Good' },
+            { rating: 3, count: 80, sentiment: 'Neutral' }
+        ]
+    });
+});
+
 module.exports = router;
+

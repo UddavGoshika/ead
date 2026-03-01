@@ -2,38 +2,40 @@ import React, { useState } from 'react';
 import StaffLayout from '../../staff/shared/StaffLayout';
 import type { NavItem } from '../../staff/shared/StaffLayout';
 import {
-    LayoutDashboard, Users, MessageSquare, BookOpen, Settings
+    LayoutDashboard, Users, MessageSquare, BookOpen, Settings, PhoneCall, BarChart2, AlertCircle, Smile
 } from 'lucide-react';
-import LiveOverview from './sections/LiveOverview';
-import TicketMonitor from './sections/TicketMonitor';
-import KnowledgeBase from './sections/KnowledgeBase';
+import SupportOverview from '../../../../components/os-modules/support/SupportOverview';
+import TicketManagement from '../../../../components/os-modules/support/TicketManagement';
+import CallControlCenter from '../../../../components/os-modules/support/CallControlCenter';
+import AgentPerformance from '../../../../components/os-modules/support/AgentPerformance';
+import { SupportKnowledgeBase, SupportSLATrends, SupportCSATDetailed } from '../../../../components/os-modules/support/AdditionalPages';
 import SystemSettings from '../../shared/SystemSettings';
 
 const navItems: NavItem[] = [
-    { id: 'overview', label: 'Live Overview', icon: <LayoutDashboard size={20} /> },
-    { id: 'tickets', label: 'Ticket Monitor', icon: <MessageSquare size={20} /> },
-    { id: 'kb', label: 'Knowledge Base', icon: <BookOpen size={20} /> },
-    { id: 'agents', label: 'Agent Performance', icon: <Users size={20} /> },
+    { id: 'support_overview', label: 'Support Overview', icon: <LayoutDashboard size={20} /> },
+    { id: 'ticket_management', label: 'Ticket Management', icon: <MessageSquare size={20} /> },
+    { id: 'call_control_center', label: 'Call Control Center', icon: <PhoneCall size={20} /> },
+    { id: 'agent_performance', label: 'Agent Performance', icon: <Users size={20} /> },
+    { id: 'knowledge_base', label: 'Knowledge Base', icon: <BookOpen size={20} /> },
+    { id: 'sla_trends', label: 'SLA Trends', icon: <AlertCircle size={20} /> },
+    { id: 'csat_detailed', label: 'Customer Satisfaction', icon: <Smile size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 
 const SupportTeamLeadDashboard: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('support_overview');
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'overview':
-                return <LiveOverview />;
-            case 'tickets':
-                return <TicketMonitor />;
-            case 'kb':
-                return <KnowledgeBase />;
-            case 'agents':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Agent Performance</h2><p style={{ color: '#94a3b8' }}>Monitor individual support agent metrics and activity timelines.</p></div>;
-            case 'settings':
-                return <SystemSettings allowedTabs={['general', 'logs']} />;
-            default:
-                return <LiveOverview />;
+            case 'support_overview': return <SupportOverview />;
+            case 'ticket_management': return <TicketManagement />;
+            case 'call_control_center': return <CallControlCenter />;
+            case 'agent_performance': return <AgentPerformance />;
+            case 'knowledge_base': return <SupportKnowledgeBase />;
+            case 'sla_trends': return <SupportSLATrends />;
+            case 'csat_detailed': return <SupportCSATDetailed />;
+            case 'settings': return <SystemSettings allowedTabs={['general', 'logs']} />;
+            default: return <SupportOverview />;
         }
     };
 

@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import StaffLayout from '../staff/shared/StaffLayout';
 import type { NavItem } from '../staff/shared/StaffLayout';
 import {
-    LayoutDashboard, Users, TrendingUp, Settings, FileText
+    LayoutDashboard, Users, TrendingUp, Settings, FileText, Map, ShieldCheck
 } from 'lucide-react';
-import Overview from './sections/Overview';
-import StaffDirectory from './sections/StaffDirectory';
-import FinanceReports from './sections/FinanceReports';
+import ExecutiveOverview from '../../../components/os-modules/gm/ExecutiveOverview';
+import StrategicAnalytics from '../../../components/os-modules/gm/StrategicAnalytics';
+import { GMStaffManagement, GMDocuments, GMRoadmap, GMCompliance } from '../../../components/os-modules/gm/AdditionalPages';
 import SystemSettings from '../shared/SystemSettings';
 
 const navItems: NavItem[] = [
-    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={20} /> },
+    { id: 'executive_overview', label: 'Executive Overview', icon: <LayoutDashboard size={20} /> },
+    { id: 'strategic_analytics', label: 'Strategic Analytics', icon: <TrendingUp size={20} /> },
     { id: 'staff', label: 'Staff Management', icon: <Users size={20} /> },
-    { id: 'finance', label: 'Financial Reports', icon: <TrendingUp size={20} /> },
-    { id: 'documents', label: 'Documents', icon: <FileText size={20} /> },
+    { id: 'documents', label: 'Company Documents', icon: <FileText size={20} /> },
+    { id: 'roadmap', label: 'Strategic Roadmap', icon: <Map size={20} /> },
+    { id: 'compliance', label: 'Risk & Compliance', icon: <ShieldCheck size={20} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 
@@ -22,18 +24,14 @@ const GeneralManagerDashboard: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'overview':
-                return <Overview />;
-            case 'staff':
-                return <StaffDirectory />;
-            case 'finance':
-                return <FinanceReports />;
-            case 'documents':
-                return <div><h2 style={{ color: '#fff', marginBottom: '20px' }}>Document Management</h2><p style={{ color: '#94a3b8' }}>This section handles company-wide documents.</p></div>;
-            case 'settings':
-                return <SystemSettings />;
-            default:
-                return <Overview />;
+            case 'executive_overview': return <ExecutiveOverview />;
+            case 'strategic_analytics': return <StrategicAnalytics />;
+            case 'staff': return <GMStaffManagement />;
+            case 'documents': return <GMDocuments />;
+            case 'roadmap': return <GMRoadmap />;
+            case 'compliance': return <GMCompliance />;
+            case 'settings': return <SystemSettings />;
+            default: return <ExecutiveOverview />;
         }
     };
 
@@ -44,6 +42,7 @@ const GeneralManagerDashboard: React.FC = () => {
             navItems={navItems}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            department="management"
         >
             {renderContent()}
         </StaffLayout>

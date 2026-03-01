@@ -264,6 +264,9 @@ const Navbar: React.FC = () => {
                                 </button>
                             </div> */}
 
+                        </nav>
+
+                        <div className={styles.mainNavActions}>
                             <div className={styles.searchContainer}>
                                 <input
                                     type="text"
@@ -278,53 +281,50 @@ const Navbar: React.FC = () => {
                                 </button>
                             </div>
 
+                            <div className={styles.actions}>
+                                {isLoggedIn ? (
+                                    <div className={styles.userActionGroup}>
+                                        <button className={styles.notificationBtn}>
+                                            <Bell size={20} />
+                                        </button>
+                                        <div className={styles.userProfile}>
+                                            <div className={styles.avatar}>
+                                                <User size={20} />
+                                            </div>
+                                            <span className={styles.userName}>{user?.name}</span>
 
-
-                        </nav>
-
-                        <div className={styles.actions}>
-                            {isLoggedIn ? (
-                                <div className={styles.userActionGroup}>
-                                    <button className={styles.notificationBtn}>
-                                        <Bell size={20} />
-                                    </button>
-                                    <div className={styles.userProfile}>
-                                        <div className={styles.avatar}>
-                                            <User size={20} />
-                                        </div>
-                                        <span className={styles.userName}>{user?.name}</span>
-
-                                        <div className={styles.dropdown}>
-                                            <button className={styles.dropdownItem} onClick={goToDashboard}>
-                                                <LayoutDashboard size={16} /> Dashboard
-                                            </button>
-                                            <button className={styles.dropdownItem} onClick={goToSettings}>
-                                                <Settings size={16} /> Settings
-                                            </button>
-                                            <div className={styles.dropdownDivider} />
-                                            <button className={`${styles.dropdownItem} ${styles.logoutItem}`} onClick={handleLogout}>
-                                                <LogOut size={16} /> Logout
-                                            </button>
+                                            <div className={styles.dropdown}>
+                                                <button className={styles.dropdownItem} onClick={goToDashboard}>
+                                                    <LayoutDashboard size={16} /> Dashboard
+                                                </button>
+                                                <button className={styles.dropdownItem} onClick={goToSettings}>
+                                                    <Settings size={16} /> Settings
+                                                </button>
+                                                <div className={styles.dropdownDivider} />
+                                                <button className={`${styles.dropdownItem} ${styles.logoutItem}`} onClick={handleLogout}>
+                                                    <LogOut size={16} /> Logout
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <button id="nav-login-btn" className={styles.login} onClick={() => openAuthModal("login")}>
-                                        <LogIn size={18} /> <span>Login</span>
-                                    </button>
-                                    <button id="nav-register-btn" className={styles.register} onClick={() => openAuthModal("register")}>
-                                        <UserPlus size={18} /> <span>Register</span>
-                                    </button>
-                                </>
-                            )}
+                                ) : (
+                                    <>
+                                        <button id="nav-login-btn" className={styles.login} onClick={() => openAuthModal("login")}>
+                                            <LogIn size={18} /> <span>Login</span>
+                                        </button>
+                                        <button id="nav-register-btn" className={styles.register} onClick={() => openAuthModal("register")}>
+                                            <UserPlus size={18} /> <span>Register</span>
+                                        </button>
+                                    </>
+                                )}
 
-                            <button
-                                className={styles.mobileToggle}
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            >
-                                {isMenuOpen ? <X /> : <Menu />}
-                            </button>
+                                <button
+                                    className={styles.mobileToggle}
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                >
+                                    {isMenuOpen ? <X /> : <Menu />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Bell, Search, Menu, X, LogOut, ChevronRight, User as UserIcon
+    Bell, Search, Menu, X, LogOut, ChevronRight, User as UserIcon, Activity, Building, Award
 } from 'lucide-react';
 import styles from './StaffLayout.module.css';
 import { useAuth } from '../../../../context/AuthContext';
@@ -166,6 +166,25 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({
                             <Search size={18} className={styles.searchIcon} />
                             <input type="text" placeholder="Search..." className={styles.searchInput} />
                         </div>
+
+                        <div className={styles.osWidgets}>
+                            <div className={styles.widgetBadge} title="Latency: 24ms">
+                                <Activity size={14} className={styles.widgetIcon} color="#10b981" />
+                                <span>24ms</span>
+                            </div>
+
+                            <div className={styles.orgSwitcher} title="Switch Organization">
+                                <Building size={16} className={styles.widgetIcon} />
+                                <span>eAdvocate Corp</span>
+                                <ChevronRight size={14} style={{ rotate: '90deg', marginLeft: '4px' }} />
+                            </div>
+
+                            <div className={styles.subscriptionBadge} title="Enterprise Plan">
+                                <Award size={16} className={styles.widgetIcon} color="#facc15" />
+                                <span style={{ color: '#facc15' }}>Enterprise</span>
+                            </div>
+                        </div>
+
                         <NotificationDropdown />
                         <div className={styles.profileMenu}>
                             <div className={styles.avatar}>
