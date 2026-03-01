@@ -91,7 +91,7 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './ChatWidget.module.css';
 import { MessageSquare, BotMessageSquare, MessageCircle, X, Send, Bot, Headphones, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -129,6 +129,13 @@ const ChatWidget: React.FC = () => {
         }
     }, [user]);
 
+    const [viewMode, setViewMode] = useState<'faq' | 'lexi'>('faq');
+    const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [isAgentConnecting, setIsAgentConnecting] = useState(false);
+    const [connectingStatus, setConnectingStatus] = useState("Searching for available agent...");
+    const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
         {
             type: 'bot',
@@ -136,6 +143,74 @@ const ChatWidget: React.FC = () => {
             showAgentBtn: true,
         }
     ]);
+
+    const faqKeywords = [
+        "Payments", "Wallet", "Coins", "Verification", "Advocates", "Registration", "Membership", "BCI Norms", "Security", "About Us"
+    ];
+
+    const getFaqsForTag = (tag: string | null) => {
+        if (!tag) {
+            return [
+                { q: "What is E-Advocate Services?", a: "E-Advocate Services is a secure digital bridge that connects clients with verified advocates safely and efficiently." },
+                { q: "How to find the best lawyer for my case?", a: "You can use our 'Browse Profiles' section to filter advocates by specialization, experience, and location." },
+                { q: "Is registration free?", a: "Yes! Registration for both Clients and Advocates is completely free on our platform." }
+            ];
+        }
+
+        const text = tag.toLowerCase();
+        const results: { q: string, a: string }[] = [];
+
+        const knowledgeBase = [
+            {
+                keys: ['advocate', 'lawyer', 'legal', 'find', 'search'],
+                q: "How to find advocates?",
+                a: "You can find expert advocates by clicking 'Browse Profiles' in the menu. We have specialists in Divorce, Criminal, Corporate, and Civil law."
+            },
+            {
+                keys: ['register', 'join', 'signup', 'account', 'create'],
+                q: "How to register?",
+                a: "Joining is easy! Click 'Register' at the top. You can choose to be an 'Advocate' or a 'Client'."
+            },
+            {
+                keys: ['membership', 'plan', 'price', 'cost'],
+                q: "What are membership plans?",
+                a: "Our membership plans (Silver, Gold, Platinum) offer premium benefits like featured placement and verified badges."
+            },
+            {
+                keys: ['wallet', 'coin', 'balance', 'credit', 'payment'],
+                q: "How to use the wallet?",
+                a: "Your wallet stores coins used for viewing premium profiles or featuring your own. Manage balance in your dashboard."
+            },
+            {
+                keys: ['verify', 'verification', 'document', 'badge'],
+                q: "How to get verified?",
+                a: "Advocates should upload their Bar ID and Identity proof in the 'Verification' section of their dashboard."
+            },
+            {
+                keys: ['bci', 'norms', 'rules'],
+                q: "Are you BCI compliant?",
+                a: "Yes, we strictly adhere to Bar Council of India (BCI) norms. We do NOT facilitate fee sharing or provide direct legal services."
+            },
+            {
+                keys: ['security', 'privacy', 'confidential'],
+                q: "Is my data secure?",
+                a: "Your privacy matters! We use encryption for all data transmission and follow strict data protection practices."
+            },
+            {
+                keys: ['about us', 'mission', 'company'],
+                q: "Who are we?",
+                a: "We are a digital bridge connecting quality advocates with people who need them, making legal help accessible for everyone."
+            }
+        ];
+
+        knowledgeBase.forEach(item => {
+            if (item.keys.some(k => text.includes(k))) {
+                results.push({ q: item.q, a: item.a });
+            }
+        });
+
+        return results.length > 0 ? results : [{ q: `FAQs for ${tag}`, a: `Explore more about ${tag} in our help center or chat with Lexi AI.` }];
+    };
 
     const getDynamicResponse = (input: string): string => {
         // ... (rest of search/logic remains same, just keeping the relevant part)
@@ -390,18 +465,51 @@ const ChatWidget: React.FC = () => {
                 source: 'LexiAI Chat Widget'
             });
 
-            // Success message in chat
-            setChatHistory(prev => [...prev, {
-                type: 'bot',
-                text: `Thank you ${formData.name}! Your request has been sent to our agent dashboard. An expert will reach out to you shortly.`
-            }]);
+            // Start connecting animation
+            setIsAgentConnecting(true);
+            setConnectingStatus("Searching for available agent...");
             setShowAgentForm(false);
+
+            const statusStages = [
+                "Connecting to secure server...",
+                "Notifying support team...",
+                "Checking specialist availability...",
+                "Almost there, please stay with us...",
+                "Finalizing connection request..."
+            ];
+
+            let stageIdx = 0;
+            statusIntervalRef.current = setInterval(() => {
+                if (stageIdx < statusStages.length) {
+                    setConnectingStatus(statusStages[stageIdx]);
+                    stageIdx++;
+                }
+            }, 10000);
+
+            // Simulate long connection attempt (60s)
+            connectionTimeoutRef.current = setTimeout(() => {
+                if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
+                setIsAgentConnecting(false);
+                // Busy message in chat
+                setChatHistory(prev => [...prev, {
+                    type: 'bot',
+                    text: `All our legal experts are currently busy with other clients. We have received your query, ${formData.name}, and we will contact you on your registered details as soon as an advocate becomes available. Thank you for your patience.`
+                }]);
+                setViewMode('lexi'); // Switch to chat to show the message
+            }, 60000); // 1 minute wait
         } catch (err) {
             console.error(err);
             alert("Failed to connect. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleCancelConnection = () => {
+        if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+        if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
+        setIsAgentConnecting(false);
+        setViewMode('faq'); // Go back to FAQ or you can decide where to go
     };
 
     return (
@@ -468,6 +576,26 @@ const ChatWidget: React.FC = () => {
                             </div>
                         )}
 
+                        {/* AGENT CONNECTING WAVE OVERLAY */}
+                        {isAgentConnecting && (
+                            <div className={styles.connectingOverlay}>
+                                <div className={styles.waveContainer}>
+                                    <div className={styles.wave}></div>
+                                    <div className={styles.wave}></div>
+                                    <div className={styles.wave}></div>
+                                </div>
+                                <h4>Connecting to Agent</h4>
+                                <p>Please wait while we reach out to our experts...</p>
+                                <div className={styles.connectingStatus}>{connectingStatus}</div>
+                                <button
+                                    className={styles.cancelConnBtn}
+                                    onClick={handleCancelConnection}
+                                >
+                                    Cancel & Go Back
+                                </button>
+                            </div>
+                        )}
+
                         <div className={styles.header}>
                             <div className={styles.headerInfo}>
                                 <div className={styles.botIcon}>
@@ -483,46 +611,97 @@ const ChatWidget: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className={styles.messages}>
-                            {chatHistory.map((msg, i) => (
-                                <div
-                                    key={i}
-                                    className={`${styles.message} ${msg.type === 'user'
-                                        ? styles.userMsg
-                                        : styles.botMsg
-                                        }`}
-                                >
-                                    <div className={styles.bubble}>
-                                        {msg.text}
+                        <div className={styles.chatBody}>
+                            {viewMode === 'faq' ? (
+                                <div className={styles.faqView}>
+                                    <div className={styles.faqContent}>
+                                        <div className={styles.faqWelcome}>
+                                            <h4>Hi there! 👋</h4>
+                                            <p>How can we help you today? Check our common topics or chat with Lexi AI.</p>
+                                        </div>
 
-                                        {/* AGENT BUTTON FOR BOT RESPONSES */}
-                                        {msg.type === 'bot' && msg.showAgentBtn && (
-                                            <div className={styles.agentCta}>
+                                        <div className={styles.faqList}>
+                                            {getFaqsForTag(selectedTag).map((faq, idx) => (
+                                                <div key={idx} className={styles.faqItem}>
+                                                    <h5>{faq.q}</h5>
+                                                    <p>{faq.a}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.faqFooter}>
+                                        <div className={styles.tagScroller}>
+                                            {faqKeywords.map(tag => (
                                                 <button
-                                                    onClick={() => setShowAgentForm(true)}
-                                                    className={styles.agentBtn}
+                                                    key={tag}
+                                                    className={`${styles.tag} ${selectedTag === tag ? styles.activeTag : ''}`}
+                                                    onClick={() => setSelectedTag(tag)}
                                                 >
-                                                    <Headphones size={16} />
-                                                    Chat with Agent
+                                                    {tag}
                                                 </button>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            className={styles.lexiSwitch}
+                                            onClick={() => setViewMode('lexi')}
+                                        >
+                                            <div className={styles.lexiSwitchContent}>
+                                                <Bot size={18} />
+                                                <span>Did not find your query? Chat with my Lexi AI</span>
                                             </div>
-                                        )}
+                                        </button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            ) : (
+                                <div className={styles.lexiView}>
+                                    <div className={styles.messages}>
+                                        {chatHistory.map((msg, i) => (
+                                            <div
+                                                key={i}
+                                                className={`${styles.message} ${msg.type === 'user' ? styles.userMsg : styles.botMsg}`}
+                                            >
+                                                <div className={styles.bubble}>
+                                                    {msg.text}
+                                                    {msg.type === 'bot' && msg.showAgentBtn && (
+                                                        <div className={styles.agentCta}>
+                                                            <button
+                                                                onClick={() => setShowAgentForm(true)}
+                                                                className={styles.agentBtn}
+                                                            >
+                                                                <Headphones size={16} />
+                                                                Chat with Agent
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
 
-                        <form className={styles.inputArea} onSubmit={handleSend}>
-                            <input
-                                type="text"
-                                placeholder="Type your message..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                            />
-                            <button type="submit" >
-                                ⮞   <Send size={24} style={{ color: "#fff" }} />
-                            </button>
-                        </form>
+                                    <div className={styles.lexiFooter}>
+                                        <button
+                                            className={styles.backToFaq}
+                                            onClick={() => setViewMode('faq')}
+                                        >
+                                            ← Back to FAQs
+                                        </button>
+                                        <form className={styles.inputArea} onSubmit={handleSend}>
+                                            <input
+                                                type="text"
+                                                placeholder="Ask Lexi anything..."
+                                                value={message}
+                                                onChange={(e) => setMessage(e.target.value)}
+                                            />
+                                            <button type="submit">
+                                                <Send size={20} style={{ color: "#fff" }} />
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -28,7 +28,7 @@ const AboutPage: React.FC = () => {
                     <div className={styles.badge}>ELITE INFRASTRUCTURE</div>
                     <h1 className={styles.title}>About E-Advocate</h1>
                     <p className={styles.subtitle}>
-                        Revolutionizing Legal Services through Digital Innovation, Connecting Clients with Expert
+                        Revolutionizing Services through Digital Innovation, Connecting Clients with Expert
                         Advocates Seamlessly.
                     </p>
                 </div>
@@ -87,29 +87,29 @@ const AboutPage: React.FC = () => {
                             </div>
                             <div className={styles.headerText}>
                                 <h2>About E-Advocate Services</h2>
-                                <div className={styles.headerSubtitle}>Digital Legal Platform</div>
+                                <div className={styles.headerSubtitle}>Digital Platform</div>
                             </div>
                         </div>
 
                         <div className={styles.cardContent}>
                             <p>
-                                E-Advocate is a premium digital platform that bridges the gap between clients seeking legal assistance
-                                and qualified advocates offering expert services. We provide a comprehensive ecosystem for legal
+                                E-Advocate is a premium digital platform that bridges the gap between clients seeking assistance
+                                and qualified advocates offering expert services. We provide a comprehensive ecosystem for
                                 consultation, case management, and professional networking.
                             </p>
 
                             <h3>What We Provide:</h3>
                             <ul>
-                                <li><strong>Digital Case Filing:</strong> File legal cases online with complete documentation support</li>
+                                <li><strong>Digital Case Filing:</strong> File cases online with complete documentation support</li>
                                 <li><strong>Advocate Matching:</strong> AI-powered matching with specialized advocates based on case type</li>
                                 <li><strong>Secure Communication:</strong> Encrypted chat, call, and video consultation features</li>
                                 <li><strong>Case Tracking:</strong> Real-time updates on case status and hearing schedules</li>
-                                <li><strong>Document Management:</strong> Secure cloud storage for all legal documents</li>
-                                <li><strong>Legal Resources:</strong> Access to legal blogs, templates, and guidance materials</li>
+                                <li><strong>Document Management:</strong> Secure cloud storage for all documents</li>
+                                <li><strong>Resources:</strong> Access to blogs, templates, and guidance materials</li>
                             </ul>
 
                             <p>
-                                <strong>Purpose:</strong> To democratize access to legal services, making them affordable, transparent,
+                                <strong>Purpose:</strong> To democratize access to services, making them affordable, transparent,
                                 and accessible to everyone regardless of location or economic status.
                             </p>
                         </div>
@@ -123,13 +123,13 @@ const AboutPage: React.FC = () => {
                             </div>
                             <div className={styles.headerText}>
                                 <h2>Browse Profiles</h2>
-                                <div className={styles.headerSubtitle}>Find Your Perfect Legal Match</div>
+                                <div className={styles.headerSubtitle}>Find Your Perfect Match</div>
                             </div>
                         </div>
 
                         <div className={styles.cardContent}>
                             <p>
-                                Our advanced profile browsing system allows you to find the perfect legal expert based on multiple
+                                Our advanced profile browsing system allows you to find the perfect expert based on multiple
                                 criteria including specialization, experience, location, and consultation mode.
                             </p>
 
@@ -471,14 +471,14 @@ const AboutPage: React.FC = () => {
                                 <FileText size={28} />
                             </div>
                             <div className={styles.headerText}>
-                                <h2>Legal Document Services</h2>
+                                <h2>Document Services</h2>
                                 <div className={styles.headerSubtitle}>Professional Drafting & Verification</div>
                             </div>
                         </div>
 
                         <div className={styles.cardContent}>
                             <p>
-                                Access high-quality legal drafting services for all your personal and business needs. Our experts ensure every document is legally sound, up-to-date with current laws, and delivered with speed.
+                                Access high-quality drafting services for all your personal and business needs. Our experts ensure every document is sound, up-to-date with current laws, and delivered with speed.
                             </p>
 
                             <div className={styles.featureGrid}>
@@ -494,12 +494,12 @@ const AboutPage: React.FC = () => {
 
                             <h3>Key Benefits:</h3>
                             <ul>
-                                <li><strong>Expert Drafting:</strong> Prepared by specialized legal professionals</li>
+                                <li><strong>Expert Drafting:</strong> Prepared by specialized professionals</li>
                                 <li><strong>Fast Turnaround:</strong> Digital delivery within 24-48 hours</li>
                                 <li><strong>Statutory Compliance:</strong> Fully compliant with latest Indian laws</li>
                                 <li><strong>Cost-Effective:</strong> Premium quality at transparent, affordable pricing</li>
                                 <li><strong>Verified Accuracy:</strong> Multi-layer verification for error-free documentation</li>
-                                <li><strong>Easy Customization:</strong> Tailored to fit your unique legal needs</li>
+                                <li><strong>Easy Customization:</strong> Tailored to fit your unique needs</li>
                             </ul>
                         </div>
                     </div>
@@ -518,29 +518,29 @@ const AboutPage: React.FC = () => {
 
                         <div className={styles.cardContent}>
                             <p>
-                                Our legal blog platform serves as a comprehensive knowledge base for both legal professionals and
-                                clients, featuring expert insights, case studies, and legal guidance.
+                                Our blog platform serves as a comprehensive knowledge base for both professionals and
+                                clients, featuring expert insights, case studies, and guidance.
                             </p>
 
                             <h3>For Advocates:</h3>
                             <ul>
-                                <li><strong>Content Creation:</strong> Write and publish articles on legal topics, case studies, and
+                                <li><strong>Content Creation:</strong> Write and publish articles on topics, case studies, and
                                     expert opinions</li>
                                 <li><strong>Professional Visibility:</strong> Establish thought leadership and attract potential clients</li>
-                                <li><strong>Knowledge Sharing:</strong> Share insights with peers and contribute to legal education</li>
+                                <li><strong>Knowledge Sharing:</strong> Share insights with peers and contribute to education</li>
                                 <li><strong>Monetization:</strong> Earn through premium content and consultations</li>
                             </ul>
 
                             <h3>For Clients:</h3>
                             <ul>
-                                <li><strong>Educational Resources:</strong> Access free legal information and guidance</li>
+                                <li><strong>Educational Resources:</strong> Access free information and guidance</li>
                                 <li><strong>Expert Insights:</strong> Learn from experienced advocates' articles and case analyses</li>
-                                <li><strong>Latest Updates:</strong> Stay informed about legal changes and precedents</li>
+                                <li><strong>Latest Updates:</strong> Stay informed about changes and precedents</li>
                                 <li><strong>Interactive Learning:</strong> Comment on articles and ask questions to authors</li>
                             </ul>
 
                             <p>
-                                <strong>Content Categories:</strong> Case Law Analysis, Legal Procedures, Rights & Duties, Recent
+                                <strong>Content Categories:</strong> Case Law Analysis, Procedures, Rights & Duties, Recent
                                 Judgments, Practice Tips, Legislative Updates.
                             </p>
                         </div>
@@ -554,7 +554,7 @@ const AboutPage: React.FC = () => {
                             </div>
                             <div className={styles.headerText}>
                                 <h2>Mission & Vision</h2>
-                                <div className={styles.headerSubtitle}>Driving Legal Innovation</div>
+                                <div className={styles.headerSubtitle}>Driving Innovation</div>
                             </div>
                         </div>
 
@@ -563,7 +563,7 @@ const AboutPage: React.FC = () => {
                                 <div className={styles.featureItem}>
                                     <h4>Our Mission</h4>
                                     <p>
-                                        To democratize access to quality legal services through technology, making legal assistance
+                                        To democratize access to quality services through technology, making assistance
                                         affordable, transparent, and accessible to every individual and business regardless of their
                                         geographical or economic constraints.
                                     </p>
@@ -571,7 +571,7 @@ const AboutPage: React.FC = () => {
                                 <div className={styles.featureItem}>
                                     <h4>Our Vision</h4>
                                     <p>
-                                        To become the world's most trusted digital legal ecosystem, transforming how legal services are
+                                        To become the world's most trusted digital ecosystem, transforming how services are
                                         delivered and experienced globally through innovation, integrity, and inclusivity.
                                     </p>
                                 </div>
@@ -579,7 +579,7 @@ const AboutPage: React.FC = () => {
 
                             <h3>Core Values:</h3>
                             <ul>
-                                <li><strong>Accessibility:</strong> Making legal help available to all</li>
+                                <li><strong>Accessibility:</strong> Making help available to all</li>
                                 <li><strong>Transparency:</strong> Clear processes and communication</li>
                                 <li><strong>Excellence:</strong> Maintaining highest professional standards</li>
                                 <li><strong>Innovation:</strong> Continuously improving through technology</li>
@@ -604,7 +604,7 @@ const AboutPage: React.FC = () => {
                         <div className={styles.cardContent}>
                             <div className={styles.approvalsContent}>
                                 <p>
-                                    E-Advocate operates with full legal compliance and has established strategic partnerships to enhance
+                                    E-Advocate operates with full compliance and has established strategic partnerships to enhance
                                     service quality, reliability, and security.
                                 </p>
 
@@ -623,7 +623,7 @@ const AboutPage: React.FC = () => {
                                         <div className={styles.accordionContent}>
                                             <p>
                                                 Registered and regulated under recognized Bar Council authorities, ensuring advocate verification,
-                                                ethical practice, and legal authenticity. All advocates on the platform undergo mandatory
+                                                ethical practice, and authenticity. All advocates on the platform undergo mandatory
                                                 verification of Bar Council enrollment certificates, identity proof, and professional standing.
                                             </p>
                                             <img
@@ -645,12 +645,12 @@ const AboutPage: React.FC = () => {
                                             <div className={styles.iconWrapper}>
                                                 <Globe size={20} />
                                             </div>
-                                            <h3>Legal Collaboration</h3>
+                                            <h3>Collaboration</h3>
                                             <span className={styles.arrow}>▼</span>
                                         </summary>
                                         <div className={styles.accordionContent}>
                                             <p>
-                                                Strategic collaborations with leading law firms and legal institutions to deliver expert legal
+                                                Strategic collaborations with leading law firms and institutions to deliver expert
                                                 solutions across multiple domains including corporate, criminal, family, property, and cyber law.
                                             </p>
                                             <img
@@ -704,7 +704,7 @@ const AboutPage: React.FC = () => {
                                         </summary>
                                         <div className={styles.accordionContent}>
                                             <p>
-                                                Partnerships with government bodies and legal aid organizations to support accessible
+                                                Partnerships with government bodies and aid organizations to support accessible
                                                 and affordable justice for all citizens, including pro-bono consultations for eligible cases.
                                             </p>
                                             <img
@@ -726,7 +726,7 @@ const AboutPage: React.FC = () => {
                                     <h3>Certifications & Compliance</h3>
                                     <ul>
                                         <li><strong>Data Protection:</strong> GDPR & Data Privacy Compliant</li>
-                                        <li><strong>Legal Compliance:</strong> Bar Council Registration No. L-12345/2023</li>
+                                        <li><strong>Compliance:</strong> Bar Council Registration No. L-12345/2023</li>
                                         <li><strong>Security Standards:</strong> ISO/IEC 27001:2013 Certified</li>
                                         <li><strong>Payment Security:</strong> PCI DSS Level 1 Compliant</li>
                                     </ul>
