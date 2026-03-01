@@ -258,9 +258,9 @@
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 38px;
-  height: 28px;
-  background: var(--primary-blue);
+  /* width: 38px;
+  height: 28px; */
+  background: transparent;
   border: none;
   border-radius: 14px;
   color: #fff;
@@ -273,7 +273,7 @@
 
 .searchButtons:hover {
   background: #3b82f6;
-  transform: translateY(-50%) scale(1.05);
+  /* transform: translateY(-50%) scale(1.05); */
 }
 
 /* AUTH & USER ACTIONS */
