@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
-import { DataTable } from '../dashboard/shared/DataTable';
+import { DataTable, type Column } from '../dashboard/shared/DataTable';
 
 interface Ticket {
     id: string;
@@ -50,7 +50,22 @@ const TicketMonitor: React.FC = () => {
         }
     };
 
-    const columns = ['Customer', 'Priority', 'Status', 'Assigned Agent', 'Created At', 'Actions'];
+    const columnsList: Column<Ticket>[] = [
+        { header: 'Customer', accessor: 'customer' },
+        {
+            header: 'Priority',
+            accessor: (t: Ticket) => <span style={{ color: getPriorityColor(t.priority) }}>{t.priority}</span>
+        },
+        {
+            header: 'Status',
+            accessor: (t: Ticket) => <span style={{ color: getStatusColor(t.status) }}>{t.status}</span>
+        },
+        { header: 'Assigned Agent', accessor: 'assigned_agent' },
+        {
+            header: 'Created At',
+            accessor: (t: Ticket) => new Date(t.created_at).toLocaleDateString()
+        }
+    ];
 
     const getPriorityColor = (p: string) => p === 'High' ? '#ef4444' : p === 'Medium' ? '#f59e0b' : '#3b82f6';
     const getStatusColor = (s: string) => s === 'Open' ? '#ef4444' : s === 'In Progress' ? '#facc15' : '#10b981';
@@ -60,19 +75,16 @@ const TicketMonitor: React.FC = () => {
             <div style={{ background: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid #334155' }}>
                 <h3 style={{ marginBottom: '16px', color: '#f8fafc' }}>Ticket Monitor</h3>
                 <DataTable
-                    headers={columns}
-                    data={tickets.map(t => [
-                        t.customer,
-                        <span style={{ color: getPriorityColor(t.priority) }}>{t.priority}</span>,
-                        <span style={{ color: getStatusColor(t.status) }}>{t.status}</span>,
-                        t.assigned_agent,
-                        new Date(t.created_at).toLocaleDateString(),
+                    data={tickets}
+                    columns={columnsList}
+                    keyExtractor={(t: Ticket) => t.id}
+                    actions={(t: Ticket) => (
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button onClick={() => handleAction(t.id, 'assign')} style={btnStyle}>Assign</button>
                             <button onClick={() => handleAction(t.id, 'escalate')} style={btnStyle}>Escalate</button>
                             <button onClick={() => handleAction(t.id, 'close')} style={{ ...btnStyle, background: '#10b981' }}>Close</button>
                         </div>
-                    ])}
+                    )}
                 />
             </div>
         </div>
